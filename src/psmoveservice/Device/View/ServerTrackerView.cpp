@@ -1261,7 +1261,8 @@ ServerTrackerView::computeProjectionForController(
 
     // Compute a region of interest in the tracker buffer around where we expect to find the tracking shape
     const TrackerManagerConfig &trackerMgrConfig= DeviceManager::getInstance()->m_tracker_manager->getConfig();
-    const bool bRoiDisabled = tracked_controller->getIsROIDisabled() || trackerMgrConfig.disable_roi;
+	const bool bRoiDisabled = tracked_controller->getIsROIDisabled() || trackerMgrConfig.disable_roi;
+	const bool bRoiOptimized = trackerMgrConfig.optimized_roi;
 
     const ControllerOpticalPoseEstimation *priorPoseEst= 
         tracked_controller->getTrackerPoseEstimate(this->getDeviceID());
@@ -1271,7 +1272,7 @@ ServerTrackerView::computeProjectionForController(
 	int controller_id = tracked_controller->getDeviceID();
 
     cv::Rect2i ROI= computeTrackerROIForPoseProjection(
-		controller_id,
+		(bRoiOptimized) ? controller_id : -1,
         bRoiDisabled,
         this,		
         bIsTracking ? tracked_controller->getPoseFilter() : nullptr,

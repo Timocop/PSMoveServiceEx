@@ -58,6 +58,7 @@ public:
 	bool exclude_opposed_cameras;
 	float min_valid_projection_area;
 	bool disable_roi;
+	bool optimized_roi;
     TrackerProfile default_tracker_profile;
 	float global_forward_degrees;
 
