@@ -454,8 +454,8 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
         int valid_projection_tracker_ids[TrackerManager::k_max_devices];
         int projections_found = 0;
 
-		static bool occluded_tracker_ids[TrackerManager::k_max_devices];
-		static float occluded_projection_tracker_ids[TrackerManager::k_max_devices][2];
+		static bool occluded_tracker_ids[TrackerManager::k_max_devices][ControllerManager::k_max_devices];
+		static float occluded_projection_tracker_ids[TrackerManager::k_max_devices][ControllerManager::k_max_devices][2];
 
         CommonDeviceTrackingShape trackingShape;
         m_device->getTrackingShape(trackingShape);
@@ -514,32 +514,34 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 					bool bIsOccluded = false;
 
 					if (trackerMgrConfig.min_occluded_area_on_loss > 0.01) {
-						if (!occluded_tracker_ids[tracker_id])
+						int iControllerId = this->getDeviceID();
+
+						if (!occluded_tracker_ids[tracker_id][iControllerId])
 						{
 							if (bWasTracking || bIsVisibleThisUpdate)
 							{
-								occluded_tracker_ids[tracker_id] = false;
-								occluded_projection_tracker_ids[tracker_id][0] = trackerPoseEstimateRef.projection.shape.ellipse.center.x;
-								occluded_projection_tracker_ids[tracker_id][1] = trackerPoseEstimateRef.projection.shape.ellipse.center.y;
+								occluded_tracker_ids[tracker_id][iControllerId] = false;
+								occluded_projection_tracker_ids[tracker_id][iControllerId][0] = trackerPoseEstimateRef.projection.shape.ellipse.center.x;
+								occluded_projection_tracker_ids[tracker_id][iControllerId][1] = trackerPoseEstimateRef.projection.shape.ellipse.center.y;
 							}
 							else
 							{
-								occluded_tracker_ids[tracker_id] = true;
+								occluded_tracker_ids[tracker_id][iControllerId] = true;
 							}
 						}
 
-						if (occluded_tracker_ids[tracker_id])
+						if (occluded_tracker_ids[tracker_id][iControllerId])
 						{
 							if (bWasTracking || bIsVisibleThisUpdate)
 							{
-								if (abs(trackerPoseEstimateRef.projection.shape.ellipse.center.x - occluded_projection_tracker_ids[tracker_id][0]) < trackerMgrConfig.min_occluded_area_on_loss
-									&& abs(trackerPoseEstimateRef.projection.shape.ellipse.center.y - occluded_projection_tracker_ids[tracker_id][1]) < trackerMgrConfig.min_occluded_area_on_loss)
+								if (abs(trackerPoseEstimateRef.projection.shape.ellipse.center.x - occluded_projection_tracker_ids[tracker_id][iControllerId][0]) < trackerMgrConfig.min_occluded_area_on_loss
+									&& abs(trackerPoseEstimateRef.projection.shape.ellipse.center.y - occluded_projection_tracker_ids[tracker_id][iControllerId][1]) < trackerMgrConfig.min_occluded_area_on_loss)
 								{
 									bIsOccluded = true;
 								}
 								else
 								{
-									occluded_tracker_ids[tracker_id] = false;
+									occluded_tracker_ids[tracker_id][iControllerId] = false;
 								}
 							}
 						}

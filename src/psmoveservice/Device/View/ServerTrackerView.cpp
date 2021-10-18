@@ -15,6 +15,7 @@
 #include "ServerRequestHandler.h"
 #include "SharedTrackerState.h"
 #include "TrackerManager.h"
+#include "ControllerManager.h"
 #include "PoseFilterInterface.h"
 
 #include <boost/interprocess/shared_memory_object.hpp>
@@ -2328,7 +2329,7 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
     const CommonDeviceTrackingProjection *prior_tracking_projection,
     const CommonDeviceTrackingShape *tracking_shape)
 {
-	static int roi_counter[64][16];
+	static int roi_counter[TrackerManager::k_max_devices][ControllerManager::k_max_devices];
 
     // Get expected ROI
     // Default to full screen.
