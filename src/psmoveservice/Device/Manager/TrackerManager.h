@@ -57,6 +57,7 @@ public:
 	bool use_bgr_to_hsv_lookup_table;
 	bool exclude_opposed_cameras;
 	float min_valid_projection_area;
+	float min_occluded_area_on_loss;
 	bool disable_roi;
 	bool optimized_roi;
     TrackerProfile default_tracker_profile;

@@ -27,7 +27,8 @@ TrackerManagerConfig::TrackerManagerConfig(const std::string &fnamebase)
 	tracker_sleep_ms = 1;
 	use_bgr_to_hsv_lookup_table = true;
 	exclude_opposed_cameras = false;
-	min_valid_projection_area= 16;
+	min_valid_projection_area = 16;
+	min_occluded_area_on_loss = 4;
 	disable_roi = false;
 	optimized_roi = true;
 	default_tracker_profile.frame_width = 640;
@@ -58,7 +59,8 @@ TrackerManagerConfig::config2ptree()
 
 	pt.put("excluded_opposed_cameras", exclude_opposed_cameras);
 
-	pt.put("min_valid_projection_area", min_valid_projection_area);	
+	pt.put("min_valid_projection_area", min_valid_projection_area);
+	pt.put("min_occluded_area_on_loss", min_occluded_area_on_loss);
 
 	pt.put("disable_roi", disable_roi);
 	pt.put("optimized_roi", optimized_roi);
@@ -90,6 +92,7 @@ TrackerManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
 		tracker_sleep_ms = pt.get<int>("tracker_sleep_ms", tracker_sleep_ms);
 		exclude_opposed_cameras = pt.get<bool>("excluded_opposed_cameras", exclude_opposed_cameras);
 		min_valid_projection_area = pt.get<float>("min_valid_projection_area", min_valid_projection_area);
+		min_occluded_area_on_loss = pt.get<float>("min_occluded_area_on_loss", min_occluded_area_on_loss);
 		disable_roi = pt.get<bool>("disable_roi", disable_roi);
 		optimized_roi = pt.get<bool>("optimized_roi", optimized_roi);
 		default_tracker_profile.frame_width = pt.get<float>("default_tracker_profile.frame_width", 640);

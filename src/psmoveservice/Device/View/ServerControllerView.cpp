@@ -443,6 +443,7 @@ void ServerControllerView::resetPoseFilter()
 void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_manager)
 {
     const std::chrono::time_point<std::chrono::high_resolution_clock> now= std::chrono::high_resolution_clock::now();
+	const TrackerManagerConfig &trackerMgrConfig = DeviceManager::getInstance()->m_tracker_manager->getConfig();
 
     // TODO: Probably need to first update IMU state to get velocity.
     // If velocity is too high, don't bother getting a new position.
@@ -452,6 +453,9 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
     {
         int valid_projection_tracker_ids[TrackerManager::k_max_devices];
         int projections_found = 0;
+
+		static bool occluded_tracker_ids[TrackerManager::k_max_devices];
+		static float occluded_projection_tracker_ids[TrackerManager::k_max_devices][2];
 
         CommonDeviceTrackingShape trackingShape;
         m_device->getTrackingShape(trackingShape);
@@ -477,7 +481,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
                 const std::chrono::duration<float, std::milli> timeSinceNewDataMillis= 
                     now - tracker->getLastNewDataTimestamp();
                 const float timeoutMilli= 
-                    static_cast<float>(DeviceManager::getInstance()->m_tracker_manager->getConfig().optical_tracking_timeout);
+                    static_cast<float>(trackerMgrConfig.optical_tracking_timeout);
 
                 // Can't compute tracking on video data that's too old
                 if (timeSinceNewDataMillis.count() < timeoutMilli)
@@ -507,6 +511,40 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
                         }
                     }
 
+					bool bIsOccluded = false;
+
+					if (trackerMgrConfig.min_occluded_area_on_loss > 0.01) {
+						if (!occluded_tracker_ids[tracker_id])
+						{
+							if (bWasTracking || bIsVisibleThisUpdate)
+							{
+								occluded_tracker_ids[tracker_id] = false;
+								occluded_projection_tracker_ids[tracker_id][0] = trackerPoseEstimateRef.projection.shape.ellipse.center.x;
+								occluded_projection_tracker_ids[tracker_id][1] = trackerPoseEstimateRef.projection.shape.ellipse.center.y;
+							}
+							else
+							{
+								occluded_tracker_ids[tracker_id] = true;
+							}
+						}
+
+						if (occluded_tracker_ids[tracker_id])
+						{
+							if (bWasTracking || bIsVisibleThisUpdate)
+							{
+								if (abs(trackerPoseEstimateRef.projection.shape.ellipse.center.x - occluded_projection_tracker_ids[tracker_id][0]) < trackerMgrConfig.min_occluded_area_on_loss
+									&& abs(trackerPoseEstimateRef.projection.shape.ellipse.center.y - occluded_projection_tracker_ids[tracker_id][1]) < trackerMgrConfig.min_occluded_area_on_loss)
+								{
+									bIsOccluded = true;
+								}
+								else
+								{
+									occluded_tracker_ids[tracker_id] = false;
+								}
+							}
+						}
+					}
+
                     // If the projection isn't too old (or updated this tick), 
                     // say we have a valid tracked location
                     if (bWasTracking || bIsVisibleThisUpdate)
@@ -516,13 +554,16 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 
                         if (timeSinceLastVisibleMillis.count() < timeoutMilli)
                         {
-                            // If this tracker has a valid projection for the controller
-                            // add it to the tracker id list
-                            valid_projection_tracker_ids[projections_found] = tracker_id;
-                            ++projections_found;
+							if (!bIsOccluded)
+							{
+								// If this tracker has a valid projection for the controller
+								// add it to the tracker id list
+								valid_projection_tracker_ids[projections_found] = tracker_id;
+								++projections_found;
 
-                            // Flag this pose estimate as invalid
-                            bCurrentlyTracking = true;
+								// Flag this pose estimate as invalid
+								bCurrentlyTracking = true;
+							}
                         }
                     }
                 }
@@ -565,7 +606,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
                 assert(false && "unreachable");
             }
         }
-        else if (projections_found == 1 && !DeviceManager::getInstance()->m_tracker_manager->getConfig().ignore_pose_from_one_tracker)
+        else if (projections_found == 1 && !trackerMgrConfig.ignore_pose_from_one_tracker)
         {
             const int tracker_id = valid_projection_tracker_ids[0];
             const ServerTrackerViewPtr tracker = tracker_manager->getTrackerViewPtr(tracker_id);
