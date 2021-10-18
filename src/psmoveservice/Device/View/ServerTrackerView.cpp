@@ -738,7 +738,8 @@ static bool computeTrackerRelativePointCloudContourPose(
     const CommonDevicePose *tracker_relative_pose_guess,
     HMDOpticalPoseEstimation *out_pose_estimate);
 static cv::Rect2i computeTrackerROIForPoseProjection(
-    const bool disabled_roi,
+	const int roi_index,
+	const bool disabled_roi,
     const ServerTrackerView *tracker,
     const IPoseFilter* pose_filter,
     const CommonDeviceTrackingProjection *prior_tracking_projection,
@@ -1266,7 +1267,11 @@ ServerTrackerView::computeProjectionForController(
         tracked_controller->getTrackerPoseEstimate(this->getDeviceID());
     const bool bIsTracking = priorPoseEst->bCurrentlyTracking;
 
+	//HMD: = 0, Controller: ID + 1
+	int controller_id = tracked_controller->getDeviceID();
+
     cv::Rect2i ROI= computeTrackerROIForPoseProjection(
+		controller_id,
         bRoiDisabled,
         this,		
         bIsTracking ? tracked_controller->getPoseFilter() : nullptr,
@@ -1450,6 +1455,7 @@ bool ServerTrackerView::computeProjectionForHMD(
     const bool bIsTracking = priorPoseEst->bCurrentlyTracking;
 
     cv::Rect2i ROI = computeTrackerROIForPoseProjection(
+		-1,
         bRoiDisabled,
         this, 
         bIsTracking ? tracked_hmd->getPoseFilter() : nullptr,
@@ -2314,18 +2320,87 @@ static bool computeTrackerRelativePointCloudContourPose(
 }
 
 static cv::Rect2i computeTrackerROIForPoseProjection(
+	const int roi_index,
     const bool roi_disabled,
     const ServerTrackerView *tracker,
     const IPoseFilter* pose_filter,
     const CommonDeviceTrackingProjection *prior_tracking_projection,
     const CommonDeviceTrackingShape *tracking_shape)
 {
+	static int roi_counter[64][16];
+
     // Get expected ROI
     // Default to full screen.
     float screenWidth, screenHeight;
     tracker->getPixelDimensions(screenWidth, screenHeight);
     cv::Rect2i ROI(0, 0, static_cast<int>(screenWidth), static_cast<int>(screenHeight));
 
+	if (!roi_disabled && roi_index > -1)
+	{
+		int trackerId = tracker->getDeviceID();
+
+		int roi_size[2];
+		roi_size[0] = static_cast<int>(screenWidth) / 3;
+		roi_size[1] = static_cast<int>(screenHeight) / 3;
+
+		switch (++roi_counter[trackerId][roi_index] % 9) {
+		case 0:
+			ROI = cv::Rect2i(
+				0, 0,
+				roi_size[0], roi_size[1]
+			);
+			break;
+		case 1:
+			ROI = cv::Rect2i(
+				roi_size[0], 0,	
+				roi_size[0], roi_size[1]
+			);
+			break;
+		case 2:
+			ROI = cv::Rect2i(
+				roi_size[0] * 2, 0, 
+				roi_size[0], roi_size[1]
+			);
+			break;
+		case 3:
+			ROI = cv::Rect2i(
+				0, roi_size[1], 
+				roi_size[0], roi_size[1]
+			);
+			break;
+		case 4:
+			ROI = cv::Rect2i(
+				roi_size[0], roi_size[1], 
+				roi_size[0], roi_size[1]
+			);
+			break;
+		case 5:
+			ROI = cv::Rect2i(
+				roi_size[0] * 2, roi_size[1], 
+				roi_size[0], roi_size[1]
+			);
+			break;
+		case 6:
+			ROI = cv::Rect2i(
+				0, roi_size[1] * 2, 
+				roi_size[0], roi_size[1]
+			);
+			break;
+		case 7:
+			ROI = cv::Rect2i(
+				roi_size[0], roi_size[1] * 2, 
+				roi_size[0], roi_size[1]
+			);
+			break;
+		case 8:
+			ROI = cv::Rect2i(
+				roi_size[0] * 2, roi_size[1] * 2,
+				roi_size[0], roi_size[1]
+			);
+			break;
+		}
+	}
+	
     //Calculate a more refined ROI.
     //Based on the physical limits of the object's bounding box
     //projected onto the image.
