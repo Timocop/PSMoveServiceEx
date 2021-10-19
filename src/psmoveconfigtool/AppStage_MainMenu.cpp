@@ -5,6 +5,7 @@
 #include "AppStage_HMDSettings.h"
 #include "AppStage_ServiceSettings.h"
 #include "AppStage_TestTracker.h"
+#include "AppStage_AdvancedSettings.h"
 #include "App.h"
 #include "Camera.h"
 #include "ProtocolVersion.h"
@@ -84,12 +85,23 @@ void AppStage_MainMenu::renderUI()
             {
                 m_app->setAppStage(AppStage_HMDSettings::APP_STAGE_NAME);
             }    
-    
-            if (ImGui::Button("Tracker Settings"))
-            {
-                m_app->setAppStage(AppStage_TrackerSettings::APP_STAGE_NAME);
-            }
-    
+
+			if (ImGui::Button("Tracker Settings"))
+			{
+				m_app->setAppStage(AppStage_TrackerSettings::APP_STAGE_NAME);
+			}
+
+#ifdef _WIN32
+			ImGui::Separator();
+
+			if (ImGui::Button("Advanced Settings"))
+			{
+				m_app->setAppStage(AppStage_AdvancedSettings::APP_STAGE_NAME);
+			}
+
+			ImGui::Separator();
+#endif
+
             if (ImGui::Button("Exit"))
             {
                 m_app->requestShutdown();

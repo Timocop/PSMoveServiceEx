@@ -19,6 +19,7 @@
 #include "AppStage_TestButtons.h"
 #include "AppStage_TestTracker.h"
 #include "AppStage_TestRumble.h"
+#include "AppStage_AdvancedSettings.h"
 
 #ifdef _WIN32
 #pragma comment (lib, "winmm.lib")     /* link with Windows MultiMedia lib */
@@ -53,7 +54,8 @@ extern "C" int main(int argc, char *argv[])
     app.registerAppStage<AppStage_TestButtons>();
     app.registerAppStage<AppStage_TestRumble>();
     app.registerAppStage<AppStage_TestTracker>();
-    app.registerAppStage<AppStage_TrackerSettings>();
+	app.registerAppStage<AppStage_TrackerSettings>();
+	app.registerAppStage<AppStage_AdvancedSettings>();
 
     return app.exec(argc, argv);
 }
