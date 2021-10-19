@@ -514,34 +514,34 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 					bool bIsOccluded = false;
 
 					if (trackerMgrConfig.min_occluded_area_on_loss > 0.01) {
-						int iControllerId = this->getDeviceID();
+						int controller_id = this->getDeviceID();
 
-						if (!occluded_tracker_ids[tracker_id][iControllerId])
+						if (!occluded_tracker_ids[tracker_id][controller_id])
 						{
 							if (bWasTracking || bIsVisibleThisUpdate)
 							{
-								occluded_tracker_ids[tracker_id][iControllerId] = false;
-								occluded_projection_tracker_ids[tracker_id][iControllerId][0] = trackerPoseEstimateRef.projection.shape.ellipse.center.x;
-								occluded_projection_tracker_ids[tracker_id][iControllerId][1] = trackerPoseEstimateRef.projection.shape.ellipse.center.y;
+								occluded_tracker_ids[tracker_id][controller_id] = false;
+								occluded_projection_tracker_ids[tracker_id][controller_id][0] = trackerPoseEstimateRef.projection.shape.ellipse.center.x;
+								occluded_projection_tracker_ids[tracker_id][controller_id][1] = trackerPoseEstimateRef.projection.shape.ellipse.center.y;
 							}
 							else
 							{
-								occluded_tracker_ids[tracker_id][iControllerId] = true;
+								occluded_tracker_ids[tracker_id][controller_id] = true;
 							}
 						}
 
-						if (occluded_tracker_ids[tracker_id][iControllerId])
+						if (occluded_tracker_ids[tracker_id][controller_id])
 						{
 							if (bWasTracking || bIsVisibleThisUpdate)
 							{
-								if (abs(trackerPoseEstimateRef.projection.shape.ellipse.center.x - occluded_projection_tracker_ids[tracker_id][iControllerId][0]) < trackerMgrConfig.min_occluded_area_on_loss
-									&& abs(trackerPoseEstimateRef.projection.shape.ellipse.center.y - occluded_projection_tracker_ids[tracker_id][iControllerId][1]) < trackerMgrConfig.min_occluded_area_on_loss)
+								if (abs(trackerPoseEstimateRef.projection.shape.ellipse.center.x - occluded_projection_tracker_ids[tracker_id][controller_id][0]) < trackerMgrConfig.min_occluded_area_on_loss
+									&& abs(trackerPoseEstimateRef.projection.shape.ellipse.center.y - occluded_projection_tracker_ids[tracker_id][controller_id][1]) < trackerMgrConfig.min_occluded_area_on_loss)
 								{
 									bIsOccluded = true;
 								}
 								else
 								{
-									occluded_tracker_ids[tracker_id][iControllerId] = false;
+									occluded_tracker_ids[tracker_id][controller_id] = false;
 								}
 							}
 						}
