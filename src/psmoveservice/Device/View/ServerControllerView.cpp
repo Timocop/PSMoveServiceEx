@@ -2587,17 +2587,42 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
         screen_area_sum += poseEstimate.projection.screen_area;
     }
 
-    // Compute triangulations amongst all pairs of projections
-    int pair_count = 0;
-    int biggest_projection_id = -1;
+	//Get biggest projector.
+	//Go through all trackers and find the biggest projector screen area to make single sphere tracking quality better.
+	//Normally this should not matter if only one camera is visible but it could be used for something else in the future.
+	int biggest_projection_id = -1;
+	for (int list_index = 0; list_index < projections_found; ++list_index)
+	{
+		const int tracker_id = valid_projection_tracker_ids[list_index];
+		const CommonDeviceScreenLocation &other_screen_location = position2d_list[list_index];
+		const ServerTrackerViewPtr other_tracker = tracker_manager->getTrackerViewPtr(tracker_id);
+
+		if (biggest_projection_id > -1)
+		{
+			const float screen_area = tracker_pose_estimations[tracker_id].projection.screen_area;
+			const float biggest_screen_area = tracker_pose_estimations[biggest_projection_id].projection.screen_area;
+
+			if (screen_area > biggest_screen_area)
+			{
+				biggest_projection_id = tracker_id;
+			}
+		}
+		else
+		{
+			biggest_projection_id = tracker_id;
+		}
+	}
+
+	// Compute triangulations amongst all pairs of projections
+	int pair_count = 0;
     CommonDevicePosition average_world_position = { 0.f, 0.f, 0.f };
     for (int list_index = 0; list_index < projections_found; ++list_index)
     {
-        const int tracker_id = valid_projection_tracker_ids[list_index];
-        const CommonDeviceScreenLocation &screen_location = position2d_list[list_index];
-        const ServerTrackerViewPtr tracker = tracker_manager->getTrackerViewPtr(tracker_id);
-
-        for (int other_list_index = 0; other_list_index < projections_found; ++other_list_index)
+		const int tracker_id = valid_projection_tracker_ids[list_index];
+		const CommonDeviceScreenLocation &screen_location = position2d_list[list_index];
+		const ServerTrackerViewPtr tracker = tracker_manager->getTrackerViewPtr(tracker_id);
+		
+		for (int other_list_index = 0; other_list_index < projections_found; ++other_list_index)
         {
 			if (list_index == other_list_index)
 				continue;
@@ -2605,6 +2630,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
             const int other_tracker_id = valid_projection_tracker_ids[other_list_index];
             const CommonDeviceScreenLocation &other_screen_location = position2d_list[other_list_index];
             const ServerTrackerViewPtr other_tracker = tracker_manager->getTrackerViewPtr(other_tracker_id);
+
             // if trackers are on poposite sides
             if (cfg.exclude_opposed_cameras)
             {
@@ -2612,11 +2638,6 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
                 if ((tracker->getTrackerPose().PositionCm.x > 0) == (other_tracker->getTrackerPose().PositionCm.x < 0) &&
                     (tracker->getTrackerPose().PositionCm.z > 0) == (other_tracker->getTrackerPose().PositionCm.z < 0))
                 {
-                    float screen_area = tracker_pose_estimations[tracker_id].projection.screen_area;
-                    float other_screen_area = tracker_pose_estimations[other_tracker_id].projection.screen_area;
-
-					biggest_projection_id = (screen_area > other_screen_area) ? tracker_id : other_tracker_id;
-
                     continue;
                 }
             }
@@ -2635,10 +2656,9 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
         }
     }
 
-    if (pair_count == 0 && biggest_projection_id >= 0 && !DeviceManager::getInstance()->m_tracker_manager->getConfig().ignore_pose_from_one_tracker)
+    if (pair_count == 0 && biggest_projection_id > -1 && !DeviceManager::getInstance()->m_tracker_manager->getConfig().ignore_pose_from_one_tracker)
     {
         // Position not triangulated from opposed camera, estimate from one tracker only.
-
         computeSpherePoseForControllerFromSingleTracker(
             controllerView,
             tracker_manager->getTrackerViewPtr(biggest_projection_id),
