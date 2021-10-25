@@ -2608,6 +2608,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
             // if trackers are on poposite sides
             if (cfg.exclude_opposed_cameras)
             {
+				//TODO: Use tracker FOV instead.
                 if ((tracker->getTrackerPose().PositionCm.x > 0) == (other_tracker->getTrackerPose().PositionCm.x < 0) &&
                     (tracker->getTrackerPose().PositionCm.z > 0) == (other_tracker->getTrackerPose().PositionCm.z < 0))
                 {
@@ -2640,8 +2641,8 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 
         computeSpherePoseForControllerFromSingleTracker(
             controllerView,
-            tracker_manager->getTrackerViewPtr(biggest_prjection_id),
-            &tracker_pose_estimations[biggest_prjection_id],
+            tracker_manager->getTrackerViewPtr(biggest_projection_id),
+            &tracker_pose_estimations[biggest_projection_id],
             multicam_pose_estimation);		
     }
     else if(pair_count > 0)
