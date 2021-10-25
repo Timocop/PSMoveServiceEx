@@ -1269,11 +1269,8 @@ ServerTrackerView::computeProjectionForController(
         tracked_controller->getTrackerPoseEstimate(this->getDeviceID());
     const bool bIsTracking = priorPoseEst->bCurrentlyTracking;
 
-	//HMD: = 0, Controller: ID + 1
-	int controller_id = tracked_controller->getDeviceID();
-
     cv::Rect2i ROI= computeTrackerROIForPoseProjection(
-		(bRoiOptimized) ? controller_id : -1,
+		(bRoiOptimized) ? tracked_controller->getDeviceID() : -1,
         bRoiDisabled,
         this,		
         bIsTracking ? tracked_controller->getPoseFilter() : nullptr,
@@ -2337,6 +2334,17 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
     tracker->getPixelDimensions(screenWidth, screenHeight);
     cv::Rect2i ROI(0, 0, static_cast<int>(screenWidth), static_cast<int>(screenHeight));
 
+	//Instead of applying ROI to the whole screen we only use parts of the screen.
+	//This will save alot of CPU cycles and also the performance should stay the same.
+	//As for now, this is disabled for HMDs since there are more blind spots between ROI edges (untested).
+	//
+	//Benchmark tested on AMD Ryzen 5 3600 @ 4.5Ghz with 3 Controllers and 6 Trackers:
+	// Fullscreen ROI:
+	//		All visible:	Peak 15% CPU
+	//		None visible:	Peak 50% CPU
+	// Optimized ROI:
+	//		All visible:	Peak 15% CPU
+	//		None visible:	Peak 18% CPU
 	if (!roi_disabled && roi_index > -1)
 	{
 		int trackerId = tracker->getDeviceID();
