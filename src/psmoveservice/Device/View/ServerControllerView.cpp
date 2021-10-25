@@ -2589,7 +2589,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 
     // Compute triangulations amongst all pairs of projections
     int pair_count = 0;
-    int biggest_prjection_id = -1;
+    int biggest_projection_id = -1;
     CommonDevicePosition average_world_position = { 0.f, 0.f, 0.f };
     for (int list_index = 0; list_index < projections_found; ++list_index)
     {
@@ -2597,8 +2597,11 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
         const CommonDeviceScreenLocation &screen_location = position2d_list[list_index];
         const ServerTrackerViewPtr tracker = tracker_manager->getTrackerViewPtr(tracker_id);
 
-        for (int other_list_index = list_index + 1; other_list_index < projections_found; ++other_list_index)
+        for (int other_list_index = 0; other_list_index < projections_found; ++other_list_index)
         {
+			if (list_index == other_list_index)
+				continue;
+
             const int other_tracker_id = valid_projection_tracker_ids[other_list_index];
             const CommonDeviceScreenLocation &other_screen_location = position2d_list[other_list_index];
             const ServerTrackerViewPtr other_tracker = tracker_manager->getTrackerViewPtr(other_tracker_id);
@@ -2611,7 +2614,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
                     float screen_area = tracker_pose_estimations[tracker_id].projection.screen_area;
                     float other_screen_area = tracker_pose_estimations[other_tracker_id].projection.screen_area;
 
-                    biggest_prjection_id = screen_area > other_screen_area ? tracker_id : other_tracker_id;
+					biggest_projection_id = (screen_area > other_screen_area) ? tracker_id : other_tracker_id;
 
                     continue;
                 }
@@ -2631,7 +2634,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
         }
     }
 
-    if (pair_count == 0 && biggest_prjection_id >= 0 && !DeviceManager::getInstance()->m_tracker_manager->getConfig().ignore_pose_from_one_tracker)
+    if (pair_count == 0 && biggest_projection_id >= 0 && !DeviceManager::getInstance()->m_tracker_manager->getConfig().ignore_pose_from_one_tracker)
     {
         // Position not triangulated from opposed camera, estimate from one tracker only.
 
