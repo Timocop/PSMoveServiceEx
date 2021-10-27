@@ -2,7 +2,10 @@
 
 IF NOT EXIST build goto no_build
 
-IF NOT EXIST ".\release\testing" mkdir ".\release\PSMoveService\testing"
+IF EXIST ".\release\PSMoveService\" rmdir /S /Q ".\release\PSMoveService\"
+
+IF NOT EXIST ".\release\PSMoveService\" mkdir ".\release\PSMoveService\"
+IF NOT EXIST ".\release\PSMoveService\testing\" mkdir ".\release\PSMoveService\testing\"
 
 copy /Y ".\build\src\psmoveclient\Release\*.dll" ".\release\PSMoveService\"
 copy /Y ".\build\src\psmoveservice\Release\*.exe" ".\release\PSMoveService\"
