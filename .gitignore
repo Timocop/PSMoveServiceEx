@@ -39,6 +39,9 @@ bin*
 dist*
 obj*
 
+# Relase directories
+release*
+
 # Auto-downloaded Dependencies
 deps
 
