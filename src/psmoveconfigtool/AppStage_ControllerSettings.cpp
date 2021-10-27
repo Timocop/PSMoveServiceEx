@@ -214,11 +214,11 @@ inline int find_string_entry(const char *string_entry, const char* string_list[]
 }
 
 //-- public methods -----
-AppStage_ControllerSettings::AppStage_ControllerSettings(App *app) 
-    : AppStage(app)
-    , m_menuState(AppStage_ControllerSettings::inactive)
-    , m_selectedControllerIndex(-1)
-    , m_gamepadCount(0)
+AppStage_ControllerSettings::AppStage_ControllerSettings(App *app)
+	: AppStage(app)
+	, m_menuState(AppStage_ControllerSettings::inactive)
+	, m_selectedControllerIndex(-1)
+	, m_gamepadCount(0)
 { }
 
 void AppStage_ControllerSettings::enter()
@@ -235,6 +235,14 @@ void AppStage_ControllerSettings::enter()
 void AppStage_ControllerSettings::exit()
 {
     m_menuState= AppStage_ControllerSettings::inactive;
+
+	for (PSMControllerID controller_id : m_controllers)
+	{
+		PSM_StopControllerDataStream(controller_id, PSM_DEFAULT_TIMEOUT);
+		PSM_FreeControllerListener(controller_id);
+	}
+
+	m_controllers.clear();
 }
 
 void AppStage_ControllerSettings::update()
@@ -418,23 +426,133 @@ void AppStage_ControllerSettings::renderUI()
                             {
                                 //###HipsterSloth $TODO - The HID report for fetching the firmware revision doesn't appear to work
                                 //ImGui::BulletText("Controller Type: PSMove (v%d.%d)", controllerInfo.FirmwareVersion, controllerInfo.FirmwareRevision);
-                                ImGui::BulletText("Controller Type: PSMove");
+								ImGui::BulletText("Controller Type: PSMove");
                             } break;
+
                         case PSMController_Navi:
                             {
                                 ImGui::BulletText("Controller Type: PSNavi");
                             } break;
+
                         case PSMController_DualShock4:
                             {
                                 ImGui::BulletText("Controller Type: PSDualShock4");
                             } break;
+
                         case PSMController_Virtual:
                             {
                                 ImGui::BulletText("Controller Type: Virtual");
                             } break;
+
                         default:
                             assert(0 && "Unreachable");
                     }
+
+					switch (controllerInfo.ControllerType)
+					{
+						case PSMController_Move:
+						{
+							PSMController *psm_controller = PSM_GetController(controllerInfo.ControllerID);
+							if (psm_controller != nullptr)
+							{
+								PSMBatteryState battery = psm_controller->ControllerState.PSMoveState.BatteryValue;
+
+								switch (battery)
+								{
+									case PSMBattery_0:
+									{
+										ImGui::BulletText("Battery discharging:");
+										ImGui::SameLine();
+										ImGui::ProgressBar(0.0F);
+										break;
+									}
+
+									case PSMBattery_20:
+									{
+										ImGui::BulletText("Battery discharging:");
+										ImGui::SameLine();
+										ImGui::ProgressBar(0.20F);
+										break;
+									}
+
+									case PSMBattery_40:
+									{
+										ImGui::BulletText("Battery discharging:");
+										ImGui::SameLine();
+										ImGui::ProgressBar(0.40F);
+										break;
+									}
+
+									case PSMBattery_60:
+									{
+										ImGui::BulletText("Battery discharging:");
+										ImGui::SameLine();
+										ImGui::ProgressBar(0.60F);
+										break;
+									}
+
+									case PSMBattery_80:
+									{
+										ImGui::BulletText("Battery discharging:");
+										ImGui::SameLine();
+										ImGui::ProgressBar(0.80F);
+										break;
+									}
+
+									case PSMBattery_100:
+									{
+										ImGui::BulletText("Battery discharging:");
+										ImGui::SameLine();
+										ImGui::ProgressBar(1.0F);
+										break;
+									}
+
+									case PSMBattery_Charged:
+									{
+										ImGui::BulletText("Battery fully charged!:");
+										ImGui::SameLine();
+										ImGui::ProgressBar(1.0F);
+										break;
+									}
+
+									case PSMBattery_Charging:
+									{
+										ImGui::BulletText("Battery charging...:");
+										ImGui::SameLine();
+
+										static float charged_value;
+										static std::chrono::milliseconds charged_time;
+										std::chrono::milliseconds now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+
+										if (charged_time < now)
+										{
+											charged_time = (now + std::chrono::milliseconds(500));
+
+											charged_value += 0.25F;
+
+											if (charged_value > 1.0F)
+												charged_value = 0.0F;
+										}
+
+										ImGui::ProgressBar(fmin(1.0f, charged_value));
+										break;
+									}
+
+									default:
+									{
+										ImGui::BulletText("Battery: Unknown");
+										break;
+									}
+								}
+							}
+							break;
+						}
+						default:
+						{
+							ImGui::BulletText("Battery: None");
+							break;
+						}
+					}
 
                     ImGui::BulletText("Device Serial: %s", controllerInfo.DeviceSerial.c_str());
                     ImGui::BulletText("Assigned Host Serial: %s", controllerInfo.AssignedHostSerial.c_str());
@@ -753,11 +871,11 @@ bool AppStage_ControllerSettings::onClientAPIEvent(
 
     switch(event)
     {
-    case PSMEventMessage::PSMEvent_controllerListUpdated:
-        {
-            bHandled= true;
-            request_controller_list();
-        } break;
+	case PSMEventMessage::PSMEvent_controllerListUpdated:
+	{
+		bHandled = true;
+		request_controller_list();
+	} break;
     }
 
     return bHandled;
@@ -887,9 +1005,9 @@ void AppStage_ControllerSettings::handle_controller_list_response(
     {
         case PSMResult_Success:
         {
-            const PSMoveProtocol::Response *response= GET_PSMOVEPROTOCOL_RESPONSE(response_handle);
+			const PSMoveProtocol::Response *response= GET_PSMOVEPROTOCOL_RESPONSE(response_handle);
             int oldSelectedControllerIndex= thisPtr->m_selectedControllerIndex;
-
+			
             thisPtr->m_hostSerial = response->result_controller_list().host_serial();
             thisPtr->m_selectedControllerIndex= -1;
             thisPtr->m_controllerInfos.clear();
@@ -1114,6 +1232,25 @@ void AppStage_ControllerSettings::handle_controller_list_response(
 				{
 					thisPtr->m_selectedControllerIndex= (thisPtr->m_controllerInfos.size() > 0) ? 0 : -1;
 				}
+			}
+
+			for (PSMControllerID controller_id : thisPtr->m_controllers)
+			{
+				PSM_StopControllerDataStream(controller_id, PSM_DEFAULT_TIMEOUT);
+				PSM_FreeControllerListener(controller_id);
+			}
+
+			thisPtr->m_controllers.clear();
+
+			for (auto it = thisPtr->m_controllerInfos.begin(); it != thisPtr->m_controllerInfos.end(); ++it)
+			{
+				unsigned int data_stream_flags =
+					PSMControllerDataStreamFlags::PSMStreamFlags_defaultStreamOptions;
+				
+				PSM_AllocateControllerListener(it->ControllerID);
+				PSM_StartControllerDataStream(it->ControllerID, data_stream_flags, PSM_DEFAULT_TIMEOUT);
+
+				thisPtr->m_controllers.push_back(it->ControllerID);
 			}
 
             thisPtr->m_menuState= AppStage_ControllerSettings::idle;

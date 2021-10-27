@@ -132,6 +132,7 @@ private:
     std::string m_hostSerial;
     int m_gamepadCount;
 
+	std::vector<PSMControllerID> m_controllers;
     int m_selectedControllerIndex;
     
     static const char *GAMEPAD_COMBO_LABELS[MAX_GAMEPAD_LABELS];
