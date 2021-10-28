@@ -2573,7 +2573,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 {
     const TrackerManagerConfig &cfg = tracker_manager->getConfig();
     float screen_area_sum = 0;
-
+	
     // Project the tracker relative 3d tracking position back on to the tracker camera plane
     // and sum up the total controller projection area across all trackers
     CommonDeviceScreenLocation position2d_list[TrackerManager::k_max_devices];
@@ -2674,19 +2674,81 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
         average_world_position.y /= N;
         average_world_position.z /= N;
 
-        // Store the averaged tracking position
-        const float q = tracker_manager->getConfig().controller_position_smoothing;
-        if (q <= 0.01f)
-        {
-            multicam_pose_estimation->position_cm = average_world_position;
-        }
-        else
-        {
-            multicam_pose_estimation->position_cm.x = q * multicam_pose_estimation->position_cm.x + (1 - q) * average_world_position.x;
-            multicam_pose_estimation->position_cm.y = q * multicam_pose_estimation->position_cm.y + (1 - q) * average_world_position.y;
-            multicam_pose_estimation->position_cm.z = q * multicam_pose_estimation->position_cm.z + (1 - q) * average_world_position.z;
-        }
+		// Do basic optical prediction
+		const float pp = tracker_manager->getConfig().controller_position_prediction;
+		if (pp > 0.01f)
+		{
+			const int controller_id = controllerView->getDeviceID();
+			const int history_max_allowed = 50;
 
+			const int ph = tracker_manager->getConfig().controller_position_prediction_history;
+
+			int history_max = static_cast<int>(fmax(static_cast<int>(fmin(ph, history_max_allowed)), 1));
+
+			static float average_world_position_history[PSMOVESERVICE_MAX_CONTROLLER_COUNT][history_max_allowed][3];
+			static int history_count[PSMOVESERVICE_MAX_CONTROLLER_COUNT];
+
+			const float ps = tracker_manager->getConfig().controller_position_prediction_smoothing;
+			if (ps <= 0.01f || ps > 0.99f)
+			{
+				average_world_position_history[controller_id][history_count[controller_id]][0] = average_world_position.x;
+				average_world_position_history[controller_id][history_count[controller_id]][1] = average_world_position.y;
+				average_world_position_history[controller_id][history_count[controller_id]][2] = average_world_position.z;
+			}
+			else 
+			{
+				average_world_position_history[controller_id][history_count[controller_id]][0] = (ps * multicam_pose_estimation->position_cm.x + (1 - ps) * average_world_position.x);
+				average_world_position_history[controller_id][history_count[controller_id]][1] = (ps * multicam_pose_estimation->position_cm.y + (1 - ps) * average_world_position.y);
+				average_world_position_history[controller_id][history_count[controller_id]][2] = (ps * multicam_pose_estimation->position_cm.z + (1 - ps) * average_world_position.z);
+			}
+
+
+			history_count[controller_id] = ((history_count[controller_id] + 1) % history_max);
+
+			CommonDevicePosition average_history = { 0.0f, 0.0f, 0.0f };
+
+			for (int i = 0; i < history_max; i++)
+			{
+				average_history.x += average_world_position_history[controller_id][i][0];
+				average_history.y += average_world_position_history[controller_id][i][1];
+				average_history.z += average_world_position_history[controller_id][i][2];
+			}
+
+			average_history.x /= history_max;
+			average_history.y /= history_max;
+			average_history.z /= history_max;
+
+			//const float dead_zone_distance = 2.0;
+
+			//float last_distance = 2.0f;
+			//last_distance = fmax(last_distance, abs(multicam_pose_estimation->position_cm.x - average_world_position.x));
+			//last_distance = fmax(last_distance, abs(multicam_pose_estimation->position_cm.y - average_world_position.y));
+			//last_distance = fmax(last_distance, abs(multicam_pose_estimation->position_cm.z - average_world_position.z));
+
+			CommonDevicePosition average_scale;
+			average_scale.x = (average_world_position.x - average_history.x) * pp; // lerp_clampf(0, pp, last_distance / dead_zone_distance);
+			average_scale.y = (average_world_position.y - average_history.y) * pp; // lerp_clampf(0, pp, last_distance / dead_zone_distance);
+			average_scale.z = (average_world_position.z - average_history.z) * pp; // lerp_clampf(0, pp, last_distance / dead_zone_distance);
+
+			average_world_position.x += average_scale.x;
+			average_world_position.y += average_scale.y;
+			average_world_position.z += average_scale.z;
+		}
+
+		// Store the averaged tracking position
+		const float q = tracker_manager->getConfig().controller_position_smoothing;
+		if (q <= 0.01f || q > 0.99f)
+		{
+			multicam_pose_estimation->position_cm = average_world_position;
+		}
+		else
+		{
+			average_world_position.x = q * multicam_pose_estimation->position_cm.x + (1 - q) * average_world_position.x;
+			average_world_position.y = q * multicam_pose_estimation->position_cm.y + (1 - q) * average_world_position.y;
+			average_world_position.z = q * multicam_pose_estimation->position_cm.z + (1 - q) * average_world_position.z;
+		}
+
+		multicam_pose_estimation->position_cm = average_world_position;
         multicam_pose_estimation->bCurrentlyTracking = true;
     }
 

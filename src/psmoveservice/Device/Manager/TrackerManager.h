@@ -60,6 +60,9 @@ public:
 	float min_occluded_area_on_loss;
 	bool disable_roi;
 	bool optimized_roi;
+	float controller_position_prediction;
+	float controller_position_prediction_smoothing;
+	int controller_position_prediction_history;
     TrackerProfile default_tracker_profile;
 	float global_forward_degrees;
 

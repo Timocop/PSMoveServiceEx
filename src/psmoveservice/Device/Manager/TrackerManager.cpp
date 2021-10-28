@@ -22,6 +22,9 @@ TrackerManagerConfig::TrackerManagerConfig(const std::string &fnamebase)
 {
 
 	controller_position_smoothing = 0.f;
+	controller_position_prediction = 0.0f;
+	controller_position_prediction_smoothing = 0.0f;
+	controller_position_prediction_history = 5;
 	ignore_pose_from_one_tracker = false;
     optical_tracking_timeout= 100;
 	tracker_sleep_ms = 1;
@@ -52,6 +55,9 @@ TrackerManagerConfig::config2ptree()
     pt.put("version", TrackerManagerConfig::CONFIG_VERSION);
 
 	pt.put("controller_position_smoothing", controller_position_smoothing);
+	pt.put("controller_position_prediction", controller_position_prediction);
+	pt.put("controller_position_prediction_smoothing", controller_position_prediction_smoothing);
+	pt.put("controller_position_prediction_history", controller_position_prediction_history);
 	pt.put("ignore_pose_from_one_tracker", ignore_pose_from_one_tracker);
     pt.put("optical_tracking_timeout", optical_tracking_timeout);
 	pt.put("use_bgr_to_hsv_lookup_table", use_bgr_to_hsv_lookup_table);
@@ -86,15 +92,22 @@ TrackerManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
     if (version == TrackerManagerConfig::CONFIG_VERSION)
     {
 		controller_position_smoothing = pt.get<float>("controller_position_smoothing", controller_position_smoothing);
+		controller_position_prediction = pt.get<float>("controller_position_prediction", controller_position_prediction);
+		controller_position_prediction_smoothing = pt.get<float>("controller_position_prediction_smoothing", controller_position_prediction_smoothing);
+		controller_position_prediction_history = pt.get<int>("controller_position_prediction_history", controller_position_prediction_history);
 		ignore_pose_from_one_tracker = pt.get<bool>("ignore_pose_from_one_tracker", ignore_pose_from_one_tracker);
         optical_tracking_timeout= pt.get<int>("optical_tracking_timeout", optical_tracking_timeout);
 		use_bgr_to_hsv_lookup_table = pt.get<bool>("use_bgr_to_hsv_lookup_table", use_bgr_to_hsv_lookup_table);
 		tracker_sleep_ms = pt.get<int>("tracker_sleep_ms", tracker_sleep_ms);
+
 		exclude_opposed_cameras = pt.get<bool>("excluded_opposed_cameras", exclude_opposed_cameras);
+
 		min_valid_projection_area = pt.get<float>("min_valid_projection_area", min_valid_projection_area);
 		min_occluded_area_on_loss = pt.get<float>("min_occluded_area_on_loss", min_occluded_area_on_loss);
+
 		disable_roi = pt.get<bool>("disable_roi", disable_roi);
 		optimized_roi = pt.get<bool>("optimized_roi", optimized_roi);
+
 		default_tracker_profile.frame_width = pt.get<float>("default_tracker_profile.frame_width", 640);
 		//default_tracker_profile.frame_height = pt.get<float>("default_tracker_profile.frame_height", 480);
 		default_tracker_profile.frame_rate = pt.get<float>("default_tracker_profile.frame_rate", 40);
