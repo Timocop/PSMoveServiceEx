@@ -197,13 +197,14 @@ private:
 	bool m_bAutoChangeController;
 	bool m_bAutoChangeColor;
 	bool m_bAutoChangeTracker;
-	bool m_bAutoCalibrate;
 
 	// Setting Windows visability
+	bool m_bAdvancedMode;
 	bool m_bShowWindows;
-	bool m_bShowAlignment;
-	bool m_bShowAlignmentColor;
-	float m_AlignmentOffset;
+
+	bool m_bAlignDetectColor;
+	bool m_bAlignPinned;
+	float m_mAlignPosition[2];
 };
 
 #endif // APP_STAGE_COLOR_CALIBRATION_H

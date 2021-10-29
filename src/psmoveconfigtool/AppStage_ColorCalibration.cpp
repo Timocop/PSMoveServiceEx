@@ -150,14 +150,15 @@ AppStage_ColorCalibration::AppStage_ColorCalibration(App *app)
     , m_bAutoChangeController(false)
     , m_bAutoChangeColor(false)
     , m_bAutoChangeTracker(false)
-    , m_bAutoCalibrate(false)
-    , m_bShowWindows(true)
-    , m_bShowAlignment(false)
-    , m_bShowAlignmentColor(false)
-    , m_AlignmentOffset(0.f)
+	, m_bAdvancedMode(false)
+	, m_bShowWindows(true)
+	, m_bAlignDetectColor(false)
+	, m_bAlignPinned(false)
     , m_masterTrackingColorType(PSMTrackingColorType_Magenta)
-{ 
-    memset(m_colorPresets, 0, sizeof(m_colorPresets));
+{
+	memset(m_colorPresets, 0, sizeof(m_colorPresets));
+	m_mAlignPosition[0] = 0.0f;
+	m_mAlignPosition[1] = 0.0f;
 }
 
 void AppStage_ColorCalibration::enter()
@@ -376,22 +377,174 @@ void AppStage_ColorCalibration::render()
 
 void AppStage_ColorCalibration::renderUI()
 {
+	// Tracker Alignment Marker
+	if (m_bAlignDetectColor && m_video_buffer_state != nullptr) 
+	{
+		float prevAlpha = ImGui::GetStyle().WindowFillAlphaDefault;
+		float prevRound = ImGui::GetStyle().WindowRounding;
+		ImGui::GetStyle().WindowFillAlphaDefault = 0.f;
+		ImGui::GetStyle().WindowRounding = 20.f;
+
+		float align_window_size = 64.f;
+		ImVec2 align_pos;
+		ImVec2 align_pos_window;
+
+		if (m_bAlignPinned)
+		{
+			align_pos.x = m_mAlignPosition[0];
+			align_pos.y = m_mAlignPosition[1];
+			align_pos_window.x = align_pos.x - (align_window_size / 2);
+			align_pos_window.y = align_pos.y - (align_window_size / 2);
+		}
+		else
+		{
+			align_pos.x = ImGui::GetMousePos().x;
+			align_pos.y = ImGui::GetMousePos().y;
+			align_pos_window.x = align_pos.x - (align_window_size / 2);
+			align_pos_window.y = align_pos.y - (align_window_size / 2);
+		}
+
+		ImVec2 dispSize = ImGui::GetIO().DisplaySize;
+		int img_x = (static_cast<int>(align_pos.x) * m_video_buffer_state->hsvBuffer->cols) / static_cast<int>(dispSize.x);
+		int img_y = (static_cast<int>(align_pos.y) * m_video_buffer_state->hsvBuffer->rows) / static_cast<int>(dispSize.y);
+		cv::Vec< unsigned char, 3 > hsv_pixel = m_video_buffer_state->hsvBuffer->at<cv::Vec< unsigned char, 3 >>(cv::Point(img_x, img_y));
+		cv::Vec< unsigned char, 3 > bgrBuffer = m_video_buffer_state->bgrBuffer->at<cv::Vec< unsigned char, 3 >>(cv::Point(img_x, img_y));
+
+		ImGui::SetNextWindowPos(align_pos_window);
+		ImGui::SetNextWindowSize(ImVec2(align_window_size, align_window_size));
+		
+		ImGui::Begin("Alignment Window", nullptr,
+			ImGuiWindowFlags_NoBringToFrontOnFocus |
+			ImGuiWindowFlags_NoFocusOnAppearing |
+			ImGuiWindowFlags_NoTitleBar |
+			ImGuiWindowFlags_ShowBorders |
+			ImGuiWindowFlags_NoResize |
+			ImGuiWindowFlags_NoMove |
+			ImGuiWindowFlags_NoScrollbar |
+			ImGuiWindowFlags_NoCollapse);
+
+		ImU32 line_colour = ImColor(0xFF, 0xFF, 0xFF, 175);
+		float line_thickness = 1.f;
+
+		ImGui::GetWindowDrawList()->AddLine(
+			align_pos_window
+			, ImVec2(align_pos_window.x + align_window_size, align_pos_window.y + align_window_size)
+			, line_colour
+			, line_thickness
+		);
+		ImGui::GetWindowDrawList()->AddLine(
+			ImVec2(align_pos_window.x + align_window_size, align_pos_window.y)
+			, ImVec2(align_pos_window.x, align_pos_window.y + align_window_size)
+			, line_colour
+			, line_thickness
+		);
+
+		ImGui::End();
+
+		align_pos_window.x -= 96.0f;
+		align_pos_window.y += align_window_size;
+
+		ImGui::SetNextWindowPos(align_pos_window);
+		ImGui::SetNextWindowSize(ImVec2(300, 64));
+
+		ImGui::Begin("Alignment Window Tip", nullptr,
+			ImGuiWindowFlags_NoBringToFrontOnFocus |
+			ImGuiWindowFlags_NoFocusOnAppearing |
+			ImGuiWindowFlags_NoTitleBar |
+			ImGuiWindowFlags_NoResize |
+			ImGuiWindowFlags_NoMove |
+			ImGuiWindowFlags_NoScrollbar |
+			ImGuiWindowFlags_NoCollapse);
+
+		ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetWindowPos(), ImVec2(ImGui::GetWindowPos().x + ImGui::GetWindowSize().x, ImGui::GetWindowPos().y + ImGui::GetWindowSize().y), ImColor(0.f, 0.f, 0.f, 0.5f));
+		 
+		ImColor textColor = ImColor(0xFF, 0xFF, 0xFF, 255);
+		
+		ImGui::ColorButton(ImColor(bgrBuffer[2], bgrBuffer[1], bgrBuffer[0]), true);
+		ImGui::SameLine(); 
+		ImGui::TextColored(textColor, "Color | H: %d, S: %d, V: %d", hsv_pixel[0], hsv_pixel[1], hsv_pixel[2]);
+		ImGui::TextColored(textColor, "Left click mouse button to detect color.");
+		ImGui::TextColored(textColor, "Right click mouse button to cancel.");
+
+		ImGui::End();
+		ImGui::GetStyle().WindowFillAlphaDefault = prevAlpha;
+		ImGui::GetStyle().WindowRounding = prevRound;
+	}
+
     const float k_panel_width = 300.f;
-    const char *k_window_title = "Color Calibration";
+	const char *k_window_title = "Color Calibration";
     const ImGuiWindowFlags window_flags =
         ImGuiWindowFlags_ShowBorders |
         ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoMove |
-        ImGuiWindowFlags_NoScrollbar |
-        ImGuiWindowFlags_NoCollapse;
+        ImGuiWindowFlags_NoMove;
     int auto_calib_sleep = 150;
 
     switch (m_menuState)
     {
     case eMenuState::manualConfig:
     {
+		if (m_bAlignPinned)
+		{
+			m_bAlignPinned = false;
+		}
+
+		if (m_bAlignDetectColor && ImGui::IsMouseClicked(0))
+		{
+			ImVec2 mousePos = ImGui::GetMousePos();
+			ImVec2 dispSize = ImGui::GetIO().DisplaySize;
+			int img_x = (static_cast<int>(mousePos.x) * m_video_buffer_state->hsvBuffer->cols) / static_cast<int>(dispSize.x);
+			int img_y = (static_cast<int>(mousePos.y) * m_video_buffer_state->hsvBuffer->rows) / static_cast<int>(dispSize.y);
+			cv::Vec< unsigned char, 3 > hsv_pixel = m_video_buffer_state->hsvBuffer->at<cv::Vec< unsigned char, 3 >>(cv::Point(img_x, img_y));
+
+			TrackerColorPreset preset = getColorPreset();
+			preset.hue_center = hsv_pixel[0];
+			preset.saturation_center = hsv_pixel[1];
+			preset.value_center = hsv_pixel[2];
+			request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+
+			if (m_masterControllerView != nullptr)
+			{
+				if (m_bAutoChangeColor) {
+					m_mAlignPosition[0] = mousePos.x;
+					m_mAlignPosition[1] = mousePos.y;
+					m_bAlignPinned = true;
+
+					setState(eMenuState::blank1);
+					request_set_controller_tracking_color(m_masterControllerView, PSMTrackingColorType_Magenta);
+					m_masterTrackingColorType = PSMTrackingColorType_Magenta;
+					std::this_thread::sleep_for(std::chrono::milliseconds(auto_calib_sleep));
+				}
+				else if (m_bAutoChangeController) {
+					setState(eMenuState::changeController);
+				}
+				else if (m_bAutoChangeTracker) {
+					setState(eMenuState::changeTracker);
+				}
+				else
+				{
+					m_bAlignDetectColor = false;
+				}
+			}
+			else if (m_hmdView != nullptr)
+			{
+				if (m_bAutoChangeTracker) {
+					setState(eMenuState::changeTracker);
+				}
+				else
+				{
+					m_bAlignDetectColor = false;
+				}
+			}
+		}
+
+		if (m_bAlignDetectColor && ImGui::IsMouseClicked(1))
+		{
+			m_bAlignDetectColor = false;
+		}
+
+
         // Video Control Panel
-        if (m_bShowWindows)
+        if (m_bShowWindows && !m_bAlignDetectColor)
         {
             ImGui::SetNextWindowPos(ImVec2(10.f, 10.f));
             ImGui::SetNextWindowSize(ImVec2(k_panel_width, 280));
@@ -407,239 +560,165 @@ void AppStage_ColorCalibration::renderUI()
                 request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
             }
 
-            if (m_video_buffer_state != nullptr)
-            {
-                if (ImGui::Button("<##Filter"))
-                {
-                    m_videoDisplayMode =
-                        static_cast<eVideoDisplayMode>(
-                        (m_videoDisplayMode + eVideoDisplayMode::MAX_VIDEO_DISPLAY_MODES - 1)
-                        % eVideoDisplayMode::MAX_VIDEO_DISPLAY_MODES);
-                }
-                ImGui::SameLine();
-                if (ImGui::Button(">##Filter"))
-                {
-                    m_videoDisplayMode =
-                        static_cast<eVideoDisplayMode>(
-                        (m_videoDisplayMode + 1) % eVideoDisplayMode::MAX_VIDEO_DISPLAY_MODES);
-                }
-                ImGui::SameLine();
-                ImGui::Text("Video [F]ilter Mode: %s", k_video_display_mode_names[m_videoDisplayMode]);
+			if (m_video_buffer_state != nullptr)
+			{
+				if (ImGui::Button("<##Filter"))
+				{
+					m_videoDisplayMode =
+						static_cast<eVideoDisplayMode>(
+						(m_videoDisplayMode + eVideoDisplayMode::MAX_VIDEO_DISPLAY_MODES - 1)
+						% eVideoDisplayMode::MAX_VIDEO_DISPLAY_MODES);
+				}
+				ImGui::SameLine();
+				if (ImGui::Button(">##Filter"))
+				{
+					m_videoDisplayMode =
+						static_cast<eVideoDisplayMode>(
+						(m_videoDisplayMode + 1) % eVideoDisplayMode::MAX_VIDEO_DISPLAY_MODES);
+				}
+				ImGui::SameLine();
+				ImGui::Text("Video [F]ilter Mode: %s", k_video_display_mode_names[m_videoDisplayMode]);
 
-                if (ImGui::Button("-##FrameWidth"))
-                {
-                    if (m_trackerFrameWidth == 640) request_tracker_set_frame_width(m_trackerFrameWidth - 320);
-                }
-                ImGui::SameLine();
-                if (ImGui::Button("+##FrameWidth"))
-                {
-                    if (m_trackerFrameWidth == 320) request_tracker_set_frame_width(m_trackerFrameWidth + 320);
-                }
-                ImGui::SameLine();
-                ImGui::Text("Frame Width: %.0f", m_trackerFrameWidth);
+				if (ImGui::Button("-##FrameWidth"))
+				{
+					if (m_trackerFrameWidth == 640) request_tracker_set_frame_width(m_trackerFrameWidth - 320);
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("+##FrameWidth"))
+				{
+					if (m_trackerFrameWidth == 320) request_tracker_set_frame_width(m_trackerFrameWidth + 320);
+				}
+				ImGui::SameLine();
+				ImGui::Text("Frame Width: %.0f", m_trackerFrameWidth);
                 
-                int frame_rate_positive_change = 10;
-                int frame_rate_negative_change = -10;
+				int frame_rate_positive_change = 10;
+				int frame_rate_negative_change = -10;
                 
-                double val = m_trackerFrameRate;
-                if (m_trackerFrameWidth == 320) 
-                {
-                    if (val == 2) { frame_rate_positive_change = 1; frame_rate_negative_change = 0; }
-                    else if (val == 3) { frame_rate_positive_change = 2; frame_rate_negative_change = -1; }
-                    else if (val == 5) { frame_rate_positive_change = 2; frame_rate_negative_change = -0; }
-                    else if (val == 7) { frame_rate_positive_change = 3; frame_rate_negative_change = -2; }
-                    else if (val == 10) { frame_rate_positive_change = 2; frame_rate_negative_change = -3; }
-                    else if (val == 12) { frame_rate_positive_change = 3; frame_rate_negative_change = -2; }
-                    else if (val == 15) { frame_rate_positive_change = 4; frame_rate_negative_change = -3; }
-                    else if (val == 17) { frame_rate_positive_change = 13; frame_rate_negative_change = -4; }
-                    else if (val == 30) { frame_rate_positive_change = 7; frame_rate_negative_change = -13; }
-                    else if (val == 37) { frame_rate_positive_change = 3; frame_rate_negative_change = -7; }
-                    else if (val == 40) { frame_rate_positive_change = 10; frame_rate_negative_change = -3; }
-                    else if (val == 50) { frame_rate_positive_change = 10; frame_rate_negative_change = -10; }
-                    else if (val == 60) { frame_rate_positive_change = 15; frame_rate_negative_change = -10; }
-                    else if (val == 75) { frame_rate_positive_change = 15; frame_rate_negative_change = -15; }
-                    else if (val == 90) { frame_rate_positive_change = 10; frame_rate_negative_change = -15; }
-                    else if (val == 100) { frame_rate_positive_change = 25; frame_rate_negative_change = -10; }
-                    else if (val == 125) { frame_rate_positive_change = 12; frame_rate_negative_change = -25; }
-                    else if (val == 137) { frame_rate_positive_change = 13; frame_rate_negative_change = -12; }
-                    else if (val == 150) { frame_rate_positive_change = 37; frame_rate_negative_change = -13; }
-                    else if (val == 187) { frame_rate_positive_change = 0; frame_rate_negative_change = -37; }
-                    else if (val == 205) { frame_rate_positive_change = 0; frame_rate_negative_change = -18; }
-                    else if (val == 290) { frame_rate_positive_change = 0; frame_rate_negative_change = -85; }
-                }
-                else 
-                {
-                    if (val == 2) { frame_rate_positive_change = 1; frame_rate_negative_change = 0; }
-                    else if (val == 3) { frame_rate_positive_change = 2; frame_rate_negative_change = -1; }
-                    else if (val == 5) { frame_rate_positive_change = 3; frame_rate_negative_change = -0; }
-                    else if (val == 8) { frame_rate_positive_change = 2; frame_rate_negative_change = -3; }
-                    else if (val == 10) { frame_rate_positive_change = 5; frame_rate_negative_change = -2; }
-                    else if (val == 15) { frame_rate_positive_change = 5; frame_rate_negative_change = -5; }
-                    else if (val == 20) { frame_rate_positive_change = 5; frame_rate_negative_change = -5; }
-                    else if (val == 25) { frame_rate_positive_change = 5; frame_rate_negative_change = -5; }
-                    else if (val == 30) { { frame_rate_negative_change = -5; } }
-                    else if (val == 60) { { frame_rate_positive_change = 15; } }
-                    else if (val == 75) { frame_rate_positive_change = 0; frame_rate_negative_change = -15; }
-                    else if (val == 83) { frame_rate_positive_change = 0; frame_rate_negative_change = -8; }
-                }
+				double val = m_trackerFrameRate;
+				if (m_trackerFrameWidth == 320) 
+				{
+					if (val == 2) { frame_rate_positive_change = 1; frame_rate_negative_change = 0; }
+					else if (val == 3) { frame_rate_positive_change = 2; frame_rate_negative_change = -1; }
+					else if (val == 5) { frame_rate_positive_change = 2; frame_rate_negative_change = -0; }
+					else if (val == 7) { frame_rate_positive_change = 3; frame_rate_negative_change = -2; }
+					else if (val == 10) { frame_rate_positive_change = 2; frame_rate_negative_change = -3; }
+					else if (val == 12) { frame_rate_positive_change = 3; frame_rate_negative_change = -2; }
+					else if (val == 15) { frame_rate_positive_change = 4; frame_rate_negative_change = -3; }
+					else if (val == 17) { frame_rate_positive_change = 13; frame_rate_negative_change = -4; }
+					else if (val == 30) { frame_rate_positive_change = 7; frame_rate_negative_change = -13; }
+					else if (val == 37) { frame_rate_positive_change = 3; frame_rate_negative_change = -7; }
+					else if (val == 40) { frame_rate_positive_change = 10; frame_rate_negative_change = -3; }
+					else if (val == 50) { frame_rate_positive_change = 10; frame_rate_negative_change = -10; }
+					else if (val == 60) { frame_rate_positive_change = 15; frame_rate_negative_change = -10; }
+					else if (val == 75) { frame_rate_positive_change = 15; frame_rate_negative_change = -15; }
+					else if (val == 90) { frame_rate_positive_change = 10; frame_rate_negative_change = -15; }
+					else if (val == 100) { frame_rate_positive_change = 25; frame_rate_negative_change = -10; }
+					else if (val == 125) { frame_rate_positive_change = 12; frame_rate_negative_change = -25; }
+					else if (val == 137) { frame_rate_positive_change = 13; frame_rate_negative_change = -12; }
+					else if (val == 150) { frame_rate_positive_change = 37; frame_rate_negative_change = -13; }
+					else if (val == 187) { frame_rate_positive_change = 0; frame_rate_negative_change = -37; }
+					else if (val == 205) { frame_rate_positive_change = 0; frame_rate_negative_change = -18; }
+					else if (val == 290) { frame_rate_positive_change = 0; frame_rate_negative_change = -85; }
+				}
+				else 
+				{
+					if (val == 2) { frame_rate_positive_change = 1; frame_rate_negative_change = 0; }
+					else if (val == 3) { frame_rate_positive_change = 2; frame_rate_negative_change = -1; }
+					else if (val == 5) { frame_rate_positive_change = 3; frame_rate_negative_change = -0; }
+					else if (val == 8) { frame_rate_positive_change = 2; frame_rate_negative_change = -3; }
+					else if (val == 10) { frame_rate_positive_change = 5; frame_rate_negative_change = -2; }
+					else if (val == 15) { frame_rate_positive_change = 5; frame_rate_negative_change = -5; }
+					else if (val == 20) { frame_rate_positive_change = 5; frame_rate_negative_change = -5; }
+					else if (val == 25) { frame_rate_positive_change = 5; frame_rate_negative_change = -5; }
+					else if (val == 30) { { frame_rate_negative_change = -5; } }
+					else if (val == 60) { { frame_rate_positive_change = 15; } }
+					else if (val == 75) { frame_rate_positive_change = 0; frame_rate_negative_change = -15; }
+					else if (val == 83) { frame_rate_positive_change = 0; frame_rate_negative_change = -8; }
+				}
 
-                if (ImGui::Button("-##FrameRate"))
-                {
-                    request_tracker_set_frame_rate(m_trackerFrameRate + frame_rate_negative_change);
-                }
-                ImGui::SameLine();
-                if (ImGui::Button("+##FrameRate"))
-                {
-                    request_tracker_set_frame_rate(m_trackerFrameRate + frame_rate_positive_change);
-                }
-                ImGui::SameLine();
-                ImGui::Text("Frame Rate: %.0f", m_trackerFrameRate);
+				if (ImGui::Button("-##FrameRate"))
+				{
+					request_tracker_set_frame_rate(m_trackerFrameRate + frame_rate_negative_change);
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("+##FrameRate"))
+				{
+					request_tracker_set_frame_rate(m_trackerFrameRate + frame_rate_positive_change);
+				}
+				ImGui::SameLine();
+				ImGui::Text("Frame Rate: %.0f", m_trackerFrameRate);
 
-                if (ImGui::Button("-##Exposure"))
-                {
-                    request_tracker_set_exposure(m_trackerExposure - 8);
-                }
-                ImGui::SameLine();
-                if (ImGui::Button("+##Exposure"))
-                {
-                    request_tracker_set_exposure(m_trackerExposure + 8);
-                }
-                ImGui::SameLine();
-                ImGui::Text("Exposure: %.0f", m_trackerExposure);
+				if (ImGui::Button("-##Exposure"))
+				{
+					request_tracker_set_exposure(m_trackerExposure - 8);
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("+##Exposure"))
+				{
+					request_tracker_set_exposure(m_trackerExposure + 8);
+				}
+				ImGui::SameLine();
+				ImGui::Text("Exposure: %.0f", m_trackerExposure);
 
-                if (ImGui::Button("-##Gain"))
-                {
-                    request_tracker_set_gain(m_trackerGain - 8);
-                }
-                ImGui::SameLine();
-                if (ImGui::Button("+##Gain"))
-                {
-                    request_tracker_set_gain(m_trackerGain + 8);
-                }
-                ImGui::SameLine();
-                ImGui::Text("Gain: %.0f", m_trackerGain);
+				if (ImGui::Button("-##Gain"))
+				{
+					request_tracker_set_gain(m_trackerGain - 8);
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("+##Gain"))
+				{
+					request_tracker_set_gain(m_trackerGain + 8);
+				}
+				ImGui::SameLine();
+				ImGui::Text("Gain: %.0f", m_trackerGain);
 
-                // Render all of the option sets fetched from the settings query
-                for (auto it = m_trackerOptions.begin(); it != m_trackerOptions.end(); ++it)
-                {
-                    TrackerOption &option = *it;
-                    const int value_count = static_cast<int>(option.option_strings.size());
+				// Render all of the option sets fetched from the settings query
+				for (auto it = m_trackerOptions.begin(); it != m_trackerOptions.end(); ++it)
+				{
+					TrackerOption &option = *it;
+					const int value_count = static_cast<int>(option.option_strings.size());
 
-                    ImGui::PushID(option.option_name.c_str());
-                    if (ImGui::Button("<"))
-                    {
-                        request_tracker_set_option(option, (option.option_index + value_count - 1) % value_count);
-                    }
-                    ImGui::SameLine();
-                    if (ImGui::Button(">"))
-                    {
-                        request_tracker_set_option(option, (option.option_index + 1) % value_count);
-                    }
-                    ImGui::SameLine();
-                    ImGui::Text("%s: %s", option.option_name.c_str(), option.option_strings[option.option_index].c_str());
-                    ImGui::PopID();
-                }
+					ImGui::PushID(option.option_name.c_str());
+					if (ImGui::Button("<"))
+					{
+						request_tracker_set_option(option, (option.option_index + value_count - 1) % value_count);
+					}
+					ImGui::SameLine();
+					if (ImGui::Button(">"))
+					{
+						request_tracker_set_option(option, (option.option_index + 1) % value_count);
+					}
+					ImGui::SameLine();
+					ImGui::Text("%s: %s", option.option_name.c_str(), option.option_strings[option.option_index].c_str());
+					ImGui::PopID();
+				}
 
-                if (m_masterControllerView != nullptr)
-                {
-                    if (ImGui::Checkbox("Turn on all bulbs", &m_bTurnOnAllControllers))
-                    {
-                        request_turn_on_all_tracking_bulbs(m_bTurnOnAllControllers);
-                    }
-                }
+				if (m_masterControllerView != nullptr)
+				{
+					if (ImGui::Checkbox("Turn on all bulbs", &m_bTurnOnAllControllers))
+					{
+						request_turn_on_all_tracking_bulbs(m_bTurnOnAllControllers);
+					}
+				}
 
-                if (ImGui::Button("Save Default Profile"))
-                {
-                    request_save_default_tracker_profile();
-                }
+				ImGui::Separator();
 
-                if (ImGui::Button("Apply Default Profile"))
-                {
-                    request_apply_default_tracker_profile();
-                }
-            }
+				if (ImGui::Button("Save Default Profile"))
+				{
+					request_save_default_tracker_profile();
+				}
+
+				if (ImGui::Button("Apply Default Profile"))
+				{
+					request_apply_default_tracker_profile();
+				}
+			}
 
             ImGui::End();
         }
         
-        if (ImGui::IsMouseClicked(1) || m_bAutoCalibrate)
-        {
-            m_bAutoCalibrate = false;
-            float x0 = ImGui::GetIO().DisplaySize.x / 2;
-            float y0 = ImGui::GetIO().DisplaySize.y / 2 + m_AlignmentOffset;
-            ImVec2 mousePos = (m_bShowAlignment) ? ImVec2(x0, y0) : ImGui::GetMousePos();
-            ImVec2 dispSize = ImGui::GetIO().DisplaySize;
-            int img_x = (static_cast<int>(mousePos.x) * m_video_buffer_state->hsvBuffer->cols) / static_cast<int>(dispSize.x);
-            int img_y = (static_cast<int>(mousePos.y) * m_video_buffer_state->hsvBuffer->rows) / static_cast<int>(dispSize.y);
-            cv::Vec< unsigned char, 3 > hsv_pixel = m_video_buffer_state->hsvBuffer->at<cv::Vec< unsigned char, 3 >>(cv::Point(img_x, img_y));
-
-            TrackerColorPreset preset = getColorPreset();
-            preset.hue_center = hsv_pixel[0];
-            preset.saturation_center = hsv_pixel[1];
-            preset.value_center = hsv_pixel[2];
-            request_tracker_set_color_preset(m_masterTrackingColorType, preset);
-
-            if (m_masterControllerView != nullptr)
-            {
-                if (m_bAutoChangeColor) {
-                    setState(eMenuState::blank1);
-                    request_set_controller_tracking_color(m_masterControllerView, PSMTrackingColorType_Magenta);
-                    m_masterTrackingColorType = PSMTrackingColorType_Magenta;
-                    std::this_thread::sleep_for(std::chrono::milliseconds(auto_calib_sleep));
-                }
-                else if ( m_bAutoChangeController && !m_bShowAlignment) {
-                    setState(eMenuState::changeController);
-                }
-                else if (m_bAutoChangeTracker) {
-                    setState(eMenuState::changeTracker);
-                }
-            }
-            else if (m_hmdView != nullptr)
-            {
-                if (m_bAutoChangeTracker) {
-                    setState(eMenuState::changeTracker);
-                }
-            }
-        }
-
         // Keyboard shortcuts
         {
-            // Hide setting windows: space bar
-            if (ImGui::IsKeyReleased(32)) m_bShowWindows = !m_bShowWindows;
-            // Hide alignment windows: x
-            if (ImGui::IsKeyReleased(120)) 
-            {
-                if (!m_bShowAlignment) {
-                    m_bShowAlignment = true;
-                    m_bShowAlignmentColor = false;
-                }
-                else if (!m_bShowAlignmentColor) {
-                    m_bShowAlignmentColor = true;
-                }
-                else {
-                    m_bShowAlignment = false;
-                    m_bShowAlignmentColor = false;
-                }
-            }
-            // Move alignment window up: Up
-            if (m_bShowAlignment && ImGui::IsKeyPressed(119))
-            {
-                m_AlignmentOffset -= (ImGui::GetIO().DisplaySize.y / 2 > -m_AlignmentOffset) 
-                    ? 1.f 
-                    : -ImGui::GetIO().DisplaySize.y;
-            }
-            // Move alignment window down: Down
-            if (m_bShowAlignment && ImGui::IsKeyPressed(115))
-            {
-                m_AlignmentOffset += (ImGui::GetIO().DisplaySize.y / 2 > m_AlignmentOffset) 
-                    ? 1.f 
-                    : -ImGui::GetIO().DisplaySize.y;
-            }
-            // Move alignment window to center: Z
-            if (m_bShowAlignment && ImGui::IsKeyPressed(122))
-            {
-                m_AlignmentOffset = 0;
-            }
             // Change filter: F
             if (ImGui::IsKeyReleased(102)) {
                 m_videoDisplayMode =
@@ -668,145 +747,139 @@ void AppStage_ColorCalibration::renderUI()
         }
 
         // Color Control Panel
-        if (m_bShowWindows)
-        {
-            ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - k_panel_width - 10, 10.f));
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 300));
-            ImGui::Begin("Controller Color", nullptr, window_flags);
+		if (m_bShowWindows && !m_bAlignDetectColor)
+		{
+			ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - k_panel_width - 10, 10.f));
+			ImGui::SetNextWindowSize(ImVec2(k_panel_width, 300));
+			ImGui::Begin("Controller Color", nullptr, window_flags);
 
-            if (m_masterControllerView != nullptr)
-            {
-                if (ImGui::Button("<##Color"))
-                {
-                    PSMTrackingColorType new_color =
-                        static_cast<PSMTrackingColorType>(
-                            (m_masterTrackingColorType + PSMTrackingColorType_MaxColorTypes - 1)
-                            % PSMTrackingColorType_MaxColorTypes);
-                    request_set_controller_tracking_color(m_masterControllerView, new_color);
-                    m_masterTrackingColorType= new_color;
-                }
-                ImGui::SameLine();
-                if (ImGui::Button(">##Color"))
-                {
-                    PSMTrackingColorType new_color =
-                        static_cast<PSMTrackingColorType>(
-                            (m_masterTrackingColorType + 1) % PSMTrackingColorType_MaxColorTypes);
-                    request_set_controller_tracking_color(m_masterControllerView, new_color);
-                    m_masterTrackingColorType= new_color;
-                }
-                ImGui::SameLine();
-            }
-            ImGui::Text("Tracking [C]olor: %s", k_tracking_color_names[m_masterTrackingColorType]);
+			if (m_masterControllerView != nullptr)
+			{
+				if (ImGui::Button("<##Color"))
+				{
+					PSMTrackingColorType new_color =
+						static_cast<PSMTrackingColorType>(
+						(m_masterTrackingColorType + PSMTrackingColorType_MaxColorTypes - 1)
+							% PSMTrackingColorType_MaxColorTypes);
+					request_set_controller_tracking_color(m_masterControllerView, new_color);
+					m_masterTrackingColorType = new_color;
+				}
+				ImGui::SameLine();
+				if (ImGui::Button(">##Color"))
+				{
+					PSMTrackingColorType new_color =
+						static_cast<PSMTrackingColorType>(
+						(m_masterTrackingColorType + 1) % PSMTrackingColorType_MaxColorTypes);
+					request_set_controller_tracking_color(m_masterControllerView, new_color);
+					m_masterTrackingColorType = new_color;
+				}
+				ImGui::SameLine();
+			}
+			ImGui::Text("Tracking [C]olor: %s", k_tracking_color_names[m_masterTrackingColorType]);
 
-            // -- Hue --
-            if (ImGui::Button("-##HueCenter"))
-            {
-                TrackerColorPreset preset = getColorPreset();
-                preset.hue_center = wrap_range(preset.hue_center - 5.f, 0.f, 180.f);
-                request_tracker_set_color_preset(m_masterTrackingColorType, preset);
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("+##HueCenter"))
-            {
-                TrackerColorPreset preset = getColorPreset();
-                preset.hue_center = wrap_range(preset.hue_center + 5.f, 0.f, 180.f);
-                request_tracker_set_color_preset(m_masterTrackingColorType, preset);
-            }
-            ImGui::SameLine();
-            ImGui::Text("Hue Angle: %f", getColorPreset().hue_center);
+			// -- Hue --
+			if (ImGui::CollapsingHeader("Advanced Settings", 0, true, false))
+			{
+				if (ImGui::Button("-##HueCenter"))
+				{
+					TrackerColorPreset preset = getColorPreset();
+					preset.hue_center = wrap_range(preset.hue_center - 5.f, 0.f, 180.f);
+					request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("+##HueCenter"))
+				{
+					TrackerColorPreset preset = getColorPreset();
+					preset.hue_center = wrap_range(preset.hue_center + 5.f, 0.f, 180.f);
+					request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+				}
+				ImGui::SameLine();
+				ImGui::Text("Hue Angle: %f", getColorPreset().hue_center);
 
-            if (ImGui::Button("-##HueRange"))
-            {
-                TrackerColorPreset preset = getColorPreset();
-                preset.hue_range = clampf(preset.hue_range - 5.f, 0.f, 90.f);
-                request_tracker_set_color_preset(m_masterTrackingColorType, preset);
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("+##HueRange"))
-            {
-                TrackerColorPreset preset = getColorPreset();
-                preset.hue_range = clampf(preset.hue_range + 5.f, 0.f, 90.f);
-                request_tracker_set_color_preset(m_masterTrackingColorType, preset);
-            }
-            ImGui::SameLine();
-            ImGui::Text("Hue Range: %f", getColorPreset().hue_range);
+				if (ImGui::Button("-##HueRange"))
+				{
+					TrackerColorPreset preset = getColorPreset();
+					preset.hue_range = clampf(preset.hue_range - 5.f, 0.f, 90.f);
+					request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("+##HueRange"))
+				{
+					TrackerColorPreset preset = getColorPreset();
+					preset.hue_range = clampf(preset.hue_range + 5.f, 0.f, 90.f);
+					request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+				}
+				ImGui::SameLine();
+				ImGui::Text("Hue Range: %f", getColorPreset().hue_range);
 
-            // -- Saturation --
-            if (ImGui::Button("-##SaturationCenter"))
-            {
-                TrackerColorPreset preset = getColorPreset();
-                preset.saturation_center = clampf(preset.saturation_center - 5.f, 0.f, 255.f);
-                request_tracker_set_color_preset(m_masterTrackingColorType, preset);
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("+##SaturationCenter"))
-            {
-                TrackerColorPreset preset = getColorPreset();
-                preset.saturation_center = clampf(preset.saturation_center + 5.f, 0.f, 255.f);
-                request_tracker_set_color_preset(m_masterTrackingColorType, preset);
-            }
-            ImGui::SameLine();
-            ImGui::Text("Saturation Center: %f", getColorPreset().saturation_center);
+				// -- Saturation --
+				if (ImGui::Button("-##SaturationCenter"))
+				{
+					TrackerColorPreset preset = getColorPreset();
+					preset.saturation_center = clampf(preset.saturation_center - 5.f, 0.f, 255.f);
+					request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("+##SaturationCenter"))
+				{
+					TrackerColorPreset preset = getColorPreset();
+					preset.saturation_center = clampf(preset.saturation_center + 5.f, 0.f, 255.f);
+					request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+				}
+				ImGui::SameLine();
+				ImGui::Text("Saturation Center: %f", getColorPreset().saturation_center);
 
-            if (ImGui::Button("-##SaturationRange"))
-            {
-                TrackerColorPreset preset = getColorPreset();
-                preset.saturation_range = clampf(preset.saturation_range - 5.f, 0.f, 125.f);
-                request_tracker_set_color_preset(m_masterTrackingColorType, preset);
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("+##SaturationRange"))
-            {
-                TrackerColorPreset preset = getColorPreset();
-                preset.saturation_range = clampf(preset.saturation_range + 5.f, 0.f, 125.f);
-                request_tracker_set_color_preset(m_masterTrackingColorType, preset);
-            }
-            ImGui::SameLine();
-            ImGui::Text("Saturation Range: %f", getColorPreset().saturation_range);
+				if (ImGui::Button("-##SaturationRange"))
+				{
+					TrackerColorPreset preset = getColorPreset();
+					preset.saturation_range = clampf(preset.saturation_range - 5.f, 0.f, 125.f);
+					request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("+##SaturationRange"))
+				{
+					TrackerColorPreset preset = getColorPreset();
+					preset.saturation_range = clampf(preset.saturation_range + 5.f, 0.f, 125.f);
+					request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+				}
+				ImGui::SameLine();
+				ImGui::Text("Saturation Range: %f", getColorPreset().saturation_range);
 
-            // -- Value --
-            if (ImGui::Button("-##ValueCenter"))
-            {
-                TrackerColorPreset preset = getColorPreset();
-                preset.value_center = clampf(preset.value_center - 5.f, 0.f, 255.f);
-                request_tracker_set_color_preset(m_masterTrackingColorType, preset);
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("+##ValueCenter"))
-            {
-                TrackerColorPreset preset = getColorPreset();
-                preset.value_center = clampf(preset.value_center + 5.f, 0.f, 255.f);
-                request_tracker_set_color_preset(m_masterTrackingColorType, preset);
-            }
-            ImGui::SameLine();
-            ImGui::Text("Value Center: %f", getColorPreset().value_center);
+				// -- Value --
+				if (ImGui::Button("-##ValueCenter"))
+				{
+					TrackerColorPreset preset = getColorPreset();
+					preset.value_center = clampf(preset.value_center - 5.f, 0.f, 255.f);
+					request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("+##ValueCenter"))
+				{
+					TrackerColorPreset preset = getColorPreset();
+					preset.value_center = clampf(preset.value_center + 5.f, 0.f, 255.f);
+					request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+				}
+				ImGui::SameLine();
+				ImGui::Text("Value Center: %f", getColorPreset().value_center);
 
-            if (ImGui::Button("-##ValueRange"))
-            {
-                TrackerColorPreset preset = getColorPreset();
-                preset.value_range = clampf(preset.value_range - 5.f, 0.f, 125.f);
-                request_tracker_set_color_preset(m_masterTrackingColorType, preset);
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("+##ValueRange"))
-            {
-                TrackerColorPreset preset = getColorPreset();
-                preset.value_range = clampf(preset.value_range + 5.f, 0.f, 125.f);
-                request_tracker_set_color_preset(m_masterTrackingColorType, preset);
-            }
-            ImGui::SameLine();
-            ImGui::Text("Value Range: %f", getColorPreset().value_range);
+				if (ImGui::Button("-##ValueRange"))
+				{
+					TrackerColorPreset preset = getColorPreset();
+					preset.value_range = clampf(preset.value_range - 5.f, 0.f, 125.f);
+					request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("+##ValueRange"))
+				{
+					TrackerColorPreset preset = getColorPreset();
+					preset.value_range = clampf(preset.value_range + 5.f, 0.f, 125.f);
+					request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+				}
+				ImGui::SameLine();
+				ImGui::Text("Value Range: %f", getColorPreset().value_range);
 
-            // -- Auto Calibration --
-            ImGui::Text("Auto Change Setings:");
-            if (m_masterControllerView != nullptr)
-            {
-                ImGui::Checkbox("Color", &m_bAutoChangeColor);
-                ImGui::SameLine();
-                ImGui::Checkbox("Controller", &m_bAutoChangeController);
-                ImGui::SameLine();
-            }
-            ImGui::Checkbox("Tracker", &m_bAutoChangeTracker);
+				ImGui::Separator();
+			}
 
             // -- Change Controller --
             if (m_masterControllerView != nullptr)
@@ -839,19 +912,19 @@ void AppStage_ColorCalibration::renderUI()
 
             if (m_masterControllerView != nullptr)
             {
-                if (ImGui::Button("Test Tracking"))
+                if (ImGui::Button("Test Tracking Pose"))
                 {
                     m_app->getAppStage<AppStage_TrackerSettings>()->gotoTestControllerTracking(true);
                     request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
                 }
                 ImGui::SameLine();
-                if (ImGui::Button("One"))
+                if (ImGui::Button("Test One"))
                 {
                     m_app->getAppStage<AppStage_TrackerSettings>()->gotoTrackingControllerVideo(true);
                     request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
                 }
                 ImGui::SameLine();
-                if (ImGui::Button("ALL"))
+                if (ImGui::Button("Test All"))
                 {
                     m_app->getAppStage<AppStage_TrackerSettings>()->gotoTrackingVideoALL(true);
                     request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
@@ -859,111 +932,66 @@ void AppStage_ColorCalibration::renderUI()
             }
             else if (m_hmdView != nullptr)
             {
-                if (ImGui::Button("Test Tracking"))
+                if (ImGui::Button("Test Tracking Pose"))
                 {
                     m_app->getAppStage<AppStage_TrackerSettings>()->gotoTestHMDTracking(true);
                     request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
                 }
                 ImGui::SameLine();
-                if (ImGui::Button("One"))
+                if (ImGui::Button("Test One"))
                 {
                     m_app->getAppStage<AppStage_TrackerSettings>()->gotoTrackingHMDVideo(true);
                     request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
                 }
                 ImGui::SameLine();
-                if (ImGui::Button("ALL"))
+                if (ImGui::Button("Test All"))
                 {
                     m_app->getAppStage<AppStage_TrackerSettings>()->gotoTrackingVideoALL(true);
                     request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
                 }
             }
-            
+
+			ImGui::Separator();
+
+			// -- Auto Calibration --
+			ImGui::Text("Auto Change Setings:");
+
+			if (m_masterControllerView != nullptr)
+			{
+				ImGui::Checkbox("Color", &m_bAutoChangeColor);
+				ImGui::SameLine();
+				ImGui::Checkbox("Controller", &m_bAutoChangeController);
+				ImGui::SameLine();
+			}
+
+			ImGui::Checkbox("Tracker", &m_bAutoChangeTracker);
+
+			if (ImGui::Button("Auto detect color"))
+			{
+				m_bAlignDetectColor = true;
+			}
+
             ImGui::End();
         }
         
-        // Tracker Alignment Marker
-        if (m_bShowAlignment)
-        {
-            float prevAlpha = ImGui::GetStyle().WindowFillAlphaDefault;
-            ImGui::GetStyle().WindowFillAlphaDefault = 0.f;
-
-            float align_window_size = 30.f;
-            float x0 = (ImGui::GetIO().DisplaySize.x - align_window_size) / 2;
-            float y0 = (ImGui::GetIO().DisplaySize.y - align_window_size) / 2 + m_AlignmentOffset;
-
-            ImGui::SetNextWindowPos(ImVec2(x0, y0));
-            ImGui::SetNextWindowSize(ImVec2(align_window_size, align_window_size));
-            ImGui::Begin("Alignment Window", nullptr,
-                ImGuiWindowFlags_NoTitleBar |
-                ImGuiWindowFlags_ShowBorders |
-                ImGuiWindowFlags_NoResize |
-                ImGuiWindowFlags_NoMove |
-                ImGuiWindowFlags_NoScrollbar |
-                ImGuiWindowFlags_NoCollapse);
-
-            unsigned char r, g, b;
-            if (m_bShowAlignmentColor)
-            {
-                switch (m_masterTrackingColorType)
-                {
-                case PSMoveProtocol::Magenta:
-                    r = 0xFF; g = 0x00; b = 0xFF;
-                    break;
-                case PSMoveProtocol::Cyan:
-                    r = 0x00; g = 0xFF; b = 0xFF;
-                    break;
-                case PSMoveProtocol::Yellow:
-                    r = 0xFF; g = 0xFF; b = 0x00;
-                    break;
-                case PSMoveProtocol::Red:
-                    r = 0xFF; g = 0x00; b = 0x00;
-                    break;
-                case PSMoveProtocol::Green:
-                    r = 0x00; g = 0xFF; b = 0x00;
-                    break;
-                case PSMoveProtocol::Blue:
-                    r = 0x00; g = 0x00; b = 0xFF;
-                    break;
-                default:
-                    r = 0x00; g = 0x00; b = 0x00;
-                }
-            }
-            else {
-                r = 0xFF; g = 0xFF; b = 0xFF;
-            }
-            ImU32 line_colour = ImColor(0xFF - r, 0xFF - g, 0xFF - b, 175);
-            float line_thickness = 1.f;
-
-            ImGui::GetWindowDrawList()->AddLine(ImVec2(x0, y0)
-                , ImVec2(x0 + align_window_size, y0 + align_window_size)
-                , line_colour
-                , line_thickness
-            );
-            ImGui::GetWindowDrawList()->AddLine(
-                ImVec2(x0 + align_window_size, y0)
-                , ImVec2(x0, y0 + align_window_size)
-                , line_colour
-                , line_thickness
-            );
-
-            ImGui::End();
-            ImGui::GetStyle().WindowFillAlphaDefault = prevAlpha;
-        }
 
     } break;
 
     case eMenuState::autoConfig:
     {
+		if (!m_bAlignPinned)
+		{
+			setState(eMenuState::manualConfig);
+			break;
+		}
+
         PSMTrackingColorType new_color =
             static_cast<PSMTrackingColorType>(
             (m_masterTrackingColorType + 1) % PSMTrackingColorType_MaxColorTypes);
 
-        float x0 = ImGui::GetIO().DisplaySize.x / 2;
-        float y0 = ImGui::GetIO().DisplaySize.y / 2 + m_AlignmentOffset;
-        ImVec2 mousePos = (m_bShowAlignment) ? ImVec2(x0, y0) : ImGui::GetMousePos();
         ImVec2 dispSize = ImGui::GetIO().DisplaySize;
-        int img_x = (static_cast<int>(mousePos.x) * m_video_buffer_state->hsvBuffer->cols) / static_cast<int>(dispSize.x);
-        int img_y = (static_cast<int>(mousePos.y) * m_video_buffer_state->hsvBuffer->rows) / static_cast<int>(dispSize.y);
+        int img_x = (static_cast<int>(m_mAlignPosition[0]) * m_video_buffer_state->hsvBuffer->cols) / static_cast<int>(dispSize.x);
+        int img_y = (static_cast<int>(m_mAlignPosition[1]) * m_video_buffer_state->hsvBuffer->rows) / static_cast<int>(dispSize.y);
         cv::Vec< unsigned char, 3 > hsv_pixel = m_video_buffer_state->hsvBuffer->at<cv::Vec< unsigned char, 3 >>(cv::Point(img_x, img_y));
 
         TrackerColorPreset preset = getColorPreset();
@@ -974,12 +1002,25 @@ void AppStage_ColorCalibration::renderUI()
 
         request_set_controller_tracking_color(m_masterControllerView, new_color);
 
-        if (new_color == PSMTrackingColorType_Magenta) {
-            if (m_bAutoChangeController && !m_bShowAlignment) setState(eMenuState::changeController);
-            else if (m_bAutoChangeTracker) setState(eMenuState::changeTracker);
-            else setState(eMenuState::manualConfig);
+        if (new_color == PSMTrackingColorType_Magenta) 
+		{
+			if (m_bAutoChangeController)
+			{
+				setState(eMenuState::changeController);
+			}
+			else if (m_bAutoChangeTracker)
+			{
+				setState(eMenuState::changeTracker);
+			}
+			else 
+			{
+				setState(eMenuState::manualConfig);
+			}
         }
-        else setState(eMenuState::blank1);
+		else
+		{
+			setState(eMenuState::blank1);
+		}
 
         m_masterTrackingColorType = new_color;
 
@@ -995,11 +1036,9 @@ void AppStage_ColorCalibration::renderUI()
         std::this_thread::sleep_for(std::chrono::milliseconds(auto_calib_sleep));
         break;
     case eMenuState::changeController:
-    {
         setState(eMenuState::manualConfig);
         request_change_controller(1);
-    }
-        break;
+		break;
     case eMenuState::changeTracker:
         setState(eMenuState::manualConfig);
         request_change_tracker(1);
@@ -1011,7 +1050,7 @@ void AppStage_ColorCalibration::renderUI()
     {
         ImGui::SetNextWindowPosCenter();
         ImGui::SetNextWindowSize(ImVec2(k_panel_width, 50));
-        ImGui::Begin(k_window_title, nullptr, window_flags);
+        ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
         ImGui::Text("Waiting for device stream to start...");
 
@@ -1024,7 +1063,7 @@ void AppStage_ColorCalibration::renderUI()
     {
         ImGui::SetNextWindowPosCenter();
         ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
-        ImGui::Begin(k_window_title, nullptr, window_flags);
+        ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
         if (m_menuState == eMenuState::failedTrackerStartStreamRequest)
         {
@@ -1746,7 +1785,9 @@ void AppStage_ColorCalibration::request_change_controller(int step)
                 m_masterControllerView = m_controllerViews[0];
                 m_masterTrackingColorType = m_controllerTrackingColorTypes[m_overrideControllerId];
                 request_set_controller_tracking_color(m_masterControllerView, m_masterTrackingColorType);
-                if (m_bAutoChangeTracker) setState(eMenuState::changeTracker);
+
+                if (m_bAutoChangeTracker)
+					setState(eMenuState::changeTracker);
             }
             else {
                 m_overrideControllerId = static_cast<int>(m_controllerViews.size()) -1;
@@ -1766,7 +1807,6 @@ void AppStage_ColorCalibration::request_change_tracker(int step)
 
     if (tracker_index + step < tracker_count && tracker_index + step >= 0)
     {
-        if (m_bShowAlignment) m_bAutoCalibrate = true;
         m_app->getAppStage<AppStage_TrackerSettings>()->set_selectedTrackerIndex(tracker_index + step);
         request_exit_to_app_stage(AppStage_ColorCalibration::APP_STAGE_NAME);
     }
