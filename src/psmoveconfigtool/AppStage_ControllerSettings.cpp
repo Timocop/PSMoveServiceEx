@@ -339,7 +339,7 @@ void AppStage_ControllerSettings::renderUI()
         ImGuiWindowFlags_ShowBorders |
         ImGuiWindowFlags_NoResize | 
         ImGuiWindowFlags_NoMove |
-        ImGuiWindowFlags_NoScrollbar |
+		ImGuiWindowFlags_NoScrollbar |
         ImGuiWindowFlags_NoCollapse;
 
     switch (m_menuState)
@@ -347,8 +347,8 @@ void AppStage_ControllerSettings::renderUI()
     case eControllerMenuState::idle:
         {
             ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(350, 490));
-            ImGui::Begin("Controller Settings", nullptr, window_flags | ImGuiWindowFlags_MenuBar);
+            ImGui::SetNextWindowSize(ImVec2(400, 490));
+            ImGui::Begin("Controller Settings", nullptr, window_flags & ~ImGuiWindowFlags_NoScrollbar);
 
             if (ImGui::CollapsingHeader("Host Info", 0, true, true))
             {
@@ -374,17 +374,25 @@ void AppStage_ControllerSettings::renderUI()
                         {
                             --m_selectedControllerIndex;
                         }
-                        ImGui::SameLine();
                     }
+					else 
+					{
+						ImGui::Button("<##ControllerIndex");
+					}
+					ImGui::SameLine();
+					if (m_selectedControllerIndex + 1 < static_cast<int>(m_controllerInfos.size()))
+					{
+						if (ImGui::Button(">##ControllerIndex"))
+						{
+							++m_selectedControllerIndex;
+						}
+					}
+					else
+					{
+						ImGui::Button(">##ControllerIndex");
+					}
+					ImGui::SameLine();
                     ImGui::Text("Controller: %d", m_selectedControllerIndex);
-                    if (m_selectedControllerIndex + 1 < static_cast<int>(m_controllerInfos.size()))
-                    {
-                        ImGui::SameLine();
-                        if (ImGui::Button(">##ControllerIndex"))
-                        {
-                            ++m_selectedControllerIndex;
-                        }
-                    }
 
                     // Combo box selection for controller tracking color
                     if (controllerInfo.ControllerType == PSMController_Virtual ||
@@ -790,11 +798,7 @@ void AppStage_ControllerSettings::renderUI()
                 }
             }
 
-            ImGui::Spacing();
-            ImGui::Spacing();
             ImGui::Separator();
-            ImGui::Spacing();
-            ImGui::Spacing();
 
 			if (m_app->excludePositionSettings) 
             {

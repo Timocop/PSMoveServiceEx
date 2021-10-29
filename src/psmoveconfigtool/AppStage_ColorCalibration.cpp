@@ -547,7 +547,7 @@ void AppStage_ColorCalibration::renderUI()
         if (m_bShowWindows && !m_bAlignDetectColor)
         {
             ImGui::SetNextWindowPos(ImVec2(10.f, 10.f));
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 280));
+            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 450));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             if (ImGui::Button("Main Menu"))
@@ -750,7 +750,7 @@ void AppStage_ColorCalibration::renderUI()
 		if (m_bShowWindows && !m_bAlignDetectColor)
 		{
 			ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - k_panel_width - 10, 10.f));
-			ImGui::SetNextWindowSize(ImVec2(k_panel_width, 300));
+			ImGui::SetNextWindowSize(ImVec2(k_panel_width, 450));
 			ImGui::Begin("Controller Color", nullptr, window_flags);
 
 			if (m_masterControllerView != nullptr)

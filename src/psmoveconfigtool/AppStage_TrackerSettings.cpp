@@ -209,22 +209,22 @@ void AppStage_TrackerSettings::renderUI()
                     m_selectedTrackerIndex = static_cast<int>(m_trackerInfos.size()) -1;
                 }
             }
+			ImGui::SameLine();
+			if (m_selectedTrackerIndex + 1 < static_cast<int>(m_trackerInfos.size()))
+			{
+				if (ImGui::Button(">##TrackerIndex"))
+				{
+					++m_selectedTrackerIndex;
+				}
+			}
+			else {
+				if (ImGui::Button(">##TrackerIndex"))
+				{
+					m_selectedTrackerIndex = 0;
+				}
+			}
             ImGui::SameLine();
             ImGui::Text("Tracker: %d", m_selectedTrackerIndex);
-            ImGui::SameLine();
-            if (m_selectedTrackerIndex + 1 < static_cast<int>(m_trackerInfos.size()))
-            {
-                if (ImGui::Button(">##TrackerIndex"))
-                {
-                    ++m_selectedTrackerIndex;
-                }
-            }
-            else {
-                if (ImGui::Button(">##TrackerIndex"))
-                {
-                    m_selectedTrackerIndex = 0;
-                }
-            }
 
             ImGui::BulletText("Tracker ID: %d", trackerInfo.tracker_id);
 
@@ -300,9 +300,26 @@ void AppStage_TrackerSettings::renderUI()
                     {
                         --m_selectedControllerIndex;
                     }
-                    ImGui::SameLine();
                 }
-                
+				else
+				{
+					ImGui::Button("<##Controller");
+				}
+				ImGui::SameLine();
+
+				if (m_selectedControllerIndex + 1 < static_cast<int>(m_controllerInfos.size()))
+				{
+					if (ImGui::Button(">##Controller"))
+					{
+						++m_selectedControllerIndex;
+					}
+				}
+				else
+				{
+					ImGui::Button(">##Controller");
+				}
+				ImGui::SameLine();
+
                 if (m_selectedControllerIndex != -1)
                 {
                     const AppStage_TrackerSettings::ControllerInfo &controllerInfo = 
@@ -335,15 +352,6 @@ void AppStage_TrackerSettings::renderUI()
                 else
                 {
                     ImGui::Text("Controller: <ALL>");
-                }
-
-                if (m_selectedControllerIndex + 1 < static_cast<int>(m_controllerInfos.size()))
-                {
-                    ImGui::SameLine();
-                    if (ImGui::Button(">##Controller"))
-                    {
-                        ++m_selectedControllerIndex;
-                    }
                 }
 
                 {
@@ -434,8 +442,25 @@ void AppStage_TrackerSettings::renderUI()
                     {
                         --m_selectedHmdIndex;
                     }
-                    ImGui::SameLine();
                 }
+				else
+				{
+					ImGui::Button("<##HMD");
+				}
+				ImGui::SameLine();
+
+				if (m_selectedHmdIndex + 1 < static_cast<int>(m_hmdInfos.size()))
+				{
+					if (ImGui::Button(">##HMD"))
+					{
+						++m_selectedHmdIndex;
+					}
+				}
+				else
+				{
+					ImGui::Button(">##HMD");
+				}
+				ImGui::SameLine();
 
                 if (m_selectedHmdIndex != -1)
                 {
@@ -467,15 +492,6 @@ void AppStage_TrackerSettings::renderUI()
                         {
                             ImGui::Text("HMD: %d (Virtual)", m_selectedHmdIndex);
                         }
-                    }
-                }
-
-                if (m_selectedHmdIndex + 1 < static_cast<int>(m_hmdInfos.size()))
-                {
-                    ImGui::SameLine();
-                    if (ImGui::Button(">##HMD"))
-                    {
-                        ++m_selectedHmdIndex;
                     }
                 }
 

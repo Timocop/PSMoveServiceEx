@@ -595,15 +595,15 @@ void AppStage_ComputeTrackerPoses::renderUI()
                 {
                     go_previous_tracker();
                 }
+				ImGui::SameLine();
+				if (ImGui::Button(">##Next Tracker"))
+				{
+					go_next_tracker();
+				}
                 ImGui::SameLine();
                 int TrackerID = m_renderTrackerIter->second.trackerView->tracker_info.tracker_id;
                 ImGui::Text("Tracker ID: #%d", TrackerID);
                 m_app->getAppStage<AppStage_TrackerSettings>()->set_selectedTrackerIndex(TrackerID);
-                ImGui::SameLine();
-                if (ImGui::Button(">##Next Tracker"))
-                {
-                    go_next_tracker();
-                }
             } 
             else {
                 ImGui::Text("Tracker ID: 0");
