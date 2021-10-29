@@ -1,6 +1,7 @@
 //-- inludes -----
 #include "AppStage_TrackerSettings.h"
 #include "AppStage_TestTracker.h"
+#include "AppStage_OpticalCalibration.h"
 #include "AppStage_ColorCalibration.h"
 #include "AppStage_ComputeTrackerPoses.h"
 #include "AppStage_DistortionCalibration.h"
@@ -178,7 +179,7 @@ void AppStage_TrackerSettings::renderUI()
     case eTrackerMenuState::idle:
     {
         ImGui::SetNextWindowPosCenter();
-        //ImGui::SetNextWindowSize(ImVec2(300, 400));
+        ImGui::SetNextWindowSize(ImVec2(400, 400));
         ImGui::Begin(k_window_title, nullptr, window_flags);
 
         //###HipsterSloth $TODO The tracker restart currently takes longer than it does
@@ -366,25 +367,52 @@ void AppStage_TrackerSettings::renderUI()
                             AppStage_ComputeTrackerPoses::enterStageAndCalibrateTrackersWithController(m_app, controllerID);
                         }
 
+						if (ImGui::Button("Calibrate Controller Optical Noise"))
+						{
+							const PSMClientTrackerInfo &trackerInfo = m_trackerInfos[m_selectedTrackerIndex];
+							const ControllerInfo *controller = get_selected_controller();
+							if (controller != NULL)
+							{
+								m_app->getAppStage<AppStage_OpticalCalibration>()->setBypassCalibrationFlag(false);
+								m_app->getAppStage<AppStage_OpticalCalibration>()->setTargetTrackerId(trackerInfo.tracker_id);
+								m_app->getAppStage<AppStage_OpticalCalibration>()->setTargetControllerId(controller->ControllerID);
+								m_app->setAppStage(AppStage_OpticalCalibration::APP_STAGE_NAME);
+							}
+						}
                     }
                     else
                     {
                         ImGui::TextDisabled("Calibrate Controller Tracking Colors");
-                        ImGui::TextDisabled("Compute Tracker Poses Using Controller");
+						ImGui::TextDisabled("Compute Tracker Poses Using Controller");
+						ImGui::TextDisabled("Calibrate Controller Optical Noise");
                     }
+
+					ImGui::Spacing();
+					ImGui::Spacing();
 
                     if (ImGui::Button("Test Tracking Pose##ControllerTrackingPose") || m_gotoTestControllerTracking)
                     {
                         if (m_gotoTestControllerTracking) m_gotoTestControllerTracking = false;
                         AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, controllerID, -1);
                     }
-                    ImGui::SameLine();
-                    if (ImGui::Button("Test Tracking Video##ControllerTrackingVideo") || m_gotoTrackingControllerVideo)
-                    {
-                        if (m_gotoTrackingControllerVideo) m_gotoTrackingControllerVideo = false;
-                        m_app->getAppStage<AppStage_ComputeTrackerPoses>()->set_tracker_id(m_selectedTrackerIndex);
-                        AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, controllerID, -1);
-                    }
+					if (ImGui::Button("Test Tracking Video##ControllerTrackingVideo") || m_gotoTrackingControllerVideo)
+					{
+						if (m_gotoTrackingControllerVideo) m_gotoTrackingControllerVideo = false;
+						m_app->getAppStage<AppStage_ComputeTrackerPoses>()->set_tracker_id(m_selectedTrackerIndex);
+						AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, controllerID, -1);
+					}
+					if (ImGui::Button("Test Controller Optical Noise##ControllerTrackingNoise"))
+					{
+						const PSMClientTrackerInfo &trackerInfo = m_trackerInfos[m_selectedTrackerIndex];
+						const ControllerInfo *controller = get_selected_controller();
+						if (controller != NULL)
+						{
+							m_app->getAppStage<AppStage_OpticalCalibration>()->setBypassCalibrationFlag(true);
+							m_app->getAppStage<AppStage_OpticalCalibration>()->setTargetTrackerId(trackerInfo.tracker_id);
+							m_app->getAppStage<AppStage_OpticalCalibration>()->setTargetControllerId(controller->ControllerID);
+							m_app->setAppStage(AppStage_OpticalCalibration::APP_STAGE_NAME);
+						}
+					}
                     if (m_gotoTrackingVideoALL)
                     {
                         m_gotoTrackingVideoALL = false;

@@ -731,13 +731,6 @@ void AppStage_ControllerSettings::renderUI()
 							m_app->getAppStage<AppStage_GyroscopeCalibration>()->setBypassCalibrationFlag(false);
 							m_app->setAppStage(AppStage_GyroscopeCalibration::APP_STAGE_NAME);
 						}
-
-						//###HipsterSloth $TODO - Disable for now until we handle camera selection
-						//if (ImGui::Button("Calibrate Optical Noise"))
-						//{
-						//    m_app->getAppStage<AppStage_OpticalCalibration>()->setBypassCalibrationFlag(false);
-						//    m_app->setAppStage(AppStage_OpticalCalibration::APP_STAGE_NAME);
-						//}
 					}
 				}
 
@@ -757,13 +750,6 @@ void AppStage_ControllerSettings::renderUI()
 						if (controllerInfo.ControllerType == PSMController_DualShock4 ||
 							controllerInfo.ControllerType == PSMController_Virtual)
 						{
-							//###HipsterSloth $TODO - Disable for now until we handle camera selection
-							//if (ImGui::Button("Calibrate Optical Noise"))
-							//{
-							//    m_app->getAppStage<AppStage_OpticalCalibration>()->setBypassCalibrationFlag(false);
-							//    m_app->setAppStage(AppStage_OpticalCalibration::APP_STAGE_NAME);
-							//}
-
 							if (controllerInfo.ControllerType == PSMController_DualShock4)
 							{
 								if (ImGui::Button("Test Orientation"))

@@ -1,6 +1,6 @@
 //-- inludes -----
 #include "AppStage_OpticalCalibration.h"
-#include "AppStage_ControllerSettings.h"
+#include "AppStage_TrackerSettings.h"
 #include "AppStage_MainMenu.h"
 #include "App.h"
 #include "Camera.h"
@@ -24,6 +24,9 @@
 
 //-- statics ----
 const char *AppStage_OpticalCalibration::APP_STAGE_NAME = "OpticalCalibration";
+static const glm::vec3 k_psmove_frustum_color_target = glm::vec3(1.0f, 1.0f, 0.f);
+static const glm::vec3 k_psmove_frustum_color = glm::vec3(0.1f, 0.7f, 0.3f);  
+static const glm::vec3 k_psmove_frustum_color_no_track = glm::vec3(1.0f, 0.f, 0.f);
 
 //-- constants -----
 const double k_stabilize_wait_time_ms = 1000.f;
@@ -186,7 +189,6 @@ AppStage_OpticalCalibration::AppStage_OpticalCalibration(App *app)
 	, m_lastProjectionArea(0.f)
 	, m_bLastMulticamPositionValid(false)
 	, m_bLastMulticamOrientationValid(false)
-	, m_bIsStableAndVisible(false)
     , m_poseNoiseSamplesSet(new PoseNoiseSampleSet)
 	, m_bWaitForSampleButtonRelease(false)
 {	
@@ -203,11 +205,7 @@ AppStage_OpticalCalibration::~AppStage_OpticalCalibration()
 
 void AppStage_OpticalCalibration::enter()
 {
-    const AppStage_ControllerSettings *controllerSettings =
-        m_app->getAppStage<AppStage_ControllerSettings>();
-    const AppStage_ControllerSettings::ControllerInfo *controllerInfo =
-        controllerSettings->getSelectedControllerInfo();
-
+	m_app->setCameraType(_cameraOrbit);
 	m_menuState = eCalibrationMenuState::inactive;
 
     // Reset all of the sampling state
@@ -216,12 +214,8 @@ void AppStage_OpticalCalibration::enter()
     // Initialize the controller state
     assert(controllerInfo->ControllerID != -1);
     assert(m_controllerView == nullptr);
-	PSM_AllocateControllerListener(controllerInfo->ControllerID);
-	m_controllerView= PSM_GetController(controllerInfo->ControllerID);
-
-
-	m_stableAndVisibleStartTime = std::chrono::time_point<std::chrono::high_resolution_clock>();
-	m_bIsStableAndVisible = false;
+	PSM_AllocateControllerListener(m_iControllerId);
+	m_controllerView= PSM_GetController(m_iControllerId);
 
     m_lastControllerSeqNum = -1;
 	m_lastMulticamPositionCm = *k_psm_float_vector3_zero;
@@ -312,8 +306,16 @@ void AppStage_OpticalCalibration::update()
 			PSMTrackingProjection projection;
 			if (PSM_GetControllerProjectionOnTracker(m_controllerView->ControllerID, &trackerId, &projection) == PSMResult_Success)
 			{
-				m_lastProjectionArea+= PSM_TrackingProjectionGetArea(&projection);
-				++projectionCount;
+				if (trackerId == m_iTrackerId)
+				{
+					float projection_area = PSM_TrackingProjectionGetArea(&projection);
+
+					if (projection_area > 1.0f)
+					{
+						m_lastProjectionArea += projection_area;
+						++projectionCount;
+					}
+				}
 			}
 
 			if (projectionCount > 0)
@@ -363,28 +365,8 @@ void AppStage_OpticalCalibration::update()
 				bCanBeTracked && bIsTracking && 
 				isPressingSamplingButton(m_controllerView))
 			{
-				if (m_bIsStableAndVisible)
-				{
-					std::chrono::duration<double, std::milli> stableDuration = now - m_stableAndVisibleStartTime;
-
-					if (stableDuration.count() >= k_stabilize_wait_time_ms)
-					{
-						m_poseNoiseSamplesSet->getCurrentLocationSamples().clear();
-						setState(eCalibrationMenuState::measureOpticalNoise);
-					}
-				}
-				else
-				{
-					m_bIsStableAndVisible = true;
-					m_stableAndVisibleStartTime = now;
-				}
-			}
-			else
-			{
-				if (m_bIsStableAndVisible)
-				{
-					m_bIsStableAndVisible = false;
-				}
+				m_poseNoiseSamplesSet->getCurrentLocationSamples().clear();
+				setState(eCalibrationMenuState::measureOpticalNoise);
 			}
 		} break;
     case eCalibrationMenuState::measureOpticalNoise:
@@ -449,7 +431,6 @@ void AppStage_OpticalCalibration::update()
             }
             else
             {
-                m_bIsStableAndVisible= false;
                 setState(AppStage_OpticalCalibration::waitForStable);
             }
         } break;
@@ -514,7 +495,7 @@ void AppStage_OpticalCalibration::render()
 			}
 
 			drawTransformedAxes(glm::mat4(1.f), 200.f);
-			drawTrackerList(m_trackerList.trackers, m_trackerList.count);
+			drawTrackerListSelected(m_trackerList.trackers, m_trackerList.count, bCanBeTracked && bIsTracking);
 		} break;
 	case eCalibrationMenuState::measureComplete:
 	case eCalibrationMenuState::test:
@@ -531,7 +512,8 @@ void AppStage_OpticalCalibration::render()
             }
 
 			drawTransformedAxes(glm::mat4(1.f), 200.f);
-			drawTrackerList(m_trackerList.trackers, m_trackerList.count);
+			drawTrackerListSelected(m_trackerList.trackers, m_trackerList.count, bCanBeTracked && bIsTracking);
+
         } break;
     default:
         assert(0 && "unreachable");
@@ -573,7 +555,7 @@ void AppStage_OpticalCalibration::renderUI()
 
             if (ImGui::Button("Ok"))
             {
-                request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
+                request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
             }
 
             ImGui::SameLine();
@@ -635,19 +617,7 @@ void AppStage_OpticalCalibration::renderUI()
 					break;
 				}
 
-				if (m_bIsStableAndVisible)
-				{
-					std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
-					std::chrono::duration<double, std::milli> stableDuration = now - m_stableAndVisibleStartTime;
-					float fraction = static_cast<float>(stableDuration.count() / k_stabilize_wait_time_ms);
-
-					ImGui::ProgressBar(fraction, ImVec2(250, 20));
-					ImGui::Spacing();
-				}
-				else
-				{
-					ImGui::Text("Controller Destabilized! Waiting for stabilization..");
-				}
+				ImGui::Spacing();
 			}
 
 			if (ImGui::Button("Redo"))
@@ -658,7 +628,7 @@ void AppStage_OpticalCalibration::renderUI()
 			ImGui::SameLine();
 			if (ImGui::Button("Cancel"))
 			{
-				request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
+				request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
 			}
 
             ImGui::End();
@@ -680,7 +650,7 @@ void AppStage_OpticalCalibration::renderUI()
 
             if (ImGui::Button("Cancel"))
             {
-                request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
+                request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
             }
 
             ImGui::End();
@@ -708,7 +678,7 @@ void AppStage_OpticalCalibration::renderUI()
             ImGui::SameLine();
             if (ImGui::Button("Cancel"))
             {
-                request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
+                request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
             }
 
             ImGui::End();
@@ -766,7 +736,7 @@ void AppStage_OpticalCalibration::renderUI()
 
             if (ImGui::Button("Ok"))
             {
-                request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
+                request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
             }
 
             ImGui::SameLine();
@@ -819,36 +789,13 @@ void AppStage_OpticalCalibration::onEnterState(eCalibrationMenuState newState)
 	switch (newState)
 	{
 	case eCalibrationMenuState::inactive:
-		// Reset the orbit camera back to default orientation and scale
-		m_app->getOrbitCamera()->reset();
-		break;
 	case eCalibrationMenuState::pendingTrackerListRequest:
-		// Reset the menu state
-		m_app->setCameraType(_cameraOrbit);
-		m_app->getOrbitCamera()->reset();
-		break;
 	case eCalibrationMenuState::failedTrackerListRequest:
 	case eCalibrationMenuState::waitingForStreamStartResponse:
 	case eCalibrationMenuState::failedStreamStart:
-		break;
 	case eCalibrationMenuState::waitForStable:
-		m_stableAndVisibleStartTime = std::chrono::high_resolution_clock::now();
-		// Align the camera to face along the global forward
-		// NOTE "0" degrees is down +Z in the ConfigTool View (rather than +X in the Service)
-		m_app->getOrbitCamera()->reset();
-		m_app->getOrbitCamera()->setCameraOrbitYaw(m_trackerList.global_forward_degrees - k_camera_default_forward_degrees);
-		m_app->getOrbitCamera()->setCameraOrbitRadius(200);
-		break;
 	case eCalibrationMenuState::measureOpticalNoise:
 	case eCalibrationMenuState::measureComplete:
-		{
-			m_app->setCameraType(_cameraOrbit);
-			m_app->getOrbitCamera()->reset();
-			// Align the camera to face along the global forward
-			// NOTE "0" degrees is down +Z in the ConfigTool View (rather than +X in the Service)
-			m_app->getOrbitCamera()->setCameraOrbitYaw(m_trackerList.global_forward_degrees - k_camera_default_forward_degrees);
-			m_app->getOrbitCamera()->setCameraOrbitRadius(200);
-		}
 		break;
 	case eCalibrationMenuState::test:
 		{
@@ -861,13 +808,6 @@ void AppStage_OpticalCalibration::onEnterState(eCalibrationMenuState newState)
 				m_controllerView->ControllerState.PSMoveState.bPoseResetButtonEnabled= true;
 				break;
 			}
-
-			m_app->setCameraType(_cameraOrbit);
-			m_app->getOrbitCamera()->reset();
-			// Align the camera to face along the global forward
-			// NOTE "0" degrees is down +Z in the ConfigTool View (rather than +X in the Service)
-			m_app->getOrbitCamera()->setCameraOrbitYaw(m_trackerList.global_forward_degrees - k_camera_default_forward_degrees);
-			m_app->getOrbitCamera()->setCameraOrbitRadius(200);
 		}
 		break;
 	default:
@@ -903,14 +843,6 @@ void AppStage_OpticalCalibration::handle_tracker_list_response(
 
 			// Save the controller list state (used in rendering)
 			thisPtr->m_trackerList = response_message->payload.tracker_list;
-
-            // Start off getting getting projection data from tracker 0
-            {
-                PSMRequestID requestId;
-
-                PSM_SetControllerDataStreamTrackerIndexAsync(thisPtr->m_controllerView->ControllerID, 0, &requestId);
-                PSM_EatResponse(requestId);
-            }
 
 			// Start streaming in controller data
             {
@@ -962,6 +894,14 @@ void AppStage_OpticalCalibration::handle_acquire_controller(
         thisPtr->m_isControllerStreamActive = true;
         thisPtr->m_lastControllerSeqNum = -1;
         // Wait for the first controller packet to show up...
+        
+		// Start off getting getting projection data from selected tracker
+		{
+			PSMRequestID requestId;
+			PSM_SetControllerDataStreamTrackerIndexAsync(thisPtr->m_controllerView->ControllerID, thisPtr->m_iTrackerId, &requestId);
+			PSM_EatResponse(requestId);
+		}
+
     }
     else
     {
@@ -1014,4 +954,47 @@ static void drawController(PSMController *controllerView, const glm::mat4 &trans
         drawVirtualControllerModel(transform, glm::vec3(1.f, 1.f, 1.f));
         break;
     }
+}
+void AppStage_OpticalCalibration::drawTrackerListSelected(const PSMClientTrackerInfo *trackerList, const int trackerCount, const bool bIsTracking)
+{
+	glm::mat4 psmove_tracking_space_to_chaperone_space = glm::mat4(1.f);
+
+	// Draw the frustum for each tracking camera.
+	// The frustums are defined in PSMove tracking space.
+	// We need to transform them into chaperone space to display them along side the HMD.
+	for (int tracker_index = 0; tracker_index < trackerCount; ++tracker_index)
+	{
+		const PSMClientTrackerInfo *trackerInfo = &trackerList[tracker_index];
+		const PSMPosef tracker_pose = trackerInfo->tracker_pose;
+		const glm::mat4 chaperoneSpaceTransform = psm_posef_to_glm_mat4(tracker_pose);
+
+		PSMFrustum frustum;
+
+		PSM_FrustumSetPose(&frustum, &tracker_pose);
+
+		// Convert the FOV angles to radians for rendering purposes
+		frustum.HFOV = trackerInfo->tracker_hfov * k_degrees_to_radians;
+		frustum.VFOV = trackerInfo->tracker_vfov * k_degrees_to_radians;
+		frustum.zNear = trackerInfo->tracker_znear;
+		frustum.zFar = trackerInfo->tracker_zfar;
+
+		drawTextAtWorldPosition(glm::mat4(1.f), psm_vector3f_to_glm_vec3(tracker_pose.Position), "#%d", tracker_index);
+
+		if (bIsTracking)
+		{
+			if (tracker_index == m_iTrackerId)
+			{
+				drawTransformedFrustum(psmove_tracking_space_to_chaperone_space, &frustum, k_psmove_frustum_color_target);
+			}
+			else
+			{
+				drawTransformedFrustum(psmove_tracking_space_to_chaperone_space, &frustum, k_psmove_frustum_color);
+			}
+		}
+		else
+		{
+			drawTransformedFrustum(psmove_tracking_space_to_chaperone_space, &frustum, k_psmove_frustum_color_no_track);
+		}
+		drawTransformedAxes(chaperoneSpaceTransform, 20.f);
+	}
 }

@@ -32,6 +32,16 @@ public:
         m_bBypassCalibration = bFlag;
     }
 
+	inline void setTargetTrackerId(int iIndex)
+	{
+		m_iTrackerId = iIndex;
+	}
+
+	inline void setTargetControllerId(int iIndex)
+	{
+		m_iControllerId = iIndex;
+	}
+
 protected:
 	enum eCalibrationMenuState
 	{
@@ -63,10 +73,14 @@ protected:
         void *userdata);
     void request_exit_to_app_stage(const char *app_stage_name);
 
+	void drawTrackerListSelected(const PSMClientTrackerInfo *trackerList, const int trackerCount, const bool bIsTracking);
+
 private:
 
     eCalibrationMenuState m_menuState;
     bool m_bBypassCalibration;
+	int m_iTrackerId;
+	int m_iControllerId;
 
     PSMController *m_controllerView;
     bool m_isControllerStreamActive;
@@ -79,9 +93,6 @@ private:
 	bool m_bLastMulticamPositionValid;
 	bool m_bLastMulticamOrientationValid;
 	bool m_bLastProjectionAreaValid;
-
-	std::chrono::time_point<std::chrono::high_resolution_clock> m_stableAndVisibleStartTime;
-	bool m_bIsStableAndVisible;
 
     struct PoseNoiseSampleSet *m_poseNoiseSamplesSet;
 	bool m_bWaitForSampleButtonRelease;
