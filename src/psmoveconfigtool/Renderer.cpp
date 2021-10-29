@@ -108,7 +108,7 @@ bool Renderer::init()
             SDL_WINDOWPOS_CENTERED,
             SDL_WINDOWPOS_CENTERED,
             k_window_pixel_width, k_window_pixel_height,
-            SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+            SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
         m_windowWidth= k_window_pixel_width;
         m_windowHeight= k_window_pixel_height;
 
