@@ -154,6 +154,8 @@ AppStage_ColorCalibration::AppStage_ColorCalibration(App *app)
 	, m_bShowWindows(true)
 	, m_bAlignDetectColor(false)
 	, m_bAlignPinned(false)
+	, m_iColorSensitivity(sensitivity_normal)
+	, m_bColorCollisionPrevent(false)
     , m_masterTrackingColorType(PSMTrackingColorType_Magenta)
 {
 	memset(m_colorPresets, 0, sizeof(m_colorPresets));
@@ -500,6 +502,9 @@ void AppStage_ColorCalibration::renderUI()
 			preset.hue_center = hsv_pixel[0];
 			preset.saturation_center = hsv_pixel[1];
 			preset.value_center = hsv_pixel[2];
+
+			auto_adjust_color_sensitivity(preset);
+
 			request_tracker_set_color_preset(m_masterTrackingColorType, preset);
 
 			if (m_masterControllerView != nullptr)
@@ -954,21 +959,87 @@ void AppStage_ColorCalibration::renderUI()
 			ImGui::Separator();
 
 			// -- Auto Calibration --
-			ImGui::Text("Auto Change Setings:");
-
-			if (m_masterControllerView != nullptr)
+			if (ImGui::CollapsingHeader("Automatic color detection", 0, true, true))
 			{
-				ImGui::Checkbox("Color", &m_bAutoChangeColor);
-				ImGui::SameLine();
-				ImGui::Checkbox("Controller", &m_bAutoChangeController);
-				ImGui::SameLine();
-			}
+				if (m_masterControllerView != nullptr)
+				{
+					ImGui::Checkbox("Automatically switch color", &m_bAutoChangeColor);
+					if (ImGui::IsItemHovered())
+						ImGui::SetTooltip("Cycles through all available colors automatically when using 'Automatically detect color'.");
 
-			ImGui::Checkbox("Tracker", &m_bAutoChangeTracker);
+					ImGui::Checkbox("Automatically switch controller", &m_bAutoChangeController);
+					if (ImGui::IsItemHovered())
+						ImGui::SetTooltip("Cycles through all available controllers automatically when using 'Automatically detect color'.");
+				}
 
-			if (ImGui::Button("Auto detect color"))
-			{
-				m_bAlignDetectColor = true;
+				ImGui::Checkbox("Automatically switch tracker", &m_bAutoChangeTracker);
+				if (ImGui::IsItemHovered())
+					ImGui::SetTooltip("Cycles through all available trackers automatically when using 'Automatically detect color'.");
+
+				ImGui::Spacing();
+
+				if (ImGui::Button("Automatically detect color"))
+				{
+					m_bAlignDetectColor = true;
+				}
+
+				int colorSensitivity = m_iColorSensitivity;
+				ImGui::Text("Automatic color detection sensitivity:");
+				ImGui::SliderInt("", &colorSensitivity, sensitivity_disabled, sensitivity_MAX - 1, "");
+				m_iColorSensitivity = static_cast<eColorDetectionSensitivity>(colorSensitivity);
+
+				if (ImGui::IsItemHovered())
+					ImGui::SetTooltip("Automatically detects and adjusts color hue, hue range, saturation center, saturation range, value center and value range.\nIncreasing the slider will improove tracking quality and range but also creates more color noise!");
+
+				switch (m_iColorSensitivity)
+				{
+				case sensitivity_disabled:
+				{
+					ImGui::SameLine();
+					ImGui::Text("Disabled");
+					break;
+				}
+				case sensitivity_normal:
+				{
+					ImGui::SameLine();
+					ImGui::Text("Normal");
+					break;
+				}
+				case sensitivity_mild:
+				{
+					ImGui::SameLine();
+					ImGui::Text("Mild");
+					break;
+				}
+				case sensitivity_high:
+				{
+					ImGui::SameLine();
+					ImGui::Text("High");
+					break;
+				}
+				case sensitivity_very_high:
+				{
+					ImGui::SameLine();
+					ImGui::Text("Very High");
+					break;
+				}
+				case sensitivity_extreme:
+				{
+					ImGui::SameLine();
+					ImGui::Text("Extreme");
+					break;
+				}
+				default:
+					assert(0 && "unreachable");
+				}
+
+				if (m_iColorSensitivity > sensitivity_normal) {
+					ImGui::Checkbox("Prevent color collisions", &m_bColorCollisionPrevent);
+
+					if (ImGui::IsItemHovered())
+						ImGui::SetTooltip("Automatically adjust the hue range to avoid collisions with other colors.\nThis will reduce tracking quality.");
+
+				}
 			}
 
             ImGui::End();
@@ -998,6 +1069,9 @@ void AppStage_ColorCalibration::renderUI()
         preset.hue_center = hsv_pixel[0];
         preset.saturation_center = hsv_pixel[1];
         preset.value_center = hsv_pixel[2];
+
+		auto_adjust_color_sensitivity(preset);
+
         request_tracker_set_color_preset(m_masterTrackingColorType, preset);
 
         request_set_controller_tracking_color(m_masterControllerView, new_color);
@@ -1820,4 +1894,103 @@ void AppStage_ColorCalibration::request_change_tracker(int step)
         m_app->getAppStage<AppStage_TrackerSettings>()->set_selectedTrackerIndex(tracker_count -1);
         request_exit_to_app_stage(AppStage_ColorCalibration::APP_STAGE_NAME);
     }
+}
+void AppStage_ColorCalibration::auto_adjust_color_sensitivity(TrackerColorPreset &preset)
+{
+	// Additional color details
+	// MAGENTA requires some HEU_RANGE range adjustments to track propperly otherwise it becomes too blocky. Noone of the colors seems to be near it at all?
+	// GREEN is very VALUE_CENTER sensitive compared to other colors since camera chips have more green sensors. Likes to collide with CYAN if VALUE_RANGE is higher.
+	// CYAN is one of the worest colors too track. HEU_RANGE between BLUE and GREEN is very dense too CYAN and collides alot.
+	// RED can collide with YELLOW edges on higher VALUE_RANGE
+
+	//###Externet $TODO Probably make it more automated. This is too hardcoded.
+
+	float hueRangeMulti = 1.0;
+	float valueCenterMulti = 1.0f;
+
+	switch (m_masterTrackingColorType)
+	{
+	case PSMTrackingColorType_Magenta:
+	{
+		hueRangeMulti = 2.0f; // Improve color detection. No other color near it?!
+		break;
+	}
+	case PSMTrackingColorType_Cyan:
+	{
+		if (m_bColorCollisionPrevent)
+			hueRangeMulti = 0.5f; // Blue/Green collsion prevention
+		break;
+	}
+	case PSMTrackingColorType_Yellow:
+		break;
+	case PSMTrackingColorType_Red:
+	{
+		if(m_bColorCollisionPrevent)
+			hueRangeMulti = 0.5f; // Yellow collision prevention
+		break;
+	}
+	case PSMTrackingColorType_Green:
+	{
+		if (m_bColorCollisionPrevent)
+			hueRangeMulti = 0.5f; // Cyan collision prevention
+
+		valueCenterMulti = 0.5f;
+		break;
+	}
+	case PSMTrackingColorType_Blue:
+	{
+		if (m_bColorCollisionPrevent)
+			hueRangeMulti = 0.5f; // Cyan collision prevention
+		break;
+	}
+	}
+
+	switch (m_iColorSensitivity)
+	{
+	case sensitivity_normal:
+	{
+		preset.hue_range = 10.f;
+		preset.saturation_range = 32.f;
+		preset.value_range = 32.f;
+		break;
+	}
+	case sensitivity_mild:
+	{
+		preset.hue_range = 10.f * hueRangeMulti;
+		preset.saturation_range = 32.f;
+		preset.value_range = 32.f;
+
+		preset.value_center -= (preset.value_range * 0.5f) * valueCenterMulti;
+
+		break;
+	}
+	case sensitivity_high:
+	{
+		preset.hue_range = 10.f * hueRangeMulti;
+		preset.saturation_range = 32.f;
+		preset.value_range = 32.f + 8.f;
+
+		preset.value_center -= (preset.value_range * 0.75f) * valueCenterMulti;
+		break;
+	}
+	case sensitivity_very_high:
+	{
+		preset.hue_range = 10.f * hueRangeMulti;
+		preset.saturation_range = 32.f;
+		preset.value_range = 32.f + 16.f;
+
+		preset.value_center -= (preset.value_range * 0.75f) * valueCenterMulti;
+		break;
+	}
+	case sensitivity_extreme:
+	{
+		preset.hue_range = 10.f * hueRangeMulti;
+		preset.saturation_range = 32.f;
+		preset.value_range = 32.f + 32.f;
+
+		preset.value_center -= (preset.value_range * 0.75f) * valueCenterMulti;
+		break;
+	}
+	}
+
 }

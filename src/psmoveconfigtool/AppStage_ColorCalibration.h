@@ -70,6 +70,18 @@ protected:
         MAX_VIDEO_DISPLAY_MODES
     };
 
+	enum eColorDetectionSensitivity
+	{
+		sensitivity_disabled,
+		sensitivity_normal,
+		sensitivity_mild,
+		sensitivity_high,
+		sensitivity_very_high,
+		sensitivity_extreme,
+
+		sensitivity_MAX
+	};
+
     struct TrackerOption
     {
         std::string option_name;
@@ -158,6 +170,8 @@ protected:
     inline TrackerColorPreset getColorPreset()
     { return m_colorPresets[m_masterTrackingColorType]; }
 
+	void AppStage_ColorCalibration::auto_adjust_color_sensitivity(TrackerColorPreset &preset);
+
 private:
     // ClientPSMoveAPI state
 	int m_overrideControllerId;	
@@ -193,18 +207,22 @@ private:
 	bool m_bTurnOnAllControllers;
     PSMTrackingColorType m_masterTrackingColorType;
 
+	// Setting Windows visability
+	bool m_bAdvancedMode;
+	bool m_bShowWindows;
+
+
 	// Auto Calibration options
 	bool m_bAutoChangeController;
 	bool m_bAutoChangeColor;
 	bool m_bAutoChangeTracker;
 
-	// Setting Windows visability
-	bool m_bAdvancedMode;
-	bool m_bShowWindows;
-
+	// Auto color detection
 	bool m_bAlignDetectColor;
 	bool m_bAlignPinned;
 	float m_mAlignPosition[2];
+	eColorDetectionSensitivity m_iColorSensitivity;
+	bool m_bColorCollisionPrevent;
 };
 
 #endif // APP_STAGE_COLOR_CALIBRATION_H
