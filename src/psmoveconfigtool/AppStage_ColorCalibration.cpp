@@ -71,7 +71,7 @@ public:
             GL_RGB, // texture format
             GL_BGR, // buffer format
             nullptr);
-
+		
         bgrBuffer = new cv::Mat(frameHeight, frameWidth, CV_8UC3);
         hsvBuffer = new cv::Mat(frameHeight, frameWidth, CV_8UC3);
         gsLowerBuffer = new cv::Mat(frameHeight, frameWidth, CV_8UC1);
@@ -156,6 +156,7 @@ AppStage_ColorCalibration::AppStage_ColorCalibration(App *app)
 	, m_bAlignPinned(false)
 	, m_iColorSensitivity(sensitivity_normal)
 	, m_bColorCollisionPrevent(false)
+	,m_bColorCollsionShow(false)
     , m_masterTrackingColorType(PSMTrackingColorType_Magenta)
 {
 	memset(m_colorPresets, 0, sizeof(m_colorPresets));
@@ -341,6 +342,8 @@ void AppStage_ColorCalibration::update()
                 *m_video_buffer_state->maskedBuffer, 
                 *m_video_buffer_state->gsLowerBuffer);
 
+			get_contures();
+
             switch (m_videoDisplayMode)
             {
             case AppStage_ColorCalibration::mode_bgr:
@@ -456,7 +459,8 @@ void AppStage_ColorCalibration::renderUI()
 			ImGuiWindowFlags_NoResize |
 			ImGuiWindowFlags_NoMove |
 			ImGuiWindowFlags_NoScrollbar |
-			ImGuiWindowFlags_NoCollapse);
+			ImGuiWindowFlags_NoCollapse |
+			ImGuiWindowFlags_NoSavedSettings);
 
 		ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetWindowPos(), ImVec2(ImGui::GetWindowPos().x + ImGui::GetWindowSize().x, ImGui::GetWindowPos().y + ImGui::GetWindowSize().y), ImColor(0.f, 0.f, 0.f, 0.5f));
 		 
@@ -471,6 +475,69 @@ void AppStage_ColorCalibration::renderUI()
 		ImGui::End();
 		ImGui::GetStyle().WindowFillAlphaDefault = prevAlpha;
 		ImGui::GetStyle().WindowRounding = prevRound;
+	}
+
+	if (m_bColorCollsionShow && m_video_buffer_state != nullptr)
+	{
+		float align_window_size = 32.f;
+
+		int detect_count = 0;
+
+		for (std::vector<int> item : m_mDetectedContures)
+		{
+			ImVec2 wndCenter = ImVec2(static_cast<float>(item[0]), static_cast<float>(item[1]));
+			ImVec2 wndPos = ImVec2(wndCenter.x - align_window_size, wndCenter.y - align_window_size);
+			ImVec2 wndSize = ImVec2(align_window_size * 2, align_window_size * 2);
+
+			float prevAlpha = ImGui::GetStyle().WindowFillAlphaDefault;
+			float prevRound = ImGui::GetStyle().WindowRounding;
+
+			ImGui::GetStyle().WindowFillAlphaDefault = 0.f;
+
+			ImGui::SetNextWindowPos(wndPos);
+			ImGui::SetNextWindowSize(wndSize);
+
+			ImGui::Begin("Collision Rec", nullptr,
+				ImGuiWindowFlags_NoBringToFrontOnFocus |
+				ImGuiWindowFlags_NoFocusOnAppearing |
+				ImGuiWindowFlags_NoTitleBar |
+				ImGuiWindowFlags_NoResize |
+				ImGuiWindowFlags_NoMove |
+				ImGuiWindowFlags_NoScrollbar |
+				ImGuiWindowFlags_NoCollapse |
+				ImGuiWindowFlags_NoSavedSettings);
+
+			if (detect_count++ == 0)
+			{
+				ImGui::GetWindowDrawList()->AddRect(
+					ImVec2(wndCenter.x - (align_window_size / 2), wndCenter.y - (align_window_size / 2)),
+					ImVec2(wndCenter.x + (align_window_size / 2), wndCenter.y + (align_window_size / 2)),
+					ImColor(0.f, 1.f, 0.f, 1.f), 0.f, 0
+				);
+				ImGui::GetWindowDrawList()->AddRectFilled(
+					ImVec2(wndCenter.x - (align_window_size / 2), wndCenter.y - (align_window_size / 2)),
+					ImVec2(wndCenter.x + (align_window_size / 2), wndCenter.y + (align_window_size / 2)),
+					ImColor(0.f, 1.f, 0.f, 0.25f), 0.f, 0
+				);
+			}
+			else 
+			{
+				ImGui::GetWindowDrawList()->AddRect(
+					ImVec2(wndCenter.x - (align_window_size / 2), wndCenter.y - (align_window_size / 2)),
+					ImVec2(wndCenter.x + (align_window_size / 2), wndCenter.y + (align_window_size / 2)),
+					ImColor(1.f, 0.f, 0.f, 1.f), 0.f, 0
+				);
+				ImGui::GetWindowDrawList()->AddRectFilled(
+					ImVec2(wndCenter.x - (align_window_size / 2), wndCenter.y - (align_window_size / 2)),
+					ImVec2(wndCenter.x + (align_window_size / 2), wndCenter.y + (align_window_size / 2)),
+					ImColor(1.f, 0.f, 0.f, 0.25f), 0.f, 0
+				);
+			}
+
+
+			ImGui::End();
+			ImGui::GetStyle().WindowFillAlphaDefault = prevAlpha;
+		}
 	}
 
     const float k_panel_width = 300.f;
@@ -595,12 +662,12 @@ void AppStage_ColorCalibration::renderUI()
 				}
 				ImGui::SameLine();
 				ImGui::Text("Frame Width: %.0f", m_trackerFrameWidth);
-                
+
 				int frame_rate_positive_change = 10;
 				int frame_rate_negative_change = -10;
-                
+
 				double val = m_trackerFrameRate;
-				if (m_trackerFrameWidth == 320) 
+				if (m_trackerFrameWidth == 320)
 				{
 					if (val == 2) { frame_rate_positive_change = 1; frame_rate_negative_change = 0; }
 					else if (val == 3) { frame_rate_positive_change = 2; frame_rate_negative_change = -1; }
@@ -625,7 +692,7 @@ void AppStage_ColorCalibration::renderUI()
 					else if (val == 205) { frame_rate_positive_change = 0; frame_rate_negative_change = -18; }
 					else if (val == 290) { frame_rate_positive_change = 0; frame_rate_negative_change = -85; }
 				}
-				else 
+				else
 				{
 					if (val == 2) { frame_rate_positive_change = 1; frame_rate_negative_change = 0; }
 					else if (val == 3) { frame_rate_positive_change = 2; frame_rate_negative_change = -1; }
@@ -702,7 +769,7 @@ void AppStage_ColorCalibration::renderUI()
 				{
 					if (ImGui::Checkbox("Turn on all bulbs", &m_bTurnOnAllControllers))
 					{
-						request_turn_on_all_tracking_bulbs(m_bTurnOnAllControllers);
+						request_turn_on_all_tracking_bulbs(m_bTurnOnAllControllers || m_bColorCollsionShow);
 					}
 				}
 
@@ -782,9 +849,9 @@ void AppStage_ColorCalibration::renderUI()
 			}
 			ImGui::Text("Tracking [C]olor: %s", k_tracking_color_names[m_masterTrackingColorType]);
 
-			// -- Hue --
 			if (ImGui::CollapsingHeader("Advanced Settings", 0, true, false))
 			{
+				// -- Hue --
 				if (ImGui::Button("-##HueCenter"))
 				{
 					TrackerColorPreset preset = getColorPreset();
@@ -989,7 +1056,7 @@ void AppStage_ColorCalibration::renderUI()
 				m_iColorSensitivity = static_cast<eColorDetectionSensitivity>(colorSensitivity);
 
 				if (ImGui::IsItemHovered())
-					ImGui::SetTooltip("Automatically detects and adjusts color hue, hue range, saturation center, saturation range, value center and value range.\nIncreasing the slider will improove tracking quality and range but also creates more color noise!");
+					ImGui::SetTooltip("When enabled, it automatically detects and adjusts color hue, hue range, saturation center, saturation range, value center and value range.\nIncreasing the slider will improove tracking quality and range but also creates more color noise!");
 
 				switch (m_iColorSensitivity)
 				{
@@ -1039,6 +1106,11 @@ void AppStage_ColorCalibration::renderUI()
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip("Automatically adjust the hue range to avoid collisions with other colors.\nThis will reduce tracking quality.");
 
+				}
+
+				if (ImGui::Checkbox("Show color collisions", &m_bColorCollsionShow))
+				{
+					request_turn_on_all_tracking_bulbs(m_bTurnOnAllControllers || m_bColorCollsionShow);
 				}
 			}
 
@@ -1992,5 +2064,128 @@ void AppStage_ColorCalibration::auto_adjust_color_sensitivity(TrackerColorPreset
 		break;
 	}
 	}
+}
 
+void AppStage_ColorCalibration::get_contures()
+{
+	if (m_trackerView == nullptr || m_video_buffer_state == nullptr)
+	{
+		return;
+	}
+
+	const int frameWidth = static_cast<int>(m_trackerView->tracker_info.tracker_screen_dimensions.x);
+	const int frameHeight = static_cast<int>(m_trackerView->tracker_info.tracker_screen_dimensions.y);
+
+	std::vector<std::vector<cv::Point>> contours;
+	std::vector<cv::Point2f> biggest_contour_f;
+
+	cv::findContours(*m_video_buffer_state->gsLowerBuffer,
+		contours,
+		CV_RETR_EXTERNAL,
+		CV_CHAIN_APPROX_SIMPLE);  // CV_CHAIN_APPROX_NONE?
+
+	struct ContourInfo
+	{
+		int contour_index;
+		double contour_area;
+	};
+	std::vector<ContourInfo> sorted_contour_list;
+
+	// Compute the area of each contour
+	int contour_index = 0;
+	for (auto it = contours.begin(); it != contours.end(); ++it)
+	{
+		const double contour_area = cv::contourArea(*it);
+		const ContourInfo contour_info = { contour_index, contour_area };
+
+		sorted_contour_list.push_back(contour_info);
+		++contour_index;
+	}
+
+
+	// Sort the list of contours by area, largest to smallest
+	if (sorted_contour_list.size() > 1)
+	{
+		std::sort(
+			sorted_contour_list.begin(), sorted_contour_list.end(),
+			[](const ContourInfo &a, const ContourInfo &b) {
+			return b.contour_area < a.contour_area;
+		});
+	}
+
+	const int max_contour_count = 32;
+	const int min_points_in_contour = 1;
+
+	std::vector<std::vector<cv::Point>> out_biggest_N_contours;
+
+	// Copy up to N valid contours
+	for (auto it = sorted_contour_list.begin();
+		it != sorted_contour_list.end() && static_cast<int>(out_biggest_N_contours.size()) < max_contour_count;
+		++it)
+	{
+		const ContourInfo &contour_info = *it;
+		std::vector<cv::Point> &contour = contours[contour_info.contour_index];
+
+		if (contour.size() > min_points_in_contour)
+		{
+			// Remove any points in contour on edge of camera/ROI
+			// TODO: Contours touching image border will be clipped,
+			// so this might not be necessary.
+			std::vector<cv::Point>::iterator it = contour.begin();
+			while (it != contour.end())
+			{
+				if (it->x == 0 || it->x == (frameWidth - 1) || it->y == 0 || it->y == (frameHeight - 1))
+				{
+					it = contour.erase(it);
+				}
+				else
+				{
+					++it;
+				}
+			}
+
+			// Add cleaned up contour to the output list
+			out_biggest_N_contours.push_back(contour);
+		}
+	}
+
+	m_mDetectedContures.clear();
+
+	for (std::vector<cv::Point> contour : out_biggest_N_contours)
+	{
+		cv::Moments mu(cv::moments(contour));
+		cv::Point2f massCenter;
+
+		// mu.m00 is zero for contours of zero area.
+		// Fallback to standard centroid in this case.
+
+		if (!is_double_nearly_zero(mu.m00))
+		{
+			massCenter = cv::Point2f(static_cast<float>(mu.m10 / mu.m00), static_cast<float>(mu.m01 / mu.m00));
+		}
+		else
+		{
+			massCenter.x = 0.f;
+			massCenter.y = 0.f;
+
+			for (const cv::Point &int_point : contour)
+			{
+				massCenter.x += static_cast<float>(int_point.x);
+				massCenter.y += static_cast<float>(int_point.y);
+			}
+
+			if (contour.size() > 1)
+			{
+				const float N = static_cast<float>(contour.size());
+
+				massCenter.x /= N;
+				massCenter.y /= N;
+			}
+		}
+		
+		std::vector<int> pos;
+		pos.push_back(static_cast<int>(massCenter.x * (ImGui::GetIO().DisplaySize.x / static_cast<float>(frameWidth))));
+		pos.push_back(static_cast<int>(massCenter.y * (ImGui::GetIO().DisplaySize.y / static_cast<float>(frameHeight))));
+		m_mDetectedContures.push_back(pos);
+	}
 }

@@ -172,6 +172,8 @@ protected:
 
 	void AppStage_ColorCalibration::auto_adjust_color_sensitivity(TrackerColorPreset &preset);
 
+	void AppStage_ColorCalibration::get_contures();
+
 private:
     // ClientPSMoveAPI state
 	int m_overrideControllerId;	
@@ -223,6 +225,8 @@ private:
 	float m_mAlignPosition[2];
 	eColorDetectionSensitivity m_iColorSensitivity;
 	bool m_bColorCollisionPrevent;
+	bool m_bColorCollsionShow;
+	std::vector<std::vector<int>> m_mDetectedContures;
 };
 
 #endif // APP_STAGE_COLOR_CALIBRATION_H
