@@ -474,11 +474,11 @@ public:
         t_opencv_int_contour_list &out_biggest_N_contours,
         std::vector<double> &out_contour_areas,
         const int max_contour_count,
-        int min_points_in_contour = 0)
+        int min_points_in_contour = -1)
     {
-		if (min_points_in_contour < 1) {
+		if (min_points_in_contour < 0) {
 			const TrackerManagerConfig &cfg = DeviceManager::getInstance()->m_tracker_manager->getConfig();
-			min_points_in_contour = static_cast<int>(fmax(cfg.min_points_in_contour, 1));
+			min_points_in_contour = static_cast<int>(fmax(cfg.min_points_in_contour, 0));
 		}
 
 		out_biggest_N_contours.clear();
@@ -583,7 +583,7 @@ public:
 
                 if (contour.size() > min_points_in_contour)
                 {
-                    // Remove any points in contour on edge of camera/ROI
+					// Remove any points in contour on edge of camera/ROI
                     // TODO: Contours touching image border will be clipped,
                     // so this might not be necessary.
                     t_opencv_int_contour::iterator it = contour.begin();
@@ -599,10 +599,48 @@ public:
                         }
                     }
 
-                    // Add cleaned up contour to the output list
-                    out_biggest_N_contours.push_back(contour);
-                    // Add its area to the output list too.
-                    out_contour_areas.push_back(contour_info.contour_area);
+					// Create fake contour otheriwise the projection will freak out if it doesnt have enough information.
+					if (contour.size() < 3)
+					{
+						if (contours[contour_info.contour_index].size() < 1)
+							return false;
+
+						cv::Point avg_contour = cv::Point(0, 0);
+						int N = 0;
+
+						t_opencv_int_contour::iterator it = contour.begin();
+						while (it != contour.end())
+						{
+							avg_contour.x += it->x;
+							avg_contour.y += it->y;
+							N++;
+
+							++it;
+						}
+
+						avg_contour.x /= N;
+						avg_contour.y /= N;
+
+						t_opencv_int_contour new_contour;
+						new_contour.push_back(cv::Point(avg_contour.x - 1, avg_contour.y - 1));
+						new_contour.push_back(cv::Point(avg_contour.x + 1, avg_contour.y + 1));
+						new_contour.push_back(cv::Point(avg_contour.x - 1, avg_contour.y + 1));
+						new_contour.push_back(cv::Point(avg_contour.x + 1, avg_contour.y - 1));
+
+						// Add cleaned up contour to the output list
+						out_biggest_N_contours.push_back(new_contour);
+
+						// Add its area to the output list too.
+						out_contour_areas.push_back(0.01f);
+					}
+					else 
+					{
+						// Add cleaned up contour to the output list
+						out_biggest_N_contours.push_back(contour);
+
+						// Add its area to the output list too.
+						out_contour_areas.push_back(contour_info.contour_area);
+					}
                 }
             }
         }
