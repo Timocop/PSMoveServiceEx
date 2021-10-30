@@ -32,6 +32,7 @@ TrackerManagerConfig::TrackerManagerConfig(const std::string &fnamebase)
 	exclude_opposed_cameras = false;
 	min_valid_projection_area = 16;
 	min_occluded_area_on_loss = 4;
+	min_points_in_contour = 6;
 	disable_roi = false;
 	optimized_roi = true;
 	default_tracker_profile.frame_width = 640;
@@ -67,6 +68,7 @@ TrackerManagerConfig::config2ptree()
 
 	pt.put("min_valid_projection_area", min_valid_projection_area);
 	pt.put("min_occluded_area_on_loss", min_occluded_area_on_loss);
+	pt.put("min_points_in_contour", min_points_in_contour);
 
 	pt.put("disable_roi", disable_roi);
 	pt.put("optimized_roi", optimized_roi);
@@ -104,6 +106,7 @@ TrackerManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
 
 		min_valid_projection_area = pt.get<float>("min_valid_projection_area", min_valid_projection_area);
 		min_occluded_area_on_loss = pt.get<float>("min_occluded_area_on_loss", min_occluded_area_on_loss);
+		min_points_in_contour = pt.get<int>("min_points_in_contour", min_points_in_contour);
 
 		disable_roi = pt.get<bool>("disable_roi", disable_roi);
 		optimized_roi = pt.get<bool>("optimized_roi", optimized_roi);

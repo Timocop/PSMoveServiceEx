@@ -474,9 +474,14 @@ public:
         t_opencv_int_contour_list &out_biggest_N_contours,
         std::vector<double> &out_contour_areas,
         const int max_contour_count,
-        const int min_points_in_contour = 6)
+        int min_points_in_contour = 0)
     {
-        out_biggest_N_contours.clear();
+		if (min_points_in_contour < 1) {
+			const TrackerManagerConfig &cfg = DeviceManager::getInstance()->m_tracker_manager->getConfig();
+			min_points_in_contour = static_cast<int>(fmax(cfg.min_points_in_contour, 1));
+		}
+
+		out_biggest_N_contours.clear();
         out_contour_areas.clear();
         
         // Clamp the HSV image, taking into account wrapping the hue angle

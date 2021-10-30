@@ -50,6 +50,9 @@ public:
     virtual void ptree2config(const boost::property_tree::ptree &pt);
 
 	float controller_position_smoothing;
+	float controller_position_prediction;
+	float controller_position_prediction_smoothing;
+	int controller_position_prediction_history;
 	bool ignore_pose_from_one_tracker;
     long version;
     int optical_tracking_timeout;
@@ -58,11 +61,9 @@ public:
 	bool exclude_opposed_cameras;
 	float min_valid_projection_area;
 	float min_occluded_area_on_loss;
+	int min_points_in_contour;
 	bool disable_roi;
 	bool optimized_roi;
-	float controller_position_prediction;
-	float controller_position_prediction_smoothing;
-	int controller_position_prediction_history;
     TrackerProfile default_tracker_profile;
 	float global_forward_degrees;
 
