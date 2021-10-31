@@ -540,6 +540,46 @@ void AppStage_ColorCalibration::renderUI()
 		}
 	}
 
+	if (m_video_buffer_state != nullptr)
+	{
+		float align_window_size = 32.f;
+
+		for (std::vector<int> item : m_mDetectedContures)
+		{
+			ImVec2 wndCenter = ImVec2(static_cast<float>(item[0]), static_cast<float>(item[1]));
+			ImVec2 wndPos = ImVec2(wndCenter.x - align_window_size, wndCenter.y - align_window_size);
+			ImVec2 wndSize = ImVec2(align_window_size * 2, align_window_size * 2);
+
+			float prevAlpha = ImGui::GetStyle().WindowFillAlphaDefault;
+			float prevRound = ImGui::GetStyle().WindowRounding;
+
+			ImGui::GetStyle().WindowFillAlphaDefault = 0.f;
+
+			ImGui::SetNextWindowPos(wndPos);
+			ImGui::SetNextWindowSize(wndSize);
+
+			ImGui::Begin("Target Controller", nullptr,
+				ImGuiWindowFlags_NoBringToFrontOnFocus |
+				ImGuiWindowFlags_NoFocusOnAppearing |
+				ImGuiWindowFlags_NoTitleBar |
+				ImGuiWindowFlags_NoResize |
+				ImGuiWindowFlags_NoMove |
+				ImGuiWindowFlags_NoScrollbar |
+				ImGuiWindowFlags_NoCollapse |
+				ImGuiWindowFlags_NoSavedSettings);
+
+			ImGui::GetWindowDrawList()->AddRect(
+				ImVec2(wndCenter.x - (align_window_size / 2), wndCenter.y - (align_window_size / 2)),
+				ImVec2(wndCenter.x + (align_window_size / 2), wndCenter.y + (align_window_size / 2)),
+				ImColor(1.f, 1.f, 1.f, 1.f), 0.f, 0
+			);
+
+			ImGui::End();
+			ImGui::GetStyle().WindowFillAlphaDefault = prevAlpha;
+			break;
+		}
+	}
+
     const float k_panel_width = 300.f;
 	const char *k_window_title = "Color Calibration";
     const ImGuiWindowFlags window_flags =
@@ -649,7 +689,7 @@ void AppStage_ColorCalibration::renderUI()
 						(m_videoDisplayMode + 1) % eVideoDisplayMode::MAX_VIDEO_DISPLAY_MODES);
 				}
 				ImGui::SameLine();
-				ImGui::Text("Video [F]ilter Mode: %s", k_video_display_mode_names[m_videoDisplayMode]);
+				ImGui::Text("Video Filter Mode: %s", k_video_display_mode_names[m_videoDisplayMode]);
 
 				if (ImGui::Button("-##FrameWidth"))
 				{
@@ -789,35 +829,6 @@ void AppStage_ColorCalibration::renderUI()
             ImGui::End();
         }
         
-        // Keyboard shortcuts
-        {
-            // Change filter: F
-            if (ImGui::IsKeyReleased(102)) {
-                m_videoDisplayMode =
-                    static_cast<eVideoDisplayMode>(
-                    (m_videoDisplayMode + 1) % eVideoDisplayMode::MAX_VIDEO_DISPLAY_MODES);
-            }
-            // Change tracker: T
-            if (ImGui::IsKeyReleased(116)) {
-                request_change_tracker(1);
-            }
-            if (m_masterControllerView != nullptr)
-            {
-                // Change controller: M
-                if (ImGui::IsKeyReleased(109)) {
-                    request_change_controller(1);
-                }
-                // Change color: C
-                if (ImGui::IsKeyReleased(99)) {
-                    PSMTrackingColorType new_color =
-                        static_cast<PSMTrackingColorType>(
-                        (m_masterTrackingColorType + 1) % PSMTrackingColorType_MaxColorTypes);
-                    request_set_controller_tracking_color(m_masterControllerView, new_color);
-                    m_masterTrackingColorType = new_color;
-                }
-            }
-        }
-
         // Color Control Panel
 		if (m_bShowWindows && !m_bAlignDetectColor)
 		{
@@ -847,7 +858,7 @@ void AppStage_ColorCalibration::renderUI()
 				}
 				ImGui::SameLine();
 			}
-			ImGui::Text("Tracking [C]olor: %s", k_tracking_color_names[m_masterTrackingColorType]);
+			ImGui::Text("Tracking Color: %s", k_tracking_color_names[m_masterTrackingColorType]);
 
 			if (ImGui::CollapsingHeader("Advanced Settings", 0, true, false))
 			{
@@ -966,7 +977,7 @@ void AppStage_ColorCalibration::renderUI()
                     request_change_controller(1);
                 }
                 ImGui::SameLine();
-                ImGui::Text("PS[M]ove Controller ID: %d", m_overrideControllerId);
+                ImGui::Text("PSMove Controller ID: %d", m_overrideControllerId);
             }
 
             // -- Change Tracker --
@@ -980,7 +991,7 @@ void AppStage_ColorCalibration::renderUI()
                 request_change_tracker(1);
             }
             ImGui::SameLine();
-            ImGui::Text("[T]racker ID: %d", tracker_index);
+            ImGui::Text("Tracker ID: %d", tracker_index);
 
             if (m_masterControllerView != nullptr)
             {
@@ -1104,7 +1115,7 @@ void AppStage_ColorCalibration::renderUI()
 					ImGui::Checkbox("Prevent color collisions", &m_bColorCollisionPrevent);
 
 					if (ImGui::IsItemHovered())
-						ImGui::SetTooltip("Automatically adjust the hue range to avoid collisions with other colors.\nThis will reduce tracking quality.");
+						ImGui::SetTooltip("Automatically adjusts the hue range to avoid collisions with other colors.\nThis will reduce tracking quality.");
 
 				}
 
