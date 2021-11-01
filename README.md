@@ -13,6 +13,7 @@ Please start with the wiki. If you can't find help with your problem then please
 
 # Attribution and Thanks
 Special thanks to the following people who helped make this project possible:
+* HipsterSloth for maintaining PSMoveService for so long ♥️
 * Thomas Perl and his [psmoveapi](https://github.com/thp/psmoveapi) project which laid the groundwork for this project.
 * Alexander Nitsch and his work on [psmove-pair-win](https://github.com/nitsch/psmove-pair-win) that enabled psmove controller pairing over Bluetooth on Windows. Alex also did nearly all of the investigation into the PSMove communication protocol.
 * Eugene Zatepyakin and his [PS3EYEDriver](https://github.com/inspirit/PS3EYEDriver) project which enabled access to the PS3Eye camera.
