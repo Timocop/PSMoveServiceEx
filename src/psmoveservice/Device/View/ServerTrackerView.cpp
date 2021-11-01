@@ -476,9 +476,9 @@ public:
         const int max_contour_count,
         int min_points_in_contour = -1)
     {
-		if (min_points_in_contour < 0) {
+		if (min_points_in_contour < 1) {
 			const TrackerManagerConfig &cfg = DeviceManager::getInstance()->m_tracker_manager->getConfig();
-			min_points_in_contour = static_cast<int>(fmax(cfg.min_points_in_contour, 0));
+			min_points_in_contour = static_cast<int>(fmax(cfg.min_points_in_contour, 1));
 		}
 
 		out_biggest_N_contours.clear();
@@ -581,7 +581,7 @@ public:
                 const ContourInfo &contour_info = *it;
                 t_opencv_int_contour &contour = contours[contour_info.contour_index];
 
-                if (contour.size() > min_points_in_contour)
+                if (contour.size() >= min_points_in_contour)
                 {
 					// Remove any points in contour on edge of camera/ROI
                     // TODO: Contours touching image border will be clipped,
@@ -623,9 +623,9 @@ public:
 
 						t_opencv_int_contour new_contour;
 						new_contour.push_back(cv::Point(avg_contour.x - 1, avg_contour.y - 1));
+						new_contour.push_back(cv::Point(avg_contour.x + 1, avg_contour.y - 1));
 						new_contour.push_back(cv::Point(avg_contour.x + 1, avg_contour.y + 1));
 						new_contour.push_back(cv::Point(avg_contour.x - 1, avg_contour.y + 1));
-						new_contour.push_back(cv::Point(avg_contour.x + 1, avg_contour.y - 1));
 
 						// Add cleaned up contour to the output list
 						out_biggest_N_contours.push_back(new_contour);
