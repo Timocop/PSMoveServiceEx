@@ -32,11 +32,18 @@ public:
 	inline void set_override_tracking_color(PSMTrackingColorType tracking_color) {
 		m_masterTrackingColorType = tracking_color;
 	}
-	
+
 	inline void set_autoConfig(bool colour, bool controller, bool tracker) {
 		m_bAutoChangeColor = colour;
 		m_bAutoChangeController = controller;
 		m_bAutoChangeTracker = tracker;
+	}
+
+	inline void set_autoDetection(bool detecting_colors, int controllers_left, int exposure, bool use_gain_instead) {
+		m_bDetectingColors = detecting_colors;
+		m_iDetectingControllersLeft = controllers_left;
+		m_iDetectingExposure = exposure;
+		m_bDetectingUseGainInstead = use_gain_instead;
 	}
 
 protected:
@@ -44,10 +51,34 @@ protected:
     {
         inactive,
         waitingForStreamStartResponse,
+
         manualConfig,
 		autoConfig,
-		blank1,
-		blank2,
+		autoConfig_wait1,
+		autoConfig_wait2,
+
+		detection_init,
+		detection_exposure_adjust,
+		detection_exposure_wait1,
+		detection_exposure_wait2,
+		detection_get_red,
+		detection_get_red_wait1,
+		detection_get_red_wait2,
+		detection_get_red_done,
+		detection_get_green,
+		detection_get_green_wait1,
+		detection_get_green_wait2,
+		detection_get_green_done,
+		detection_get_blue,
+		detection_get_blue_wait1,
+		detection_get_blue_wait2,
+		detection_get_blue_done,
+		detection_change_color,
+		detection_change_color_wait1,
+		detection_change_color_wait2,
+		detection_fail,
+		detection_finish,
+
 		changeController,
 		changeTracker,
 
@@ -172,7 +203,7 @@ protected:
 
 	void AppStage_ColorCalibration::auto_adjust_color_sensitivity(TrackerColorPreset &preset);
 
-	void AppStage_ColorCalibration::get_contures();
+	void AppStage_ColorCalibration::get_contures_lower(int type, int min_points_in_contour, std::vector<std::vector<int>> &contures);
 
 private:
     // ClientPSMoveAPI state
@@ -227,6 +258,14 @@ private:
 	bool m_bColorCollisionPrevent;
 	bool m_bColorCollsionShow;
 	std::vector<std::vector<int>> m_mDetectedContures;
+
+	// Auto detect color
+	bool m_bDetectingColors;
+	int m_iDetectingControllersLeft;
+	int m_iDetectingExposure;
+	bool m_bDetectingExposureGood;
+	bool m_bDetectingUseGainInstead;
+	std::vector<std::vector<int>> m_mAutoDetectedContures;
 };
 
 #endif // APP_STAGE_COLOR_CALIBRATION_H
