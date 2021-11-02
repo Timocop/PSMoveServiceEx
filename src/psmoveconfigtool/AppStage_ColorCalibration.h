@@ -265,6 +265,7 @@ private:
 	int m_iDetectingExposure;
 	bool m_bDetectingExposureGood;
 	bool m_bDetectingUseGainInstead;
+	bool m_bDetectingCancel;
 	std::vector<std::vector<int>> m_mAutoDetectedContures;
 };
 

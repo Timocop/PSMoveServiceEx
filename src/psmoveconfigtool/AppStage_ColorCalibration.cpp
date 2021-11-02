@@ -182,6 +182,7 @@ AppStage_ColorCalibration::AppStage_ColorCalibration(App *app)
 	, m_iDetectingControllersLeft(0)
 	, m_iDetectingExposure(0)
 	, m_bDetectingUseGainInstead(false)
+	, m_bDetectingCancel(false)
 {
 	memset(m_colorPresets, 0, sizeof(m_colorPresets));
 	m_mAlignPosition[0] = 0.0f;
@@ -633,13 +634,15 @@ void AppStage_ColorCalibration::renderUI()
 	if (m_menuState > eMenuState::detection_init && m_menuState < eMenuState::detection_fail)
 	{
 		ImGui::SetNextWindowPosCenter();
-		ImGui::SetNextWindowSize(ImVec2(550, 100));
+		ImGui::SetNextWindowSize(ImVec2(550, 150));
 		ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
 		ImGui::Text(
-			"Color detection in progress! Please wait...\n"
-			"Do not move the controllers or obscure the tracking light!"
+			"Color sampling in progress! Please wait...\n"
+			"Do not move the controllers or obscure the tracking light!\n"
+			"[Sampling colors...]"
 		);
+		
 
 		float total_progress;
 
@@ -657,6 +660,11 @@ void AppStage_ColorCalibration::renderUI()
 		}
 		
 		ImGui::ProgressBar(fmax(1.0f - (static_cast<float>(m_iDetectingControllersLeft) / total_progress), 0.0f));
+
+		if (ImGui::Button("Cancel"))
+		{
+			m_bDetectingCancel = true;
+		}
 
 		ImGui::End();
 	}
@@ -1167,12 +1175,12 @@ void AppStage_ColorCalibration::renderUI()
 						"between colors!"
 					);
 
-				if (m_iColorSensitivity > sensitivity_normal) {
+				if (m_iColorSensitivity > sensitivity_disabled) {
 					ImGui::Checkbox("Prevent color collisions", &m_bColorCollisionPrevent);
 
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip(
-							"Adjusts the hue range to avoid collisions between colors and potentional color noise.\n"
+							"Adjusts the hue range to avoid collisions between controller colors and potentional color noise.\n"
 							"This will reduce tracking quality if enabled."
 						);
 
@@ -1187,23 +1195,20 @@ void AppStage_ColorCalibration::renderUI()
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip(
 							"Cycles through all available colors automatically.\n"
-							"This option applies for manual as well for automatic color detection.\n"
 							"(This is always enabled when using 'Automatically detect colors')"
 						);
 
 					ImGui::Checkbox("Automatically switch controller", &m_bAutoChangeController);
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip(
-							"Cycles through all available controllers automatically.\n"
-							"This option applies for manual as well for automatic color detection."
+							"Cycles through all available controllers automatically."
 						);
 				}
 
 				ImGui::Checkbox("Automatically switch tracker", &m_bAutoChangeTracker);
 				if (ImGui::IsItemHovered())
 					ImGui::SetTooltip(
-						"Cycles through all available trackers automatically.\n"
-						"This option applies for manual as well for automatic color detection."
+						"Cycles through all available trackers automatically."
 					);
 
 				if (ImGui::Checkbox("Show color collisions", &m_bColorCollsionShow))
@@ -1287,6 +1292,8 @@ void AppStage_ColorCalibration::renderUI()
 		m_bColorCollsionShow = false;
 		request_turn_on_all_tracking_bulbs(false);
 
+		m_bDetectingCancel = false;
+
 		int stable_controllers = 0;
 
 		for (int i = 0; i < m_controllerViews.size(); i++)
@@ -1311,8 +1318,8 @@ void AppStage_ColorCalibration::renderUI()
 
 		ImGui::Text(
 			"Place all controllers in the middle of your play space so all trackers can see them.\n"
-			"Do not obscure the tracking light while the process is running otherwise the\n"
-			"color detection result might be inaccurate!"
+			"Do not obscure the tracking light while the sampling process is running otherwise the\n"
+			"sampled colors might be inaccurate!"
 		);
 
 		ImGui::Spacing();
@@ -1321,7 +1328,7 @@ void AppStage_ColorCalibration::renderUI()
 
 		if (stable_controllers == m_controllerViews.size())
 		{
-			if (ImGui::Button("Continue"))
+			if (ImGui::Button("Start sampling colors"))
 			{
 				if (m_bAutoChangeTracker)
 				{
@@ -1342,7 +1349,7 @@ void AppStage_ColorCalibration::renderUI()
 		}
 		else
 		{
-			if (ImGui::Button("Force continue"))
+			if (ImGui::Button("Force start sampling colors"))
 			{
 				if (m_bAutoChangeTracker)
 				{
@@ -1533,67 +1540,75 @@ void AppStage_ColorCalibration::renderUI()
 		cv::cvtColor(*m_video_buffer_state->detectionMaskedBuffer, *m_video_buffer_state->detectionLowerBuffer, cv::COLOR_BGR2GRAY);
 		cv::threshold(*m_video_buffer_state->detectionLowerBuffer, *m_video_buffer_state->detectionLowerBuffer, 0, 255, CV_THRESH_BINARY);
 
-		std::vector<std::vector<int>> contures;
-		get_contures_lower(1, 4, contures);
-
-		// We didnt got any results?
-		// Controller either blocked by something or exposure too low.
-		// Try adjusting exposure first.
-		if (contures.size() == 0)
+		if (!m_bDetectingCancel)
 		{
-			m_iDetectingExposure += 8;
+			std::vector<std::vector<int>> contures;
+			get_contures_lower(1, 4, contures);
 
-			if (m_iDetectingExposure >= 128)
+			// We didnt got any results?
+			// Controller either blocked by something or exposure too low.
+			// Try adjusting exposure first.
+			if (contures.size() == 0)
 			{
-				setState(eMenuState::detection_fail);
+				m_iDetectingExposure += 8;
+
+				if (m_iDetectingExposure >= 128)
+				{
+					setState(eMenuState::detection_fail);
+				}
+				else
+				{
+					setState(eMenuState::detection_exposure_adjust);
+				}
+				break;
+			}
+
+			PSMTrackingColorType new_color =
+				static_cast<PSMTrackingColorType>(
+				(m_masterTrackingColorType + 1) % PSMTrackingColorType_MaxColorTypes);
+
+			ImVec2 dispSize = ImGui::GetIO().DisplaySize;
+			int img_x = (contures[0][0] * m_video_buffer_state->hsvBuffer->cols) / static_cast<int>(dispSize.x);
+			int img_y = (contures[0][1] * m_video_buffer_state->hsvBuffer->rows) / static_cast<int>(dispSize.y);
+			cv::Vec< unsigned char, 3 > hsv_pixel = m_video_buffer_state->hsvBuffer->at<cv::Vec< unsigned char, 3 >>(cv::Point(img_x, img_y));
+
+			TrackerColorPreset preset = getColorPreset();
+			preset.hue_center = hsv_pixel[0];
+			preset.hue_range = 10.f;
+			preset.saturation_center = hsv_pixel[1];
+			preset.saturation_range = 32.f;
+			preset.value_center = hsv_pixel[2];
+			preset.value_range = 32.f;
+
+			auto_adjust_color_sensitivity(preset);
+
+			request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+
+			request_set_controller_tracking_color(m_masterControllerView, new_color);
+
+			if (new_color == PSMTrackingColorType_Magenta)
+			{
+				if (--m_iDetectingControllersLeft > 0)
+				{
+					setState(eMenuState::changeController);
+				}
+				else
+				{
+					setState(eMenuState::detection_finish);
+				}
 			}
 			else
 			{
-				setState(eMenuState::detection_exposure_adjust);
+				setState(eMenuState::detection_change_color_wait1);
 			}
-			break;
-		}
 
-		PSMTrackingColorType new_color =
-			static_cast<PSMTrackingColorType>(
-			(m_masterTrackingColorType + 1) % PSMTrackingColorType_MaxColorTypes);
-
-		ImVec2 dispSize = ImGui::GetIO().DisplaySize;
-		int img_x = (contures[0][0] * m_video_buffer_state->hsvBuffer->cols) / static_cast<int>(dispSize.x);
-		int img_y = (contures[0][1] * m_video_buffer_state->hsvBuffer->rows) / static_cast<int>(dispSize.y);
-		cv::Vec< unsigned char, 3 > hsv_pixel = m_video_buffer_state->hsvBuffer->at<cv::Vec< unsigned char, 3 >>(cv::Point(img_x, img_y));
-
-		TrackerColorPreset preset = getColorPreset();
-		preset.hue_center = hsv_pixel[0];
-		preset.hue_range = 10.f;
-		preset.saturation_center = hsv_pixel[1];
-		preset.saturation_range = 32.f;
-		preset.value_center = hsv_pixel[2];
-		preset.value_range = 32.f;
-
-		auto_adjust_color_sensitivity(preset);
-
-		request_tracker_set_color_preset(m_masterTrackingColorType, preset);
-
-		request_set_controller_tracking_color(m_masterControllerView, new_color);
-
-		if (new_color == PSMTrackingColorType_Magenta)
-		{
-			if (--m_iDetectingControllersLeft > 0)
-			{
-				setState(eMenuState::changeController);
-			}
-			else
-			{
-				setState(eMenuState::detection_finish);
-			}
+			m_masterTrackingColorType = new_color;
 		}
 		else
 		{
-			setState(eMenuState::detection_change_color_wait1);
+			m_bDetectingCancel = false;
+			setState(eMenuState::detection_fail);
 		}
-
-		m_masterTrackingColorType = new_color;
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(auto_calib_sleep));
 		break;
@@ -1617,7 +1632,7 @@ void AppStage_ColorCalibration::renderUI()
 		ImGui::SetNextWindowSize(ImVec2(600, 100));
 		ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
-		ImGui::Text("Color detection of controller #%d failed!", m_masterControllerView->ControllerID);
+		ImGui::Text("Color sampling of controller #%d failed!", m_masterControllerView->ControllerID);
 
 		if (ImGui::Button("Try again"))
 		{
@@ -1643,7 +1658,7 @@ void AppStage_ColorCalibration::renderUI()
 		ImGui::SetNextWindowSize(ImVec2(600, 100));
 		ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
-		ImGui::Text("Color detection finished!");
+		ImGui::Text("Color sampling finished.");
 		ImGui::Text("Controller colors and tracker exposure/gain have been automatically adjusted!");
 
 		if (ImGui::Button("Ok"))
@@ -2489,7 +2504,8 @@ void AppStage_ColorCalibration::auto_adjust_color_sensitivity(TrackerColorPreset
 	{
 	case PSMTrackingColorType_Magenta:
 	{
-		hueRangeMulti = 2.0f; // Improve color detection. No other color near it?!
+		if (!m_bColorCollisionPrevent)
+			hueRangeMulti = 2.0f; // Improve color detection. No other color near it?!
 		break;
 	}
 	case PSMTrackingColorType_Cyan:
@@ -2529,7 +2545,7 @@ void AppStage_ColorCalibration::auto_adjust_color_sensitivity(TrackerColorPreset
 	{
 	case sensitivity_normal:
 	{
-		preset.hue_range = 10.f;
+		preset.hue_range = 10.f * hueRangeMulti;
 		preset.saturation_range = 32.f;
 		preset.value_range = 32.f;
 		break;
