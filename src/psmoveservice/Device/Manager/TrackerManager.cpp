@@ -25,28 +25,28 @@ TrackerManagerConfig::TrackerManagerConfig(const std::string &fnamebase)
 	controller_position_prediction = 0.0f;
 	controller_position_prediction_smoothing = 0.0f;
 	controller_position_prediction_history = 5;
-	ignore_pose_from_one_tracker = false;
-    optical_tracking_timeout= 100;
+	ignore_pose_from_one_tracker = true;
+	optical_tracking_timeout= 100;
 	tracker_sleep_ms = 1;
 	use_bgr_to_hsv_lookup_table = true;
 	exclude_opposed_cameras = false;
-	min_valid_projection_area = 16;
+	min_valid_projection_area = 6;
 	min_occluded_area_on_loss = 4;
-	min_points_in_contour = 6;
+	min_points_in_contour = 4;
 	max_tracker_position_deviation = 12.0f;
 	disable_roi = false;
 	optimized_roi = true;
 	default_tracker_profile.frame_width = 640;
 	//default_tracker_profile.frame_height = 480;
-	default_tracker_profile.frame_rate = 40;
-    default_tracker_profile.exposure = 32;
-    default_tracker_profile.gain = 32;
+	default_tracker_profile.frame_rate = 30;
+	default_tracker_profile.exposure = 32;
+	default_tracker_profile.gain = 32;
 	default_tracker_profile.color_preset_table.table_name= "default_tracker_profile";
 	global_forward_degrees = 270.f; // Down -Z by default
-    for (int preset_index = 0; preset_index < eCommonTrackingColorID::MAX_TRACKING_COLOR_TYPES; ++preset_index)
-    {
-        default_tracker_profile.color_preset_table.color_presets[preset_index] = k_default_color_presets[preset_index];
-    }
+	for (int preset_index = 0; preset_index < eCommonTrackingColorID::MAX_TRACKING_COLOR_TYPES; ++preset_index)
+	{
+		default_tracker_profile.color_preset_table.color_presets[preset_index] = k_default_color_presets[preset_index];
+	}
 };
 
 const boost::property_tree::ptree
