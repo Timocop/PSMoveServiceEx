@@ -454,6 +454,8 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
         int valid_projection_tracker_ids[TrackerManager::k_max_devices];
         int projections_found = 0;
 
+		int available_trackers = 0;
+
 		static bool occluded_tracker_ids[TrackerManager::k_max_devices][ControllerManager::k_max_devices];
 		static float occluded_projection_tracker_ids[TrackerManager::k_max_devices][ControllerManager::k_max_devices][2];
 
@@ -475,6 +477,8 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 
             if (tracker->getIsOpen())
             {
+				available_trackers++;
+
                 // See how long it's been since we got a new video frame
                 const std::chrono::time_point<std::chrono::high_resolution_clock> now= 
                     std::chrono::high_resolution_clock::now();
@@ -613,7 +617,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
                 assert(false && "unreachable");
             }
         }
-        else if (projections_found == 1 && !trackerMgrConfig.ignore_pose_from_one_tracker)
+        else if (projections_found == 1 && (available_trackers == 1 || !trackerMgrConfig.ignore_pose_from_one_tracker))
         {
             const int tracker_id = valid_projection_tracker_ids[0];
             const ServerTrackerViewPtr tracker = tracker_manager->getTrackerViewPtr(tracker_id);
@@ -2571,7 +2575,19 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
     ControllerOpticalPoseEstimation *tracker_pose_estimations,
     ControllerOpticalPoseEstimation *multicam_pose_estimation)
 {
-    const TrackerManagerConfig &cfg = tracker_manager->getConfig();
+	int available_trackers = 0;
+
+	for (int tracker_id = 0; tracker_id < tracker_manager->getMaxDevices(); ++tracker_id)
+	{
+		ServerTrackerViewPtr tracker = tracker_manager->getTrackerViewPtr(tracker_id);
+
+		if (tracker->getIsOpen())
+		{
+			available_trackers++;
+		}
+	}
+	
+	const TrackerManagerConfig &cfg = tracker_manager->getConfig();
     float screen_area_sum = 0;
 	
 	struct projectionInfo
@@ -2688,7 +2704,10 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 		}
     }
 
-    if (pair_count == 0 && sorted_projections.size() > 0 && sorted_projections[0].tracker_id > -1 && !DeviceManager::getInstance()->m_tracker_manager->getConfig().ignore_pose_from_one_tracker)
+    if (pair_count == 0 
+		&& sorted_projections.size() > 0 
+		&& sorted_projections[0].tracker_id > -1 
+		&& (available_trackers == 1 || !DeviceManager::getInstance()->m_tracker_manager->getConfig().ignore_pose_from_one_tracker))
     {
         // Position not triangulated from opposed camera, estimate from one tracker only.
         computeSpherePoseForControllerFromSingleTracker(

@@ -287,6 +287,8 @@ void ServerHMDView::updateOpticalPoseEstimation(TrackerManager* tracker_manager)
         int valid_projection_tracker_ids[TrackerManager::k_max_devices];
         int projections_found = 0;
 
+		int available_trackers = 0;
+
         CommonDeviceTrackingShape trackingShape;
         m_device->getTrackingShape(trackingShape);
         assert(trackingShape.shape_type != eCommonTrackingShapeType::INVALID_SHAPE);
@@ -305,6 +307,8 @@ void ServerHMDView::updateOpticalPoseEstimation(TrackerManager* tracker_manager)
 
             if (tracker->getIsOpen())
             {
+				available_trackers++;
+
                 // See how long it's been since we got a new video frame
                 const std::chrono::time_point<std::chrono::high_resolution_clock> now= 
                     std::chrono::high_resolution_clock::now();
@@ -399,7 +403,7 @@ void ServerHMDView::updateOpticalPoseEstimation(TrackerManager* tracker_manager)
                 assert(false && "unreachable");
             }
         }
-        else if (projections_found == 1 && !DeviceManager::getInstance()->m_tracker_manager->getConfig().ignore_pose_from_one_tracker)
+        else if (projections_found == 1 && (available_trackers == 1 || !DeviceManager::getInstance()->m_tracker_manager->getConfig().ignore_pose_from_one_tracker))
         {
             const int tracker_id = valid_projection_tracker_ids[0];
             const ServerTrackerViewPtr tracker = tracker_manager->getTrackerViewPtr(tracker_id);
@@ -1469,6 +1473,18 @@ static void computeSpherePoseForHmdFromMultipleTrackers(
     HMDOpticalPoseEstimation *tracker_pose_estimations,
     HMDOpticalPoseEstimation *multicam_pose_estimation)
 {
+	int available_trackers = 0;
+
+	for (int tracker_id = 0; tracker_id < tracker_manager->getMaxDevices(); ++tracker_id)
+	{
+		ServerTrackerViewPtr tracker = tracker_manager->getTrackerViewPtr(tracker_id);
+
+		if (tracker->getIsOpen())
+		{
+			available_trackers++;
+		}
+	}
+
     const TrackerManagerConfig &cfg = tracker_manager->getConfig();
     float screen_area_sum = 0;
 
@@ -1529,7 +1545,7 @@ static void computeSpherePoseForHmdFromMultipleTrackers(
         }
     }
 
-    if (pair_count == 0 && biggest_prjection_id >= 0 && !DeviceManager::getInstance()->m_tracker_manager->getConfig().ignore_pose_from_one_tracker)
+    if (pair_count == 0 && biggest_prjection_id >= 0 && (available_trackers == 1 || !DeviceManager::getInstance()->m_tracker_manager->getConfig().ignore_pose_from_one_tracker))
     {
         // Position not triangulated from opposed camera, estimate from one tracker only.
         computeSpherePoseForHmdFromSingleTracker(
@@ -1581,6 +1597,18 @@ static void computePointCloudPoseForHmdFromMultipleTrackers(
     HMDOpticalPoseEstimation *tracker_pose_estimations,
     HMDOpticalPoseEstimation *multicam_pose_estimation)
 {
+	int available_trackers = 0;
+
+	for (int tracker_id = 0; tracker_id < tracker_manager->getMaxDevices(); ++tracker_id)
+	{
+		ServerTrackerViewPtr tracker = tracker_manager->getTrackerViewPtr(tracker_id);
+
+		if (tracker->getIsOpen())
+		{
+			available_trackers++;
+		}
+	}
+
     const TrackerManagerConfig &cfg = tracker_manager->getConfig();
     float screen_area_sum = 0;
 
@@ -1641,7 +1669,7 @@ static void computePointCloudPoseForHmdFromMultipleTrackers(
         }
     }
 
-    if (pair_count == 0 && biggest_prjection_id >= 0 && !DeviceManager::getInstance()->m_tracker_manager->getConfig().ignore_pose_from_one_tracker)
+    if (pair_count == 0 && biggest_prjection_id >= 0 && (available_trackers == 1 || !DeviceManager::getInstance()->m_tracker_manager->getConfig().ignore_pose_from_one_tracker))
     {
         // Position not triangulated from opposed camera, estimate from one tracker only.
         computePointCloudPoseForHmdFromSingleTracker(
