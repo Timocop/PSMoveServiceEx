@@ -15,7 +15,7 @@
 //-- constants -----
 
 //-- Tracker Manager Config -----
-const int TrackerManagerConfig::CONFIG_VERSION = 2;
+const int TrackerManagerConfig::CONFIG_VERSION = 3;
 
 TrackerManagerConfig::TrackerManagerConfig(const std::string &fnamebase)
     : PSMoveConfig(fnamebase)
