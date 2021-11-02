@@ -40,6 +40,8 @@ struct ControllerOpticalPoseEstimation
     CommonDeviceQuaternion orientation;
     bool bOrientationValid;
 
+	bool bEnforceNewROI;
+
     inline void clear()
     {
         last_update_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>();
@@ -51,6 +53,8 @@ struct ControllerOpticalPoseEstimation
 
         orientation.clear();
         bOrientationValid= false;
+
+		bEnforceNewROI = false;
 
         memset(&projection, 0, sizeof(CommonDeviceTrackingProjection));
         projection.shape_type= eCommonTrackingProjectionType::INVALID_PROJECTION;

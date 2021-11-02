@@ -62,6 +62,7 @@ public:
 	float min_valid_projection_area;
 	float min_occluded_area_on_loss;
 	int min_points_in_contour;
+	float max_tracker_position_deviation;
 	bool disable_roi;
 	bool optimized_roi;
     TrackerProfile default_tracker_profile;

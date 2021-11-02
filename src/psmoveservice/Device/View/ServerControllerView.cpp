@@ -2574,52 +2574,53 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
     const TrackerManagerConfig &cfg = tracker_manager->getConfig();
     float screen_area_sum = 0;
 	
+	struct projectionInfo
+	{
+		int index;
+		int tracker_id;
+		CommonDeviceScreenLocation position2d_list;
+		float screen_area;
+	};
+	std::vector<projectionInfo> sorted_projections;
+
     // Project the tracker relative 3d tracking position back on to the tracker camera plane
     // and sum up the total controller projection area across all trackers
-    CommonDeviceScreenLocation position2d_list[TrackerManager::k_max_devices];
     for (int list_index = 0; list_index < projections_found; ++list_index)
     {
         const int tracker_id = valid_projection_tracker_ids[list_index];
         const ServerTrackerViewPtr tracker = tracker_manager->getTrackerViewPtr(tracker_id);
         const ControllerOpticalPoseEstimation &poseEstimate = tracker_pose_estimations[tracker_id];
 
-        position2d_list[list_index] = tracker->projectTrackerRelativePosition(&poseEstimate.position_cm);
-        screen_area_sum += poseEstimate.projection.screen_area;
+		projectionInfo info;
+		info.index = list_index;
+		info.tracker_id = tracker_id;
+		info.position2d_list = tracker->projectTrackerRelativePosition(&poseEstimate.position_cm);
+		info.screen_area = tracker_pose_estimations[tracker_id].projection.screen_area;
+		sorted_projections.push_back(info);
+
+		screen_area_sum += poseEstimate.projection.screen_area;
     }
 
-	//Get biggest projector.
-	//Go through all trackers and find the biggest projector screen area to make single sphere tracking quality better.
-	//Normally this should not matter if only one camera is visible but it could be used for something else in the future.
-	int biggest_projection_id = -1;
-	for (int list_index = 0; list_index < projections_found; ++list_index)
+	// Sort by biggest projector.
+	// Go through all trackers and sort them by biggest projector to make tracking quality better.
+	// The bigger projections should be closer to trackers and smaller far away.
+	std::sort(
+		sorted_projections.begin(), sorted_projections.end(),
+		[](const projectionInfo & a, const projectionInfo & b) -> bool
 	{
-		const int tracker_id = valid_projection_tracker_ids[list_index];
-		const CommonDeviceScreenLocation &other_screen_location = position2d_list[list_index];
-		const ServerTrackerViewPtr other_tracker = tracker_manager->getTrackerViewPtr(tracker_id);
-
-		if (biggest_projection_id > -1)
-		{
-			const float screen_area = tracker_pose_estimations[tracker_id].projection.screen_area;
-			const float biggest_screen_area = tracker_pose_estimations[biggest_projection_id].projection.screen_area;
-
-			if (screen_area > biggest_screen_area)
-			{
-				biggest_projection_id = tracker_id;
-			}
-		}
-		else
-		{
-			biggest_projection_id = tracker_id;
-		}
-	}
+		return a.screen_area > b.screen_area;
+	});
 
 	// Compute triangulations amongst all pairs of projections
 	int pair_count = 0;
+
     CommonDevicePosition average_world_position = { 0.f, 0.f, 0.f };
     for (int list_index = 0; list_index < projections_found; ++list_index)
     {
-		const int tracker_id = valid_projection_tracker_ids[list_index];
-		const CommonDeviceScreenLocation &screen_location = position2d_list[list_index];
+		int bad_deviations = 0;
+
+		const int tracker_id = sorted_projections[list_index].tracker_id;
+		const CommonDeviceScreenLocation &screen_location = sorted_projections[list_index].position2d_list;
 		const ServerTrackerViewPtr tracker = tracker_manager->getTrackerViewPtr(tracker_id);
 		
 		for (int other_list_index = 0; other_list_index < projections_found; ++other_list_index)
@@ -2627,8 +2628,8 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 			if (list_index == other_list_index)
 				continue;
 
-            const int other_tracker_id = valid_projection_tracker_ids[other_list_index];
-            const CommonDeviceScreenLocation &other_screen_location = position2d_list[other_list_index];
+            const int other_tracker_id = sorted_projections[other_list_index].tracker_id;
+            const CommonDeviceScreenLocation &other_screen_location = sorted_projections[other_list_index].position2d_list;
             const ServerTrackerViewPtr other_tracker = tracker_manager->getTrackerViewPtr(other_tracker_id);
 
             // if trackers are on poposite sides
@@ -2648,21 +2649,52 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
                     tracker.get(), &screen_location,
                     other_tracker.get(), &other_screen_location);
 
-            average_world_position.x += world_position.x;
-            average_world_position.y += world_position.y;
-            average_world_position.z += world_position.z;
+			// Check how much the trangulation deviates from other trackers.
+			// Ignore its position if it deviates too much and renew its ROI.
+			if (pair_count > 0 && cfg.max_tracker_position_deviation > 0.01f)
+			{
+				const float N = static_cast<float>(pair_count);
 
-            ++pair_count;
+				if (abs((average_world_position.x / N) - world_position.x) < cfg.max_tracker_position_deviation
+					&& abs((average_world_position.y / N) - world_position.y) < cfg.max_tracker_position_deviation
+					&& abs((average_world_position.z / N) - world_position.z) < cfg.max_tracker_position_deviation)
+				{ 
+					average_world_position.x += world_position.x;
+					average_world_position.y += world_position.y;
+					average_world_position.z += world_position.z;
+
+					++pair_count;
+				}
+				else
+				{
+					++bad_deviations;
+				}
+			}
+			else
+			{
+				average_world_position.x += world_position.x;
+				average_world_position.y += world_position.y;
+				average_world_position.z += world_position.z;
+
+				++pair_count;
+			}
         }
+
+		// What happend to that trackers projection? Its probably stuck somewhere on some color noise.
+		// Enforce new ROI on this tracker to make it unstuck.
+		if (bad_deviations >= projections_found - 1)
+		{
+			tracker_pose_estimations[tracker_id].bEnforceNewROI = true;
+		}
     }
 
-    if (pair_count == 0 && biggest_projection_id > -1 && !DeviceManager::getInstance()->m_tracker_manager->getConfig().ignore_pose_from_one_tracker)
+    if (pair_count == 0 && sorted_projections.size() > 0 && sorted_projections[0].tracker_id > -1 && !DeviceManager::getInstance()->m_tracker_manager->getConfig().ignore_pose_from_one_tracker)
     {
         // Position not triangulated from opposed camera, estimate from one tracker only.
         computeSpherePoseForControllerFromSingleTracker(
             controllerView,
-            tracker_manager->getTrackerViewPtr(biggest_projection_id),
-            &tracker_pose_estimations[biggest_projection_id],
+            tracker_manager->getTrackerViewPtr(sorted_projections[0].tracker_id),
+            &tracker_pose_estimations[sorted_projections[0].tracker_id],
             multicam_pose_estimation);		
     }
     else if(pair_count > 0)

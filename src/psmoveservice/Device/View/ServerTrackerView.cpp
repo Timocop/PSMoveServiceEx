@@ -1310,14 +1310,15 @@ ServerTrackerView::computeProjectionForController(
 
     const ControllerOpticalPoseEstimation *priorPoseEst= 
         tracked_controller->getTrackerPoseEstimate(this->getDeviceID());
-    const bool bIsTracking = priorPoseEst->bCurrentlyTracking;
+	const bool bIsTracking = priorPoseEst->bCurrentlyTracking;
+	const bool bEnforceNewROI = priorPoseEst->bEnforceNewROI;
 
     cv::Rect2i ROI= computeTrackerROIForPoseProjection(
 		(bRoiOptimized) ? tracked_controller->getDeviceID() : -1,
         bRoiDisabled,
         this,		
-        bIsTracking ? tracked_controller->getPoseFilter() : nullptr,
-        bIsTracking ? &priorPoseEst->projection : nullptr,
+        (bIsTracking && !bEnforceNewROI) ? (tracked_controller->getPoseFilter()) : (nullptr),
+        (bIsTracking && !bEnforceNewROI) ? (&priorPoseEst->projection) : (nullptr),
         tracking_shape);
 
     m_opencv_buffer_state->applyROI(ROI);
@@ -1333,6 +1334,8 @@ ServerTrackerView::computeProjectionForController(
     // Process the contour for its 2D and 3D pose.
     if (bSuccess)
     {
+		out_pose_estimate->bEnforceNewROI = false;
+
         // Get camera parameters.
         // Needed for undistortion.
         cv::Matx33f camera_matrix;
