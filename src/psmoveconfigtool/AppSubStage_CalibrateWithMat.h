@@ -59,6 +59,8 @@ private:
     int m_sampleTrackerId;
     int m_sampleLocationIndex;
     bool m_bNeedMoreSamplesAtLocation;
+
+	int m_iLightFlicker;
 };
 
 #endif // APP_STAGE_COREGISTER_WITH_MAT_H

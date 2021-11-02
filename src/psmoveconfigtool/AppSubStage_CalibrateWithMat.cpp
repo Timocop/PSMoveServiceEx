@@ -197,6 +197,7 @@ AppSubStage_CalibrateWithMat::AppSubStage_CalibrateWithMat(
     , m_bIsStable(false)
 	, m_sampleLocationIndex(0)
     , m_bNeedMoreSamplesAtLocation(false)
+	, m_iLightFlicker(0)
 {
 	for (int location_index = 0; location_index < PSMOVESERVICE_MAX_TRACKER_COUNT; ++location_index)
 	{
@@ -347,10 +348,36 @@ void AppSubStage_CalibrateWithMat::update()
             }
             else
             {
-                // If we have completed sampling at this location, wait until the controller is picked up
+				std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+				static std::chrono::high_resolution_clock::time_point lastFlickerDuration;
+
+				if (lastFlickerDuration < now)
+				{
+					lastFlickerDuration = (now + std::chrono::milliseconds(500));
+
+					if (m_iLightFlicker == 0)
+					{
+						m_iLightFlicker = 1;
+						PSM_SetControllerLEDOverrideColor(ControllerView->ControllerID, 0, 255, 0);
+					}
+					else
+					{
+						m_iLightFlicker = 0;
+						PSM_SetControllerLEDOverrideColor(ControllerView->ControllerID, 0, 0, 0);
+					}
+				}
+
+				// If we have completed sampling at this location, wait until the controller is picked up
                 if (!bIsStable)
                 {
-                    // Move on to next sample location
+					// Disable blinking if its enabled.
+					if (m_iLightFlicker == 1)
+					{
+						const PSMController *ControllerView = m_parentStage->get_calibration_controller_view();
+						PSM_SetControllerLEDOverrideColor(ControllerView->ControllerID, 0, 0, 0);
+					}
+
+					// Move on to next sample location
                     ++m_sampleLocationIndex;
 
                     if (m_sampleLocationIndex < k_mat_sample_location_count)
@@ -649,6 +676,13 @@ void AppSubStage_CalibrateWithMat::renderUI()
             ImGui::SameLine();
             if (ImGui::Button("Cancel"))
             {
+				// Disable blinking if its enabled.
+				if (m_iLightFlicker == 1)
+				{
+					const PSMController *ControllerView = m_parentStage->get_calibration_controller_view();
+					PSM_SetControllerLEDOverrideColor(ControllerView->ControllerID, 0, 0, 0);
+				}
+
                 m_parentStage->setState(AppStage_ComputeTrackerPoses::eMenuState::verifyTrackers);
             }
 
@@ -719,6 +753,13 @@ void AppSubStage_CalibrateWithMat::renderUI()
 
             if (ImGui::Button("Cancel"))
             {
+				// Disable blinking if its enabled.
+				if (m_iLightFlicker == 1)
+				{
+					const PSMController *ControllerView = m_parentStage->get_calibration_controller_view();
+					PSM_SetControllerLEDOverrideColor(ControllerView->ControllerID, 0, 0, 0);
+				}
+
                 m_parentStage->setState(AppStage_ComputeTrackerPoses::eMenuState::verifyTrackers);
             }
 
