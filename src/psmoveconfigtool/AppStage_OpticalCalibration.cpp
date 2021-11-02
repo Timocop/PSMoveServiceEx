@@ -29,7 +29,7 @@ static const glm::vec3 k_psmove_frustum_color = glm::vec3(0.1f, 0.7f, 0.3f);
 static const glm::vec3 k_psmove_frustum_color_no_track = glm::vec3(1.0f, 0.f, 0.f);
 
 //-- constants -----
-const double k_stabilize_wait_time_ms = 1000.f;
+const double k_stabilize_wait_time_ms = 3000.f;
 const int k_desired_noise_sample_count = 100;
 const int k_sample_location_count = 10;
 

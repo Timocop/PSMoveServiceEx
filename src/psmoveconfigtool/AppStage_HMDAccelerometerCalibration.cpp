@@ -26,7 +26,7 @@
 const char *AppStage_HMDAccelerometerCalibration::APP_STAGE_NAME = "HMDAcceleromterCalibration";
 
 //-- constants -----
-static const double k_stabilize_wait_time_ms = 1000.f;
+static const double k_stabilize_wait_time_ms = 3000.f;
 static const int k_max_accelerometer_samples = 500;
 
 static const float k_min_sample_distance = 1000.f;

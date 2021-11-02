@@ -33,7 +33,7 @@ static const int k_mat_calibration_sample_count = 60;
 
 static const glm::vec3 k_psmove_frustum_color = glm::vec3(0.1f, 0.7f, 0.3f);
 
-static const double k_stabilize_wait_time_ms = 1000.f;
+static const double k_stabilize_wait_time_ms = 3000.f;
 
 static const float k_height_to_psmove_bulb_center = 17.7f; // cm - measured base to bulb center distance
 static const float k_sample_x_location_offset = 14.f; // cm - Half the length of a 8.5'x11' sheet of paper

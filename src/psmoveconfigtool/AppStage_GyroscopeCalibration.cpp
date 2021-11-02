@@ -24,7 +24,7 @@
 const char *AppStage_GyroscopeCalibration::APP_STAGE_NAME = "GyroscopeCalibration";
 
 //-- constants -----
-const double k_stabilize_wait_time_ms = 1000.f;
+const double k_stabilize_wait_time_ms = 3000.f;
 const int k_desired_noise_sample_count = 1000;
 const float k_desired_drift_sampling_time = 30.0*1000.f; // milliseconds
 
