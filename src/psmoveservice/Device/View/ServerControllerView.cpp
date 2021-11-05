@@ -463,10 +463,44 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
         m_device->getTrackingShape(trackingShape);
         assert(trackingShape.shape_type != eCommonTrackingShapeType::INVALID_SHAPE);
 
+		struct projectionInfo
+		{
+			int tracker_id;
+			float screen_area;
+		};
+		std::vector<projectionInfo> sorted_projections;
+
+		for (int tracker_id = 0; tracker_id < tracker_manager->getMaxDevices(); ++tracker_id)
+		{
+			const ServerTrackerViewPtr tracker = tracker_manager->getTrackerViewPtr(tracker_id);
+			if (tracker->getIsOpen())
+			{
+				ControllerOpticalPoseEstimation &trackerPoseEstimateRef = m_tracker_pose_estimations[tracker_id];
+
+				projectionInfo info;
+				info.tracker_id = tracker_id;
+				info.screen_area = trackerPoseEstimateRef.projection.screen_area;
+				sorted_projections.push_back(info);
+			}
+		}
+
+		// Sort by biggest projector.
+		// Go through all trackers and sort them by biggest projector to make tracking quality better.
+		// The bigger projections should be closer to trackers and smaller far away.
+		std::sort(
+			sorted_projections.begin(), sorted_projections.end(),
+			[](const projectionInfo & a, const projectionInfo & b) -> bool
+		{
+			return a.screen_area > b.screen_area;
+		});
+
+
         // Find the projection of the controller from the perspective of each tracker.
         // In the case of sphere projections, go ahead and compute the tracker relative position as well.
-        for (int tracker_id = 0; tracker_id < tracker_manager->getMaxDevices(); ++tracker_id)
+        for (int list_index = 0; list_index < sorted_projections.size(); ++list_index)
         {
+			int tracker_id = sorted_projections[list_index].tracker_id;
+
             ServerTrackerViewPtr tracker = tracker_manager->getTrackerViewPtr(tracker_id);
             ControllerOpticalPoseEstimation &trackerPoseEstimateRef = m_tracker_pose_estimations[tracker_id];
 
@@ -556,7 +590,8 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 						}
 					}
 
-					if (!bIsOccluded)
+					// Ignore projections that are occluded BUT always pass atleast 2 biggest projected trackers.
+					if (!bIsOccluded || projections_found < 2)
 					{
 						// If the projection isn't too old (or updated this tick), 
 						// say we have a valid tracked location
