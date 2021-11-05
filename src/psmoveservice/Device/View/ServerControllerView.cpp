@@ -2742,7 +2742,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
     if (pair_count == 0 
 		&& sorted_projections.size() > 0 
 		&& sorted_projections[0].tracker_id > -1 
-		&& (available_trackers == 1 || !DeviceManager::getInstance()->m_tracker_manager->getConfig().ignore_pose_from_one_tracker))
+		&& (available_trackers == 1 || !cfg.ignore_pose_from_one_tracker))
     {
         // Position not triangulated from opposed camera, estimate from one tracker only.
         computeSpherePoseForControllerFromSingleTracker(
@@ -2761,21 +2761,21 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
         average_world_position.z /= N;
 
 		// Do basic optical prediction
-		const float pp = tracker_manager->getConfig().controller_position_prediction;
+		const float pp = cfg.controller_position_prediction;
 		if (pp > 0.01f)
 		{
 			const int controller_id = controllerView->getDeviceID();
 			const int history_max_allowed = 50;
 
-			const int ph = tracker_manager->getConfig().controller_position_prediction_history;
+			const int ph = cfg.controller_position_prediction_history;
 
-			int history_max = static_cast<int>(fmax(static_cast<int>(fmin(ph, history_max_allowed)), 1));
+			int history_max = static_cast<int>(fmax(fmin(ph, history_max_allowed), 1.0f));
 
 			static float average_world_position_history[PSMOVESERVICE_MAX_CONTROLLER_COUNT][history_max_allowed][3];
 			static int history_count[PSMOVESERVICE_MAX_CONTROLLER_COUNT];
 
-			const float ps = tracker_manager->getConfig().controller_position_prediction_smoothing;
-			if (ps <= 0.01f || ps > 0.99f)
+			const float ps = fmin(cfg.controller_position_prediction_smoothing, 0.99f);
+			if (ps <= 0.01f)
 			{
 				average_world_position_history[controller_id][history_count[controller_id]][0] = average_world_position.x;
 				average_world_position_history[controller_id][history_count[controller_id]][1] = average_world_position.y;
@@ -2822,8 +2822,8 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 		}
 
 		// Store the averaged tracking position
-		const float q = tracker_manager->getConfig().controller_position_smoothing;
-		if (q <= 0.01f || q > 0.99f)
+		const float q = fmin(cfg.controller_position_smoothing, 0.99f);
+		if (q <= 0.01f)
 		{
 			multicam_pose_estimation->position_cm = average_world_position;
 		}
