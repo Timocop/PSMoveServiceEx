@@ -26,13 +26,24 @@ but we use custom cv::VideoCapture::set() and \ref get() to change parameters vi
 */
 class PSEyeVideoCapture : public cv::VideoCapture {
 public:
+	enum eVideoCaptureType
+	{
+		CaptureType_ALL,
+		CaptureType_HID,
+		CaptureType_VIRTUAL
+	};
 
     /**
     \param camindex The index of the camera (0-based). To specify an API
     pass in the index + API. e.g., PSEyeVideoCapture(0 + PSEYE_CAP_CLMULTI)
     */
-    PSEyeVideoCapture(int camindex)
-        : m_index(-1) {open(camindex);} // Constructor is same as base class
+    PSEyeVideoCapture(int camindex, eVideoCaptureType videoCaptureType)
+        : m_index(-1) 
+		, m_iVideoCaptureType(eVideoCaptureType::CaptureType_ALL)
+	{
+		m_iVideoCaptureType = videoCaptureType;
+		open(camindex);
+	} // Constructor is same as base class
     
     /// Attempts to open a device using different drivers in the order outlined above.
     /*
@@ -51,6 +62,7 @@ public:
     
 protected:
     int m_index; /**< Keep track of index. Necessary for PSEYE_CLEYE_DRIVER */
+	eVideoCaptureType m_iVideoCaptureType;
     std::string m_indentifier; /**< Filled in when the tracker is opened */
 
 private:

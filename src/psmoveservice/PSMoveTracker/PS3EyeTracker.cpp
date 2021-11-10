@@ -277,14 +277,8 @@ PS3EyeTracker::~PS3EyeTracker()
 // PSMoveTracker
 bool PS3EyeTracker::open() // Opens the first HID device for the tracker
 {
-    TrackerDeviceEnumerator enumerator;
+    TrackerDeviceEnumerator enumerator(TrackerDeviceEnumerator::CommunicationType_ALL);
     bool success = false;
-
-    // Skip over everything that isn't a PS3EYE
-    while (enumerator.is_valid() && enumerator.get_device_type() != CommonDeviceState::PS3EYE)
-    {
-        enumerator.next();
-    }
 
     if (enumerator.is_valid())
     {
@@ -330,20 +324,45 @@ bool PS3EyeTracker::open(const DeviceEnumerator *enumerator)
 
         SERVER_LOG_INFO("PS3EyeTracker::open") << "Opening PS3EyeTracker(" << cur_dev_path << ", camera_index=" << camera_index << ")";
 
-        VideoCapture = new PSEyeVideoCapture(camera_index);
+		switch (tracker_enumerator->get_device_type())
+		{
+			case CommonDeviceState::eDeviceType::PS3EYE:
+			{
+				VideoCapture = new PSEyeVideoCapture(camera_index, PSEyeVideoCapture::eVideoCaptureType::CaptureType_HID);
 
-        if (VideoCapture->isOpened())
-        {
-            CaptureData = new PSEyeCaptureData;
-            USBDevicePath = enumerator->get_path();
-            bSuccess = true;
-        }
-        else
-        {
-            SERVER_LOG_ERROR("PS3EyeTracker::open") << "Failed to open PS3EyeTracker(" << cur_dev_path << ", camera_index=" << camera_index << ")";
+				if (VideoCapture->isOpened())
+				{
+					CaptureData = new PSEyeCaptureData;
+					USBDevicePath = enumerator->get_path();
+					bSuccess = true;
+				}
+				else
+				{
+					SERVER_LOG_ERROR("PS3EyeTracker::open") << "Failed to open PS3EyeTracker(" << cur_dev_path << ", camera_index=" << camera_index << ")";
 
-            close();
-        }
+					close();
+				}
+				break;
+			}
+			case CommonDeviceState::eDeviceType::VirtualTracker:
+			{
+				VideoCapture = new PSEyeVideoCapture(camera_index, PSEyeVideoCapture::eVideoCaptureType::CaptureType_VIRTUAL);
+
+				if (VideoCapture->isOpened())
+				{
+					CaptureData = new PSEyeCaptureData;
+					USBDevicePath = enumerator->get_path();
+					bSuccess = true;
+				}
+				else
+				{
+					SERVER_LOG_ERROR("PS3EyeTracker::open") << "Failed to open PS3EyeTracker(" << cur_dev_path << ", camera_index=" << camera_index << ")";
+
+					close();
+				}
+				break;
+			}
+		}
     }
     
     if (bSuccess)

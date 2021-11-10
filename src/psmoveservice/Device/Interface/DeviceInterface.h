@@ -204,7 +204,8 @@ struct CommonDeviceState
         SUPPORTED_CONTROLLER_TYPE_COUNT = Controller + 0x04,
         
         PS3EYE = TrackingCamera + 0x00,
-        SUPPORTED_CAMERA_TYPE_COUNT = TrackingCamera + 0x01,
+		VirtualTracker = TrackingCamera + 0x01,
+        SUPPORTED_CAMERA_TYPE_COUNT = TrackingCamera + 0x02,
         
         Morpheus = HeadMountedDisplay + 0x00,
         VirtualHMD = HeadMountedDisplay + 0x01,

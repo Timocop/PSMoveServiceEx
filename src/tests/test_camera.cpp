@@ -47,10 +47,10 @@ int main(int, char**)
 	std::cout << "Please enter the initial frame width for the cameras:\n";
 	std::cin >> frame_width_init;
 
-    // Open all available cameras (up to 4 max)
+    // Open all available cameras (up to PSMOVESERVICE_MAX_TRACKER_COUNT max)
 	for (int camera_index = 0; camera_index < PSMOVESERVICE_MAX_TRACKER_COUNT; ++camera_index)
 	{
-        PSEyeVideoCapture *camera = new PSEyeVideoCapture(camera_index); // open the default camera
+        PSEyeVideoCapture *camera = new PSEyeVideoCapture(camera_index, PSEyeVideoCapture::eVideoCaptureType::CaptureType_ALL);
 
         if (camera->isOpened())
         {

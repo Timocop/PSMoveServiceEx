@@ -951,10 +951,11 @@ bool ServerTrackerView::allocate_device_interface(const class DeviceEnumerator *
 {
     switch (enumerator->get_device_type())
     {
-    case CommonDeviceState::PS3EYE:
-    {
-        m_device = new PS3EyeTracker();
-    } break;
+	case CommonDeviceState::PS3EYE:
+	case CommonDeviceState::VirtualTracker:
+	{
+		m_device = new PS3EyeTracker();
+	} break;
     default:
         break;
     }

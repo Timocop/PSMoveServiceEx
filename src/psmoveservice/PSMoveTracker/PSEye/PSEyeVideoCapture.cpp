@@ -15,6 +15,14 @@ const char *CLEYE_DRIVER_PROVIDER_NAME = "Code Laboratories, Inc.";
 const char *CL_DRIVER_REG_PATH = "Software\\PS3EyeCamera\\Settings";  // [HKCU]
 #endif
 
+#ifdef WIN32
+#include <windows.h> 
+#include <stdio.h> 
+#include <tchar.h>
+#include <strsafe.h>
+#include <fstream>
+#endif
+
 enum
 {
 #ifdef HAVE_CLEYE
@@ -457,6 +465,193 @@ protected:
 
 #endif
 
+#ifdef WIN32
+#define VRIT_BUFF_SIZE (480 * 640 * 3)
+
+/// Implementation of PS3EyeCapture using named pipes
+class PSEYECaptureCAM_VIRTUAL : public cv::IVideoCapture
+{
+public:
+	PSEYECaptureCAM_VIRTUAL(int _index)
+		: m_index(-1)
+	{
+		//CoInitialize(NULL);
+		open(_index);
+	}
+
+	~PSEYECaptureCAM_VIRTUAL()
+	{
+		close();
+	}
+
+	// Currently there is no way to get/set properties on virtual trackers.
+	double getProperty(int property_id) const
+	{
+		switch (property_id)
+		{
+		case CV_CAP_PROP_BRIGHTNESS:
+			return 0;
+		case CV_CAP_PROP_CONTRAST:
+			return 0;
+		case CV_CAP_PROP_EXPOSURE:
+			return 0;
+		case CV_CAP_PROP_FPS:
+			return 0;
+		case CV_CAP_PROP_FRAME_HEIGHT:
+			return 480;
+		case CV_CAP_PROP_FRAME_WIDTH:
+			return 640;
+		case CV_CAP_PROP_GAIN:
+			return 0;
+		case CV_CAP_PROP_HUE:
+			return 0;
+		case CV_CAP_PROP_SHARPNESS:
+			return 0;
+		case CV_CAP_PROP_FORMAT:
+			return cv::CAP_MODE_RGB;
+		}
+		return 0;
+	}
+
+	// Currently there is no way to get/set properties on virtual trackers.
+	bool setProperty(int property_id, double value)
+	{
+		return false;
+	}
+
+	// ####Externet $TODO: Always return true and retrieve black frame instead?
+	bool grabFrame()
+	{
+		if (hPipe == INVALID_HANDLE_VALUE)
+		{
+			return false;
+		}
+
+		bool connected = ConnectNamedPipe(hPipe, NULL);
+		if(connected)
+			std::cout << "ps3eye::VIRTUAL() ConnectNamedPipe success, index " << m_index << std::endl;
+
+		if (!connected)
+			connected = (GetLastError() == ERROR_PIPE_CONNECTED);
+
+		if (!connected)
+		{
+			if (GetLastError() != ERROR_PIPE_LISTENING) {
+				std::cout << "ps3eye::VIRTUAL() ConnectNamedPipe failed, index " << m_index << ", GLE=" << GetLastError() << "." << std::endl;
+
+				DisconnectNamedPipe(hPipe);
+			}
+		}
+		
+		return connected;
+	}
+
+	// ####Externet $TODO: Always return true and retrieve black frame instead?
+	bool retrieveFrame(int outputType, cv::OutputArray outArray)
+	{
+		if (hPipe == INVALID_HANDLE_VALUE)
+		{
+			return false;
+		}
+
+		bool success = ReadFile(hPipe, pipeBuffer, VRIT_BUFF_SIZE, dwRead, NULL);
+		if (!success)
+		{
+			if (GetLastError() == ERROR_BROKEN_PIPE)
+			{
+				std::cout << "ps3eye::VIRTUAL() client disconnected, index " << m_index << "." << std::endl;
+			}
+			else if(GetLastError() != ERROR_NO_DATA)
+			{
+				std::cout << "ps3eye::VIRTUAL() ReadFile failed, index " << m_index << ", GLE=" << GetLastError() << "." << std::endl;
+			}
+			return false;
+		}
+
+		cv::Mat frame = cv::Mat(480, 640, CV_8UC3, CvScalar(0, 0, 0));
+
+		memcpy((uchar*)frame.data, pipeBuffer, VRIT_BUFF_SIZE);
+
+		frame.copyTo(outArray);
+		return true;
+	}
+
+	int getCaptureDomain() {
+		return CV_CAP_IMAGES;
+	}
+
+	bool isOpened() const
+	{
+		return (m_index != -1);
+	}
+
+	std::string getUniqueIndentifier() const
+	{
+		std::string identifier = "virtual_";
+
+		char indexStr[20];
+		identifier.append(itoa(m_index, indexStr, 10));
+
+		return identifier;
+	}
+
+protected:
+
+	bool open(int _index)
+	{
+		m_index = _index;
+		std::cout << "ps3eye::VIRTUAL() index " << m_index << " open." << std::endl;
+
+		std::string pipeName = "\\\\.\\pipe\\PSMoveSerivceEx\\VirtPSeyeStream_";
+
+		char indexStr[20];
+		pipeName.append(itoa(m_index, indexStr, 10));
+
+		hPipe = CreateNamedPipe(
+			pipeName.c_str(),
+			PIPE_ACCESS_INBOUND,
+			PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_NOWAIT,
+			1,
+			sizeof(pipeBuffer),
+			sizeof(pipeBuffer),
+			NMPWAIT_USE_DEFAULT_WAIT,
+			NULL
+		);
+
+		if (hPipe != INVALID_HANDLE_VALUE)
+		{
+			std::cout << "ps3eye::VIRTUAL() " << pipeName.c_str() << " pipe created." << std::endl;
+			return true;
+		}
+		else 
+		{
+			std::cout << "ps3eye::VIRTUAL() " << pipeName.c_str() << " pipe failed!, GLE=" << GetLastError() << std::endl;
+			return false;
+		}
+	}
+
+	void close()
+	{
+		if (hPipe != INVALID_HANDLE_VALUE)
+		{
+			DisconnectNamedPipe(hPipe);
+			CloseHandle(hPipe);
+
+			hPipe = INVALID_HANDLE_VALUE;
+		}
+
+		m_index = -1;
+	}
+
+	void refreshDimensions() {}
+
+	int m_index;
+
+	HANDLE hPipe = INVALID_HANDLE_VALUE;
+	char pipeBuffer[VRIT_BUFF_SIZE];
+	LPDWORD dwRead;
+};
+
 static bool usingCLEyeDriver()
 {
     bool cleyedriver_found = false;
@@ -481,6 +676,7 @@ static bool usingCLEyeDriver()
 #endif
     return cleyedriver_found;
 }
+#endif
 
 
 /*
@@ -488,47 +684,62 @@ static bool usingCLEyeDriver()
 */
 bool PSEyeVideoCapture::open(int index)
 {
-    if (isOpened())
-    {
-        release();
-    }
+	if (isOpened())
+	{
+		release();
+	}
 
-	// Try to open a PS3EYE-specific camera capture
-    // Only works for CLEYE_MULTICAM and PS3EYEDRIVER
-    icap = pseyeVideoCapture_create(index);
-    if (!icap.empty())
-    {
-        return true;
-    }
-    
-    // Keep track of the camera index. Necessary for CLEyeDriver only.
-    // non -1 m_index is used as a CL Eye Driver check elsewhere.
-    if (usingCLEyeDriver())
-    {
-        m_index = index;
-        std::cout << "CL Eye Driver being used with native DShow. Setting m_index to " << m_index << std::endl;
+	if (m_iVideoCaptureType == eVideoCaptureType::CaptureType_HID || m_iVideoCaptureType == eVideoCaptureType::CaptureType_ALL)
+	{
+		// Try to open a PS3EYE-specific camera capture
+		// Only works for CLEYE_MULTICAM and PS3EYEDRIVER
+		icap = pseyeVideoCapture_create(index);
+		if (!icap.empty())
+		{
+			return true;
+		}
 
-        if (!isOpened())
-        {
-            std::cout << "Attempting cv::VideoCapture::open(index) for CLEye DShow camera." << std::endl;
-            return cv::VideoCapture::open(index);
-        }
-    }
+		// Keep track of the camera index. Necessary for CLEyeDriver only.
+		// non -1 m_index is used as a CL Eye Driver check elsewhere.
+		if (usingCLEyeDriver())
+		{
+			m_index = index;
+			std::cout << "CL Eye Driver being used with native DShow. Setting m_index to " << m_index << std::endl;
 
-	// PS3EYE-specific camera capture if available, else use base class open()
+			if (!isOpened())
+			{
+				std::cout << "Attempting cv::VideoCapture::open(index) for CLEye DShow camera." << std::endl;
+				return cv::VideoCapture::open(index);
+			}
+		}
 
-    //###HipsterSloth $TODO
-    // Disabling the OpenCV camera open fallback.
-    // We don't officially support anything but the PS3Eye camera at the moment
-    // and it's currently confusing debugging other peoples camera issues with 
-    // this code path in place (random web cams getting opened)
-    //if (!isOpened())
-    //{
-    //    std::cout << "Attempting cv::VideoCapture::open(index)" << std::endl;
-    //    return cv::VideoCapture::open(index);
-    //}
+		// PS3EYE-specific camera capture if available, else use base class open()
 
-    return isOpened();
+		//###HipsterSloth $TODO
+		// Disabling the OpenCV camera open fallback.
+		// We don't officially support anything but the PS3Eye camera at the moment
+		// and it's currently confusing debugging other peoples camera issues with 
+		// this code path in place (random web cams getting opened)
+		//if (!isOpened())
+		//{
+		//    std::cout << "Attempting cv::VideoCapture::open(index)" << std::endl;
+		//    return cv::VideoCapture::open(index);
+		//}
+	}
+
+	if (m_iVideoCaptureType == eVideoCaptureType::CaptureType_VIRTUAL || m_iVideoCaptureType == eVideoCaptureType::CaptureType_ALL)
+	{
+#ifdef WIN32
+		icap = cv::makePtr<PSEYECaptureCAM_VIRTUAL>(index);
+		m_indentifier = icap.dynamicCast<PSEYECaptureCAM_VIRTUAL>()->getUniqueIndentifier();
+
+		return (!icap.empty());
+#else
+		return isOpened();
+#endif
+	}
+
+	return isOpened();
 }
 
 bool PSEyeVideoCapture::set(int propId, double value)

@@ -236,7 +236,7 @@ TrackerManager::mark_tracker_list_dirty()
 DeviceEnumerator *
 TrackerManager::allocate_device_enumerator()
 {
-    return new TrackerDeviceEnumerator;
+    return new TrackerDeviceEnumerator(TrackerDeviceEnumerator::CommunicationType_ALL);
 }
 
 void
