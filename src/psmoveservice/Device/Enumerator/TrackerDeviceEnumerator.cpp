@@ -78,13 +78,19 @@ TrackerDeviceEnumerator::TrackerDeviceEnumerator(
 	}
 	}
 
-	if (enumerators[enumerator_index].m_usb_enumerator != nullptr)
+	m_deviceType = CommonDeviceState::SUPPORTED_CAMERA_TYPE_COUNT; // invalid
+
+	int index = 0;
+	bool success = false;
+
+	if (!success && index < enumerator_count && enumerators[index].m_usb_enumerator != nullptr)
 	{
-		m_deviceType = CommonDeviceState::PS3EYE;
+		success = true;
 
 		// If the first USB device handle isn't a tracker, move on to the next device
 		if (testUSBEnumerator())
 		{
+			m_deviceType = CommonDeviceState::PS3EYE;
 			m_cameraIndex = 0;
 		}
 		else
@@ -92,21 +98,22 @@ TrackerDeviceEnumerator::TrackerDeviceEnumerator(
 			next();
 		}
 	}
-	else if (enumerators[enumerator_index].enumerator != nullptr)
+
+	index = 1;
+
+	if (!success && index < enumerator_count && enumerators[index].enumerator != nullptr)
 	{
+		success = true;
+
 		if (is_valid())
 		{
-			m_deviceType = enumerators[enumerator_index].enumerator->get_device_type();
+			m_deviceType = enumerators[index].enumerator->get_device_type();
 			m_cameraIndex = 0;
 		}
 		else
 		{
 			next();
 		}
-	}
-	else
-	{
-		m_deviceType = CommonDeviceState::SUPPORTED_CAMERA_TYPE_COUNT; // invalid
 	}
 }
 
@@ -274,60 +281,66 @@ bool TrackerDeviceEnumerator::is_valid() const
 bool TrackerDeviceEnumerator::next()
 {
 	bool foundValid = false;
+	bool prevFailed = false;
 
-	while (!foundValid && enumerator_index < enumerator_count)
+	while (!foundValid && enumerator_index < enumerator_count && enumerators[enumerator_index].m_usb_enumerator != nullptr)
 	{
-		if (enumerators[enumerator_index].m_usb_enumerator != nullptr)
+		while (is_valid() && !foundValid)
 		{
-			while (is_valid() && !foundValid)
-			{
-				usb_device_enumerator_next(enumerators[enumerator_index].m_usb_enumerator);
+			usb_device_enumerator_next(enumerators[enumerator_index].m_usb_enumerator);
 
-				if (testUSBEnumerator())
-				{
-					foundValid = true;
-				}
+			if (testUSBEnumerator())
+			{
+				foundValid = true;
 			}
+		}
 
-			if (foundValid)
+		if (foundValid)
+		{
+			m_deviceType = CommonDeviceState::PS3EYE;
+			++m_cameraIndex;
+		}
+		else
+		{
+			++enumerator_index;
+			prevFailed = true;
+		}
+	}
+
+	while (!foundValid && enumerator_index < enumerator_count && enumerators[enumerator_index].enumerator != nullptr)
+	{
+		if (prevFailed)
+		{
+			prevFailed = false;
+
+			if (enumerator_index < enumerator_count)
 			{
-				m_deviceType = CommonDeviceState::PS3EYE;
-				++m_cameraIndex;
+				foundValid = enumerators[enumerator_index].enumerator->is_valid();
+			}
+		}
+
+		while (!foundValid && enumerator_index < enumerator_count)
+		{
+			if (enumerators[enumerator_index].enumerator->is_valid())
+			{
+				enumerators[enumerator_index].enumerator->next();
+				foundValid = enumerators[enumerator_index].enumerator->is_valid();
 			}
 			else
 			{
 				++enumerator_index;
+				prevFailed = true;
 			}
 		}
-		else if (enumerators[enumerator_index].enumerator != nullptr)
+
+		if (foundValid)
 		{
-			while (!foundValid && enumerator_index < enumerator_count)
-			{
-				if (enumerators[enumerator_index].enumerator->is_valid())
-				{
-					enumerators[enumerator_index].enumerator->next();
-					foundValid = enumerators[enumerator_index].enumerator->is_valid();
-				}
-				else
-				{
-					++enumerator_index;
-
-					if (enumerator_index < enumerator_count)
-					{
-						foundValid = enumerators[enumerator_index].enumerator->is_valid();
-					}
-				}
-			}
-
-			if (foundValid)
-			{
-				m_deviceType = enumerators[enumerator_index].enumerator->get_device_type();
-				++m_cameraIndex;
-			}
-			else
-			{
-				m_deviceType = CommonDeviceState::SUPPORTED_CONTROLLER_TYPE_COUNT; // invalid
-			}
+			m_deviceType = enumerators[enumerator_index].enumerator->get_device_type();
+			++m_cameraIndex;
+		}
+		else
+		{
+			m_deviceType = CommonDeviceState::SUPPORTED_CONTROLLER_TYPE_COUNT; // invalid
 		}
 	}
 
