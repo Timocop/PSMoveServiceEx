@@ -205,6 +205,8 @@ protected:
 
 	void AppStage_ColorCalibration::get_contures_lower(int type, int min_points_in_contour, std::vector<std::vector<int>> &contures);
 
+	bool AppStage_ColorCalibration::is_tracker_virtual();
+
 private:
     // ClientPSMoveAPI state
 	int m_overrideControllerId;	

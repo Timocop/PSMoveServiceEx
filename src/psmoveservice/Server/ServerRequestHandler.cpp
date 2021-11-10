@@ -1816,7 +1816,9 @@ protected:
 
                 switch (tracker_view->getTrackerDeviceType())
                 {
-                case CommonControllerState::PS3EYE:
+				case CommonControllerState::PS3EYE:
+				case CommonControllerState::VirtualTracker:
+					//###Externet $TODO: Change Server Protocol for virtual trackers.
                     tracker_info->set_tracker_type(PSMoveProtocol::PS3EYE);
                     break;
                 default:

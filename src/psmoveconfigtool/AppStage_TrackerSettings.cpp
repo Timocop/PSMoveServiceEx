@@ -228,37 +228,55 @@ void AppStage_TrackerSettings::renderUI()
 
             ImGui::BulletText("Tracker ID: %d", trackerInfo.tracker_id);
 
+			// Virtual trackers have a common device path "VirtualTracker_#"
+			// ###Externet $TODO: Add better virtual tracker check. Probably should do that after changing protocols.
+			bool is_virtual = (trackerInfo.device_path[0] == 'V');
+
             switch (trackerInfo.tracker_type)
             {
-            case PSMTracker_PS3Eye:
-                {
-                    ImGui::BulletText("Controller Type: PS3 Eye");
-                } break;
+			case PSMTracker_PS3Eye:
+			{
+				if (is_virtual)
+				{
+					ImGui::BulletText("Controller Type: PS3 Eye (Virtual)");
+				}
+				else
+				{
+					ImGui::BulletText("Controller Type: PS3 Eye");
+				}
+			} break;
             default:
                 assert(0 && "Unreachable");
             }
 
-            switch (trackerInfo.tracker_driver)
-            {
-            case PSMDriver_LIBUSB:
-                {
-                    ImGui::BulletText("Controller Type: LIBUSB");
-                } break;
-            case PSMDriver_CL_EYE:
-                {
-                    ImGui::BulletText("Controller Type: CLEye");
-                } break;
-            case PSMDriver_CL_EYE_MULTICAM:
-                {
-                    ImGui::BulletText("Controller Type: CLEye(Multicam SDK)");
-                } break;
-            case PSMDriver_GENERIC_WEBCAM:
-                {
-                    ImGui::BulletText("Controller Type: Generic Webcam");
-                } break;
-            default:
-                assert(0 && "Unreachable");
-            }
+			if (is_virtual)
+			{
+				ImGui::BulletText("Controller Driver: Virtual");
+			}
+			else
+			{
+				switch (trackerInfo.tracker_driver)
+				{
+				case PSMDriver_LIBUSB:
+				{
+					ImGui::BulletText("Controller Driver: LIBUSB");
+				} break;
+				case PSMDriver_CL_EYE:
+				{
+					ImGui::BulletText("Controller Driver: CLEye");
+				} break;
+				case PSMDriver_CL_EYE_MULTICAM:
+				{
+					ImGui::BulletText("Controller Driver: CLEye(Multicam SDK)");
+				} break;
+				case PSMDriver_GENERIC_WEBCAM:
+				{
+					ImGui::BulletText("Controller Driver: Generic Webcam");
+				} break;
+				default:
+					assert(0 && "Unreachable");
+				}
+			}
 
             ImGui::BulletText("Shared Mem Name: %s", trackerInfo.shared_memory_name);
             ImGui::BulletText("Device Path: ");

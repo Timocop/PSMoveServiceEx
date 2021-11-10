@@ -774,118 +774,125 @@ void AppStage_ColorCalibration::renderUI()
 
 				if (ImGui::CollapsingHeader("Advanced Settings", 0, true, false))
 				{
-					if (ImGui::Button("-##FrameWidth"))
+					if (is_tracker_virtual())
 					{
-						if (m_trackerFrameWidth == 640) request_tracker_set_frame_width(m_trackerFrameWidth - 320);
-					}
-					ImGui::SameLine();
-					if (ImGui::Button("+##FrameWidth"))
-					{
-						if (m_trackerFrameWidth == 320) request_tracker_set_frame_width(m_trackerFrameWidth + 320);
-					}
-					ImGui::SameLine();
-					ImGui::Text("Frame Width: %.0f", m_trackerFrameWidth);
-
-					int frame_rate_positive_change = 10;
-					int frame_rate_negative_change = -10;
-
-					double val = m_trackerFrameRate;
-					if (m_trackerFrameWidth == 320)
-					{
-						if (val == 2) { frame_rate_positive_change = 1; frame_rate_negative_change = 0; }
-						else if (val == 3) { frame_rate_positive_change = 2; frame_rate_negative_change = -1; }
-						else if (val == 5) { frame_rate_positive_change = 2; frame_rate_negative_change = -0; }
-						else if (val == 7) { frame_rate_positive_change = 3; frame_rate_negative_change = -2; }
-						else if (val == 10) { frame_rate_positive_change = 2; frame_rate_negative_change = -3; }
-						else if (val == 12) { frame_rate_positive_change = 3; frame_rate_negative_change = -2; }
-						else if (val == 15) { frame_rate_positive_change = 4; frame_rate_negative_change = -3; }
-						else if (val == 17) { frame_rate_positive_change = 13; frame_rate_negative_change = -4; }
-						else if (val == 30) { frame_rate_positive_change = 7; frame_rate_negative_change = -13; }
-						else if (val == 37) { frame_rate_positive_change = 3; frame_rate_negative_change = -7; }
-						else if (val == 40) { frame_rate_positive_change = 10; frame_rate_negative_change = -3; }
-						else if (val == 50) { frame_rate_positive_change = 10; frame_rate_negative_change = -10; }
-						else if (val == 60) { frame_rate_positive_change = 15; frame_rate_negative_change = -10; }
-						else if (val == 75) { frame_rate_positive_change = 15; frame_rate_negative_change = -15; }
-						else if (val == 90) { frame_rate_positive_change = 10; frame_rate_negative_change = -15; }
-						else if (val == 100) { frame_rate_positive_change = 25; frame_rate_negative_change = -10; }
-						else if (val == 125) { frame_rate_positive_change = 12; frame_rate_negative_change = -25; }
-						else if (val == 137) { frame_rate_positive_change = 13; frame_rate_negative_change = -12; }
-						else if (val == 150) { frame_rate_positive_change = 37; frame_rate_negative_change = -13; }
-						else if (val == 187) { frame_rate_positive_change = 0; frame_rate_negative_change = -37; }
-						else if (val == 205) { frame_rate_positive_change = 0; frame_rate_negative_change = -18; }
-						else if (val == 290) { frame_rate_positive_change = 0; frame_rate_negative_change = -85; }
+						ImGui::TextDisabled("Virtual Trackers have no properties.");
 					}
 					else
 					{
-						if (val == 2) { frame_rate_positive_change = 1; frame_rate_negative_change = 0; }
-						else if (val == 3) { frame_rate_positive_change = 2; frame_rate_negative_change = -1; }
-						else if (val == 5) { frame_rate_positive_change = 3; frame_rate_negative_change = -0; }
-						else if (val == 8) { frame_rate_positive_change = 2; frame_rate_negative_change = -3; }
-						else if (val == 10) { frame_rate_positive_change = 5; frame_rate_negative_change = -2; }
-						else if (val == 15) { frame_rate_positive_change = 5; frame_rate_negative_change = -5; }
-						else if (val == 20) { frame_rate_positive_change = 5; frame_rate_negative_change = -5; }
-						else if (val == 25) { frame_rate_positive_change = 5; frame_rate_negative_change = -5; }
-						else if (val == 30) { { frame_rate_negative_change = -5; } }
-						else if (val == 60) { { frame_rate_positive_change = 15; } }
-						else if (val == 75) { frame_rate_positive_change = 0; frame_rate_negative_change = -15; }
-						else if (val == 83) { frame_rate_positive_change = 0; frame_rate_negative_change = -8; }
-					}
-
-					if (ImGui::Button("-##FrameRate"))
-					{
-						request_tracker_set_frame_rate(m_trackerFrameRate + frame_rate_negative_change);
-					}
-					ImGui::SameLine();
-					if (ImGui::Button("+##FrameRate"))
-					{
-						request_tracker_set_frame_rate(m_trackerFrameRate + frame_rate_positive_change);
-					}
-					ImGui::SameLine();
-					ImGui::Text("Frame Rate: %.0f", m_trackerFrameRate);
-
-					if (ImGui::Button("-##Exposure"))
-					{
-						request_tracker_set_exposure(m_trackerExposure - 8);
-					}
-					ImGui::SameLine();
-					if (ImGui::Button("+##Exposure"))
-					{
-						request_tracker_set_exposure(m_trackerExposure + 8);
-					}
-					ImGui::SameLine();
-					ImGui::Text("Exposure: %.0f", m_trackerExposure);
-
-					if (ImGui::Button("-##Gain"))
-					{
-						request_tracker_set_gain(m_trackerGain - 8);
-					}
-					ImGui::SameLine();
-					if (ImGui::Button("+##Gain"))
-					{
-						request_tracker_set_gain(m_trackerGain + 8);
-					}
-					ImGui::SameLine();
-					ImGui::Text("Gain: %.0f", m_trackerGain);
-
-					// Render all of the option sets fetched from the settings query
-					for (auto it = m_trackerOptions.begin(); it != m_trackerOptions.end(); ++it)
-					{
-						TrackerOption &option = *it;
-						const int value_count = static_cast<int>(option.option_strings.size());
-
-						ImGui::PushID(option.option_name.c_str());
-						if (ImGui::Button("<"))
+						if (ImGui::Button("-##FrameWidth"))
 						{
-							request_tracker_set_option(option, (option.option_index + value_count - 1) % value_count);
+							if (m_trackerFrameWidth == 640) request_tracker_set_frame_width(m_trackerFrameWidth - 320);
 						}
 						ImGui::SameLine();
-						if (ImGui::Button(">"))
+						if (ImGui::Button("+##FrameWidth"))
 						{
-							request_tracker_set_option(option, (option.option_index + 1) % value_count);
+							if (m_trackerFrameWidth == 320) request_tracker_set_frame_width(m_trackerFrameWidth + 320);
 						}
 						ImGui::SameLine();
-						ImGui::Text("%s: %s", option.option_name.c_str(), option.option_strings[option.option_index].c_str());
-						ImGui::PopID();
+						ImGui::Text("Frame Width: %.0f", m_trackerFrameWidth);
+
+						int frame_rate_positive_change = 10;
+						int frame_rate_negative_change = -10;
+
+						double val = m_trackerFrameRate;
+						if (m_trackerFrameWidth == 320)
+						{
+							if (val == 2) { frame_rate_positive_change = 1; frame_rate_negative_change = 0; }
+							else if (val == 3) { frame_rate_positive_change = 2; frame_rate_negative_change = -1; }
+							else if (val == 5) { frame_rate_positive_change = 2; frame_rate_negative_change = -0; }
+							else if (val == 7) { frame_rate_positive_change = 3; frame_rate_negative_change = -2; }
+							else if (val == 10) { frame_rate_positive_change = 2; frame_rate_negative_change = -3; }
+							else if (val == 12) { frame_rate_positive_change = 3; frame_rate_negative_change = -2; }
+							else if (val == 15) { frame_rate_positive_change = 4; frame_rate_negative_change = -3; }
+							else if (val == 17) { frame_rate_positive_change = 13; frame_rate_negative_change = -4; }
+							else if (val == 30) { frame_rate_positive_change = 7; frame_rate_negative_change = -13; }
+							else if (val == 37) { frame_rate_positive_change = 3; frame_rate_negative_change = -7; }
+							else if (val == 40) { frame_rate_positive_change = 10; frame_rate_negative_change = -3; }
+							else if (val == 50) { frame_rate_positive_change = 10; frame_rate_negative_change = -10; }
+							else if (val == 60) { frame_rate_positive_change = 15; frame_rate_negative_change = -10; }
+							else if (val == 75) { frame_rate_positive_change = 15; frame_rate_negative_change = -15; }
+							else if (val == 90) { frame_rate_positive_change = 10; frame_rate_negative_change = -15; }
+							else if (val == 100) { frame_rate_positive_change = 25; frame_rate_negative_change = -10; }
+							else if (val == 125) { frame_rate_positive_change = 12; frame_rate_negative_change = -25; }
+							else if (val == 137) { frame_rate_positive_change = 13; frame_rate_negative_change = -12; }
+							else if (val == 150) { frame_rate_positive_change = 37; frame_rate_negative_change = -13; }
+							else if (val == 187) { frame_rate_positive_change = 0; frame_rate_negative_change = -37; }
+							else if (val == 205) { frame_rate_positive_change = 0; frame_rate_negative_change = -18; }
+							else if (val == 290) { frame_rate_positive_change = 0; frame_rate_negative_change = -85; }
+						}
+						else
+						{
+							if (val == 2) { frame_rate_positive_change = 1; frame_rate_negative_change = 0; }
+							else if (val == 3) { frame_rate_positive_change = 2; frame_rate_negative_change = -1; }
+							else if (val == 5) { frame_rate_positive_change = 3; frame_rate_negative_change = -0; }
+							else if (val == 8) { frame_rate_positive_change = 2; frame_rate_negative_change = -3; }
+							else if (val == 10) { frame_rate_positive_change = 5; frame_rate_negative_change = -2; }
+							else if (val == 15) { frame_rate_positive_change = 5; frame_rate_negative_change = -5; }
+							else if (val == 20) { frame_rate_positive_change = 5; frame_rate_negative_change = -5; }
+							else if (val == 25) { frame_rate_positive_change = 5; frame_rate_negative_change = -5; }
+							else if (val == 30) { { frame_rate_negative_change = -5; } }
+							else if (val == 60) { { frame_rate_positive_change = 15; } }
+							else if (val == 75) { frame_rate_positive_change = 0; frame_rate_negative_change = -15; }
+							else if (val == 83) { frame_rate_positive_change = 0; frame_rate_negative_change = -8; }
+						}
+
+						if (ImGui::Button("-##FrameRate"))
+						{
+							request_tracker_set_frame_rate(m_trackerFrameRate + frame_rate_negative_change);
+						}
+						ImGui::SameLine();
+						if (ImGui::Button("+##FrameRate"))
+						{
+							request_tracker_set_frame_rate(m_trackerFrameRate + frame_rate_positive_change);
+						}
+						ImGui::SameLine();
+						ImGui::Text("Frame Rate: %.0f", m_trackerFrameRate);
+
+						if (ImGui::Button("-##Exposure"))
+						{
+							request_tracker_set_exposure(m_trackerExposure - 8);
+						}
+						ImGui::SameLine();
+						if (ImGui::Button("+##Exposure"))
+						{
+							request_tracker_set_exposure(m_trackerExposure + 8);
+						}
+						ImGui::SameLine();
+						ImGui::Text("Exposure: %.0f", m_trackerExposure);
+
+						if (ImGui::Button("-##Gain"))
+						{
+							request_tracker_set_gain(m_trackerGain - 8);
+						}
+						ImGui::SameLine();
+						if (ImGui::Button("+##Gain"))
+						{
+							request_tracker_set_gain(m_trackerGain + 8);
+						}
+						ImGui::SameLine();
+						ImGui::Text("Gain: %.0f", m_trackerGain);
+
+						// Render all of the option sets fetched from the settings query
+						for (auto it = m_trackerOptions.begin(); it != m_trackerOptions.end(); ++it)
+						{
+							TrackerOption &option = *it;
+							const int value_count = static_cast<int>(option.option_strings.size());
+
+							ImGui::PushID(option.option_name.c_str());
+							if (ImGui::Button("<"))
+							{
+								request_tracker_set_option(option, (option.option_index + value_count - 1) % value_count);
+							}
+							ImGui::SameLine();
+							if (ImGui::Button(">"))
+							{
+								request_tracker_set_option(option, (option.option_index + 1) % value_count);
+							}
+							ImGui::SameLine();
+							ImGui::Text("%s: %s", option.option_name.c_str(), option.option_strings[option.option_index].c_str());
+							ImGui::PopID();
+						}
 					}
 				}
 
@@ -2724,4 +2731,16 @@ void AppStage_ColorCalibration::get_contures_lower(int type, int min_points_in_c
 		pos.push_back(static_cast<int>(massCenter.y * (ImGui::GetIO().DisplaySize.y / static_cast<float>(frameHeight))));
 		contures.push_back(pos);
 	}
+}
+
+// Virtual trackers have a common device path "VirtualTracker_#"
+// ###Externet $TODO: Add better virtual tracker check. Probably should do that after changing protocols.
+bool AppStage_ColorCalibration::is_tracker_virtual()
+{
+	if (m_trackerView->tracker_info.tracker_type == PSMTracker_PS3Eye)
+	{
+		return m_trackerView->tracker_info.device_path[0] == 'V';
+	}
+
+	return false;
 }
