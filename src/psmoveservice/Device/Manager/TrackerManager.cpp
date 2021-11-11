@@ -21,7 +21,7 @@ const int TrackerManagerConfig::CONFIG_VERSION = 3;
 TrackerManagerConfig::TrackerManagerConfig(const std::string &fnamebase)
     : PSMoveConfig(fnamebase)
 {
-	virtual_controller_count = 0;
+	virtual_tracker_count = 0;
 	controller_position_smoothing = 0.f;
 	controller_position_prediction = 0.0f;
 	controller_position_prediction_smoothing = 0.0f;
@@ -57,7 +57,7 @@ TrackerManagerConfig::config2ptree()
 
     pt.put("version", TrackerManagerConfig::CONFIG_VERSION);
 
-	pt.put("virtual_controller_count", virtual_controller_count);
+	pt.put("virtual_tracker_count", virtual_tracker_count);
 	pt.put("controller_position_smoothing", controller_position_smoothing);
 	pt.put("controller_position_prediction", controller_position_prediction);
 	pt.put("controller_position_prediction_smoothing", controller_position_prediction_smoothing);
@@ -97,7 +97,7 @@ TrackerManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
 
     if (version == TrackerManagerConfig::CONFIG_VERSION)
     {
-		virtual_controller_count = pt.get<int>("virtual_controller_count", virtual_controller_count);
+		virtual_tracker_count = pt.get<int>("virtual_tracker_count", virtual_tracker_count);
 		controller_position_smoothing = pt.get<float>("controller_position_smoothing", controller_position_smoothing);
 		controller_position_prediction = pt.get<float>("controller_position_prediction", controller_position_prediction);
 		controller_position_prediction_smoothing = pt.get<float>("controller_position_prediction_smoothing", controller_position_prediction_smoothing);
@@ -193,7 +193,7 @@ TrackerManager::startup()
 
 		// Copy the virtual tracker count into the Virtual tracker enumerator's static variable.
 		// This breaks the dependency between the Tracker Manager and the enumerator.
-		VirtualTrackerEnumerator::virtual_tracker_count = cfg.virtual_controller_count;
+		VirtualTrackerEnumerator::virtual_tracker_count = cfg.virtual_tracker_count;
 
         // Refresh the tracker list
         mark_tracker_list_dirty();

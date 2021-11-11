@@ -49,7 +49,7 @@ public:
     virtual const boost::property_tree::ptree config2ptree();
     virtual void ptree2config(const boost::property_tree::ptree &pt);
 
-	int virtual_controller_count;
+	int virtual_tracker_count;
 	float controller_position_smoothing;
 	float controller_position_prediction;
 	float controller_position_prediction_smoothing;
