@@ -76,6 +76,7 @@ protected:
 		detection_change_color,
 		detection_change_color_wait1,
 		detection_change_color_wait2,
+		detection_fail_pre,
 		detection_fail,
 		detection_finish,
 
@@ -91,6 +92,15 @@ protected:
         pendingTrackerStartStreamRequest,
         failedTrackerStartStreamRequest,
     };
+
+	enum eDetectionFailReason
+	{
+		failreason_unknown,
+		failreason_unsupported_tracker,
+		failreason_unsupported_controller,
+		failreason_no_detection,
+		failreason_canceled
+	};
 
     enum eVideoDisplayMode
     {
@@ -268,6 +278,7 @@ private:
 	bool m_bDetectingExposureGood;
 	bool m_bDetectingUseGainInstead;
 	bool m_bDetectingCancel;
+	eDetectionFailReason m_iDetectingFailReason;
 	std::vector<std::vector<int>> m_mAutoDetectedContures;
 };
 

@@ -29,6 +29,8 @@
 #define snprintf _snprintf
 #endif
 
+#define MAX_COLOR_AUTODETECT_PROBING 64
+
 //-- statics ----
 const char *AppStage_ColorCalibration::APP_STAGE_NAME = "ColorCalibration";
 
@@ -183,6 +185,7 @@ AppStage_ColorCalibration::AppStage_ColorCalibration(App *app)
 	, m_iDetectingExposure(0)
 	, m_bDetectingUseGainInstead(false)
 	, m_bDetectingCancel(false)
+	, m_iDetectingFailReason(eDetectionFailReason::failreason_unknown)
 {
 	memset(m_colorPresets, 0, sizeof(m_colorPresets));
 	m_mAlignPosition[0] = 0.0f;
@@ -1552,20 +1555,39 @@ void AppStage_ColorCalibration::renderUI()
 			std::vector<std::vector<int>> contures;
 			get_contures_lower(1, 4, contures);
 
+			// We can only change PSmoves and PS4 controllers colors. Abort on others.
+			if (m_masterControllerView->ControllerType != PSMControllerType::PSMController_Move &&
+				m_masterControllerView->ControllerType != PSMControllerType::PSMController_DualShock4)
+			{
+				m_iDetectingFailReason = eDetectionFailReason::failreason_unsupported_controller;
+				setState(eMenuState::detection_fail_pre);
+				break;
+			}
+
 			// We didnt got any results?
 			// Controller either blocked by something or exposure too low.
 			// Try adjusting exposure first.
 			if (contures.size() == 0)
 			{
-				m_iDetectingExposure += 8;
-
-				if (m_iDetectingExposure >= 128)
+				// If its a virtual tracker, don't even bother setting gain/exposure, just fail.
+				if (is_tracker_virtual())
 				{
-					setState(eMenuState::detection_fail);
+					m_iDetectingFailReason = eDetectionFailReason::failreason_unsupported_tracker;
+					setState(eMenuState::detection_fail_pre);
 				}
 				else
 				{
-					setState(eMenuState::detection_exposure_adjust);
+					m_iDetectingExposure += 8;
+
+					if (m_iDetectingExposure >= MAX_COLOR_AUTODETECT_PROBING)
+					{
+						m_iDetectingFailReason = eDetectionFailReason::failreason_no_detection;
+						setState(eMenuState::detection_fail_pre);
+					}
+					else
+					{
+						setState(eMenuState::detection_exposure_adjust);
+					}
 				}
 				break;
 			}
@@ -1614,7 +1636,8 @@ void AppStage_ColorCalibration::renderUI()
 		else
 		{
 			m_bDetectingCancel = false;
-			setState(eMenuState::detection_fail);
+			m_iDetectingFailReason = eDetectionFailReason::failreason_canceled;
+			setState(eMenuState::detection_fail_pre);
 		}
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(auto_calib_sleep));
@@ -1628,33 +1651,135 @@ void AppStage_ColorCalibration::renderUI()
 		setState(eMenuState::detection_change_color);
 		std::this_thread::sleep_for(std::chrono::milliseconds(auto_calib_sleep));
 		break;
-	case eMenuState::detection_fail:
+	case eMenuState::detection_fail_pre:
 	{
-		m_bDetectingColors = false;
-
 		request_tracker_set_exposure(32);
 		request_tracker_set_gain(32);
 
-		ImGui::SetNextWindowPosCenter();
-		ImGui::SetNextWindowSize(ImVec2(600, 100));
-		ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
-
-		ImGui::Text("Color sampling of controller #%d failed!", m_masterControllerView->ControllerID);
-
-		if (ImGui::Button("Try again"))
+		setState(eMenuState::detection_fail);
+		break;
+	}
+	case eMenuState::detection_fail:
+	{
+		m_bDetectingColors = false;
+		
+		switch (m_iDetectingFailReason)
 		{
-			m_iDetectingExposure = 8;
-			setState(eMenuState::detection_exposure_adjust);
+		case eDetectionFailReason::failreason_no_detection:
+		{
+			ImGui::SetNextWindowPosCenter();
+			ImGui::SetNextWindowSize(ImVec2(600, 175));
+			ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
+
+			ImGui::TextWrapped("Color sampling failed!");
+			ImGui::TextWrapped("Unable to find controller #%d on tracker #%d!", m_masterControllerView->ControllerID, m_trackerView->tracker_info.tracker_id);
+		 	ImGui::TextWrapped("Make sure the controller tracking light is not being obscured during the sampling process.");
+			ImGui::TextWrapped("Otherwise use manual color detection method.");
+
+			if (ImGui::Button("Try again"))
+			{
+				m_iDetectingExposure = 8;
+				setState(eMenuState::detection_exposure_adjust);
+			}
+
+			ImGui::SameLine();
+
+			if (ImGui::Button("Go back"))
+			{
+				setState(eMenuState::manualConfig);
+			}
+
+			ImGui::End();
+			break;
+		}
+		case eDetectionFailReason::failreason_canceled:
+		{
+			ImGui::SetNextWindowPosCenter();
+			ImGui::SetNextWindowSize(ImVec2(600, 100));
+			ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
+
+			ImGui::Text("Color sampling aborted!");
+
+			if (ImGui::Button("Go back"))
+			{
+				setState(eMenuState::manualConfig);
+			}
+
+			ImGui::End();
+			break;
+		}
+		case eDetectionFailReason::failreason_unsupported_controller:
+		{
+			ImGui::SetNextWindowPosCenter();
+			ImGui::SetNextWindowSize(ImVec2(600, 150));
+			ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
+
+			ImGui::TextWrapped("Color sampling failed!");
+			ImGui::TextWrapped("Unable to change color on virtual controllers!");
+			ImGui::TextWrapped("Please use the manual color detection instead.");
+
+			if (ImGui::Button("Go back"))
+			{
+				setState(eMenuState::manualConfig);
+			}
+
+			ImGui::End();
+			break;
+		}
+		case eDetectionFailReason::failreason_unsupported_tracker:
+		{
+			ImGui::SetNextWindowPosCenter();
+			ImGui::SetNextWindowSize(ImVec2(600, 175));
+			ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
+
+			ImGui::TextWrapped("Color sampling failed!");
+			ImGui::TextWrapped("Unable to automatically adjust exposure/gain on virtual trackers!");
+			ImGui::TextWrapped("Please adjust exposure/gain on this tracker manually and try again.");
+			ImGui::TextWrapped("Otherwise use manual color detection method.");
+		
+			if (ImGui::Button("Try again"))
+			{
+				m_iDetectingExposure = 8;
+				setState(eMenuState::detection_exposure_adjust);
+			}
+
+			ImGui::SameLine();
+
+			if (ImGui::Button("Go back"))
+			{
+				setState(eMenuState::manualConfig);
+			}
+
+			ImGui::End();
+			break;
+		}
+		default:
+		{
+			ImGui::SetNextWindowPosCenter();
+			ImGui::SetNextWindowSize(ImVec2(600, 150));
+			ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
+
+			ImGui::TextWrapped("Color sampling on controller #%d and tracker #%d failed!", m_masterControllerView->ControllerID, m_trackerView->tracker_info.tracker_id);
+
+			if (ImGui::Button("Try again"))
+			{
+				m_iDetectingExposure = 8;
+				setState(eMenuState::detection_exposure_adjust);
+			}
+
+			ImGui::SameLine();
+
+			if (ImGui::Button("Go back"))
+			{
+				setState(eMenuState::manualConfig);
+			}
+
+			ImGui::End();
+			break;
+		}
 		}
 
-		ImGui::SameLine();
-
-		if (ImGui::Button("Cancel"))
-		{
-			setState(eMenuState::manualConfig);
-		}
-
-		ImGui::End();
+		
 		break;
 	}
 	case eMenuState::detection_finish:
@@ -1665,8 +1790,8 @@ void AppStage_ColorCalibration::renderUI()
 		ImGui::SetNextWindowSize(ImVec2(600, 100));
 		ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
-		ImGui::Text("Color sampling finished.");
-		ImGui::Text("Controller colors and tracker exposure/gain have been automatically adjusted!");
+		ImGui::TextWrapped("Color sampling finished.");
+		ImGui::TextWrapped("Controller colors and tracker exposure/gain have been automatically adjusted!");
 
 		if (ImGui::Button("Ok"))
 		{
