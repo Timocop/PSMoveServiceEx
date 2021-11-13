@@ -519,16 +519,32 @@ public:
 		return false;
 	}
 
-	// ####Externet $TODO: Always return true and retrieve black frame instead?
 	bool grabFrame()
+	{
+		return true;
+	}
+
+	bool retrieveFrame(int outputType, cv::OutputArray outArray)
 	{
 		if (hPipe == INVALID_HANDLE_VALUE)
 		{
-			return false;
+			capFrame.setTo(cv::Scalar(0, 0, 0));
+			cv::putText(
+				capFrame,
+				"Virtual tracker not connected.",
+				cv::Point(64, capFrame.rows / 2),
+				cv::FONT_HERSHEY_DUPLEX,
+				1.0,
+				CvScalar(255, 255, 255),
+				2
+			);
+
+			capFrame.copyTo(outArray);
+			return true;
 		}
 
 		bool connected = ConnectNamedPipe(hPipe, NULL);
-		if(connected)
+		if (connected)
 			std::cout << "ps3eye::VIRTUAL() ConnectNamedPipe success, index " << m_index << std::endl;
 
 		if (!connected)
@@ -542,37 +558,77 @@ public:
 				DisconnectNamedPipe(hPipe);
 			}
 		}
-		
-		return connected;
-	}
 
-	// ####Externet $TODO: Always return true and retrieve black frame instead?
-	bool retrieveFrame(int outputType, cv::OutputArray outArray)
-	{
-		if (hPipe == INVALID_HANDLE_VALUE)
+		if (!connected)
 		{
-			return false;
+			capFrame.setTo(cv::Scalar(0, 0, 0));
+			cv::putText(
+				capFrame,
+				"Virtual tracker not connected.",
+				cv::Point(64, capFrame.rows / 2),
+				cv::FONT_HERSHEY_DUPLEX,
+				1.0,
+				CvScalar(255, 255, 255),
+				2
+			);
+
+			capFrame.copyTo(outArray);
+			return true;
 		}
 
 		bool success = ReadFile(hPipe, pipeBuffer, VRIT_BUFF_SIZE, dwRead, NULL);
 		if (!success)
 		{
-			if (GetLastError() == ERROR_BROKEN_PIPE)
+			bool bDisplayText = true;
+
+			switch (GetLastError())
+			{
+			case ERROR_BROKEN_PIPE:
 			{
 				std::cout << "ps3eye::VIRTUAL() client disconnected, index " << m_index << "." << std::endl;
+				break;
 			}
-			else if(GetLastError() != ERROR_NO_DATA)
+			case ERROR_PIPE_LISTENING:
+			{
+				break;
+			}
+			case ERROR_NO_DATA:
+			{
+				// Everything ok, we are just waiting for new data.
+				bDisplayText = false;
+				break;
+			}
+			default:
 			{
 				std::cout << "ps3eye::VIRTUAL() ReadFile failed, index " << m_index << ", GLE=" << GetLastError() << "." << std::endl;
+				break;
 			}
+			}
+
+			if (bDisplayText)
+			{
+				capFrame.setTo(cv::Scalar(0, 0, 0));
+				cv::putText(
+					capFrame,
+					"Virtual tracker not connected.",
+					cv::Point(64, capFrame.rows / 2),
+					cv::FONT_HERSHEY_DUPLEX,
+					1.0,
+					CvScalar(255, 255, 255),
+					2
+				);
+
+				capFrame.copyTo(outArray);
+				return true;
+			}
+
 			return false;
 		}
 
-		cv::Mat frame = cv::Mat(480, 640, CV_8UC3, CvScalar(0, 0, 0));
 
-		memcpy((uchar*)frame.data, pipeBuffer, VRIT_BUFF_SIZE);
+		memcpy((uchar*)capFrame.data, pipeBuffer, VRIT_BUFF_SIZE);
 
-		frame.copyTo(outArray);
+		capFrame.copyTo(outArray);
 		return true;
 	}
 
@@ -600,6 +656,8 @@ protected:
 	bool open(int _index)
 	{
 		m_index = _index;
+		capFrame = cv::Mat(480, 640, CV_8UC3, CvScalar(0, 0, 0));
+
 		std::cout << "ps3eye::VIRTUAL() index " << m_index << " open." << std::endl;
 
 		std::string pipeName = "\\\\.\\pipe\\PSMoveSerivceEx\\VirtPSeyeStream_";
@@ -650,6 +708,7 @@ protected:
 	HANDLE hPipe = INVALID_HANDLE_VALUE;
 	char pipeBuffer[VRIT_BUFF_SIZE];
 	LPDWORD dwRead;
+	cv::Mat capFrame;
 };
 
 static bool usingCLEyeDriver()
