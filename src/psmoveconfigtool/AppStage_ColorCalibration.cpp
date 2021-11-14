@@ -1221,6 +1221,357 @@ void AppStage_ColorCalibration::renderUI()
 				}
 			}
 
+			if (ImGui::CollapsingHeader("Warnings and issues", 0, true, true))
+			{
+				ImColor colorGreen = ImColor(0.f, 1.f, 0.f);
+				ImColor colorOrange = ImColor(1.f, .5f, 0.f);
+				ImColor colorRed = ImColor(1.f, 0.f, 0.f);
+				ImColor colorBlue = ImColor(0.f, 0.25f, 1.f);
+
+				bool bHasIssues = false;
+
+				{
+					// Recommend exposure adjustments rather than gain adjustments
+					if (m_trackerGain > 32)
+					{
+						ImGui::ColorButton(colorBlue, true);
+						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+						ImGui::SameLine();
+						ImGui::TextWrapped(
+							"Tracker gain not default. "
+							"It's recommended to adjust exposure instead of gain. "
+							"Increasing gain will increase random color noise which can affect tracking quality in a negative way."
+						);
+					}
+				}
+
+				{
+					// Validate Exposure/Gain
+					TrackerColorPreset preset = getColorPreset();
+
+					// Saturation too low, its too bright!
+					if (preset.saturation_center < 25)
+					{
+						ImGui::ColorButton(colorRed, true);
+						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+						ImGui::SameLine();
+						ImGui::TextWrapped("Color saturation too low! The tracking color is way too bright and will cause tracking problems! Adjust your tracker exposure/gain settings!");
+						bHasIssues = true;
+					}
+					else if (preset.saturation_center < 75)
+					{
+						ImGui::ColorButton(colorOrange, true);
+						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+						ImGui::SameLine();
+						ImGui::TextWrapped("Color saturation not optimal! The tracking color is too bright and could cause tracking problems! Adjust your tracker exposure/gain settings.");
+						bHasIssues = true;
+					}
+
+					// Value too low, its too dark!
+					if (preset.value_center < 25)
+					{
+						ImGui::ColorButton(colorOrange, true);
+						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+						ImGui::SameLine();
+						ImGui::TextWrapped("Color value too low! The tracking color is way too dark and could cause tracking problems! Adjust your tracker exposure/gain settings!");
+						bHasIssues = true;
+					}
+					else if (preset.value_center < 75)
+					{
+						ImGui::ColorButton(colorOrange, true);
+						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+						ImGui::SameLine();
+						ImGui::TextWrapped("Color value not optimal! The tracking color is too dark and could cause tracking problems! Adjust your tracker exposure/gain settings.");
+						bHasIssues = true;
+					}
+				}
+
+				{
+					// Validate color settings
+					TrackerColorPreset preset = getColorPreset();
+					switch (m_masterTrackingColorType)
+					{
+					case PSMTrackingColorType::PSMTrackingColorType_Red:
+					{
+						const int targetHue = 0;
+						const int targetRange = 25;
+						const float hue_min = preset.hue_center - targetRange;
+						const float hue_max = preset.hue_center + targetRange;
+						bool invalidHue = false;
+						if (hue_min < 0)
+						{
+							invalidHue = (preset.hue_center < ((targetHue + (180 - targetRange)) % 180) && preset.hue_center > ((targetHue + targetRange) % 180));
+						}
+						else if (hue_max > 180)
+						{
+							invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) && preset.hue_center > ((targetHue + targetRange) % 180));
+						}
+						else
+						{
+							invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) || preset.hue_center > ((targetHue + targetRange) % 180));
+						}
+
+						if (invalidHue)
+						{
+							ImGui::ColorButton(colorRed, true);
+							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::SameLine();
+							ImGui::TextWrapped(
+								"Wrong tracking color set! "
+								"Target tracking color is set to RED but target hue center is not RED. "
+								"This can cause collisions with other colors! "
+								"Please adjust your tracking color settings!"
+							);
+							bHasIssues = true;
+						}
+
+						break;
+					}
+					case PSMTrackingColorType::PSMTrackingColorType_Green:
+					{
+						int targetHue = 60;
+						const int targetRange = 25;
+						const float hue_min = preset.hue_center - targetRange;
+						const float hue_max = preset.hue_center + targetRange;
+						bool invalidHue = false;
+						if (hue_min < 0)
+						{
+							invalidHue = (preset.hue_center < ((targetHue + (180 - targetRange)) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
+						}
+						else if (hue_max > 180)
+						{
+							invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
+						}
+						else
+						{
+							invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) || preset.hue_center >((targetHue + targetRange) % 180));
+						}
+
+						if (invalidHue)
+						{
+							ImGui::ColorButton(colorRed, true);
+							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::SameLine();
+							ImGui::TextWrapped(
+								"Wrong tracking color set! "
+								"Target tracking color is set to GREEN but target hue center is not GREEN. "
+								"This can cause collisions with other colors! "
+								"Adjust your tracking color settings!"
+							);
+							bHasIssues = true;
+						}
+
+						break;
+					}
+					case PSMTrackingColorType::PSMTrackingColorType_Blue:
+					{
+						int targetHue = 120;
+						const int targetRange = 25;
+						const float hue_min = preset.hue_center - targetRange;
+						const float hue_max = preset.hue_center + targetRange;
+						bool invalidHue = false;
+						if (hue_min < 0)
+						{
+							invalidHue = (preset.hue_center < ((targetHue + (180 - targetRange)) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
+						}
+						else if (hue_max > 180)
+						{
+							invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
+						}
+						else
+						{
+							invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) || preset.hue_center >((targetHue + targetRange) % 180));
+						}
+
+						if (invalidHue)
+						{
+							ImGui::ColorButton(colorRed, true);
+							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::SameLine();
+							ImGui::TextWrapped(
+								"Wrong tracking color set! "
+								"Target tracking color is set to BLUE but target hue center is not BLUE. "
+								"This can cause collisions with other colors! "
+								"Adjust your tracking color settings!"
+							);
+							bHasIssues = true;
+						}
+
+						break;
+					}
+					case PSMTrackingColorType::PSMTrackingColorType_Magenta:
+					{
+						int targetHue = 150;
+						const int targetRange = 25;
+						const float hue_min = preset.hue_center - targetRange;
+						const float hue_max = preset.hue_center + targetRange;
+						bool invalidHue = false;
+						if (hue_min < 0)
+						{
+							invalidHue = (preset.hue_center < ((targetHue + (180 - targetRange)) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
+						}
+						else if (hue_max > 180)
+						{
+							invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
+						}
+						else
+						{
+							invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) || preset.hue_center >((targetHue + targetRange) % 180));
+						}
+
+						if (invalidHue)
+						{
+							ImGui::ColorButton(colorRed, true);
+							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::SameLine();
+							ImGui::TextWrapped(
+								"Wrong tracking color set! "
+								"Target tracking color is set to MAGENTA but target hue center is not MAGENTA. "
+								"This can cause collisions with other colors! "
+								"Please adjust your tracking color settings!"
+							);
+							bHasIssues = true;
+						}
+
+						break;
+					}
+					case PSMTrackingColorType::PSMTrackingColorType_Cyan:
+					{
+						int targetHue = 90;
+						const int targetRange = 25;
+						const float hue_min = preset.hue_center - targetRange;
+						const float hue_max = preset.hue_center + targetRange;
+						bool invalidHue = false;
+						if (hue_min < 0)
+						{
+							invalidHue = (preset.hue_center < ((targetHue + (180 - targetRange)) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
+						}
+						else if (hue_max > 180)
+						{
+							invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
+						}
+						else
+						{
+							invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) || preset.hue_center >((targetHue + targetRange) % 180));
+						}
+
+						if (invalidHue)
+						{
+							ImGui::ColorButton(colorRed, true);
+							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::SameLine();
+							ImGui::TextWrapped(
+								"Wrong tracking color set! "
+								"Target tracking color is set to CYAN but target hue center is not CYAN. "
+								"This can cause collisions with other colors! "
+								"Please adjust your tracking color settings!"
+							);
+							bHasIssues = true;
+						}
+
+						break;
+					}
+					case PSMTrackingColorType::PSMTrackingColorType_Yellow:
+					{
+						int targetHue = 30;
+						const int targetRange = 25;
+						const float hue_min = preset.hue_center - targetRange;
+						const float hue_max = preset.hue_center + targetRange;
+						bool invalidHue = false;
+						if (hue_min < 0)
+						{
+							invalidHue = (preset.hue_center < ((targetHue + (180 - targetRange)) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
+						}
+						else if (hue_max > 180)
+						{
+							invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
+						}
+						else
+						{
+							invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) || preset.hue_center >((targetHue + targetRange) % 180));
+						}
+
+						if (invalidHue)
+						{
+							ImGui::ColorButton(colorRed, true);
+							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::SameLine();
+							ImGui::TextWrapped(
+								"Wrong tracking color set! "
+								"Target tracking color is set to YELLOW but target hue center is not YELLOW. "
+								"This can cause collisions with other colors! "
+								"Please adjust your tracking color settings!"
+							);
+							bHasIssues = true;
+						}
+
+						break;
+					}
+					}
+				}
+
+				{
+					// Check for color noise and if the color can be found at all.
+					int detectedContures = m_mDetectedContures.size();
+					switch (detectedContures)
+					{
+					case 0:
+					{
+						ImGui::ColorButton(colorRed, true);
+						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+						ImGui::SameLine();
+						ImGui::TextWrapped(
+							"Could not detect tracking color! Place your controller in view of the tracker. "
+							"If it already is, then your color settings are not correctly set up."
+						);
+						bHasIssues = true;
+						break;
+					}
+					case 1:
+					{
+						// Optimal
+						break;
+					}
+					case 2:
+					case 3:
+					{
+						ImGui::ColorButton(colorOrange, true);
+						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+						ImGui::SameLine();
+						ImGui::TextWrapped(
+							"Minor color noise detected! Tracking quality may suffer. "
+							"Enable 'Show color collisions' to show color collisions on screen. "
+							"Please adjust your color settings to avoid color noise."
+						);
+						bHasIssues = true;
+						break;
+					}
+					default:
+					{
+						ImGui::ColorButton(colorRed, true);
+						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+						ImGui::SameLine();
+						ImGui::TextWrapped(
+							"Major color noise detected! Tracking quality will suffer! "
+							"Enable 'Show color collisions' to show color collisions on screen. "
+							"Please adjust your color settings to avoid color noise."
+						);
+						bHasIssues = true;
+						break;
+					}
+					}
+				}
+
+				if (!bHasIssues)
+				{
+					ImGui::ColorButton(colorGreen, true);
+					if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+
+					ImGui::SameLine();
+					ImGui::TextWrapped("No issues detected. Everything good!");
+				}
+			}
+
             ImGui::End();
         }
         
