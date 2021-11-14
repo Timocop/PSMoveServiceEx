@@ -1149,55 +1149,49 @@ void AppStage_ColorCalibration::renderUI()
 					m_bAlignDetectColor = true;
 				}
 
-				ImGui::Separator();
-
-				ImGui::TextDisabled("Automatic detection settings");
-				ImGui::Spacing();
-
-				int useGain = (m_bDetectingUseGainInstead) ? (1) : (0);
-				ImGui::Text("Automatic exposure/gain options:");
-				if (ImGui::Combo("##AutoExposureOrGain", &useGain, "Adjust exposure\0Adjust gain\0\0"))
+				if (ImGui::CollapsingHeader("Automatic detection settings", 0, true, false))
 				{
-					m_bDetectingUseGainInstead = (useGain != 0);
+					int useGain = (m_bDetectingUseGainInstead) ? (1) : (0);
+					ImGui::Text("Automatic exposure/gain options:");
+					if (ImGui::Combo("##AutoExposureOrGain", &useGain, "Adjust exposure\0Adjust gain\0\0"))
+					{
+						m_bDetectingUseGainInstead = (useGain != 0);
+					}
 				}
 
-				ImGui::Separator();
-
-				ImGui::TextDisabled("Automatic and manual detection settings");
-				ImGui::Spacing();
-
-				int colorSensitivity = m_iColorSensitivity;
-				ImGui::Text("Color post processing adjustments:");
-				if (ImGui::Combo("##PostProcessing", &colorSensitivity, "Disabled\0Default\0Mild\0High\0Very High\0Extreme\0\0"))
+				if (ImGui::CollapsingHeader("Automatic/manual detection settings", 0, true, false))
 				{
-					if (colorSensitivity >= sensitivity_MAX)
-						colorSensitivity = sensitivity_MAX - 1;
+					int colorSensitivity = m_iColorSensitivity;
+					ImGui::Text("Color post processing adjustments:");
+					if (ImGui::Combo("##PostProcessing", &colorSensitivity, "Disabled\0Default\0Mild\0High\0Very High\0Extreme\0\0"))
+					{
+						if (colorSensitivity >= sensitivity_MAX)
+							colorSensitivity = sensitivity_MAX - 1;
 
-					m_iColorSensitivity = static_cast<eColorDetectionSensitivity>(colorSensitivity);
-				}
-
-				if (ImGui::IsItemHovered())
-					ImGui::SetTooltip(
-						"Automatically adjusts color hue, hue range, saturation center,\n"
-						"saturation range, value center and value range.\n"
-						"Increasing the slider can help improve tracking quality and\n"
-						"tracking range but also creates more color noise and collisions\n"
-						"between colors!"
-					);
-
-				if (m_iColorSensitivity > sensitivity_disabled) {
-					ImGui::Checkbox("Prevent color collisions", &m_bColorCollisionPrevent);
+						m_iColorSensitivity = static_cast<eColorDetectionSensitivity>(colorSensitivity);
+					}
 
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip(
-							"Adjusts the hue range to avoid collisions between controller colors and potentional color noise.\n"
-							"This will reduce tracking quality if enabled."
+							"Automatically adjusts color hue, hue range, saturation center,\n"
+							"saturation range, value center and value range.\n"
+							"Uisng higher settings can help improve tracking quality and\n"
+							"tracking range but also creates more color noise and collisions\n"
+							"between colors!"
 						);
 
+					if (m_iColorSensitivity > sensitivity_disabled) {
+						ImGui::Checkbox("Prevent color collisions", &m_bColorCollisionPrevent);
+
+						if (ImGui::IsItemHovered())
+							ImGui::SetTooltip(
+								"Adjusts the hue range to avoid collisions between controller colors and potentional color noise.\n"
+								"This will reduce tracking quality if enabled."
+							);
+					}
+
+					ImGui::Separator();
 				}
-
-
-				ImGui::Separator();
 
 				if (m_masterControllerView != nullptr)
 				{
