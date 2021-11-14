@@ -1175,7 +1175,7 @@ void AppStage_ColorCalibration::renderUI()
 						ImGui::SetTooltip(
 							"Automatically adjusts color hue, hue range, saturation center,\n"
 							"saturation range, value center and value range.\n"
-							"Uisng higher settings can help improve tracking quality and\n"
+							"Using higher options can help improve tracking quality and\n"
 							"tracking range but also creates more color noise and collisions\n"
 							"between colors!"
 						);
@@ -1231,8 +1231,44 @@ void AppStage_ColorCalibration::renderUI()
 				bool bHasIssues = false;
 
 				{
+					// Tell if its a virtual device.
+					if (is_tracker_virtual())
+					{
+						ImGui::ColorButton(colorBlue, true);
+						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+						ImGui::SameLine();
+						ImGui::TextWrapped(
+							"Tracker is virtual. "
+							"Some settings on this page might not be available or have to be set manually."
+						);
+					}
+
+					if (m_masterControllerView != nullptr && m_masterControllerView->ControllerType == PSMController_Virtual)
+					{
+						ImGui::ColorButton(colorBlue, true);
+						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+						ImGui::SameLine();
+						ImGui::TextWrapped(
+							"Controller is virtual. "
+							"Some settings on this page might not be available or have to be set manually."
+						);
+					}
+
+					if (m_hmdView != nullptr && m_hmdView->HmdType == PSMHmd_Virtual)
+					{
+						ImGui::ColorButton(colorBlue, true);
+						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+						ImGui::SameLine();
+						ImGui::TextWrapped(
+							"HMD is virtual. "
+							"Some settings on this page might not be available or have to be set manually."
+						);
+					}
+				}
+
+				{
 					// Recommend exposure adjustments rather than gain adjustments
-					if (m_trackerGain > 32)
+					if (!is_tracker_virtual() && m_trackerGain > 32)
 					{
 						ImGui::ColorButton(colorBlue, true);
 						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
@@ -1246,11 +1282,26 @@ void AppStage_ColorCalibration::renderUI()
 				}
 
 				{
+					// Recommend higher fps
+					if (!is_tracker_virtual() && m_trackerFrameRate < 30)
+					{
+						ImGui::ColorButton(colorBlue, true);
+						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+						ImGui::SameLine();
+						ImGui::TextWrapped(
+							"Tracker frame rate too low. "
+							"It's recommended to run trackers at least at 30 fps or higher. "
+							"Lowering the frame rate of the tracker below 30 fps can lead to less responsive tracking, input lag and tracking loss on fast movements."
+						);
+					}
+				}
+
+				{
 					// Validate Exposure/Gain
 					TrackerColorPreset preset = getColorPreset();
 
 					// Saturation too low, its too bright!
-					if (preset.saturation_center < 25)
+					if (preset.saturation_center < 40)
 					{
 						ImGui::ColorButton(colorRed, true);
 						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
@@ -1258,7 +1309,7 @@ void AppStage_ColorCalibration::renderUI()
 						ImGui::TextWrapped("Color saturation too low! The tracking color is way too bright and will cause tracking problems! Adjust your tracker exposure/gain settings!");
 						bHasIssues = true;
 					}
-					else if (preset.saturation_center < 75)
+					else if (preset.saturation_center < 80)
 					{
 						ImGui::ColorButton(colorOrange, true);
 						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
@@ -1268,7 +1319,7 @@ void AppStage_ColorCalibration::renderUI()
 					}
 
 					// Value too low, its too dark!
-					if (preset.value_center < 25)
+					if (preset.value_center < 40)
 					{
 						ImGui::ColorButton(colorOrange, true);
 						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
@@ -1276,7 +1327,7 @@ void AppStage_ColorCalibration::renderUI()
 						ImGui::TextWrapped("Color value too low! The tracking color is way too dark and could cause tracking problems! Adjust your tracker exposure/gain settings!");
 						bHasIssues = true;
 					}
-					else if (preset.value_center < 75)
+					else if (preset.value_center < 80)
 					{
 						ImGui::ColorButton(colorOrange, true);
 						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
@@ -1320,7 +1371,7 @@ void AppStage_ColorCalibration::renderUI()
 								"Wrong tracking color set! "
 								"Target tracking color is set to RED but target hue center is not RED. "
 								"This can cause collisions with other colors! "
-								"Please adjust your tracking color settings!"
+								"Adjust your tracking color settings!"
 							);
 							bHasIssues = true;
 						}
@@ -1428,7 +1479,7 @@ void AppStage_ColorCalibration::renderUI()
 								"Wrong tracking color set! "
 								"Target tracking color is set to MAGENTA but target hue center is not MAGENTA. "
 								"This can cause collisions with other colors! "
-								"Please adjust your tracking color settings!"
+								"Adjust your tracking color settings!"
 							);
 							bHasIssues = true;
 						}
@@ -1464,7 +1515,7 @@ void AppStage_ColorCalibration::renderUI()
 								"Wrong tracking color set! "
 								"Target tracking color is set to CYAN but target hue center is not CYAN. "
 								"This can cause collisions with other colors! "
-								"Please adjust your tracking color settings!"
+								"Adjust your tracking color settings!"
 							);
 							bHasIssues = true;
 						}
@@ -1500,7 +1551,7 @@ void AppStage_ColorCalibration::renderUI()
 								"Wrong tracking color set! "
 								"Target tracking color is set to YELLOW but target hue center is not YELLOW. "
 								"This can cause collisions with other colors! "
-								"Please adjust your tracking color settings!"
+								"Adjust your tracking color settings!"
 							);
 							bHasIssues = true;
 						}
@@ -1528,22 +1579,9 @@ void AppStage_ColorCalibration::renderUI()
 						break;
 					}
 					case 1:
+					case 2:
 					{
 						// Optimal
-						break;
-					}
-					case 2:
-					case 3:
-					{
-						ImGui::ColorButton(colorOrange, true);
-						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
-						ImGui::SameLine();
-						ImGui::TextWrapped(
-							"Minor color noise detected! Tracking quality may suffer. "
-							"Enable 'Show color collisions' to show color collisions on screen. "
-							"Please adjust your color settings to avoid color noise."
-						);
-						bHasIssues = true;
 						break;
 					}
 					default:
@@ -1552,9 +1590,10 @@ void AppStage_ColorCalibration::renderUI()
 						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
 						ImGui::SameLine();
 						ImGui::TextWrapped(
-							"Major color noise detected! Tracking quality will suffer! "
+							"Color noise/collisions detected! "
+							"The tracker could track different objects instead of the controller! "
 							"Enable 'Show color collisions' to show color collisions on screen. "
-							"Please adjust your color settings to avoid color noise."
+							"Adjust your color settings to avoid color noise."
 						);
 						bHasIssues = true;
 						break;
@@ -1568,7 +1607,7 @@ void AppStage_ColorCalibration::renderUI()
 					if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
 
 					ImGui::SameLine();
-					ImGui::TextWrapped("No issues detected. Everything good!");
+					ImGui::TextWrapped("No issues detected.");
 				}
 			}
 
@@ -3207,7 +3246,7 @@ void AppStage_ColorCalibration::get_contures_lower(int type, int min_points_in_c
 // ###Externet $TODO: Add better virtual tracker check. Probably should do that after changing protocols.
 bool AppStage_ColorCalibration::is_tracker_virtual()
 {
-	if (m_trackerView->tracker_info.tracker_type == PSMTracker_PS3Eye)
+	if (m_trackerView != nullptr && m_trackerView->tracker_info.tracker_type == PSMTracker_PS3Eye)
 	{
 		return m_trackerView->tracker_info.device_path[0] == 'V';
 	}
