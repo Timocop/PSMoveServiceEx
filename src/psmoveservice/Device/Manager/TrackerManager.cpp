@@ -119,7 +119,7 @@ TrackerManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
 
 		default_tracker_profile.frame_width = pt.get<float>("default_tracker_profile.frame_width", 640);
 		//default_tracker_profile.frame_height = pt.get<float>("default_tracker_profile.frame_height", 480);
-		default_tracker_profile.frame_rate = pt.get<float>("default_tracker_profile.frame_rate", 40);
+		default_tracker_profile.frame_rate = pt.get<float>("default_tracker_profile.frame_rate", 30);
         default_tracker_profile.exposure = pt.get<float>("default_tracker_profile.exposure", 32);
         default_tracker_profile.gain = pt.get<float>("default_tracker_profile.gain", 32);
 
