@@ -40,6 +40,8 @@ static const char *k_video_display_mode_names[] = {
     "Undistorted"
 };
 
+static const double k_stabilize_wait_time_ms = 3000.f;
+
 #define PATTERN_W 9 // Internal corners
 #define PATTERN_H 6
 #define CORNER_COUNT (PATTERN_W*PATTERN_H)
@@ -102,7 +104,8 @@ public:
     void resetCaptureState()
     {
         capturedBoardCount= 0;
-        bCurrentImagePointsValid= false;
+        bCurrentImagePointsValid= false; 
+		timeStableValidPoints = std::chrono::high_resolution_clock::now();
         currentImagePoints.clear();
         lastValidImagePoints.clear();
         quadList.clear();
@@ -251,6 +254,10 @@ public:
                     currentImagePoints= new_image_points;
                 }
             }
+			else
+			{
+				bCurrentImagePointsValid = false;
+			}
         }
     }
 
@@ -362,6 +369,7 @@ public:
     std::vector<cv::Point2f> lastValidImagePoints;
     std::vector<cv::Point2f> currentImagePoints;
     bool bCurrentImagePointsValid;
+	std::chrono::time_point<std::chrono::high_resolution_clock> timeStableValidPoints;
     std::vector<cv::Point2f> quadList;
     std::vector<std::vector<cv::Point2f>> imagePointsList;
 
@@ -462,10 +470,26 @@ void AppStage_DistortionCalibration::update()
 
             if (m_menuState == AppStage_DistortionCalibration::capture)
             {
-                
-                // Update the chess board capture state
-                ImGuiIO io_state = ImGui::GetIO();
-                m_opencv_state->findAndAppendNewChessBoard(io_state.KeysDown[32]);
+				std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+
+				bool bCapurePoint = false;
+
+				if (m_opencv_state->bCurrentImagePointsValid)
+				{
+					std::chrono::duration<double, std::milli> stableDuration = now - m_opencv_state->timeStableValidPoints;
+
+					if (stableDuration.count() >= k_stabilize_wait_time_ms)
+					{
+						bCapurePoint = true;
+					}
+				}
+				else
+				{
+					m_opencv_state->timeStableValidPoints = now;
+					bCapurePoint = false;
+				}
+
+				m_opencv_state->findAndAppendNewChessBoard(bCapurePoint);
 
                 if (m_opencv_state->capturedBoardCount >= DESIRED_CAPTURE_BOARD_COUNT)
                 {
@@ -724,6 +748,20 @@ void AppStage_DistortionCalibration::renderUI()
                     static_cast<float>(m_opencv_state->capturedBoardCount) / static_cast<float>(DESIRED_CAPTURE_BOARD_COUNT);
                 ImGui::ProgressBar(samplePercentage, ImVec2(k_panel_width - 20, 20));
 
+				if (m_opencv_state->bCurrentImagePointsValid)
+				{
+					std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+					std::chrono::duration<double, std::milli> stableDuration = now - m_opencv_state->timeStableValidPoints;
+
+					ImGui::Text("[stable for %d/%dms]",
+						static_cast<int>(stableDuration.count()),
+						static_cast<int>(k_stabilize_wait_time_ms));
+				}
+				else
+				{
+					ImGui::Text("[capture point not valid]");
+				}
+
                 if (ImGui::Button("Restart"))
                 {
                     m_opencv_state->resetCaptureState();
@@ -733,10 +771,6 @@ void AppStage_DistortionCalibration::renderUI()
                 if (ImGui::Button("Cancel"))
                 {
                     request_exit();
-                }
-                if (m_opencv_state->bCurrentImagePointsValid)
-                {
-                    ImGui::Text("Press spacebar to capture");
                 }
 
                 ImGui::End();
