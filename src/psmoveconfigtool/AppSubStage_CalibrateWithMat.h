@@ -26,6 +26,21 @@ public:
         calibrateStepFailed,
     };
 
+	enum ePaperFormat
+	{
+		MIN_PAPER_FORMATS = -1,
+
+		formatLetter,
+		formatA4,
+		formatA3,
+		formatQuadLetter,
+		formatQuadA4,
+		formatQuadA3,
+
+		MAX_PAPER_FORMATS
+	};
+	ePaperFormat m_iPaperFormat;
+
     AppSubStage_CalibrateWithMat(class AppStage_ComputeTrackerPoses *parentStage);
 	virtual ~AppSubStage_CalibrateWithMat();
 
@@ -59,7 +74,6 @@ private:
     int m_sampleTrackerId;
     int m_sampleLocationIndex;
     bool m_bNeedMoreSamplesAtLocation;
-
 	int m_iLightFlicker;
 };
 

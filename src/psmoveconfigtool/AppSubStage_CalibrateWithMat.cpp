@@ -36,22 +36,101 @@ static const glm::vec3 k_psmove_frustum_color = glm::vec3(0.1f, 0.7f, 0.3f);
 static const double k_stabilize_wait_time_ms = 3000.f;
 
 static const float k_height_to_psmove_bulb_center = 17.7f; // cm - measured base to bulb center distance
-static const float k_sample_x_location_offset = 14.f; // cm - Half the length of a 8.5'x11' sheet of paper
-static const float k_sample_z_location_offset = 10.75f; // cm - Half the length of a 8.5'x11' sheet of paper
 
-static const PSMVector3f k_sample_3d_locations[k_mat_sample_location_count] = {
-    { k_sample_x_location_offset, k_height_to_psmove_bulb_center, k_sample_z_location_offset },
-    { -k_sample_x_location_offset, k_height_to_psmove_bulb_center, k_sample_z_location_offset },
-    { 0.f, k_height_to_psmove_bulb_center, 0.f },
-    { -k_sample_x_location_offset, k_height_to_psmove_bulb_center, -k_sample_z_location_offset },
-    { k_sample_x_location_offset, k_height_to_psmove_bulb_center, -k_sample_z_location_offset }
+static const float k_sample_x_location_letter_offset = (27.94f / 2); // cm - Half the height of a sheet of a paper in letter format
+static const float k_sample_z_location_letter_offset = (21.59f / 2); // cm - Half the width of a sheet of a paper in letter format
+
+static const float k_sample_x_location_a4_offset = (29.7f / 2); // cm - Half the height of a sheet of a paper in A4 format
+static const float k_sample_z_location_a4_offset = (21.f / 2); // cm - Half the width of a sheet of a paper in A4 format
+
+static const float k_sample_x_location_a3_offset = (42.f / 2); // cm - Half the height of a sheet of a paper in A3 format
+static const float k_sample_z_location_a3_offset = (29.7f / 2); // cm - Half the width of a sheet of a paper in A3 format
+
+// 1 Paper
+//     #2----#4
+//     |      |
+//	 X |  #3->|
+//     |      |
+//     #1----#5
+//        Z
+//
+// 4 Papers
+//     #2-----+-----#4
+//     |      |      |
+//	   |      |      |
+//     |      |      |
+//   X +---- #3-> ---+
+//     |      |      |
+//	   |      |      |
+//     |      |      |
+//     #1-----+-----#5
+//            Z
+
+
+
+static const PSMVector3f k_sample_3d_letter_locations[k_mat_sample_location_count] = {
+	{ k_sample_x_location_letter_offset, k_height_to_psmove_bulb_center, k_sample_z_location_letter_offset },
+	{ -k_sample_x_location_letter_offset, k_height_to_psmove_bulb_center, k_sample_z_location_letter_offset },
+	{ 0.f, k_height_to_psmove_bulb_center, 0.f },
+	{ -k_sample_x_location_letter_offset, k_height_to_psmove_bulb_center, -k_sample_z_location_letter_offset },
+	{ k_sample_x_location_letter_offset, k_height_to_psmove_bulb_center, -k_sample_z_location_letter_offset }
 };
+
+static const PSMVector3f k_sample_3d_a4_locations[k_mat_sample_location_count] = {
+	{ k_sample_x_location_a4_offset, k_height_to_psmove_bulb_center, k_sample_z_location_a4_offset },
+	{ -k_sample_x_location_a4_offset, k_height_to_psmove_bulb_center, k_sample_z_location_a4_offset },
+	{ 0.f, k_height_to_psmove_bulb_center, 0.f },
+	{ -k_sample_x_location_a4_offset, k_height_to_psmove_bulb_center, -k_sample_z_location_a4_offset },
+	{ k_sample_x_location_a4_offset, k_height_to_psmove_bulb_center, -k_sample_z_location_a4_offset }
+};
+
+static const PSMVector3f k_sample_3d_a3_locations[k_mat_sample_location_count] = {
+	{ k_sample_x_location_a3_offset, k_height_to_psmove_bulb_center, k_sample_z_location_a3_offset },
+	{ -k_sample_x_location_a3_offset, k_height_to_psmove_bulb_center, k_sample_z_location_a3_offset },
+	{ 0.f, k_height_to_psmove_bulb_center, 0.f },
+	{ -k_sample_x_location_a3_offset, k_height_to_psmove_bulb_center, -k_sample_z_location_a3_offset },
+	{ k_sample_x_location_a3_offset, k_height_to_psmove_bulb_center, -k_sample_z_location_a3_offset }
+};
+
+static const PSMVector3f k_sample_3d_quad_letter_locations[k_mat_sample_location_count] = {
+	{ k_sample_x_location_letter_offset * 2, k_height_to_psmove_bulb_center, k_sample_z_location_letter_offset * 2 },
+	{ -k_sample_x_location_letter_offset * 2, k_height_to_psmove_bulb_center, k_sample_z_location_letter_offset * 2 },
+	{ 0.f, k_height_to_psmove_bulb_center, 0.f },
+	{ -k_sample_x_location_letter_offset * 2, k_height_to_psmove_bulb_center, -k_sample_z_location_letter_offset * 2 },
+	{ k_sample_x_location_letter_offset * 2, k_height_to_psmove_bulb_center, -k_sample_z_location_letter_offset * 2 }
+};
+
+static const PSMVector3f k_sample_3d_quad_a4_locations[k_mat_sample_location_count] = {
+	{ k_sample_x_location_a4_offset * 2, k_height_to_psmove_bulb_center, k_sample_z_location_a4_offset * 2 },
+	{ -k_sample_x_location_a4_offset * 2, k_height_to_psmove_bulb_center, k_sample_z_location_a4_offset * 2 },
+	{ 0.f, k_height_to_psmove_bulb_center, 0.f },
+	{ -k_sample_x_location_a4_offset * 2, k_height_to_psmove_bulb_center, -k_sample_z_location_a4_offset * 2 },
+	{ k_sample_x_location_a4_offset * 2, k_height_to_psmove_bulb_center, -k_sample_z_location_a4_offset * 2 }
+};
+
+static const PSMVector3f k_sample_3d_quad_a3_locations[k_mat_sample_location_count] = {
+	{ k_sample_x_location_a3_offset * 2, k_height_to_psmove_bulb_center, k_sample_z_location_a3_offset * 2 },
+	{ -k_sample_x_location_a3_offset * 2, k_height_to_psmove_bulb_center, k_sample_z_location_a3_offset * 2 },
+	{ 0.f, k_height_to_psmove_bulb_center, 0.f },
+	{ -k_sample_x_location_a3_offset * 2, k_height_to_psmove_bulb_center, -k_sample_z_location_a3_offset * 2 },
+	{ k_sample_x_location_a3_offset * 2, k_height_to_psmove_bulb_center, -k_sample_z_location_a3_offset * 2 }
+};
+
 static const char *k_sample_location_names[k_mat_sample_location_count] = {
-    "+X+Z Corner",
-    "-X+Z Corner",
-    "Center",
-    "-X-Z Corner",
-    "+X-Z Corner"
+	"+X+Z Corner",
+	"-X+Z Corner",
+	"Center",
+	"-X-Z Corner",
+	"+X-Z Corner"
+};
+
+static const char *k_paper_formats_names[AppSubStage_CalibrateWithMat::ePaperFormat::MAX_PAPER_FORMATS] = {
+	"[1 Paper] Letter format",
+	"[1 Paper] A4 format",
+	"[1 Paper] A3 format",
+	"[4 Papers] Letter format",
+	"[4 Papers] A4 format",
+	"[4 Papers] A3 format"
 };
 
 //-- private definitions -----
@@ -185,9 +264,11 @@ struct TrackerRelativePoseStatistics
 };
 
 //-- private methods -----
-static bool computeTrackerCameraPose(
-    const PSMTracker *trackerView,
-    TrackerRelativePoseStatistics &trackerCoregData);
+static bool
+computeTrackerCameraPose(
+	const PSMTracker *trackerView,
+	TrackerRelativePoseStatistics &trackerCoregData,
+	AppSubStage_CalibrateWithMat::ePaperFormat paperFormat);
 
 //-- public methods -----
 AppSubStage_CalibrateWithMat::AppSubStage_CalibrateWithMat(
@@ -197,6 +278,7 @@ AppSubStage_CalibrateWithMat::AppSubStage_CalibrateWithMat(
     , m_bIsStable(false)
 	, m_sampleLocationIndex(0)
     , m_bNeedMoreSamplesAtLocation(false)
+	, m_iPaperFormat(ePaperFormat::formatLetter)
 	, m_iLightFlicker(0)
 {
 	for (int location_index = 0; location_index < PSMOVESERVICE_MAX_TRACKER_COUNT; ++location_index)
@@ -536,7 +618,7 @@ void AppSubStage_CalibrateWithMat::update()
                 const PSMTracker *trackerView = iter->second.trackerView;
                 TrackerRelativePoseStatistics &trackerSampleData = *m_deviceTrackerPoseStats[trackerIndex];
 
-                bSuccess&= computeTrackerCameraPose(trackerView, trackerSampleData);
+                bSuccess&= computeTrackerCameraPose(trackerView, trackerSampleData, m_iPaperFormat);
             }
 
             if (bSuccess)
@@ -620,8 +702,10 @@ void AppSubStage_CalibrateWithMat::renderUI()
     case AppSubStage_CalibrateWithMat::eMenuState::calibrationStepPlaceHMD:
         {
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
+            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 150));
             ImGui::Begin(k_window_title, nullptr, window_flags);
+
+			ImGui::Text("Calibration mat paper format: %s", k_paper_formats_names[m_iPaperFormat]);
 
             if (m_menuState == AppSubStage_CalibrateWithMat::eMenuState::calibrationStepPlaceController)
             {
@@ -879,7 +963,8 @@ void AppSubStage_CalibrateWithMat::onEnterState(
 static bool
 computeTrackerCameraPose(
     const PSMTracker *trackerView,
-    TrackerRelativePoseStatistics &trackerCoregData)
+    TrackerRelativePoseStatistics &trackerCoregData,
+	AppSubStage_CalibrateWithMat::ePaperFormat paperFormat)
 {
     // Get the pixel width and height of the tracker image
     const PSMVector2f trackerPixelDimensions = trackerView->tracker_info.tracker_screen_dimensions;
@@ -896,8 +981,46 @@ computeTrackerCameraPose(
     {
         const PSMVector2f &screenPoint =
             trackerCoregData.avgScreenSpacePointAtLocation[locationIndex];
-        const PSMVector3f &worldPoint =
-            k_sample_3d_locations[locationIndex];
+        PSMVector3f worldPoint;
+
+		switch (paperFormat)
+		{
+		case AppSubStage_CalibrateWithMat::ePaperFormat::formatLetter:
+		{
+			worldPoint = k_sample_3d_letter_locations[locationIndex];
+			break;
+		}
+		case AppSubStage_CalibrateWithMat::ePaperFormat::formatA4:
+		{
+			worldPoint = k_sample_3d_a4_locations[locationIndex];
+			break;
+		}
+		case AppSubStage_CalibrateWithMat::ePaperFormat::formatA3:
+		{
+			worldPoint = k_sample_3d_a3_locations[locationIndex];
+			break;
+		}
+		case AppSubStage_CalibrateWithMat::ePaperFormat::formatQuadLetter:
+		{
+			worldPoint = k_sample_3d_quad_letter_locations[locationIndex];
+			break;
+		}
+		case AppSubStage_CalibrateWithMat::ePaperFormat::formatQuadA4:
+		{
+			worldPoint = k_sample_3d_quad_a4_locations[locationIndex];
+			break;
+		}
+		case AppSubStage_CalibrateWithMat::ePaperFormat::formatQuadA3:
+		{
+			worldPoint = k_sample_3d_quad_a3_locations[locationIndex];
+			break;
+		}
+		default:
+		{
+			assert(0 && "unreachable");
+			break;
+		}
+		}
 
         // Add in the psmove calibration origin offset
         cvObjectPoints.push_back(cv::Point3f(worldPoint.x, worldPoint.y, worldPoint.z));
