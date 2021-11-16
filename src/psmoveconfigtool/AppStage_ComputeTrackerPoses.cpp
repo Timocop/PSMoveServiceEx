@@ -407,9 +407,18 @@ void AppStage_ComputeTrackerPoses::renderUI()
             ImGui::Text("Verify that your tracking cameras can see the tracking origin.");
 
 
-			int paperFormat = static_cast<int>(m_pCalibrateWithMat->m_iPaperFormat);
 			ImGui::Text("Calibration mat paper format:");
-			if (ImGui::Combo("##CaliMatFormat", &paperFormat, "[1 Paper] Letter format\0[1 Paper] A4 format\0[1 Paper] A3 format\0[4 Papers] Letter format\0[4 Papers] A4 format\0[4 Papers] A3 format\0\0"))
+
+			std::string paperFormats;
+			for (int i = 0; i < AppSubStage_CalibrateWithMat::ePaperFormat::MAX_PAPER_FORMATS; i++)
+			{
+				paperFormats += AppSubStage_CalibrateWithMat::k_paper_formats_names[i];
+				paperFormats += '\0';
+			}
+			paperFormats += '\0';
+
+			int paperFormat = static_cast<int>(m_pCalibrateWithMat->m_iPaperFormat);
+			if (ImGui::Combo("##CaliMatFormat", &paperFormat, paperFormats.c_str()))
 			{
 				assert(paperFormat > AppSubStage_CalibrateWithMat::ePaperFormat::MIN_PAPER_FORMATS && paperFormat < AppSubStage_CalibrateWithMat::ePaperFormat::MAX_PAPER_FORMATS);
 				m_pCalibrateWithMat->m_iPaperFormat = static_cast<AppSubStage_CalibrateWithMat::ePaperFormat>(paperFormat);

@@ -124,7 +124,7 @@ static const char *k_sample_location_names[k_mat_sample_location_count] = {
 	"+X-Z Corner"
 };
 
-static const char *k_paper_formats_names[AppSubStage_CalibrateWithMat::ePaperFormat::MAX_PAPER_FORMATS] = {
+const char *AppSubStage_CalibrateWithMat::k_paper_formats_names[AppSubStage_CalibrateWithMat::ePaperFormat::MAX_PAPER_FORMATS] = {
 	"[1 Paper] Letter format",
 	"[1 Paper] A4 format",
 	"[1 Paper] A3 format",
