@@ -504,7 +504,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
             ServerTrackerViewPtr tracker = tracker_manager->getTrackerViewPtr(tracker_id);
             ControllerOpticalPoseEstimation &trackerPoseEstimateRef = m_tracker_pose_estimations[tracker_id];
 
-            const bool bWasTracking= trackerPoseEstimateRef.bCurrentlyTracking;
+			const bool bWasTracking = trackerPoseEstimateRef.bCurrentlyTracking;
 
             // Assume we're going to lose tracking this frame
             bool bCurrentlyTracking = false;
@@ -554,7 +554,8 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 					//Create an occlusion area at the last seen valid tracked projection.
 					//If the projection center is near the occluded area it will not mark the projection as valid.
 					//This will remove jitter when the shape of the controllers is partially visible to the trackers.
-					if (trackerMgrConfig.min_occluded_area_on_loss >= 0.01) {
+					if (trackerMgrConfig.min_occluded_area_on_loss >= 0.01)
+					{
 						int controller_id = this->getDeviceID();
 
 						if (!occluded_tracker_ids[tracker_id][controller_id])
@@ -581,6 +582,10 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 											< trackerMgrConfig.min_occluded_area_on_loss)
 								{
 									bIsOccluded = true;
+
+									trackerPoseEstimateRef.occlusionAreaSize = trackerMgrConfig.min_occluded_area_on_loss;
+									trackerPoseEstimateRef.occlusionAreaPos.x = occluded_projection_tracker_ids[tracker_id][controller_id][0];
+									trackerPoseEstimateRef.occlusionAreaPos.y = occluded_projection_tracker_ids[tracker_id][controller_id][1];
 								}
 								else
 								{
@@ -593,6 +598,9 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 					// Ignore projections that are occluded BUT always pass atleast 2 biggest projected trackers.
 					if (!bIsOccluded || projections_found < 2)
 					{
+						if (trackerPoseEstimateRef.bIsOccluded)
+							trackerPoseEstimateRef.bIsOccluded = false;
+						
 						// If the projection isn't too old (or updated this tick), 
 						// say we have a valid tracked location
 						if (bWasTracking || bIsVisibleThisUpdate)
@@ -611,6 +619,11 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 								bCurrentlyTracking = true;
 							}
 						}
+					}
+					else
+					{
+						if (!trackerPoseEstimateRef.bIsOccluded)
+							trackerPoseEstimateRef.bIsOccluded = true;
 					}
                 }
             }

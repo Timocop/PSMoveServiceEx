@@ -41,6 +41,9 @@ struct ControllerOpticalPoseEstimation
     bool bOrientationValid;
 
 	bool bEnforceNewROI;
+	bool bIsOccluded;
+	CommonDeviceScreenLocation occlusionAreaPos;
+	float occlusionAreaSize;
 
     inline void clear()
     {
@@ -55,6 +58,9 @@ struct ControllerOpticalPoseEstimation
         bOrientationValid= false;
 
 		bEnforceNewROI = false;
+		bIsOccluded = false;
+		occlusionAreaPos.clear();
+		occlusionAreaSize = 0.f;
 
         memset(&projection, 0, sizeof(CommonDeviceTrackingProjection));
         projection.shape_type= eCommonTrackingProjectionType::INVALID_PROJECTION;

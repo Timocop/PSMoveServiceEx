@@ -661,83 +661,98 @@ public:
             (cv::boundingRect(contour).height < cv::boundingRect(contour).width) ?
             cv::boundingRect(contour).height : cv::boundingRect(contour).width);
     }
-    
-    void
-    draw_pose_projection(const CommonDeviceTrackingProjection &pose_projection)
-    {
-        // Draw the projection of the pose onto the shared mem buffer.
-        switch (pose_projection.shape_type)
-        {
-        case eCommonTrackingProjectionType::ProjectionType_Ellipse:
-            {
-                // For the sphere, its ellipse projection parameters should already
-                // be calculated, so we can use those parameters to draw an ellipse.
 
-                //Create cv::ellipse from pose_estimate
-                cv::Point ell_center(
-                    static_cast<int>(pose_projection.shape.ellipse.center.x),
-                    static_cast<int>(pose_projection.shape.ellipse.center.y));
-                cv::Size ell_size(
-                    static_cast<int>(pose_projection.shape.ellipse.half_x_extent),
-                    static_cast<int>(pose_projection.shape.ellipse.half_y_extent));
+	void
+	draw_pose_projection(const CommonDeviceTrackingProjection &pose_projection)
+	{
+		// Draw the projection of the pose onto the shared mem buffer.
+		switch (pose_projection.shape_type)
+		{
+		case eCommonTrackingProjectionType::ProjectionType_Ellipse:
+		{
+			// For the sphere, its ellipse projection parameters should already
+			// be calculated, so we can use those parameters to draw an ellipse.
 
-                //Draw ellipse on bgrShmemBuffer
-                cv::ellipse(*bgrShmemBuffer,
-                    ell_center,
-                    ell_size,
-                    pose_projection.shape.ellipse.angle,
-                    0, 360, cv::Scalar(0, 0, 255));
-                cv::drawMarker(*bgrShmemBuffer, ell_center, cv::Scalar(0, 0, 255), 0,
-                    (ell_size.height < ell_size.width) ? ell_size.height * 2 : ell_size.width * 2);
-            } break;
-        case eCommonTrackingProjectionType::ProjectionType_LightBar:
-            {
-                int prev_point_index;
+			//Create cv::ellipse from pose_estimate
+			cv::Point ell_center(
+				static_cast<int>(pose_projection.shape.ellipse.center.x),
+				static_cast<int>(pose_projection.shape.ellipse.center.y));
+			cv::Size ell_size(
+				static_cast<int>(pose_projection.shape.ellipse.half_x_extent),
+				static_cast<int>(pose_projection.shape.ellipse.half_y_extent));
 
-                prev_point_index = CommonDeviceTrackingShape::QuadVertexCount - 1;
-                for (int point_index = 0; point_index < CommonDeviceTrackingShape::QuadVertexCount; ++point_index)
-                {
-                    cv::Point pt1(
-                        static_cast<int>(pose_projection.shape.lightbar.quad[prev_point_index].x),
-                        static_cast<int>(pose_projection.shape.lightbar.quad[prev_point_index].y));
-                    cv::Point pt2(
-                        static_cast<int>(pose_projection.shape.lightbar.quad[point_index].x),
-                        static_cast<int>(pose_projection.shape.lightbar.quad[point_index].y));
-                    cv::line(*bgrShmemBuffer, pt1, pt2, cv::Scalar(0, 0, 255));
+			//Draw ellipse on bgrShmemBuffer
+			cv::ellipse(*bgrShmemBuffer,
+				ell_center,
+				ell_size,
+				pose_projection.shape.ellipse.angle,
+				0, 360, cv::Scalar(0, 0, 255));
+			cv::drawMarker(*bgrShmemBuffer, ell_center, cv::Scalar(0, 0, 255), 0,
+				(ell_size.height < ell_size.width) ? ell_size.height * 2 : ell_size.width * 2);
+		} break;
+		case eCommonTrackingProjectionType::ProjectionType_LightBar:
+		{
+			int prev_point_index;
 
-                    prev_point_index = point_index;
-                }
+			prev_point_index = CommonDeviceTrackingShape::QuadVertexCount - 1;
+			for (int point_index = 0; point_index < CommonDeviceTrackingShape::QuadVertexCount; ++point_index)
+			{
+				cv::Point pt1(
+					static_cast<int>(pose_projection.shape.lightbar.quad[prev_point_index].x),
+					static_cast<int>(pose_projection.shape.lightbar.quad[prev_point_index].y));
+				cv::Point pt2(
+					static_cast<int>(pose_projection.shape.lightbar.quad[point_index].x),
+					static_cast<int>(pose_projection.shape.lightbar.quad[point_index].y));
+				cv::line(*bgrShmemBuffer, pt1, pt2, cv::Scalar(0, 0, 255));
 
-                prev_point_index = CommonDeviceTrackingShape::TriVertexCount - 1;
-                for (int point_index = 0; point_index < CommonDeviceTrackingShape::TriVertexCount; ++point_index)
-                {
-                    cv::Point pt1(
-                        static_cast<int>(pose_projection.shape.lightbar.triangle[prev_point_index].x),
-                        static_cast<int>(pose_projection.shape.lightbar.triangle[prev_point_index].y));
-                    cv::Point pt2(
-                        static_cast<int>(pose_projection.shape.lightbar.triangle[point_index].x),
-                        static_cast<int>(pose_projection.shape.lightbar.triangle[point_index].y));
-                    cv::line(*bgrShmemBuffer, pt1, pt2, cv::Scalar(0, 0, 255));
+				prev_point_index = point_index;
+			}
 
-                    prev_point_index = point_index;
-                }
-                
-            } break;
-        case eCommonTrackingProjectionType::ProjectionType_Points:
-            {
-                for (int point_index = 0; point_index < pose_projection.shape.points.point_count; ++point_index)
-                {
-                    cv::Point pt(
-                        static_cast<int>(pose_projection.shape.points.point[point_index].x),
-                        static_cast<int>(pose_projection.shape.points.point[point_index].y));
-                    cv::drawMarker(*bgrShmemBuffer, pt, cv::Scalar(0, 0, 255));
-                }
-            } break;
-        default:
-            assert(false && "unreachable");
-            break;
-        }		
-    }
+			prev_point_index = CommonDeviceTrackingShape::TriVertexCount - 1;
+			for (int point_index = 0; point_index < CommonDeviceTrackingShape::TriVertexCount; ++point_index)
+			{
+				cv::Point pt1(
+					static_cast<int>(pose_projection.shape.lightbar.triangle[prev_point_index].x),
+					static_cast<int>(pose_projection.shape.lightbar.triangle[prev_point_index].y));
+				cv::Point pt2(
+					static_cast<int>(pose_projection.shape.lightbar.triangle[point_index].x),
+					static_cast<int>(pose_projection.shape.lightbar.triangle[point_index].y));
+				cv::line(*bgrShmemBuffer, pt1, pt2, cv::Scalar(0, 0, 255));
+
+				prev_point_index = point_index;
+			}
+
+		} break;
+		case eCommonTrackingProjectionType::ProjectionType_Points:
+		{
+			for (int point_index = 0; point_index < pose_projection.shape.points.point_count; ++point_index)
+			{
+				cv::Point pt(
+					static_cast<int>(pose_projection.shape.points.point[point_index].x),
+					static_cast<int>(pose_projection.shape.points.point[point_index].y));
+				cv::drawMarker(*bgrShmemBuffer, pt, cv::Scalar(0, 0, 255));
+			}
+		} break;
+		default:
+			assert(false && "unreachable");
+			break;
+		}
+	}
+
+	void
+	draw_pose_occlusion(CommonDeviceScreenLocation center, float size)
+	{
+		cv::Rect rec;
+		rec.x = center.x - (size);
+		rec.y = center.y - (size);
+		rec.width = size * 2;
+		rec.height = size * 2;
+
+		//Draw occlusion rectangle on bgrShmemBuffer
+		cv::rectangle(*bgrShmemBuffer, rec, cv::Scalar(0, 0, 255));
+		cv::line(*bgrShmemBuffer, cv::Point(rec.x, rec.y), cv::Point(rec.x + rec.width - 1, rec.y + rec.height - 1), cv::Scalar(0, 0, 255));
+		cv::line(*bgrShmemBuffer, cv::Point(rec.x, rec.y + rec.height - 1), cv::Point(rec.x + rec.width - 1, rec.y), cv::Scalar(0, 0, 255));
+	}
 
     int frameWidth;
     int frameHeight;
@@ -1313,6 +1328,9 @@ ServerTrackerView::computeProjectionForController(
         tracked_controller->getTrackerPoseEstimate(this->getDeviceID());
 	const bool bIsTracking = priorPoseEst->bCurrentlyTracking;
 	const bool bEnforceNewROI = priorPoseEst->bEnforceNewROI;
+	const bool bIsOccluded = priorPoseEst->bIsOccluded;
+	const CommonDeviceScreenLocation mOcclusionAreaPos = priorPoseEst->occlusionAreaPos;
+	const float fOcclusionAreaSize = priorPoseEst->occlusionAreaSize;
 
     cv::Rect2i ROI= computeTrackerROIForPoseProjection(
 		(bRoiOptimized) ? tracked_controller->getDeviceID() : -1,
@@ -1331,7 +1349,7 @@ ServerTrackerView::computeProjectionForController(
     {
         bSuccess = m_opencv_buffer_state->computeBiggestNContours(hsvColorRange, biggest_contours, contour_areas, 1);
     }
-    
+
     // Process the contour for its 2D and 3D pose.
     if (bSuccess)
     {
@@ -1452,6 +1470,13 @@ ServerTrackerView::computeProjectionForController(
             break;
         }
     }
+
+	// Draw occlusion area
+	if (bIsOccluded)
+	{
+		m_opencv_buffer_state->draw_pose_occlusion(mOcclusionAreaPos, fOcclusionAreaSize);
+	}
+
 
     // Throw out the result if the contour we found was too small and 
     // we were using an ROI less that the size of the full screen
