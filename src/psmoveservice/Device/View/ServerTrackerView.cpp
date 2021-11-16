@@ -1336,8 +1336,8 @@ ServerTrackerView::computeProjectionForController(
 		(bRoiOptimized) ? tracked_controller->getDeviceID() : -1,
         bRoiDisabled,
         this,		
-        (bIsTracking && !bEnforceNewROI) ? (tracked_controller->getPoseFilter()) : (nullptr),
-        (bIsTracking && !bEnforceNewROI) ? (&priorPoseEst->projection) : (nullptr),
+        ((bIsTracking || bIsOccluded) && !bEnforceNewROI) ? (tracked_controller->getPoseFilter()) : (nullptr),
+        ((bIsTracking || bIsOccluded) && !bEnforceNewROI) ? (&priorPoseEst->projection) : (nullptr),
         tracking_shape);
 
     m_opencv_buffer_state->applyROI(ROI);

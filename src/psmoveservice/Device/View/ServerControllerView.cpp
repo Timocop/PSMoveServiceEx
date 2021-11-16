@@ -505,9 +505,10 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
             ControllerOpticalPoseEstimation &trackerPoseEstimateRef = m_tracker_pose_estimations[tracker_id];
 
 			const bool bWasTracking = trackerPoseEstimateRef.bCurrentlyTracking;
-
+			
             // Assume we're going to lose tracking this frame
             bool bCurrentlyTracking = false;
+			bool bOccluded = false;
 
             if (tracker->getIsOpen())
             {
@@ -598,8 +599,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 					// Ignore projections that are occluded BUT always pass atleast 2 biggest projected trackers.
 					if (!bIsOccluded || projections_found < 2)
 					{
-						if (trackerPoseEstimateRef.bIsOccluded)
-							trackerPoseEstimateRef.bIsOccluded = false;
+						bOccluded = false;
 						
 						// If the projection isn't too old (or updated this tick), 
 						// say we have a valid tracked location
@@ -622,8 +622,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 					}
 					else
 					{
-						if (!trackerPoseEstimateRef.bIsOccluded)
-							trackerPoseEstimateRef.bIsOccluded = true;
+						bOccluded = true;
 					}
                 }
             }
@@ -632,6 +631,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
             trackerPoseEstimateRef.last_update_timestamp = now;
             trackerPoseEstimateRef.bValidTimestamps = true;
             trackerPoseEstimateRef.bCurrentlyTracking = bCurrentlyTracking;
+			trackerPoseEstimateRef.bIsOccluded = bOccluded;
         }
 
         // How we compute the final world pose estimate varies based on
