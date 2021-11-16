@@ -183,7 +183,7 @@ AppStage_ColorCalibration::AppStage_ColorCalibration(App *app)
 	, m_bDetectingColors(false)
 	, m_iDetectingControllersLeft(0)
 	, m_iDetectingExposure(0)
-	, m_bDetectingUseGainInstead(false)
+	, m_iDetectingAdjustMethod(eDetectionAdjustMethod::adjust_exposure)
 	, m_bDetectingCancel(false)
 	, m_iDetectingFailReason(eDetectionFailReason::failreason_unknown)
 {
@@ -255,9 +255,9 @@ void AppStage_ColorCalibration::enter()
     m_bAutoChangeTracker = (m_bAutoChangeTracker) ? m_bAutoChangeTracker : false;
 
 	m_bDetectingColors = (m_bDetectingColors) ? m_bDetectingColors : false;
-	m_iDetectingControllersLeft = (m_iDetectingControllersLeft) ? m_iDetectingControllersLeft : 0;
-	m_iDetectingExposure = (m_iDetectingExposure) ? m_iDetectingExposure : 0;
-	m_bDetectingUseGainInstead = (m_bDetectingUseGainInstead) ? m_bDetectingUseGainInstead : false;
+	m_iDetectingControllersLeft = m_iDetectingControllersLeft;
+	m_iDetectingExposure = m_iDetectingExposure;
+	m_iDetectingAdjustMethod = m_iDetectingAdjustMethod;
 
     // Request to start the tracker
     // Wait for the tracker response before requesting the controller
@@ -1151,11 +1151,11 @@ void AppStage_ColorCalibration::renderUI()
 
 				if (ImGui::CollapsingHeader("Automatic detection settings", 0, true, false))
 				{
-					int useGain = (m_bDetectingUseGainInstead) ? (1) : (0);
+					int adjustMethod = static_cast<int>(m_iDetectingAdjustMethod);
 					ImGui::Text("Automatic exposure/gain options:");
-					if (ImGui::Combo("##AutoExposureOrGain", &useGain, "Adjust exposure\0Adjust gain\0\0"))
+					if (ImGui::Combo("##DetectAdjustMethod", &adjustMethod, "Keep settings\0Adjust exposure\0Adjust gain\0\0"))
 					{
-						m_bDetectingUseGainInstead = (useGain != 0);
+						m_iDetectingAdjustMethod = static_cast<eDetectionAdjustMethod>(adjustMethod);
 					}
 				}
 
@@ -1778,15 +1778,20 @@ void AppStage_ColorCalibration::renderUI()
 	{
 		m_bDetectingColors = true;
 
-		if (m_bDetectingUseGainInstead)
+		switch (m_iDetectingAdjustMethod)
+		{
+		case eDetectionAdjustMethod::adjust_exposure:
 		{
 			request_tracker_set_exposure(32);
 			request_tracker_set_gain(m_iDetectingExposure);
+			break;
 		}
-		else
+		case eDetectionAdjustMethod::adjust_gain:
 		{
 			request_tracker_set_exposure(m_iDetectingExposure);
 			request_tracker_set_gain(32);
+			break;
+		}
 		}
 
 		setState(eMenuState::detection_exposure_wait1);
@@ -1961,17 +1966,26 @@ void AppStage_ColorCalibration::renderUI()
 				}
 				else
 				{
-					m_iDetectingExposure += 8;
-
-					if (m_iDetectingExposure >= MAX_COLOR_AUTODETECT_PROBING)
+					if (m_iDetectingAdjustMethod == eDetectionAdjustMethod::adjust_keep)
 					{
 						m_iDetectingFailReason = eDetectionFailReason::failreason_no_detection;
 						setState(eMenuState::detection_fail_pre);
 					}
 					else
 					{
-						setState(eMenuState::detection_exposure_adjust);
+						m_iDetectingExposure += 8;
+
+						if (m_iDetectingExposure >= MAX_COLOR_AUTODETECT_PROBING)
+						{
+							m_iDetectingFailReason = eDetectionFailReason::failreason_no_detection;
+							setState(eMenuState::detection_fail_pre);
+						}
+						else
+						{
+							setState(eMenuState::detection_exposure_adjust);
+						}
 					}
+					
 				}
 				break;
 			}
@@ -2037,8 +2051,11 @@ void AppStage_ColorCalibration::renderUI()
 		break;
 	case eMenuState::detection_fail_pre:
 	{
-		request_tracker_set_exposure(32);
-		request_tracker_set_gain(32);
+		if (m_iDetectingAdjustMethod != eDetectionAdjustMethod::adjust_keep)
+		{
+			request_tracker_set_exposure(32);
+			request_tracker_set_gain(32);
+		}
 
 		setState(eMenuState::detection_fail);
 		break;
@@ -2983,7 +3000,7 @@ void AppStage_ColorCalibration::request_change_tracker(int step)
 		set_autoConfig(m_bAutoChangeColor, m_bAutoChangeController, m_bAutoChangeTracker);
 
 	m_app->getAppStage<AppStage_ColorCalibration>()->
-		set_autoDetection(m_bDetectingColors, m_iDetectingControllersLeft, m_iDetectingExposure, m_bDetectingUseGainInstead);
+		set_autoDetection(m_bDetectingColors, m_iDetectingControllersLeft, m_iDetectingExposure, m_iDetectingAdjustMethod);
 
     if (tracker_index + step < tracker_count && tracker_index + step >= 0)
     {

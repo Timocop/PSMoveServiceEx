@@ -14,6 +14,13 @@ class AppStage_ColorCalibration : public AppStage
 public:
     AppStage_ColorCalibration(class App *app);
 
+	enum eDetectionAdjustMethod
+	{
+		adjust_keep,
+		adjust_exposure,
+		adjust_gain
+	};
+
     virtual void enter() override;
     virtual void exit() override;
     virtual void update() override;
@@ -39,11 +46,11 @@ public:
 		m_bAutoChangeTracker = tracker;
 	}
 
-	inline void set_autoDetection(bool detecting_colors, int controllers_left, int exposure, bool use_gain_instead) {
+	inline void set_autoDetection(bool detecting_colors, int controllers_left, int exposure, eDetectionAdjustMethod adjustMethod) {
 		m_bDetectingColors = detecting_colors;
 		m_iDetectingControllersLeft = controllers_left;
 		m_iDetectingExposure = exposure;
-		m_bDetectingUseGainInstead = use_gain_instead;
+		m_iDetectingAdjustMethod = adjustMethod;
 	}
 
 protected:
@@ -276,7 +283,7 @@ private:
 	int m_iDetectingControllersLeft;
 	int m_iDetectingExposure;
 	bool m_bDetectingExposureGood;
-	bool m_bDetectingUseGainInstead;
+	eDetectionAdjustMethod m_iDetectingAdjustMethod;
 	bool m_bDetectingCancel;
 	eDetectionFailReason m_iDetectingFailReason;
 	std::vector<std::vector<int>> m_mAutoDetectedContures;
