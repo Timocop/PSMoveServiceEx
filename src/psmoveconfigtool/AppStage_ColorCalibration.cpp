@@ -3030,15 +3030,20 @@ void AppStage_ColorCalibration::auto_adjust_color_sensitivity(TrackerColorPreset
 	//###Externet $TODO Probably make it more automated. This is too hardcoded.
 
 	float hueRangeMulti = 1.0;
-	float valueCenterMulti = 1.0f;
 	float saturationRangeMulti = 1.0f;
 
 	switch (m_masterTrackingColorType)
 	{
 	case PSMTrackingColorType_Magenta:
 	{
-		if (!m_bColorCollisionPrevent)
+		if (m_bColorCollisionPrevent)
+		{
+			hueRangeMulti = 1.5f; // Improve color detection. No other color near it?!
+		}
+		else
+		{
 			hueRangeMulti = 2.0f; // Improve color detection. No other color near it?!
+		}
 		break;
 	}
 	case PSMTrackingColorType_Cyan:
@@ -3062,8 +3067,6 @@ void AppStage_ColorCalibration::auto_adjust_color_sensitivity(TrackerColorPreset
 	{
 		if (m_bColorCollisionPrevent)
 			hueRangeMulti = 0.5f; // Cyan collision prevention
-
-		valueCenterMulti = 0.5f;
 		break;
 	}
 	case PSMTrackingColorType_Blue:
@@ -3087,28 +3090,27 @@ void AppStage_ColorCalibration::auto_adjust_color_sensitivity(TrackerColorPreset
 	{
 		preset.hue_range = 10.f * hueRangeMulti;
 		preset.saturation_range = 32.f * saturationRangeMulti;
-		preset.value_range = 32.f;
+		preset.value_range = 32.f + 8.f;
 
-		preset.value_center -= (preset.value_range * 0.5f) * valueCenterMulti;
-
+		preset.value_center -= 8.f;
 		break;
 	}
 	case sensitivity_high:
 	{
 		preset.hue_range = 10.f * hueRangeMulti;
 		preset.saturation_range = 32.f * saturationRangeMulti;
-		preset.value_range = 32.f + 8.f;
+		preset.value_range = 32.f + 16.f;
 
-		preset.value_center -= (preset.value_range * 0.75f) * valueCenterMulti;
+		preset.value_center -= 16.f;
 		break;
 	}
 	case sensitivity_very_high:
 	{
 		preset.hue_range = 10.f * hueRangeMulti;
 		preset.saturation_range = 32.f * saturationRangeMulti;
-		preset.value_range = 32.f + 16.f;
+		preset.value_range = 32.f + 24.f;
 
-		preset.value_center -= (preset.value_range * 0.75f) * valueCenterMulti;
+		preset.value_center -= 24.f;
 		break;
 	}
 	case sensitivity_extreme:
@@ -3117,10 +3119,12 @@ void AppStage_ColorCalibration::auto_adjust_color_sensitivity(TrackerColorPreset
 		preset.saturation_range = 32.f * saturationRangeMulti;
 		preset.value_range = 32.f + 32.f;
 
-		preset.value_center -= (preset.value_range * 0.75f) * valueCenterMulti;
+		preset.value_center -= 32.f;
 		break;
 	}
 	}
+
+	preset.value_center = std::max(preset.value_center, 0.f);
 }
 
 void AppStage_ColorCalibration::get_contures_lower(int type, int min_points_in_contour, std::vector<std::vector<int>> &contures)
