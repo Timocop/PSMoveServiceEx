@@ -926,7 +926,20 @@ void AppStage_DistortionCalibration::handle_tracker_start_stream_response(
 				// Warn the user if they are about to change the distortion calibration settings for the PS3EYE
 				if (trackerInfo.tracker_type == PSMTrackerType::PSMTracker_PS3Eye)
 				{
-					thisPtr->m_menuState = AppStage_DistortionCalibration::showWarning;
+					// Virtual trackers have a common device path "VirtualTracker_#"
+					// ###Externet $TODO: Add better virtual tracker check. Probably should do that after changing protocols.
+					bool is_virtual = (trackerInfo.device_path[0] == 'V');
+
+					// Virtual trackers dont have precomputed distortion calibration settings.
+					if (is_virtual)
+					{
+						// Start capturing chess boards
+						thisPtr->m_menuState = AppStage_DistortionCalibration::enterBoardSettings;
+					}
+					else
+					{
+						thisPtr->m_menuState = AppStage_DistortionCalibration::showWarning;
+					}
 				}
 				else
 				{
