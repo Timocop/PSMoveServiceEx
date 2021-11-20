@@ -1030,13 +1030,20 @@ computeTrackerCameraPose(
         cvImagePoints.push_back(cv::Point2f(screenPoint.x, trackerPixelDimensions.y - screenPoint.y));
     }
 
-    // Assume no distortion
-    // TODO: Probably should get the distortion coefficients out of the tracker
-    cv::Mat cvDistCoeffs(4, 1, cv::DataType<float>::type);
-    cvDistCoeffs.at<float>(0) = 0;
-    cvDistCoeffs.at<float>(1) = 0;
-    cvDistCoeffs.at<float>(2) = 0;
-    cvDistCoeffs.at<float>(3) = 0;
+	// Assume no distortion
+	cv::Mat cvDistCoeffs(4, 1, cv::DataType<float>::type);
+	cvDistCoeffs.at<float>(0) = 0;
+	cvDistCoeffs.at<float>(1) = 0;
+	cvDistCoeffs.at<float>(2) = 0;
+	cvDistCoeffs.at<float>(3) = 0;
+
+	//###Externet Seems like its already using distortion coefficients from the tracker stream.
+	//cv::Mat cvDistCoeffs(5, 1, cv::DataType<float>::type);
+	//cvDistCoeffs.at<float>(0) = trackerView->tracker_info.tracker_k1;
+	//cvDistCoeffs.at<float>(1) = trackerView->tracker_info.tracker_k2;
+	//cvDistCoeffs.at<float>(2) = trackerView->tracker_info.tracker_p1;
+	//cvDistCoeffs.at<float>(3) = trackerView->tracker_info.tracker_p2;
+	//cvDistCoeffs.at<float>(4) = trackerView->tracker_info.tracker_k3;
 
     // Solve the Project N-Point problem:
     // Given a set of 3D points and their corresponding 2D pixel projections,
