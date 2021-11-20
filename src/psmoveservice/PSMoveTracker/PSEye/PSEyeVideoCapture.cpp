@@ -543,7 +543,7 @@ public:
 			return true;
 		}
 
-		bool connected = ConnectNamedPipe(hPipe, NULL);
+		BOOL connected = ConnectNamedPipe(hPipe, NULL);
 		if (connected)
 			std::cout << "ps3eye::VIRTUAL() ConnectNamedPipe success, index " << m_index << std::endl;
 
@@ -576,7 +576,7 @@ public:
 			return true;
 		}
 
-		bool success = ReadFile(hPipe, pipeBuffer, VRIT_BUFF_SIZE, dwRead, NULL);
+		BOOL success = ReadFile(hPipe, pipeBuffer, VRIT_BUFF_SIZE, dwRead, NULL);
 		if (!success)
 		{
 			bool bDisplayText = true;
