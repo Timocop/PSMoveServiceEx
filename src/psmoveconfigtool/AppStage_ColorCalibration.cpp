@@ -1562,8 +1562,21 @@ void AppStage_ColorCalibration::renderUI()
 				}
 
 				{
+					// Get the avg of detected contures to avoid frequent UI changes.
+					const int DETECTED_CONTURES_SMOOTH_SIZE = 32;
+					static int detectedContures = 0;
+					static int detectedConturesAvg = 0;
+					static int detectedConturesCount = 0;
+
+					detectedConturesAvg += m_mDetectedContures.size();
+					if (++detectedConturesCount > DETECTED_CONTURES_SMOOTH_SIZE)
+					{
+						detectedContures = static_cast<int>(floor(detectedConturesAvg / DETECTED_CONTURES_SMOOTH_SIZE));
+						detectedConturesAvg = 0;
+						detectedConturesCount = 0;
+					}
+
 					// Check for color noise and if the color can be found at all.
-					int detectedContures = m_mDetectedContures.size();
 					switch (detectedContures)
 					{
 					case 0:
