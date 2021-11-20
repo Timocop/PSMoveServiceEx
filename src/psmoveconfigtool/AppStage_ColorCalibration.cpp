@@ -1162,8 +1162,8 @@ void AppStage_ColorCalibration::renderUI()
 				if (ImGui::CollapsingHeader("Automatic/manual detection settings", 0, true, false))
 				{
 					int colorSensitivity = m_iColorSensitivity;
-					ImGui::Text("Color post processing adjustments:");
-					if (ImGui::Combo("##PostProcessing", &colorSensitivity, "Disabled\0Default\0Mild\0High\0Very High\0Extreme\0\0"))
+					ImGui::Text("Color detection sensitivity:");
+					if (ImGui::Combo("##SensitivityPostProcessing", &colorSensitivity, "Keep settings\0Normal sensitivity\0Medium sensitivity\0High sensitivity\0Aggressive sensitivity\0Extreme sensitivity\0\0"))
 					{
 						if (colorSensitivity >= sensitivity_MAX)
 							colorSensitivity = sensitivity_MAX - 1;
@@ -1175,7 +1175,7 @@ void AppStage_ColorCalibration::renderUI()
 						ImGui::SetTooltip(
 							"Automatically adjusts color hue, hue range, saturation center,\n"
 							"saturation range, value center and value range.\n"
-							"Using higher options can help improve tracking quality and\n"
+							"Using higher sensitivity can help improve tracking quality and\n"
 							"tracking range but also creates more color noise and collisions\n"
 							"between colors!"
 						);
@@ -1568,7 +1568,7 @@ void AppStage_ColorCalibration::renderUI()
 					static int detectedConturesAvg = 0;
 					static int detectedConturesCount = 0;
 
-					detectedConturesAvg += m_mDetectedContures.size();
+					detectedConturesAvg += static_cast<int>(m_mDetectedContures.size());
 					if (++detectedConturesCount > DETECTED_CONTURES_SMOOTH_SIZE)
 					{
 						detectedContures = static_cast<int>(floor(detectedConturesAvg / DETECTED_CONTURES_SMOOTH_SIZE));
@@ -3102,41 +3102,35 @@ void AppStage_ColorCalibration::auto_adjust_color_sensitivity(TrackerColorPreset
 	case sensitivity_mild:
 	{
 		preset.hue_range = 10.f * hueRangeMulti;
-		preset.saturation_range = 32.f * saturationRangeMulti;
+		preset.saturation_range = (32.f * saturationRangeMulti) + (8.f / saturationRangeMulti);
 		preset.value_range = 32.f + 8.f;
-
-		preset.value_center -= 8.f;
 		break;
 	}
 	case sensitivity_high:
 	{
 		preset.hue_range = 10.f * hueRangeMulti;
-		preset.saturation_range = 32.f * saturationRangeMulti;
+		preset.saturation_range = (32.f * saturationRangeMulti) + (16.f / saturationRangeMulti);
 		preset.value_range = 32.f + 16.f;
-
-		preset.value_center -= 16.f;
 		break;
 	}
 	case sensitivity_very_high:
 	{
 		preset.hue_range = 10.f * hueRangeMulti;
-		preset.saturation_range = 32.f * saturationRangeMulti;
-		preset.value_range = 32.f + 24.f;
+		preset.saturation_range = (32.f * saturationRangeMulti) + (32.f / saturationRangeMulti);
+		preset.value_range = 32.f + 32.f;
 
-		preset.value_center -= 24.f;
 		break;
 	}
 	case sensitivity_extreme:
 	{
 		preset.hue_range = 10.f * hueRangeMulti;
-		preset.saturation_range = 32.f * saturationRangeMulti;
-		preset.value_range = 32.f + 32.f;
-
-		preset.value_center -= 32.f;
+		preset.saturation_range = (32.f * saturationRangeMulti) + (64.f / saturationRangeMulti);
+		preset.value_range = 32.f + 64.f;
 		break;
 	}
 	}
 
+	preset.saturation_center = std::max(preset.saturation_center, 0.f);
 	preset.value_center = std::max(preset.value_center, 0.f);
 }
 
