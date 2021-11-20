@@ -2407,7 +2407,7 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
     cv::Rect2i ROI(0, 0, static_cast<int>(screenWidth), static_cast<int>(screenHeight));
 
 	//Instead of applying ROI to the whole screen we only use parts of the screen.
-	//This will save alot of CPU cycles and also the performance should stay the same.
+	//This will save alot of CPU cycles and also the tracking quality should stay the same.
 	//As for now, this is disabled for HMDs since there are more blind spots between ROI edges (untested).
 	//
 	//Benchmark tested on AMD Ryzen 5 3600 @ 4.5Ghz with 3 Controllers and 6 Trackers:
@@ -2425,7 +2425,7 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
 		roi_size[0] = static_cast<int>(screenWidth) / 3;
 		roi_size[1] = static_cast<int>(screenHeight) / 3;
 
-		switch (++roi_counter[trackerId][roi_index] % 9) {
+		switch (roi_counter[trackerId][roi_index]++ % 9) {
 		case 0:
 			ROI = cv::Rect2i(
 				0, 0,
