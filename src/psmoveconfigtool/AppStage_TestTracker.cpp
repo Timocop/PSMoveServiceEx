@@ -151,7 +151,7 @@ void AppStage_TestTracker::renderUI()
 
         ImGui::Text("Failed to start tracker stream!");
 
-        if (ImGui::Button("Ok"))
+        if (ImGui::Button(" Ok "))
         {
             m_app->setAppStage(AppStage_TrackerSettings::APP_STAGE_NAME);
         }
@@ -183,7 +183,7 @@ void AppStage_TestTracker::renderUI()
 
         ImGui::Text("Failed to stop tracker stream!");
 
-        if (ImGui::Button("Ok"))
+        if (ImGui::Button(" Ok "))
         {
             m_app->setAppStage(AppStage_TrackerSettings::APP_STAGE_NAME);
         }

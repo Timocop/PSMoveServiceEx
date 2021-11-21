@@ -604,7 +604,7 @@ void AppStage_HMDModelCalibration::renderUI()
 			break;
 		}
 
-		if (ImGui::Button("Ok"))
+		if (ImGui::Button(" Ok "))
 		{
 			request_exit_to_app_stage(AppStage_HMDSettings::APP_STAGE_NAME);
 		}

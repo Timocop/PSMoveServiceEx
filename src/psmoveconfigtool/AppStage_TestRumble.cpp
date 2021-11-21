@@ -155,7 +155,7 @@ void AppStage_TestRumble::renderUI()
 
             ImGui::Text("Failed to start controller stream!");
 
-            if (ImGui::Button("Ok"))
+            if (ImGui::Button(" Ok "))
             {
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }
