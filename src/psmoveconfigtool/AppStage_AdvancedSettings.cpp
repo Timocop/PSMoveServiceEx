@@ -446,7 +446,6 @@ void AppStage_AdvancedSettings::renderUI()
 			// Tracker Manager Config
 			if (ImGui::CollapsingHeader("Tracker Manager Config", 0, true, false))
 			{
-				ImGui::Indent();
 				{
 					ImGui::Text("Virtual Trackers:");
 					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
@@ -459,8 +458,8 @@ void AppStage_AdvancedSettings::renderUI()
 
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip(
-							"The amount of trackers emulated in PSMoveService.\n"
-							"Usefull if you want to add your own trackers that are not related to Playstation Move."
+							"The number of trackers emulated in PSMoveService.\n"
+							"Useful if you want to add your custom trackers that are not related to PlayStation Move."
 						);
 				}
 
@@ -477,9 +476,9 @@ void AppStage_AdvancedSettings::renderUI()
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip(
 							"The amount of position smoothing all controllers will have.\n"
-							"Should be a value between 0.00 and 1.00. Where as 0.00 is no smoothing and 1.00 is maximum smoothing.\n"
-							"Beware that high smoothing can cause input lag. Adjust 'Controller position prediction' to reduce input lag.\n"
-							"(Default value is 0)"
+							"Should be a value between 0.00 and 1.00. Where 0.00 is no smoothing and 1.00 is maximum smoothing.\n"
+							"Beware that smoothing can cause input lag. Adjust 'Controller position prediction' to reduce input lag.\n"
+							"(The default value is 0)"
 						);
 				}
 
@@ -496,10 +495,10 @@ void AppStage_AdvancedSettings::renderUI()
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip(
 							"The amount of position prediction all controllers will have.\n"
-							"Should be a value between 0.00 and 1.00. Where as 0.00 is no prediction and 1.00 is very high prediction.\n"
+							"Should be a value between 0.00 and 1.00. Whereas 0.00 is no prediction and 1.00 is very high prediction.\n"
 							"The value can be set higher than 1.00 but you might experience over-prediction.\n"
-							"Use 'Controller position smoothing' to remove position jitter when prediction is enabled."
-							"(Default value is 0)"
+							"Use 'Controller position smoothing' to remove position jitter when prediction is enabled.\n"
+							"(The default value is 0)"
 						);
 				}
 
@@ -518,9 +517,10 @@ void AppStage_AdvancedSettings::renderUI()
 						ImGui::SetTooltip(
 							"How many previous positions should be saved for calculations.\n"
 							"Lower values makes prediction respond faster and higher slower.\n"
-							"(Default value is 5)"
+							"(The default value is 5)"
 						);
 				}
+				ImGui::Unindent();
 
 				{
 					ImGui::Text("Ignore pose from one tracker:");
@@ -529,12 +529,12 @@ void AppStage_AdvancedSettings::renderUI()
 
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip(
-							"Ignores poses from one tracker and enforces triangulation from atleast 2 trackers.\n"
-							"This will greatly improve training quality and should always be enabled!\n"
-							"(Default value is TRUE)"
+							"Ignores poses from one tracker and enforces triangulation from at least 2 trackers.\n"
+							"This will greatly improve training quality and should always be enabled.\n"
+							"This setting will be ignored if only one tracker is available.\n"
+							"(The default value is TRUE)"
 						);
 				}
-				ImGui::Unindent();
 
 				{
 					ImGui::Text("Optical tracking timeout:");
@@ -550,7 +550,7 @@ void AppStage_AdvancedSettings::renderUI()
 						ImGui::SetTooltip(
 							"When tracking is lost wait this amount of time until tracking is resumed.\n"
 							"Do not set this value lower than 100ms otherwise you will experience random tracker timeouts.\n"
-							"(Default value is 100)"
+							"(The default value is 100)"
 						);
 				}
 
@@ -566,7 +566,7 @@ void AppStage_AdvancedSettings::renderUI()
 
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip(
-							"(Default value is 1)"
+							"(The default value is 1)"
 						);
 				}
 
@@ -577,7 +577,7 @@ void AppStage_AdvancedSettings::renderUI()
 
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip(
-							"(Default value is TRUE)"
+							"(The default value is TRUE)"
 						);
 				}
 
@@ -589,8 +589,11 @@ void AppStage_AdvancedSettings::renderUI()
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip(
 							"Exclude triangulations from trackers that are facing each other.\n"
-							"Enabling this can can help get better triangulations between trackers, thus better tracking.\n"
-							"(Default value is FALSE)"
+							"Enabling this can help get better triangulations between trackers\n"
+							"and may result in better tracking but also increases potential tracking loss\n"
+							"due to trackers being excluded.\n"
+							"This is only good if you have 4 or more trackers.\n"
+							"(The default value is FALSE)"
 						);
 				}
 
@@ -606,11 +609,11 @@ void AppStage_AdvancedSettings::renderUI()
 
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip(
-							"Projection areas smaller that this will not be valid and will not be tracked.\n"
-							"Using smaller values can help track tracking lights better on further distances "
-							"but also introduces more position jitter.\n"
-							"Set the value to 16 for the old PSMoveService behaviour.\n"
-							"(Default value is 6)"
+							"Projection areas smaller than this will not be valid and will not be tracked.\n"
+							"Using smaller values can help track tracking lights better on further distances\n"
+							"but can also introduce more position jitter.\n"
+							"(Legacy value is 16)\n"
+							"(The default value is 6)"
 						);
 				}
 
@@ -626,10 +629,10 @@ void AppStage_AdvancedSettings::renderUI()
 
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip(
-							"Occlusion areas are created when trackers lose their projection target.\n"
-							"The tracker will not re-gain its target if its is near the trackers occlusion area.\n"
+							"Occlusion areas are created when trackers lose their tracking projection.\n"
+							"The tracker will not re-gain its projection if the projection is near the tracker's occlusion area.\n"
 							"This will help avoid position jitter on continuous tracking loss.\n"
-							"(Default value is 4)"
+							"(The default value is 4)"
 						);
 				}
 
@@ -646,9 +649,10 @@ void AppStage_AdvancedSettings::renderUI()
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip(
 							"How many points a contour can have until it counts as a valid projection.\n"
-							"A minimum of 4 points should be a square and more than 6 points a sphere.\n"
-							"If the minimum is 0, any pixel will count as valid.\n"
-							"(Default value is 4)"
+							"A minimum of 4 points requires the projection to be a square and more than 6 points a sphere.\n"
+							"If the minimum is 1 or lower then any pixel will count as valid.\n"
+							"(The legacy value is 6)\n"
+							"(The default value is 4)"
 						);
 				}
 
@@ -664,32 +668,41 @@ void AppStage_AdvancedSettings::renderUI()
 
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip(
-							"If trackers deviate their triangulation position too much from other trackers, they will be disregarded.\n"
+							"Trackers that deviate their triangulation position too much from other trackers will be disregarded.\n"
 							"This will avoid trackers getting stuck on random color noise or other controllers.\n"
-							"(Default value is 12)"
+							"(The default value is 12)"
 						);
 				}
 
 				{
-					ImGui::Text("Disable ROI (region on interest):");
+					ImGui::Text("Enable ROI (region of interest):");
 					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-					ImGui::Checkbox("##DisableROI", &cfg_tracker.disable_roi);
+					bool roiEnabled = !cfg_tracker.disable_roi;
+					if (ImGui::Checkbox("##EnableROI", &roiEnabled))
+					{
+						cfg_tracker.disable_roi = !roiEnabled;
+					}
 
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip(
-							"(Default value is FALSE)"
+							"Enables ROI (region of interest) which only analyzes parts around the target projection.\n"
+							"This reduces CPU usage when controllers and head mount devices are visible to the tracker.\n"
+							"However, you may experience tracking loss on rapid movement when running trackers on low FPS.\n"
+							"(The default value is TRUE)"
 						);
 				}
 
 				ImGui::Indent();
 				{
-					ImGui::Text("Optimized ROI (region on interest):");
+					ImGui::Text("Optimized ROI (region of interest):");
 					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 					ImGui::Checkbox("##OptimizedROI", &cfg_tracker.optimized_roi);
 
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip(
-							"(Default value is TRUE)"
+							"Optimizes ROI (region of interest) for controllers that are not visible to the tracker\n"
+							"to reduce CPU usage even more.\n"
+							"(The default value is TRUE)"
 						);
 				}
 				ImGui::Unindent();
@@ -706,17 +719,14 @@ void AppStage_AdvancedSettings::renderUI()
 
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip(
-							"(Default value is 270)"
+							"(The default value is 270)"
 						);
 				}
-				ImGui::Unindent();
 			}
 
 			// Controller Manager Config
 			if (ImGui::CollapsingHeader("Controller Manager Config", 0, true, false))
 			{
-				ImGui::Indent();
-
 				ImGui::Text("Virtual Controllers:");
 				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 				ImGui::PushItemWidth(100.f);
@@ -728,18 +738,15 @@ void AppStage_AdvancedSettings::renderUI()
 
 				if (ImGui::IsItemHovered())
 					ImGui::SetTooltip(
-						"The amount of controllers emulated in PSMoveService.\n"
-						"Usefull if you want to add your own controllers that are not related to Playstation Move."
+						"The number of controllers emulated in PSMoveService.\n"
+						"Useful if you want to add your custom controllers that are not related to PlayStation Move."
 					);
 				
-				ImGui::Unindent();
 			}
 
 			// HMD Manager Config
 			if (ImGui::CollapsingHeader("HMD Manager Config", 0, true, false))
 			{
-				ImGui::Indent();
-
 				ImGui::Text("Virtual HMDs:");
 				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 				ImGui::PushItemWidth(100.f);
@@ -751,28 +758,26 @@ void AppStage_AdvancedSettings::renderUI()
 				
 				if (ImGui::IsItemHovered())
 					ImGui::SetTooltip(
-						"The amount of head mount devices emulated in PSMoveService.\n"
-						"Usefull if you want to add your own head mount devices that are not related to Playstation Move."
+						"The number of head mount devices emulated in PSMoveService.\n"
+						"Useful if you want to add your custom head mount devices that are not related to PlayStation Move."
 					);
-
-				ImGui::Unindent();
 			}
 
 			if (ImGui::CollapsingHeader("Miscellaneous", 0, true, false))
 			{
-				ImGui::Indent();
-
 				if (ImGui::Button("Open PSMoveService config directory"))
 				{
 					configExec.OpenConfigInExplorer();
 				}
-
-				ImGui::Unindent();
 			}
 
+			ImGui::Spacing();
 			ImGui::Separator();
+			ImGui::Spacing();
 
 			ImGui::TextDisabled("Note: Restart PSMoveService to apply changes.");
+
+			ImGui::Spacing();
 
             if (ImGui::Button("Back"))
             {
@@ -794,6 +799,8 @@ void AppStage_AdvancedSettings::renderUI()
 			}
 
 #ifdef _WIN32
+			ImGui::SameLine(0.f, 16.f);
+
 			if (ImGui::Button("Restart PSMoveService"))
 			{
 				serviceRestart.CheckProcesses();
