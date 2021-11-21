@@ -52,7 +52,6 @@ public:
 	int virtual_tracker_count;
 	float controller_position_smoothing;
 	float controller_position_prediction;
-	float controller_position_prediction_smoothing;
 	int controller_position_prediction_history;
 	bool ignore_pose_from_one_tracker;
     long version;

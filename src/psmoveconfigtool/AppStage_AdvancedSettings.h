@@ -40,7 +40,6 @@ public:
 		virtual_tracker_count = 0;
 		controller_position_smoothing = 0.f;
 		controller_position_prediction = 0.0f;
-		controller_position_prediction_smoothing = 0.0f;
 		controller_position_prediction_history = 5;
 		ignore_pose_from_one_tracker = true;
 		optical_tracking_timeout = 100;
@@ -64,7 +63,6 @@ public:
 	int virtual_tracker_count;
 	float controller_position_smoothing;
 	float controller_position_prediction;
-	float controller_position_prediction_smoothing;
 	int controller_position_prediction_history;
 	bool ignore_pose_from_one_tracker;
 	int optical_tracking_timeout;

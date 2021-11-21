@@ -2787,20 +2787,9 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 			static float average_world_position_history[PSMOVESERVICE_MAX_CONTROLLER_COUNT][history_max_allowed][3];
 			static int history_count[PSMOVESERVICE_MAX_CONTROLLER_COUNT];
 
-			const float ps = fmin(cfg.controller_position_prediction_smoothing, 0.99f);
-			if (ps <= 0.01f)
-			{
-				average_world_position_history[controller_id][history_count[controller_id]][0] = average_world_position.x;
-				average_world_position_history[controller_id][history_count[controller_id]][1] = average_world_position.y;
-				average_world_position_history[controller_id][history_count[controller_id]][2] = average_world_position.z;
-			}
-			else 
-			{
-				average_world_position_history[controller_id][history_count[controller_id]][0] = (ps * multicam_pose_estimation->position_cm.x + (1 - ps) * average_world_position.x);
-				average_world_position_history[controller_id][history_count[controller_id]][1] = (ps * multicam_pose_estimation->position_cm.y + (1 - ps) * average_world_position.y);
-				average_world_position_history[controller_id][history_count[controller_id]][2] = (ps * multicam_pose_estimation->position_cm.z + (1 - ps) * average_world_position.z);
-			}
-
+			average_world_position_history[controller_id][history_count[controller_id]][0] = average_world_position.x;
+			average_world_position_history[controller_id][history_count[controller_id]][1] = average_world_position.y;
+			average_world_position_history[controller_id][history_count[controller_id]][2] = average_world_position.z;
 
 			history_count[controller_id] = ((history_count[controller_id] + 1) % history_max);
 
