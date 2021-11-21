@@ -612,7 +612,7 @@ void AppStage_AdvancedSettings::renderUI()
 							"Projection areas smaller than this will not be valid and will not be tracked.\n"
 							"Using smaller values can help track tracking lights better on further distances\n"
 							"but can also introduce more position jitter.\n"
-							"(Legacy value is 16)\n"
+							"(The legacy value is 16)\n"
 							"(The default value is 6)"
 						);
 				}
