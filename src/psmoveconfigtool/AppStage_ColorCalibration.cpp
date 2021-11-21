@@ -515,8 +515,8 @@ void AppStage_ColorCalibration::renderUI()
 		ImGui::ColorButton(ImColor(bgrBuffer[2], bgrBuffer[1], bgrBuffer[0]), true);
 		ImGui::SameLine(); 
 		ImGui::TextColored(textColor, "Color | H: %d, S: %d, V: %d", hsv_pixel[0], hsv_pixel[1], hsv_pixel[2]);
-		ImGui::TextColored(textColor, "Left click mouse button to detect color.");
-		ImGui::TextColored(textColor, "Right click mouse button to cancel.");
+		ImGui::TextColored(textColor, "Left-click the mouse button to detect color.");
+		ImGui::TextColored(textColor, "Right-click the mouse button to cancel.");
 
 		ImGui::End();
 		ImGui::GetStyle().WindowFillAlphaDefault = prevAlpha;
@@ -641,7 +641,7 @@ void AppStage_ColorCalibration::renderUI()
 		ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
 		ImGui::Text(
-			"Color sampling in progress! Please wait...\n"
+			"Color sampling is in progress! Please wait...\n"
 			"Do not move the controllers or obscure the tracking light!\n"
 			"[Sampling colors...]"
 		);
@@ -758,7 +758,7 @@ void AppStage_ColorCalibration::renderUI()
 
 			if (m_video_buffer_state != nullptr)
 			{
-				if (ImGui::Button("<##Filter"))
+				if (ImGui::Button(" < ##Filter"))
 				{
 					m_videoDisplayMode =
 						static_cast<eVideoDisplayMode>(
@@ -766,7 +766,7 @@ void AppStage_ColorCalibration::renderUI()
 						% eVideoDisplayMode::MAX_VIDEO_DISPLAY_MODES);
 				}
 				ImGui::SameLine();
-				if (ImGui::Button(">##Filter"))
+				if (ImGui::Button(" > ##Filter"))
 				{
 					m_videoDisplayMode =
 						static_cast<eVideoDisplayMode>(
@@ -779,16 +779,16 @@ void AppStage_ColorCalibration::renderUI()
 				{
 					if (is_tracker_virtual())
 					{
-						ImGui::TextDisabled("Virtual Trackers have no properties.");
+						ImGui::TextDisabled("Virtual Trackers do not have any properties.");
 					}
 					else
 					{
-						if (ImGui::Button("-##FrameWidth"))
+						if (ImGui::Button(" - ##FrameWidth"))
 						{
 							if (m_trackerFrameWidth == 640) request_tracker_set_frame_width(m_trackerFrameWidth - 320);
 						}
 						ImGui::SameLine();
-						if (ImGui::Button("+##FrameWidth"))
+						if (ImGui::Button(" + ##FrameWidth"))
 						{
 							if (m_trackerFrameWidth == 320) request_tracker_set_frame_width(m_trackerFrameWidth + 320);
 						}
@@ -840,36 +840,36 @@ void AppStage_ColorCalibration::renderUI()
 							else if (val == 83) { frame_rate_positive_change = 0; frame_rate_negative_change = -8; }
 						}
 
-						if (ImGui::Button("-##FrameRate"))
+						if (ImGui::Button(" - ##FrameRate"))
 						{
 							request_tracker_set_frame_rate(m_trackerFrameRate + frame_rate_negative_change);
 						}
 						ImGui::SameLine();
-						if (ImGui::Button("+##FrameRate"))
+						if (ImGui::Button(" + ##FrameRate"))
 						{
 							request_tracker_set_frame_rate(m_trackerFrameRate + frame_rate_positive_change);
 						}
 						ImGui::SameLine();
 						ImGui::Text("Frame Rate: %.0f", m_trackerFrameRate);
 
-						if (ImGui::Button("-##Exposure"))
+						if (ImGui::Button(" - ##Exposure"))
 						{
 							request_tracker_set_exposure(m_trackerExposure - 8);
 						}
 						ImGui::SameLine();
-						if (ImGui::Button("+##Exposure"))
+						if (ImGui::Button(" + ##Exposure"))
 						{
 							request_tracker_set_exposure(m_trackerExposure + 8);
 						}
 						ImGui::SameLine();
 						ImGui::Text("Exposure: %.0f", m_trackerExposure);
 
-						if (ImGui::Button("-##Gain"))
+						if (ImGui::Button(" - ##Gain"))
 						{
 							request_tracker_set_gain(m_trackerGain - 8);
 						}
 						ImGui::SameLine();
-						if (ImGui::Button("+##Gain"))
+						if (ImGui::Button(" + ##Gain"))
 						{
 							request_tracker_set_gain(m_trackerGain + 8);
 						}
@@ -883,12 +883,12 @@ void AppStage_ColorCalibration::renderUI()
 							const int value_count = static_cast<int>(option.option_strings.size());
 
 							ImGui::PushID(option.option_name.c_str());
-							if (ImGui::Button("<"))
+							if (ImGui::Button(" < ##CustomProperty"))
 							{
 								request_tracker_set_option(option, (option.option_index + value_count - 1) % value_count);
 							}
 							ImGui::SameLine();
-							if (ImGui::Button(">"))
+							if (ImGui::Button(" > ##CustomProperty"))
 							{
 								request_tracker_set_option(option, (option.option_index + 1) % value_count);
 							}
@@ -935,7 +935,7 @@ void AppStage_ColorCalibration::renderUI()
 
 			if (m_masterControllerView != nullptr)
 			{
-				if (ImGui::Button("<##Color"))
+				if (ImGui::Button(" < ##Color"))
 				{
 					PSMTrackingColorType new_color =
 						static_cast<PSMTrackingColorType>(
@@ -945,7 +945,7 @@ void AppStage_ColorCalibration::renderUI()
 					m_masterTrackingColorType = new_color;
 				}
 				ImGui::SameLine();
-				if (ImGui::Button(">##Color"))
+				if (ImGui::Button(" > ##Color"))
 				{
 					PSMTrackingColorType new_color =
 						static_cast<PSMTrackingColorType>(
@@ -960,14 +960,14 @@ void AppStage_ColorCalibration::renderUI()
 			if (ImGui::CollapsingHeader("Advanced Settings", 0, true, false))
 			{
 				// -- Hue --
-				if (ImGui::Button("-##HueCenter"))
+				if (ImGui::Button(" - ##HueCenter"))
 				{
 					TrackerColorPreset preset = getColorPreset();
 					preset.hue_center = wrap_range(preset.hue_center - 5.f, 0.f, 180.f);
 					request_tracker_set_color_preset(m_masterTrackingColorType, preset);
 				}
 				ImGui::SameLine();
-				if (ImGui::Button("+##HueCenter"))
+				if (ImGui::Button(" + ##HueCenter"))
 				{
 					TrackerColorPreset preset = getColorPreset();
 					preset.hue_center = wrap_range(preset.hue_center + 5.f, 0.f, 180.f);
@@ -976,14 +976,14 @@ void AppStage_ColorCalibration::renderUI()
 				ImGui::SameLine();
 				ImGui::Text("Hue Angle: %f", getColorPreset().hue_center);
 
-				if (ImGui::Button("-##HueRange"))
+				if (ImGui::Button(" - ##HueRange"))
 				{
 					TrackerColorPreset preset = getColorPreset();
 					preset.hue_range = clampf(preset.hue_range - 5.f, 0.f, 90.f);
 					request_tracker_set_color_preset(m_masterTrackingColorType, preset);
 				}
 				ImGui::SameLine();
-				if (ImGui::Button("+##HueRange"))
+				if (ImGui::Button(" + ##HueRange"))
 				{
 					TrackerColorPreset preset = getColorPreset();
 					preset.hue_range = clampf(preset.hue_range + 5.f, 0.f, 90.f);
@@ -993,14 +993,14 @@ void AppStage_ColorCalibration::renderUI()
 				ImGui::Text("Hue Range: %f", getColorPreset().hue_range);
 
 				// -- Saturation --
-				if (ImGui::Button("-##SaturationCenter"))
+				if (ImGui::Button(" - ##SaturationCenter"))
 				{
 					TrackerColorPreset preset = getColorPreset();
 					preset.saturation_center = clampf(preset.saturation_center - 5.f, 0.f, 255.f);
 					request_tracker_set_color_preset(m_masterTrackingColorType, preset);
 				}
 				ImGui::SameLine();
-				if (ImGui::Button("+##SaturationCenter"))
+				if (ImGui::Button(" + ##SaturationCenter"))
 				{
 					TrackerColorPreset preset = getColorPreset();
 					preset.saturation_center = clampf(preset.saturation_center + 5.f, 0.f, 255.f);
@@ -1009,14 +1009,14 @@ void AppStage_ColorCalibration::renderUI()
 				ImGui::SameLine();
 				ImGui::Text("Saturation Center: %f", getColorPreset().saturation_center);
 
-				if (ImGui::Button("-##SaturationRange"))
+				if (ImGui::Button(" - ##SaturationRange"))
 				{
 					TrackerColorPreset preset = getColorPreset();
 					preset.saturation_range = clampf(preset.saturation_range - 5.f, 0.f, 125.f);
 					request_tracker_set_color_preset(m_masterTrackingColorType, preset);
 				}
 				ImGui::SameLine();
-				if (ImGui::Button("+##SaturationRange"))
+				if (ImGui::Button(" + ##SaturationRange"))
 				{
 					TrackerColorPreset preset = getColorPreset();
 					preset.saturation_range = clampf(preset.saturation_range + 5.f, 0.f, 125.f);
@@ -1026,14 +1026,14 @@ void AppStage_ColorCalibration::renderUI()
 				ImGui::Text("Saturation Range: %f", getColorPreset().saturation_range);
 
 				// -- Value --
-				if (ImGui::Button("-##ValueCenter"))
+				if (ImGui::Button(" - ##ValueCenter"))
 				{
 					TrackerColorPreset preset = getColorPreset();
 					preset.value_center = clampf(preset.value_center - 5.f, 0.f, 255.f);
 					request_tracker_set_color_preset(m_masterTrackingColorType, preset);
 				}
 				ImGui::SameLine();
-				if (ImGui::Button("+##ValueCenter"))
+				if (ImGui::Button(" + ##ValueCenter"))
 				{
 					TrackerColorPreset preset = getColorPreset();
 					preset.value_center = clampf(preset.value_center + 5.f, 0.f, 255.f);
@@ -1042,14 +1042,14 @@ void AppStage_ColorCalibration::renderUI()
 				ImGui::SameLine();
 				ImGui::Text("Value Center: %f", getColorPreset().value_center);
 
-				if (ImGui::Button("-##ValueRange"))
+				if (ImGui::Button(" - ##ValueRange"))
 				{
 					TrackerColorPreset preset = getColorPreset();
 					preset.value_range = clampf(preset.value_range - 5.f, 0.f, 125.f);
 					request_tracker_set_color_preset(m_masterTrackingColorType, preset);
 				}
 				ImGui::SameLine();
-				if (ImGui::Button("+##ValueRange"))
+				if (ImGui::Button(" + ##ValueRange"))
 				{
 					TrackerColorPreset preset = getColorPreset();
 					preset.value_range = clampf(preset.value_range + 5.f, 0.f, 125.f);
@@ -1064,12 +1064,12 @@ void AppStage_ColorCalibration::renderUI()
             // -- Change Controller --
             if (m_masterControllerView != nullptr)
             {
-                if (ImGui::Button("<##Controller"))
+                if (ImGui::Button(" < ##Controller"))
                 {
                     request_change_controller(-1);
                 }
                 ImGui::SameLine();
-                if (ImGui::Button(">##Controller"))
+                if (ImGui::Button(" > ##Controller"))
                 {
                     request_change_controller(1);
                 }
@@ -1078,12 +1078,12 @@ void AppStage_ColorCalibration::renderUI()
             }
 
             // -- Change Tracker --
-            if (ImGui::Button("<##Tracker"))
+            if (ImGui::Button(" < ##Tracker"))
             {
                 request_change_tracker(-1);
             }
             ImGui::SameLine();
-            if (ImGui::Button(">##Tracker"))
+            if (ImGui::Button(" > ##Tracker"))
             {
                 request_change_tracker(1);
             }
@@ -1173,7 +1173,7 @@ void AppStage_ColorCalibration::renderUI()
 
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip(
-							"Automatically adjusts color hue, hue range, saturation center,\n"
+							"Automatically adjusts the color hue, hue range, saturation center,\n"
 							"saturation range, value center and value range.\n"
 							"Using higher sensitivity can help improve tracking quality and\n"
 							"tracking range but also creates more color noise and collisions\n"
@@ -1185,7 +1185,7 @@ void AppStage_ColorCalibration::renderUI()
 
 						if (ImGui::IsItemHovered())
 							ImGui::SetTooltip(
-								"Adjusts the hue range to avoid collisions between controller colors and potentional color noise.\n"
+								"Adjusts the hue range to avoid collisions between controller colors and potential color noise.\n"
 								"This will reduce tracking quality if enabled."
 							);
 					}
@@ -1276,7 +1276,7 @@ void AppStage_ColorCalibration::renderUI()
 						ImGui::TextWrapped(
 							"Tracker gain not default. "
 							"It's recommended to adjust exposure instead of gain. "
-							"Increasing gain will increase random color noise which can affect tracking quality in a negative way."
+							"Increasing gain will increase random color noise which can negatively affect tracking quality."
 						);
 					}
 				}
@@ -1369,7 +1369,7 @@ void AppStage_ColorCalibration::renderUI()
 							ImGui::SameLine();
 							ImGui::TextWrapped(
 								"Wrong tracking color set! "
-								"Target tracking color is set to RED but target hue center is not RED. "
+								"The target tracking color is set to RED but the target hue center is not RED. "
 								"This can cause collisions with other colors! "
 								"Adjust your tracking color settings!"
 							);
@@ -1405,7 +1405,7 @@ void AppStage_ColorCalibration::renderUI()
 							ImGui::SameLine();
 							ImGui::TextWrapped(
 								"Wrong tracking color set! "
-								"Target tracking color is set to GREEN but target hue center is not GREEN. "
+								"The target tracking color is set to GREEN but the target hue center is not GREEN. "
 								"This can cause collisions with other colors! "
 								"Adjust your tracking color settings!"
 							);
@@ -1441,7 +1441,7 @@ void AppStage_ColorCalibration::renderUI()
 							ImGui::SameLine();
 							ImGui::TextWrapped(
 								"Wrong tracking color set! "
-								"Target tracking color is set to BLUE but target hue center is not BLUE. "
+								"The target tracking color is set to BLUE but the target hue center is not BLUE. "
 								"This can cause collisions with other colors! "
 								"Adjust your tracking color settings!"
 							);
@@ -1477,7 +1477,7 @@ void AppStage_ColorCalibration::renderUI()
 							ImGui::SameLine();
 							ImGui::TextWrapped(
 								"Wrong tracking color set! "
-								"Target tracking color is set to MAGENTA but target hue center is not MAGENTA. "
+								"The target tracking color is set to MAGENTA but the target hue center is not MAGENTA. "
 								"This can cause collisions with other colors! "
 								"Adjust your tracking color settings!"
 							);
@@ -1513,7 +1513,7 @@ void AppStage_ColorCalibration::renderUI()
 							ImGui::SameLine();
 							ImGui::TextWrapped(
 								"Wrong tracking color set! "
-								"Target tracking color is set to CYAN but target hue center is not CYAN. "
+								"The target tracking color is set to CYAN but the target hue center is not CYAN. "
 								"This can cause collisions with other colors! "
 								"Adjust your tracking color settings!"
 							);
@@ -1549,7 +1549,7 @@ void AppStage_ColorCalibration::renderUI()
 							ImGui::SameLine();
 							ImGui::TextWrapped(
 								"Wrong tracking color set! "
-								"Target tracking color is set to YELLOW but target hue center is not YELLOW. "
+								"The target tracking color is set to YELLOW but the target hue center is not YELLOW. "
 								"This can cause collisions with other colors! "
 								"Adjust your tracking color settings!"
 							);
@@ -2088,7 +2088,7 @@ void AppStage_ColorCalibration::renderUI()
 			ImGui::TextWrapped("Color sampling failed!");
 			ImGui::TextWrapped("Unable to find controller #%d on tracker #%d!", m_masterControllerView->ControllerID, m_trackerView->tracker_info.tracker_id);
 		 	ImGui::TextWrapped("Make sure the controller tracking light is not being obscured during the sampling process.");
-			ImGui::TextWrapped("Otherwise use manual color detection method.");
+			ImGui::TextWrapped("Otherwise use the manual color detection method.");
 
 			if (ImGui::Button("Try again"))
 			{
@@ -2143,13 +2143,14 @@ void AppStage_ColorCalibration::renderUI()
 		case eDetectionFailReason::failreason_unsupported_tracker:
 		{
 			ImGui::SetNextWindowPosCenter();
-			ImGui::SetNextWindowSize(ImVec2(600, 175));
+			ImGui::SetNextWindowSize(ImVec2(600, 200));
 			ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
 			ImGui::TextWrapped("Color sampling failed!");
-			ImGui::TextWrapped("Unable to automatically adjust exposure/gain on virtual trackers!");
+			ImGui::TextWrapped("Unable to find controller #%d on tracker #%d!", m_masterControllerView->ControllerID, m_trackerView->tracker_info.tracker_id);
+			ImGui::TextWrapped("Could not automatically adjust exposure/gain on virtual trackers!");
 			ImGui::TextWrapped("Please adjust exposure/gain on this tracker manually and try again.");
-			ImGui::TextWrapped("Otherwise use manual color detection method.");
+			ImGui::TextWrapped("Otherwise use the manual color detection method.");
 		
 			if (ImGui::Button("Try again"))
 			{
