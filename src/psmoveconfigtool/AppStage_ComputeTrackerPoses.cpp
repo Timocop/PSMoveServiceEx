@@ -610,12 +610,12 @@ void AppStage_ComputeTrackerPoses::renderUI()
 
             if (m_trackerViews.size() > 1)
             {
-                if (ImGui::Button("<##Previous Tracker"))
+                if (ImGui::Button(" < ##Previous Tracker"))
                 {
                     go_previous_tracker();
                 }
 				ImGui::SameLine();
-				if (ImGui::Button(">##Next Tracker"))
+				if (ImGui::Button(" > ##Next Tracker"))
 				{
 					go_next_tracker();
 				}

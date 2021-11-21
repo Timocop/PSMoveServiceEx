@@ -695,7 +695,7 @@ void AppStage_DistortionCalibration::renderUI()
                 ImGui::SetNextWindowSize(ImVec2(275, 150));
                 ImGui::Begin("Video Controls", nullptr, window_flags);
 
-                if (ImGui::Button("<##Filter"))
+                if (ImGui::Button(" < ##Filter"))
                 {
                     m_videoDisplayMode =
                         static_cast<eVideoDisplayMode>(
@@ -703,7 +703,7 @@ void AppStage_DistortionCalibration::renderUI()
                         % eVideoDisplayMode::MAX_VIDEO_DISPLAY_MODES);
                 }
                 ImGui::SameLine();
-                if (ImGui::Button(">##Filter"))
+                if (ImGui::Button(" > ##Filter"))
                 {
                     m_videoDisplayMode =
                         static_cast<eVideoDisplayMode>(
@@ -712,24 +712,24 @@ void AppStage_DistortionCalibration::renderUI()
                 ImGui::SameLine();
                 ImGui::Text("Video Filter Mode: %s", k_video_display_mode_names[m_videoDisplayMode]);
 
-                if (ImGui::Button("-##Exposure"))
+                if (ImGui::Button(" - ##Exposure"))
                 {
                     request_tracker_set_temp_exposure(m_trackerExposure - 8);
                 }
                 ImGui::SameLine();
-                if (ImGui::Button("+##Exposure"))
+                if (ImGui::Button(" + ##Exposure"))
                 {
                     request_tracker_set_temp_exposure(m_trackerExposure + 8);
                 }
                 ImGui::SameLine();
                 ImGui::Text("Exposure: %f", m_trackerExposure);
 
-                if (ImGui::Button("-##Gain"))
+                if (ImGui::Button(" - ##Gain"))
                 {
                     request_tracker_set_temp_gain(m_trackerGain - 8);
                 }
                 ImGui::SameLine();
-                if (ImGui::Button("+##Gain"))
+                if (ImGui::Button(" + ##Gain"))
                 {
                     request_tracker_set_temp_gain(m_trackerGain + 8);
                 }

@@ -765,7 +765,7 @@ void AppStage_AdvancedSettings::renderUI()
 
 			if (ImGui::CollapsingHeader("Miscellaneous", 0, true, false))
 			{
-				if (ImGui::Button("Open PSMoveService config directory"))
+				if (ImGui::Button("Open PSMoveService Config Directory"))
 				{
 					configExec.OpenConfigInExplorer();
 				}
@@ -786,7 +786,7 @@ void AppStage_AdvancedSettings::renderUI()
 
 			ImGui::SameLine();
 
-			if (ImGui::Button("Save settings"))
+			if (ImGui::Button("Save Settings"))
 			{
 				if (cfg_tracker.isLoaded)
 					cfg_tracker.save();

@@ -157,7 +157,7 @@ void AppStage_HMDSettings::renderUI()
 
             if (m_selectedHmdIndex > 0)
             {
-                if (ImGui::Button("<##HMDIndex"))
+                if (ImGui::Button(" < ##HMDIndex"))
                 {
                     --m_selectedHmdIndex;
                 }
@@ -167,7 +167,7 @@ void AppStage_HMDSettings::renderUI()
             if (m_selectedHmdIndex + 1 < static_cast<int>(m_hmdInfos.size()))
             {
                 ImGui::SameLine();
-                if (ImGui::Button(">##HMDIndex"))
+                if (ImGui::Button(" > ##HMDIndex"))
                 {
                     ++m_selectedHmdIndex;
                 }

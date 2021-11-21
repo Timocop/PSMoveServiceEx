@@ -347,7 +347,7 @@ void AppStage_ControllerSettings::renderUI()
     case eControllerMenuState::idle:
         {
             ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(400, 490));
+            ImGui::SetNextWindowSize(ImVec2(400, 500));
             ImGui::Begin("Controller Settings", nullptr, window_flags & ~ImGuiWindowFlags_NoScrollbar);
 
             if (ImGui::CollapsingHeader("Host Info", 0, true, true))
@@ -370,26 +370,26 @@ void AppStage_ControllerSettings::renderUI()
                 {
                     if (m_selectedControllerIndex > 0)
                     {
-                        if (ImGui::Button("<##ControllerIndex"))
+                        if (ImGui::Button(" < ##ControllerIndex"))
                         {
                             --m_selectedControllerIndex;
                         }
                     }
 					else 
 					{
-						ImGui::Button("<##ControllerIndex");
+						ImGui::Button(" < ##ControllerIndex");
 					}
 					ImGui::SameLine();
 					if (m_selectedControllerIndex + 1 < static_cast<int>(m_controllerInfos.size()))
 					{
-						if (ImGui::Button(">##ControllerIndex"))
+						if (ImGui::Button(" > ##ControllerIndex"))
 						{
 							++m_selectedControllerIndex;
 						}
 					}
 					else
 					{
-						ImGui::Button(">##ControllerIndex");
+						ImGui::Button(" > ##ControllerIndex");
 					}
 					ImGui::SameLine();
                     ImGui::Text("Controller: %d", m_selectedControllerIndex);

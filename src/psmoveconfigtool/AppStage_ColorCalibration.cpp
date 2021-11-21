@@ -643,7 +643,7 @@ void AppStage_ColorCalibration::renderUI()
 		ImGui::Text(
 			"Color sampling is in progress! Please wait...\n"
 			"Do not move the controllers or obscure the tracking light!\n"
-			"[Sampling colors...]"
+			"[sampling colors...]"
 		);
 		
 
@@ -1134,26 +1134,26 @@ void AppStage_ColorCalibration::renderUI()
 			ImGui::Separator();
 
 			// -- Auto Calibration --
-			if (ImGui::CollapsingHeader("Automatic color detection", 0, true, true))
+			if (ImGui::CollapsingHeader("Automatic Color Detection", 0, true, true))
 			{
 				if (m_masterControllerView != nullptr)
 				{
-					if (ImGui::Button("Automatically detect colors"))
+					if (ImGui::Button("Automatically Detect Colors"))
 					{
 						setState(eMenuState::detection_init);
 					}
 				}
 
-				if (ImGui::Button("Manually detect colors"))
+				if (ImGui::Button("Manually Detect Colors"))
 				{
 					m_bAlignDetectColor = true;
 				}
 
-				if (ImGui::CollapsingHeader("Automatic detection settings", 0, true, false))
+				if (ImGui::CollapsingHeader("Automatic Detection Settings", 0, true, false))
 				{
 					int adjustMethod = static_cast<int>(m_iDetectingAdjustMethod);
 					ImGui::Text("Automatic exposure/gain options:");
-					if (ImGui::Combo("##DetectAdjustMethod", &adjustMethod, "Keep settings\0Adjust exposure\0Adjust gain\0\0"))
+					if (ImGui::Combo("##DetectAdjustMethod", &adjustMethod, "Keep Settings\0Adjust Exposure\0Adjust Gain\0\0"))
 					{
 						m_iDetectingAdjustMethod = static_cast<eDetectionAdjustMethod>(adjustMethod);
 					}
@@ -1163,7 +1163,7 @@ void AppStage_ColorCalibration::renderUI()
 				{
 					int colorSensitivity = m_iColorSensitivity;
 					ImGui::Text("Color detection sensitivity:");
-					if (ImGui::Combo("##SensitivityPostProcessing", &colorSensitivity, "Keep settings\0Normal sensitivity\0Medium sensitivity\0High sensitivity\0Aggressive sensitivity\0Extreme sensitivity\0\0"))
+					if (ImGui::Combo("##SensitivityPostProcessing", &colorSensitivity, "Keep Settings\0Normal Sensitivity\0Medium Sensitivity\0High Sensitivity\0Aggressive Sensitivity\0Extreme Sensitivity\0\0"))
 					{
 						if (colorSensitivity >= sensitivity_MAX)
 							colorSensitivity = sensitivity_MAX - 1;
@@ -1221,7 +1221,7 @@ void AppStage_ColorCalibration::renderUI()
 				}
 			}
 
-			if (ImGui::CollapsingHeader("Warnings and issues", 0, true, true))
+			if (ImGui::CollapsingHeader("Warnings and Issues", 0, true, true))
 			{
 				ImColor colorGreen = ImColor(0.f, 1.f, 0.f);
 				ImColor colorOrange = ImColor(1.f, .5f, 0.f);
@@ -1735,7 +1735,7 @@ void AppStage_ColorCalibration::renderUI()
 
 		if (stable_controllers == m_controllerViews.size())
 		{
-			if (ImGui::Button("Start sampling colors"))
+			if (ImGui::Button("Start Sampling Colors"))
 			{
 				if (m_bAutoChangeTracker)
 				{
@@ -1756,7 +1756,7 @@ void AppStage_ColorCalibration::renderUI()
 		}
 		else
 		{
-			if (ImGui::Button("Force start sampling colors"))
+			if (ImGui::Button("Force Start Sampling Colors"))
 			{
 				if (m_bAutoChangeTracker)
 				{
@@ -2090,7 +2090,7 @@ void AppStage_ColorCalibration::renderUI()
 		 	ImGui::TextWrapped("Make sure the controller tracking light is not being obscured during the sampling process.");
 			ImGui::TextWrapped("Otherwise use the manual color detection method.");
 
-			if (ImGui::Button("Try again"))
+			if (ImGui::Button("Try Again"))
 			{
 				m_iDetectingExposure = 8;
 				setState(eMenuState::detection_exposure_adjust);
@@ -2098,7 +2098,7 @@ void AppStage_ColorCalibration::renderUI()
 
 			ImGui::SameLine();
 
-			if (ImGui::Button("Go back"))
+			if (ImGui::Button("Go Back"))
 			{
 				setState(eMenuState::manualConfig);
 			}
@@ -2114,7 +2114,7 @@ void AppStage_ColorCalibration::renderUI()
 
 			ImGui::Text("Color sampling aborted!");
 
-			if (ImGui::Button("Go back"))
+			if (ImGui::Button("Go Back"))
 			{
 				setState(eMenuState::manualConfig);
 			}
@@ -2132,7 +2132,7 @@ void AppStage_ColorCalibration::renderUI()
 			ImGui::TextWrapped("Unable to change color on virtual controllers!");
 			ImGui::TextWrapped("Please use the manual color detection instead.");
 
-			if (ImGui::Button("Go back"))
+			if (ImGui::Button("Go Back"))
 			{
 				setState(eMenuState::manualConfig);
 			}
@@ -2152,7 +2152,7 @@ void AppStage_ColorCalibration::renderUI()
 			ImGui::TextWrapped("Please adjust exposure/gain on this tracker manually and try again.");
 			ImGui::TextWrapped("Otherwise use the manual color detection method.");
 		
-			if (ImGui::Button("Try again"))
+			if (ImGui::Button("Try Again"))
 			{
 				m_iDetectingExposure = 8;
 				setState(eMenuState::detection_exposure_adjust);
@@ -2160,7 +2160,7 @@ void AppStage_ColorCalibration::renderUI()
 
 			ImGui::SameLine();
 
-			if (ImGui::Button("Go back"))
+			if (ImGui::Button("Go Back"))
 			{
 				setState(eMenuState::manualConfig);
 			}
@@ -2176,7 +2176,7 @@ void AppStage_ColorCalibration::renderUI()
 
 			ImGui::TextWrapped("Color sampling on controller #%d and tracker #%d failed!", m_masterControllerView->ControllerID, m_trackerView->tracker_info.tracker_id);
 
-			if (ImGui::Button("Try again"))
+			if (ImGui::Button("Try Again"))
 			{
 				m_iDetectingExposure = 8;
 				setState(eMenuState::detection_exposure_adjust);
@@ -2184,7 +2184,7 @@ void AppStage_ColorCalibration::renderUI()
 
 			ImGui::SameLine();
 
-			if (ImGui::Button("Go back"))
+			if (ImGui::Button("Go Back"))
 			{
 				setState(eMenuState::manualConfig);
 			}
