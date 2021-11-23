@@ -2066,7 +2066,7 @@ pose_filter_factory(
             {
             case CommonDeviceState::PSMove:
             case CommonDeviceState::VirtualController:
-                position_filter_enum= PositionFilterTypeLowPassExponential;
+                position_filter_enum= PositionFilterTypeLowPassOptical;
                 break;
             case CommonDeviceState::PSDualShock4:
                 position_filter_enum= PositionFilterTypeComplimentaryOpticalIMU;
