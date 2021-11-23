@@ -296,7 +296,8 @@ bool PS3EyeTracker::matchesDeviceEnumerator(const DeviceEnumerator *enumerator) 
 
     bool matches = false;
 
-    if (pEnum->get_device_type() == CommonControllerState::PS3EYE)
+    if (pEnum->get_device_type() == CommonControllerState::PS3EYE ||
+		pEnum->get_device_type() == CommonControllerState::VirtualTracker)
     {
         std::string enumerator_path = pEnum->get_path();
 
