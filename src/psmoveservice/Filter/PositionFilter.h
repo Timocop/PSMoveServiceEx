@@ -37,12 +37,14 @@ class PositionFilterPassThru : public PositionFilter
 {
 public:
     void update(const float delta_time, const PoseFilterPacket &packet) override;
+	std::list<Eigen::Vector3f> blendedPositionHistory;
 };
 
 class PositionFilterLowPassOptical : public PositionFilter
 {
 public:
     void update(const float delta_time, const PoseFilterPacket &packet) override;
+	std::list<Eigen::Vector3f> blendedPositionHistory;
 };
 
 class PositionFilterLowPassIMU : public PositionFilter

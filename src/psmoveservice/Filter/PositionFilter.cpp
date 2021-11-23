@@ -26,6 +26,8 @@
 // IMU extrapolation of an unseen controller
 #define k_max_unseen_position_timeout 10000.f // ms
 
+#define k_max_optical_prediction_power 2.5f
+
 // -- private definitions -----
 struct PositionFilterState
 {
@@ -217,6 +219,10 @@ static Eigen::Vector3f lowpass_filter_vector3f(
     const float cutoff_frequency,
     const Eigen::Vector3f &old_filtered_vector,
     const Eigen::Vector3f &new_vector);
+static Eigen::Vector3f lowpass_prediction_vector3f(
+	const float delta_time,
+	const Eigen::Vector3f &old_filtered_vector,
+	const Eigen::Vector3f &new_vector);
 static Eigen::Vector3f lowpass_filter_optical_position_using_distance(
     const PoseFilterPacket *filter_packet,
     const PositionFilterState *fusion_state);
@@ -320,11 +326,42 @@ void PositionFilterPassThru::update(
 	const float delta_time, 
 	const PoseFilterPacket &packet)
 {
+	const int history_queue_length = 5;
+
 	if (packet.has_optical_measurement())
 	{
-		const Eigen::Vector3f new_position_meters= packet.get_optical_position_in_meters();
+		Eigen::Vector3f old_position_meters;
+		Eigen::Vector3f new_position_meters = packet.get_optical_position_in_meters();
+		Eigen::Vector3f new_position_meters_sec;
 
-		m_state->apply_optical_state(new_position_meters, delta_time);
+		// Apply basic optical prediction
+		// Add the new blend position to blend history
+		blendedPositionHistory.push_back(new_position_meters);
+		if (blendedPositionHistory.size() > history_queue_length)
+		{
+			blendedPositionHistory.pop_front();
+		}
+
+		old_position_meters = Eigen::Vector3f::Zero();
+
+		int sampleCount = 0;
+		for (std::list<Eigen::Vector3f>::iterator it = blendedPositionHistory.begin(); it != blendedPositionHistory.end(); it++)
+		{
+			old_position_meters += *it;
+			sampleCount++;
+		}
+
+		if (sampleCount > 0)
+		{
+			new_position_meters_sec =
+				lowpass_prediction_vector3f(delta_time, (old_position_meters / sampleCount), new_position_meters);
+		}
+		else
+		{
+			new_position_meters_sec = Eigen::Vector3f::Zero();
+		}
+
+		m_state->apply_optical_state(new_position_meters, new_position_meters_sec, delta_time);
 	}
 	else
 	{
@@ -337,9 +374,13 @@ void PositionFilterLowPassOptical::update(
 	const float delta_time, 
 	const PoseFilterPacket &packet)
 {
+	const int history_queue_length = 5;
+
     if (packet.has_optical_measurement())
-    {        
+    {
+		Eigen::Vector3f old_position_meters;
 		Eigen::Vector3f new_position_meters;
+		Eigen::Vector3f new_position_meters_sec;
 
         if (m_state->bIsValid)
         {
@@ -352,7 +393,34 @@ void PositionFilterLowPassOptical::update(
             new_position_meters = packet.get_optical_position_in_meters();
         }
 
-		m_state->apply_optical_state(new_position_meters, delta_time);
+		// Apply basic optical prediction
+		// Add the new blend position to blend history
+		blendedPositionHistory.push_back(new_position_meters);
+		if (blendedPositionHistory.size() > history_queue_length)
+		{
+			blendedPositionHistory.pop_front();
+		}
+
+		old_position_meters = Eigen::Vector3f::Zero();
+		
+		int sampleCount = 0;
+		for (std::list<Eigen::Vector3f>::iterator it = blendedPositionHistory.begin(); it != blendedPositionHistory.end(); it++)
+		{
+			old_position_meters += *it;
+			sampleCount++;
+		}
+
+		if (sampleCount > 0)
+		{
+			new_position_meters_sec =
+				lowpass_prediction_vector3f(delta_time, (old_position_meters / sampleCount), new_position_meters);
+		}
+		else
+		{
+			new_position_meters_sec = Eigen::Vector3f::Zero();
+		}
+
+		m_state->apply_optical_state(new_position_meters, new_position_meters_sec, delta_time);
     }
 	else
 	{
@@ -368,7 +436,7 @@ void PositionFilterLowPassIMU::update(
     if (packet.has_optical_measurement())
     {        
 		// Use the raw optical position unfiltered
-		Eigen::Vector3f new_position_meters= packet.get_optical_position_in_meters();
+		const Eigen::Vector3f new_position_meters= packet.get_optical_position_in_meters();
 
 		m_state->apply_optical_state(new_position_meters, delta_time);
     }
@@ -570,6 +638,28 @@ static Eigen::Vector3f lowpass_filter_vector3f(
     return filtered_vector;
 }
 
+static Eigen::Vector3f lowpass_prediction_vector3f(
+	const float delta_time,
+	const Eigen::Vector3f &old_filtered_vector,
+	const Eigen::Vector3f &new_vector)
+{
+	Eigen::Vector3f new_position_meters_sec;
+
+	// Apply basic optical prediction
+	// We need to convert meters to centimeters otherwise it wont work. I assume value too small for decimal point precision.
+	Eigen::Vector3f diff = (new_vector - old_filtered_vector) * k_meters_to_centimeters;
+	float distance = diff.norm();
+	float new_position_weight = clampf01(lerpf(0.40f, 1.00f, distance / (k_max_lowpass_smoothing_distance * k_meters_to_centimeters)));
+
+	static float g_cutoff_frequency = k_accelerometer_frequency_cutoff;
+	new_position_meters_sec =
+		lowpass_filter_vector3f(
+			delta_time, g_cutoff_frequency,
+			Eigen::Vector3f::Zero(), ((new_vector - old_filtered_vector) * new_position_weight) * k_max_optical_prediction_power);
+
+	return new_position_meters_sec;
+}
+
 static Eigen::Vector3f lowpass_filter_optical_position_using_distance(
     const PoseFilterPacket *packet,
     const PositionFilterState *state)
@@ -579,9 +669,10 @@ static Eigen::Vector3f lowpass_filter_optical_position_using_distance(
 
     // Traveling k_max_lowpass_smoothing_distance in one frame should have 0 smoothing
     // Traveling 0+noise cm in one frame should have 60% smoothing
-    Eigen::Vector3f diff = packet->get_optical_position_in_meters() - state->position_meters;
+	// We need to convert meters to centimeters otherwise it wont work. I assume value too small for decimal point precision.
+    Eigen::Vector3f diff = (packet->get_optical_position_in_meters() - state->position_meters) * k_meters_to_centimeters;
     float distance = diff.norm();
-    float new_position_weight = clampf01(lerpf(0.40f, 1.00f, distance / k_max_lowpass_smoothing_distance));
+    float new_position_weight = clampf01(lerpf(0.40f, 1.00f, distance / (k_max_lowpass_smoothing_distance * k_meters_to_centimeters)));
 
     // New position is blended against the old position
     const Eigen::Vector3f &old_position = state->position_meters;
@@ -593,29 +684,29 @@ static Eigen::Vector3f lowpass_filter_optical_position_using_distance(
 
 static Eigen::Vector3f lowpass_filter_optical_position_using_variance(
 	const ExponentialCurve &position_variance_curve,
-    const PoseFilterPacket *packet,
-    const PositionFilterState *state)
+	const PoseFilterPacket *packet,
+	const PositionFilterState *state)
 {
-    assert(state->bIsValid);
+	assert(state->bIsValid);
 	assert(packet->has_optical_measurement());
 
 	// Compute the amount of variance in position we expect to see for the given screen area
-	const float position_variance= 
+	const float position_variance =
 		position_variance_curve.evaluate(packet->tracking_projection_area_px_sqr);
 
 	// Compute the percentage of maximum variance
-	const float max_variance_fraction=
+	const float max_variance_fraction =
 		safe_divide_with_default(position_variance, position_variance_curve.MaxValue, 1.f);
 
 	// Trust the new position more when there is less variance
 	const float new_position_weight = clampf01(1.f - max_variance_fraction);
 
-    // New position is blended against the old position
-    const Eigen::Vector3f &old_position = state->position_meters;
-    const Eigen::Vector3f new_position = packet->get_optical_position_in_meters();
-    const Eigen::Vector3f filtered_new_position = lowpass_filter_vector3f(new_position_weight, old_position, new_position);
+	// New position is blended against the old position
+	const Eigen::Vector3f &old_position = state->position_meters;
+	const Eigen::Vector3f new_position = packet->get_optical_position_in_meters();
+	const Eigen::Vector3f filtered_new_position = lowpass_filter_vector3f(new_position_weight, old_position, new_position);
 
-    return filtered_new_position;
+	return filtered_new_position;
 }
 
 static void lowpass_filter_imu_step(
@@ -669,9 +760,7 @@ static void lowpass_filter_imu_step(
         // Apply a lowpass filter to the acceleration
         static float g_cutoff_frequency= k_accelerometer_frequency_cutoff;
         new_acceleration= 
-            lowpass_filter_vector3f(
-                g_cutoff_frequency, delta_time, 
-                old_acceleration, new_acceleration);
+            lowpass_filter_vector3f(delta_time, g_cutoff_frequency, old_acceleration, new_acceleration);
 
         // Apply a decay filter to the acceleration
         static float g_acceleration_decay= k_acceleration_decay;
