@@ -1151,7 +1151,7 @@ void AppStage_ColorCalibration::renderUI()
 
 				if (ImGui::CollapsingHeader("Automatic Detection Settings", 0, true, false))
 				{
-					int adjustMethod = static_cast<int>(m_iDetectingAdjustMethod);
+					int adjustMethod = m_iDetectingAdjustMethod;
 					ImGui::Text("Automatic exposure/gain options:");
 					if (ImGui::Combo("##DetectAdjustMethod", &adjustMethod, "Keep Settings\0Adjust Exposure\0Adjust Gain\0\0"))
 					{
@@ -1795,14 +1795,14 @@ void AppStage_ColorCalibration::renderUI()
 		{
 		case eDetectionAdjustMethod::adjust_exposure:
 		{
-			request_tracker_set_exposure(32);
-			request_tracker_set_gain(m_iDetectingExposure);
+			request_tracker_set_exposure(m_iDetectingExposure);
+			request_tracker_set_gain(32);
 			break;
 		}
 		case eDetectionAdjustMethod::adjust_gain:
 		{
-			request_tracker_set_exposure(m_iDetectingExposure);
-			request_tracker_set_gain(32);
+			request_tracker_set_exposure(32);
+			request_tracker_set_gain(m_iDetectingExposure);
 			break;
 		}
 		}
