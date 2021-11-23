@@ -1018,7 +1018,8 @@ void ServerTrackerView::generate_tracker_data_frame_for_stream(
 
     switch (tracker_view->getTrackerDeviceType())
     {
-    case CommonDeviceState::PS3EYE:
+	case CommonDeviceState::PS3EYE:
+	case CommonDeviceState::VirtualTracker:
         {
             //TODO: PS3EYE tracker location
         } break;

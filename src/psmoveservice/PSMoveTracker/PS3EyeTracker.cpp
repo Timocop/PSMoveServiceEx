@@ -460,6 +460,10 @@ long PS3EyeTracker::getMaxPollFailureCount() const
 
 CommonDeviceState::eDeviceType PS3EyeTracker::getDeviceType() const
 {
+	// Virtual trackers have a common device path "VirtualTracker_#"
+	if (USBDevicePath[0] == 'V')
+		return CommonDeviceState::VirtualTracker;
+
     return CommonDeviceState::PS3EYE;
 }
 

@@ -243,9 +243,12 @@ struct CommonDeviceState
         case PSDualShock4:
             result = "PSDualShock4";
             break;
-        case PS3EYE:
-            result = "PSEYE";
-            break;
+		case PS3EYE:
+			result = "PSEYE";
+			break;
+		case VirtualTracker:
+			result = "VirtualTracker";
+			break;
         case Morpheus:
             result = "Morpheus";
             break;
