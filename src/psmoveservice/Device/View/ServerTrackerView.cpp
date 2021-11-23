@@ -743,10 +743,10 @@ public:
 	draw_pose_occlusion(CommonDeviceScreenLocation center, float size)
 	{
 		cv::Rect rec;
-		rec.x = center.x - (size);
-		rec.y = center.y - (size);
-		rec.width = size * 2;
-		rec.height = size * 2;
+		rec.x = static_cast<int>(center.x - size);
+		rec.y = static_cast<int>(center.y - size);
+		rec.width = static_cast<int>(size * 2.f);
+		rec.height = static_cast<int>(size * 2.f);
 
 		//Draw occlusion rectangle on bgrShmemBuffer
 		cv::rectangle(*bgrShmemBuffer, rec, cv::Scalar(0, 0, 255));
@@ -2399,12 +2399,15 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
     const CommonDeviceTrackingShape *tracking_shape)
 {
 	static int roi_counter[TrackerManager::k_max_devices][ControllerManager::k_max_devices];
+	static int last_roi_center[TrackerManager::k_max_devices][ControllerManager::k_max_devices][2];
 
     // Get expected ROI
     // Default to full screen.
     float screenWidth, screenHeight;
     tracker->getPixelDimensions(screenWidth, screenHeight);
     cv::Rect2i ROI(0, 0, static_cast<int>(screenWidth), static_cast<int>(screenHeight));
+
+	int trackerId = tracker->getDeviceID();
 
 	//Instead of applying ROI to the whole screen we only use parts of the screen.
 	//This will save alot of CPU cycles and also the tracking quality should stay the same.
@@ -2419,8 +2422,6 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
 	//		None visible:	Peak 18% CPU
 	if (!roi_disabled && roi_index > -1)
 	{
-		int trackerId = tracker->getDeviceID();
-
 		int roi_size[2];
 		roi_size[0] = static_cast<int>(screenWidth) / 3;
 		roi_size[1] = static_cast<int>(screenHeight) / 3;
@@ -2599,9 +2600,9 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
             } break;
         }
 
-        // The center of the ROI is the pixel projection center from last frame
-        // The size of the ROI computed by projecting the bounding box 
         {
+			// The center of the ROI is the pixel projection center from last frame
+			// The size of the ROI computed by projecting the bounding box 
             std::vector<CommonDevicePosition> trps{ tl, br };
             std::vector<CommonDeviceScreenLocation> screen_locs = tracker->projectTrackerRelativePositions(trps);
 
@@ -2618,12 +2619,34 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
             const int safe_proj_width = std::max(proj_width, k_min_roi_size);
             const int safe_proj_height = std::max(proj_height, k_min_roi_size);
 
-            const cv::Point2i roi_top_left = roi_center + cv::Point2i(-safe_proj_width, -safe_proj_height);
-            const cv::Size roi_size(2*safe_proj_width, 2*safe_proj_height);
+
+			// Increase ROI size if the projection is moving
+			// This help fast controller movements on lower tracker Hz
+			float scale_axis = 0.f;
+
+			if (roi_index > -1)
+			{
+				const float scale_x = static_cast<float>(fmax(0, abs(roi_center.x - last_roi_center[trackerId][roi_index][0]) - (k_min_roi_size / 3)) / fmax(1, fmax(safe_proj_width, safe_proj_height) / 2));
+				const float scale_y = static_cast<float>(fmax(0, abs(roi_center.y - last_roi_center[trackerId][roi_index][1]) - (k_min_roi_size / 3)) / fmax(1, fmax(safe_proj_width, safe_proj_height) / 2));
+
+				scale_axis = fmin(1.f, fmax(0.f, fmax(scale_x, scale_y)));
+			}
+
+            const cv::Point2i roi_top_left = roi_center + (cv::Point2i(-safe_proj_width, -safe_proj_height) * (1 + scale_axis));
+            const cv::Size2f roi_size(
+				static_cast<float>(2 * (safe_proj_width * (1 + scale_axis))),
+				static_cast<float>(2 * (safe_proj_height * (1 + scale_axis)))
+			);
 
             ROI = cv::Rect2i(roi_top_left, roi_size);
         }
     }
+
+	if (roi_index > -1)
+	{
+		last_roi_center[trackerId][roi_index][0] = (ROI.x + (ROI.width / 2));
+		last_roi_center[trackerId][roi_index][1] = (ROI.y + (ROI.height / 2));
+	}
 
     return ROI;
 }
