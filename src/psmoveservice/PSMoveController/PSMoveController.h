@@ -43,7 +43,7 @@ public:
 		, max_poll_failure_count(100)
         , poll_timeout_ms(1000) 
         , prediction_time(0.f)
-		, position_filter_type("LowPassExponential")
+		, position_filter_type("LowPassOptical")
 		, orientation_filter_type("ComplementaryMARG")
         , cal_ag_xyz_kbd({{ 
             {{ {{0, 0, 0}}, {{0, 0, 0}}, {{0, 0, 0}} }},

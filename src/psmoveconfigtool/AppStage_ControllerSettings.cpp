@@ -185,10 +185,10 @@ const char *AppStage_ControllerSettings::GAMEPAD_COMBO_LABELS[MAX_GAMEPAD_LABELS
 };
 
 //-- constants -----
-const int k_default_position_filter_index = 3; // LowPassExponential
+const int k_default_position_filter_index = 1; // LowPassOptical
 const int k_default_psmove_orientation_filter_index = 3; // ComplementaryMARG
-const int k_default_ds4_position_filter_index = 5; // PositionKalman
-const int k_default_ds4_orientation_filter_index = 3; // OrientationKalman
+const int k_default_ds4_position_filter_index = 4; // ComplimentaryOpticalIMU
+const int k_default_ds4_orientation_filter_index = 2; // ComplementaryOpticalARG
 const int k_default_ds4_gyro_gain_index = 4; // 2000deg/s
 
 const char* k_controller_position_filter_names[] = { "PassThru", "LowPassOptical", "LowPassIMU", "LowPassExponential", "ComplimentaryOpticalIMU", "PositionKalman" };

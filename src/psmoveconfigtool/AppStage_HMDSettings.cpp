@@ -20,9 +20,9 @@
 const char *AppStage_HMDSettings::APP_STAGE_NAME= "HMDSettings";
 
 //-- constants -----
-const int k_default_hmd_position_filter_index = 3; // LowPassExponential
-const int k_default_morpheus_position_filter_index = 5; // PositionKalman
-const int k_default_morpheus_orientation_filter_index = 3; // OrientationKalman
+const int k_default_hmd_position_filter_index = 1; // LowPassOptical
+const int k_default_morpheus_position_filter_index = 1; // LowPassOptical
+const int k_default_morpheus_orientation_filter_index = 1; // MadgwickARG //Why this one?
 
 const char* k_hmd_position_filter_names[] = { "PassThru", "LowPassOptical", "LowPassIMU", "LowPassExponential", "ComplimentaryOpticalIMU", "PositionKalman" };
 const char* k_morpheus_orientation_filter_names[] = { "PassThru", "MadgwickARG", "ComplementaryOpticalARG", "OrientationKalman" };
