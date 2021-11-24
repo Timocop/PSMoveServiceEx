@@ -61,4 +61,7 @@ SetBuildVars_X64.bat
 # Allow assets
 !src/psmoveconfigtool/assets/**
 
+# Allow misc
+!misc/**
+
 *.kdev4
