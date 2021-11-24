@@ -397,6 +397,8 @@ void AppStage_ControllerSettings::renderUI()
 					ImGui::SameLine();
                     ImGui::Text("Controller: %d", m_selectedControllerIndex);
 
+					ImGui::Separator();
+
                     // Combo box selection for controller tracking color
                     if (controllerInfo.ControllerType == PSMController_Virtual ||
 						(controllerInfo.ControllerType == PSMController_Move && controllerInfo.IsBluetooth))
@@ -428,6 +430,8 @@ void AppStage_ControllerSettings::renderUI()
                             request_set_controller_hand(controllerInfo.ControllerID, controllerInfo.ControllerHand);
                         }
                     }
+
+					ImGui::Separator();
 
                     ImGui::BulletText("Controller ID: %d", controllerInfo.ControllerID);
 
@@ -558,13 +562,13 @@ void AppStage_ControllerSettings::renderUI()
 							}
 							else
 							{
-								ImGui::BulletText("Battery N/A:");
+								ImGui::BulletText("Battery: N/A");
 							}
 							break;
 						}
 						default:
 						{
-							ImGui::BulletText("Battery N/A:");
+							ImGui::BulletText("Battery: N/A");
 							break;
 						}
 					}
