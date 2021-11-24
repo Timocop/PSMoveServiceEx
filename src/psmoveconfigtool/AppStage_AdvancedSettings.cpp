@@ -548,8 +548,8 @@ void AppStage_AdvancedSettings::renderUI()
 
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip(
-							"When tracking is lost wait this amount of time until tracking is resumed.\n"
-							"Do not set this value lower than 100ms otherwise you will experience random tracker timeouts.\n"
+							"The maximum amount of time we can wait for new tracker data for optical tracking.\n"
+							"If the time exceeds the given value then the tracker positional tracking will be ignored.\n"
 							"(The default value is 100)"
 						);
 				}

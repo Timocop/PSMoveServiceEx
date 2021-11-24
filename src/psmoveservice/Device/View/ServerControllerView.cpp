@@ -504,8 +504,6 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
             ServerTrackerViewPtr tracker = tracker_manager->getTrackerViewPtr(tracker_id);
             ControllerOpticalPoseEstimation &trackerPoseEstimateRef = m_tracker_pose_estimations[tracker_id];
 
-			const bool bWasTracking = trackerPoseEstimateRef.bCurrentlyTracking;
-			
             // Assume we're going to lose tracking this frame
             bool bCurrentlyTracking = false;
 			bool bOccluded = false;
@@ -561,7 +559,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 
 						if (!occluded_tracker_ids[tracker_id][controller_id])
 						{
-							if (bWasTracking || bIsVisibleThisUpdate)
+							if (bIsVisibleThisUpdate)
 							{
 								occluded_tracker_ids[tracker_id][controller_id] = false;
 								occluded_projection_tracker_ids[tracker_id][controller_id][0] = trackerPoseEstimateRef.projection.shape.ellipse.center.x;
@@ -575,7 +573,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 
 						if (occluded_tracker_ids[tracker_id][controller_id])
 						{
-							if (bWasTracking || bIsVisibleThisUpdate)
+							if (bIsVisibleThisUpdate)
 							{
 								if (abs(trackerPoseEstimateRef.projection.shape.ellipse.center.x - occluded_projection_tracker_ids[tracker_id][controller_id][0]) 
 											< trackerMgrConfig.min_occluded_area_on_loss
@@ -600,24 +598,18 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 					if (!bIsOccluded || projections_found < 2)
 					{
 						bOccluded = false;
-						
+
 						// If the projection isn't too old (or updated this tick), 
 						// say we have a valid tracked location
-						if (bWasTracking || bIsVisibleThisUpdate)
+						if (bIsVisibleThisUpdate)
 						{
-							const std::chrono::duration<float, std::milli> timeSinceLastVisibleMillis =
-								now - trackerPoseEstimateRef.last_visible_timestamp;
+							// If this tracker has a valid projection for the controller
+							// add it to the tracker id list
+							valid_projection_tracker_ids[projections_found] = tracker_id;
+							++projections_found;
 
-							if (timeSinceLastVisibleMillis.count() < timeoutMilli)
-							{
-								// If this tracker has a valid projection for the controller
-								// add it to the tracker id list
-								valid_projection_tracker_ids[projections_found] = tracker_id;
-								++projections_found;
-
-								// Flag this pose estimate as invalid
-								bCurrentlyTracking = true;
-							}
+							// Flag this pose estimate as invalid
+							bCurrentlyTracking = true;
 						}
 					}
 					else
