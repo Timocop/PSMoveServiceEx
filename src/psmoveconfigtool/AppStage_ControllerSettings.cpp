@@ -238,7 +238,10 @@ void AppStage_ControllerSettings::exit()
 
 	for (PSMControllerID controller_id : m_controllers)
 	{
-		PSM_StopControllerDataStream(controller_id, PSM_DEFAULT_TIMEOUT);
+		PSMRequestID request_id;
+		PSM_StopControllerDataStreamAsync(controller_id, &request_id);
+		PSM_EatResponse(request_id);
+
 		PSM_FreeControllerListener(controller_id);
 	}
 
@@ -352,7 +355,7 @@ void AppStage_ControllerSettings::renderUI()
 
             if (ImGui::CollapsingHeader("Host Info", 0, true, true))
             {
-                if (m_hostSerial.length() > 1 && m_hostSerial != "00:00:00:00:00:00")
+				if (m_hostSerial.length() > 1 && m_hostSerial != "00:00:00:00:00:00")
                 {
                     ImGui::Text("Host Serial: %s", m_hostSerial.c_str());
                 }
@@ -517,7 +520,7 @@ void AppStage_ControllerSettings::renderUI()
 
 									case PSMBattery_Charged:
 									{
-										ImGui::BulletText("Battery fully charged!:");
+										ImGui::BulletText("Battery fully charged:");
 										ImGui::SameLine();
 										ImGui::ProgressBar(1.0F);
 										break;
@@ -553,11 +556,15 @@ void AppStage_ControllerSettings::renderUI()
 									}
 								}
 							}
+							else
+							{
+								ImGui::BulletText("Battery N/A:");
+							}
 							break;
 						}
 						default:
 						{
-							ImGui::BulletText("Battery: None");
+							ImGui::BulletText("Battery N/A:");
 							break;
 						}
 					}
@@ -1226,7 +1233,10 @@ void AppStage_ControllerSettings::handle_controller_list_response(
 
 			for (PSMControllerID controller_id : thisPtr->m_controllers)
 			{
-				PSM_StopControllerDataStream(controller_id, PSM_DEFAULT_TIMEOUT);
+				PSMRequestID request_id;
+				PSM_StopControllerDataStreamAsync(controller_id, &request_id);
+				PSM_EatResponse(request_id);
+
 				PSM_FreeControllerListener(controller_id);
 			}
 
@@ -1238,7 +1248,10 @@ void AppStage_ControllerSettings::handle_controller_list_response(
 					PSMControllerDataStreamFlags::PSMStreamFlags_defaultStreamOptions;
 				
 				PSM_AllocateControllerListener(it->ControllerID);
-				PSM_StartControllerDataStream(it->ControllerID, data_stream_flags, PSM_DEFAULT_TIMEOUT);
+
+				PSMRequestID request_id;
+				PSM_StartControllerDataStreamAsync(it->ControllerID, PSMStreamFlags_defaultStreamOptions, &request_id);
+				PSM_EatResponse(request_id);
 
 				thisPtr->m_controllers.push_back(it->ControllerID);
 			}
