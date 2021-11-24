@@ -630,10 +630,12 @@ public:
 
 		// ###Externet We need to flip the input image because PSEyes do so too.
 		// If we dont do this the Y axis will be flipped on pose calibration.
-		cv::Mat flipped;
-		cv::flip(capFrame, flipped, 1);
+		// EDIT:
+		// Let the virtual tracker manager control the flip. Not all cameras have flipped horizontal streams.
+		//cv::Mat flipped;
+		//cv::flip(capFrame, flipped, 1);
 
-		flipped.copyTo(outArray);
+		capFrame.copyTo(outArray);
 		return true;
 	}
 
