@@ -39,7 +39,7 @@ bin*
 dist*
 obj*
 
-# Relase directories
+# Release directories
 release*
 
 # Auto-downloaded Dependencies
@@ -57,5 +57,8 @@ SetBuildVars_X64.bat
 # Allow source model files
 !src/psmoveconfigtool/source_assets/*.obj
 !src/openvr_plugin/resources/*.obj
+
+# Allow assets
+!src/psmoveconfigtool/assets/**
 
 *.kdev4

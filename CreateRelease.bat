@@ -10,7 +10,7 @@ IF NOT EXIST ".\release\PSMoveService\testing\" mkdir ".\release\PSMoveService\t
 copy /Y ".\build\src\psmoveclient\Release\*.dll" ".\release\PSMoveService\"
 copy /Y ".\build\src\psmoveservice\Release\*.exe" ".\release\PSMoveService\"
 copy /Y ".\build\src\psmoveconfigtool\Release\*.exe" ".\release\PSMoveService\"
-xcopy /S /I /Y ".\build\src\psmoveconfigtool\Release\assets" ".\release\PSMoveService\assets"
+xcopy /S /I /Y ".\src\psmoveconfigtool\assets" ".\release\PSMoveService\assets"
 
 copy /Y ".\build\src\psmoveclient\Release\*.dll" ".\release\PSMoveService\testing\"
 copy /Y ".\build\src\tests\Release\*.exe" ".\release\PSMoveService\testing\"
