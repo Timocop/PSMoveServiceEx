@@ -39,7 +39,7 @@ PS3EyeTrackerConfig::PS3EyeTrackerConfig(const std::string &fnamebase)
     , max_poll_failure_count(100)
 	, frame_width(640)
 	, frame_height(480)
-	, frame_rate(40)
+	, frame_rate(30)
     , exposure(32)
     , gain(32)
     , focalLengthX(554.2563) // pixels
@@ -123,7 +123,7 @@ PS3EyeTrackerConfig::ptree2config(const boost::property_tree::ptree &pt)
         max_poll_failure_count = pt.get<long>("max_poll_failure_count", 100);
 		frame_width = pt.get<double>("frame_width", 640);
 		frame_height = pt.get<double>("frame_height", 480);
-		frame_rate = pt.get<double>("frame_rate", 40);
+		frame_rate = pt.get<double>("frame_rate", 30);
         exposure = pt.get<double>("exposure", 32);
 		gain = pt.get<double>("gain", 32);
         hfov = pt.get<double>("hfov", 60.0);
@@ -423,6 +423,7 @@ IDeviceInterface::ePollResult PS3EyeTracker::poll()
 
             // Increment the sequence for every new polling packet
             newState.PollSequenceNumber = NextPollSequenceNumber;
+			newState.DeviceType = getDeviceType();
             ++NextPollSequenceNumber;
 
             // Make room for new entry if at the max queue size
