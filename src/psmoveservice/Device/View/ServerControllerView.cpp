@@ -597,7 +597,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 					}
 
 					// Ignore projections that are occluded BUT always pass atleast 2 biggest projected trackers.
-					if (!bIsOccluded /*|| projections_found < 2*/)
+					if (!bIsOccluded || projections_found < 2)
 					{
 						bOccluded = false;
 
