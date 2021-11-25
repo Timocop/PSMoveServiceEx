@@ -504,6 +504,8 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
             ServerTrackerViewPtr tracker = tracker_manager->getTrackerViewPtr(tracker_id);
             ControllerOpticalPoseEstimation &trackerPoseEstimateRef = m_tracker_pose_estimations[tracker_id];
 
+			const bool bWasTracking = trackerPoseEstimateRef.bCurrentlyTracking;
+
             // Assume we're going to lose tracking this frame
             bool bCurrentlyTracking = false;
 			bool bOccluded = false;
@@ -559,7 +561,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 
 						if (!occluded_tracker_ids[tracker_id][controller_id])
 						{
-							if (bIsVisibleThisUpdate)
+							if (bWasTracking || bIsVisibleThisUpdate)
 							{
 								occluded_tracker_ids[tracker_id][controller_id] = false;
 								occluded_projection_tracker_ids[tracker_id][controller_id][0] = trackerPoseEstimateRef.projection.shape.ellipse.center.x;
@@ -573,7 +575,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 
 						if (occluded_tracker_ids[tracker_id][controller_id])
 						{
-							if (bIsVisibleThisUpdate)
+							if (bWasTracking || bIsVisibleThisUpdate)
 							{
 								if (abs(trackerPoseEstimateRef.projection.shape.ellipse.center.x - occluded_projection_tracker_ids[tracker_id][controller_id][0]) 
 											< trackerMgrConfig.min_occluded_area_on_loss
@@ -595,7 +597,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 					}
 
 					// Ignore projections that are occluded BUT always pass atleast 2 biggest projected trackers.
-					if (!bIsOccluded || projections_found < 2)
+					if (!bIsOccluded /*|| projections_found < 2*/)
 					{
 						bOccluded = false;
 
