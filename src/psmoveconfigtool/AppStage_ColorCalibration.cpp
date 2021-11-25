@@ -1159,7 +1159,7 @@ void AppStage_ColorCalibration::renderUI()
 					}
 				}
 
-				if (ImGui::CollapsingHeader("Automatic/manual detection settings", 0, true, false))
+				if (ImGui::CollapsingHeader("Automatic/Manual Detection Settings", 0, true, false))
 				{
 					int colorSensitivity = m_iColorSensitivity;
 					ImGui::Text("Color detection sensitivity:");
@@ -1723,9 +1723,9 @@ void AppStage_ColorCalibration::renderUI()
 			}
 		}
 
-		ImGui::Text(
-			"Place all controllers in the middle of your play space so all trackers can see them.\n"
-			"Do not obscure the tracking light while the sampling process is running otherwise the\n"
+		ImGui::TextWrapped(
+			"Place all controllers in the middle of your play space so all trackers can see them. "
+			"Do not obscure the tracking light while the sampling process is running otherwise the "
 			"sampled colors might be inaccurate!"
 		);
 
