@@ -437,15 +437,15 @@ void AppSubStage_CalibrateWithMat::update()
 				{
 					lastFlickerDuration = (now + std::chrono::milliseconds(500));
 
-					if (m_iLightFlicker == 0)
+					if (m_iLightFlicker == 0 || m_iLightFlicker == 2)
 					{
 						m_iLightFlicker = 1;
 						PSM_SetControllerLEDOverrideColor(ControllerView->ControllerID, 0, 255, 0);
 					}
 					else
 					{
-						m_iLightFlicker = 0;
-						PSM_SetControllerLEDOverrideColor(ControllerView->ControllerID, 0, 0, 0);
+						m_iLightFlicker = 2;
+						PSM_SetControllerLEDOverrideColor(ControllerView->ControllerID, 0, 1, 0);
 					}
 				}
 
@@ -453,7 +453,7 @@ void AppSubStage_CalibrateWithMat::update()
                 if (!bIsStable)
                 {
 					// Disable blinking if its enabled.
-					if (m_iLightFlicker == 1)
+					if (m_iLightFlicker > 0)
 					{
 						const PSMController *ControllerView = m_parentStage->get_calibration_controller_view();
 						PSM_SetControllerLEDOverrideColor(ControllerView->ControllerID, 0, 0, 0);
@@ -761,7 +761,7 @@ void AppSubStage_CalibrateWithMat::renderUI()
             if (ImGui::Button("Cancel"))
             {
 				// Disable blinking if its enabled.
-				if (m_iLightFlicker == 1)
+				if (m_iLightFlicker > 0)
 				{
 					const PSMController *ControllerView = m_parentStage->get_calibration_controller_view();
 					PSM_SetControllerLEDOverrideColor(ControllerView->ControllerID, 0, 0, 0);
@@ -838,7 +838,7 @@ void AppSubStage_CalibrateWithMat::renderUI()
             if (ImGui::Button("Cancel"))
             {
 				// Disable blinking if its enabled.
-				if (m_iLightFlicker == 1)
+				if (m_iLightFlicker > 0)
 				{
 					const PSMController *ControllerView = m_parentStage->get_calibration_controller_view();
 					PSM_SetControllerLEDOverrideColor(ControllerView->ControllerID, 0, 0, 0);
