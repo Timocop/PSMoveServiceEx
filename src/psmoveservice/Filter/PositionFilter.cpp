@@ -26,7 +26,7 @@
 // IMU extrapolation of an unseen controller
 #define k_max_unseen_position_timeout 10000.f // ms
 
-#define k_max_optical_prediction_power 2.5f
+#define k_max_optical_prediction_power 10.0f
 
 // -- private definitions -----
 struct PositionFilterState
