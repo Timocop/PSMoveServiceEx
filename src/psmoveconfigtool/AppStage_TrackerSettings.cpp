@@ -398,7 +398,7 @@ void AppStage_TrackerSettings::renderUI()
 									AppStage_ComputeTrackerPoses::enterStageAndCalibrateTrackersWithController(m_app, controllerID);
 								}
 
-								if (ImGui::Button("Calibrate Optical Noise (Kalman Filter)"))
+								if (ImGui::Button("Calibrate Optical Noise"))
 								{
 									const PSMClientTrackerInfo &trackerInfo = m_trackerInfos[m_selectedTrackerIndex];
 									const ControllerInfo *controller = get_selected_controller();
@@ -410,30 +410,37 @@ void AppStage_TrackerSettings::renderUI()
 										m_app->setAppStage(AppStage_OpticalCalibration::APP_STAGE_NAME);
 									}
 								}
+
+								if (ImGui::IsItemHovered())
+									ImGui::SetTooltip(
+										"NOTE: This only appiles for following positional filters:\n"
+										" - ComplimentaryOpticalIMU\n"
+										" - PositionKalman"
+									);
 							}
 							else
 							{
 								ImGui::TextDisabled("Calibrate Tracking Colors");
 								ImGui::TextDisabled("Calibrate Tracker Poses");
-								ImGui::TextDisabled("Calibrate Optical Noise (Kalman Filter)");
+								ImGui::TextDisabled("Calibrate Optical Noise");
 							}
 
 						}
 
 						if (ImGui::CollapsingHeader("Testing##ControllerTesting", 0, true, true))
 						{
-							if (ImGui::Button("Test Tracking Pose##ControllerTrackingPose") || m_gotoTestControllerTracking)
-							{
-								if (m_gotoTestControllerTracking) m_gotoTestControllerTracking = false;
-								AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, controllerID, -1);
-							}
-							if (ImGui::Button("Test Tracking Video##ControllerTrackingVideo") || m_gotoTrackingControllerVideo)
+							if (ImGui::Button("Test Tracking Colors##ControllerTrackingColors") || m_gotoTrackingControllerVideo)
 							{
 								if (m_gotoTrackingControllerVideo) m_gotoTrackingControllerVideo = false;
 								m_app->getAppStage<AppStage_ComputeTrackerPoses>()->set_tracker_id(m_selectedTrackerIndex);
 								AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, controllerID, -1);
 							}
-							if (ImGui::Button("Test Optical Noise (Kalman Filter)##ControllerTrackingNoise"))
+							if (ImGui::Button("Test Tracking Pose##ControllerTrackingPose") || m_gotoTestControllerTracking)
+							{
+								if (m_gotoTestControllerTracking) m_gotoTestControllerTracking = false;
+								AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, controllerID, -1);
+							}
+							if (ImGui::Button("Test Optical Noise##ControllerTrackingNoise"))
 							{
 								const PSMClientTrackerInfo &trackerInfo = m_trackerInfos[m_selectedTrackerIndex];
 								const ControllerInfo *controller = get_selected_controller();
@@ -563,15 +570,15 @@ void AppStage_TrackerSettings::renderUI()
 
 					if (ImGui::CollapsingHeader("Testing##HMDTesting", 0, true, true))
 					{
-						if (ImGui::Button("Test Tracking Pose##HMDTrackingPose") || m_gotoTestHmdTracking)
-						{
-							m_gotoTestHmdTracking = false;
-							AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, -1, hmdID);
-						}
-						if (ImGui::Button("Test Tracking Video##HMDTrackingVideo") || m_gotoTrackingHmdVideo)
+						if (ImGui::Button("Test Tracking Colors##HMDTrackingColors") || m_gotoTrackingHmdVideo)
 						{
 							m_gotoTrackingHmdVideo = false;
 							m_app->getAppStage<AppStage_ComputeTrackerPoses>()->set_tracker_id(m_selectedTrackerIndex);
+							AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, -1, hmdID);
+						}
+						if (ImGui::Button("Test Tracking Pose##HMDTrackingPose") || m_gotoTestHmdTracking)
+						{
+							m_gotoTestHmdTracking = false;
 							AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, -1, hmdID);
 						}
 						if (m_gotoTrackingVideoALL)
