@@ -40,18 +40,19 @@ static const char *k_video_display_mode_names[] = {
     "Undistorted"
 };
 
-static const double k_stabilize_wait_time_ms = 3000.f;
+static const double k_stabilize_init_wait_time_ms = 3000.f;
+static const double k_stabilize_next_wait_time_ms = 1000.f;
 
 #define PATTERN_W 9 // Internal corners
 #define PATTERN_H 6
 #define CORNER_COUNT (PATTERN_W*PATTERN_H)
 #define DEFAULT_SQUARE_LEN_MM 24
-#define DESIRED_CAPTURE_BOARD_COUNT 12
+#define DESIRED_CAPTURE_BOARD_COUNT 24
 
 #define BOARD_MOVED_PIXEL_DIST 5
 #define BOARD_MOVED_ERROR_SUM BOARD_MOVED_PIXEL_DIST*CORNER_COUNT
 
-#define BOARD_NEW_LOCATION_PIXEL_DIST 100 
+#define BOARD_NEW_LOCATION_PIXEL_DIST 100
 #define BOARD_NEW_LOCATION_ERROR_SUM BOARD_NEW_LOCATION_PIXEL_DIST*CORNER_COUNT
 
 #define STRAIGHT_LINE_TOLERANCE 5 // error tolerance in pixels
@@ -477,6 +478,7 @@ void AppStage_DistortionCalibration::update()
 				if (m_opencv_state->bCurrentImagePointsValid)
 				{
 					std::chrono::duration<double, std::milli> stableDuration = now - m_opencv_state->timeStableValidPoints;
+					const float k_stabilize_wait_time_ms = (m_opencv_state->capturedBoardCount > 0) ? (k_stabilize_next_wait_time_ms) : (k_stabilize_init_wait_time_ms);
 
 					if (stableDuration.count() >= k_stabilize_wait_time_ms)
 					{
@@ -743,6 +745,8 @@ void AppStage_DistortionCalibration::renderUI()
                 ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
                 ImGui::SetNextWindowSize(ImVec2(k_panel_width, 110));
                 ImGui::Begin(k_window_title, nullptr, window_flags);
+
+				const float k_stabilize_wait_time_ms = (m_opencv_state->capturedBoardCount > 0) ? (k_stabilize_next_wait_time_ms) : (k_stabilize_init_wait_time_ms);
 
                 const float samplePercentage= 
                     static_cast<float>(m_opencv_state->capturedBoardCount) / static_cast<float>(DESIRED_CAPTURE_BOARD_COUNT);
