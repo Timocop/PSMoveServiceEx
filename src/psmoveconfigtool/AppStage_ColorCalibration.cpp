@@ -496,7 +496,7 @@ void AppStage_ColorCalibration::renderUI()
 		align_pos_window.y += align_window_size;
 
 		ImGui::SetNextWindowPos(align_pos_window);
-		ImGui::SetNextWindowSize(ImVec2(300, 64));
+		ImGui::SetNextWindowSize(ImVec2(350, 64));
 
 		ImGui::Begin("Alignment Window Tip", nullptr,
 			ImGuiWindowFlags_NoBringToFrontOnFocus |
