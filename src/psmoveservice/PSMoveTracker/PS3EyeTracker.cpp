@@ -685,10 +685,8 @@ void PS3EyeTracker::getCameraIntrinsics(
     outDistortionP1 = static_cast<float>(cfg.distortionP1);
     outDistortionP2 = static_cast<float>(cfg.distortionP2);
 
-
 	// ###Externet $TODO Scale precomputed intrinsics if its other than 480p.
-	// Distortion calibration should never be done at 240p anyways so this should be fine.
-	// So we can finally use 240p out of the box.
+	// 480p should be the default resolution for intrinsics.
 	const float N = static_cast<float>(getFrameWidth() / 640);
 
 	outFocalLengthX *= N; //F_PX
@@ -717,6 +715,20 @@ void PS3EyeTracker::setCameraIntrinsics(
     cfg.distortionK3 = distortionK3;
     cfg.distortionP1 = distortionP1;
     cfg.distortionP2 = distortionP2;
+
+	// ###Externet $TODO Scale precomputed intrinsics if its other than 480p.
+	// 480p should be the default resolution for intrinsics.
+	const float N = static_cast<float>(getFrameWidth() / 640);
+
+	cfg.focalLengthX /= N; //F_PX
+	cfg.focalLengthY /= N; //F_PY
+	cfg.principalX /= N; //PrincipalX
+	cfg.principalY /= N; //PrincipalY
+	//outDistortionK1 /= N; //K1
+	//outDistortionK2 /= N; //K2
+	//outDistortionK3 /= N; //K3
+	//outDistortionP1 /= N; //P1
+	//outDistortionP2 /= N; //P2
 }
 
 CommonDevicePose PS3EyeTracker::getTrackerPose() const
