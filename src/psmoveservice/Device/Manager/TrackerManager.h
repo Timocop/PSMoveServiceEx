@@ -60,7 +60,9 @@ public:
 	bool use_bgr_to_hsv_lookup_table;
 	bool exclude_opposed_cameras;
 	float min_valid_projection_area;
-	float min_occluded_area_on_loss;
+	float occluded_area_on_loss_size;
+	int occluded_area_ignore_trackers;
+	float occluded_area_regain_projection_size;
 	int min_points_in_contour;
 	float max_tracker_position_deviation;
 	bool disable_roi;

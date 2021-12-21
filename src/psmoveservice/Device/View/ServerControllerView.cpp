@@ -555,7 +555,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 					//Create an occlusion area at the last seen valid tracked projection.
 					//If the projection center is near the occluded area it will not mark the projection as valid.
 					//This will remove jitter when the shape of the controllers is partially visible to the trackers.
-					if (trackerMgrConfig.min_occluded_area_on_loss >= 0.01)
+					if (trackerMgrConfig.occluded_area_on_loss_size >= 0.01)
 					{
 						int controller_id = this->getDeviceID();
 
@@ -577,14 +577,19 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 						{
 							if (bWasTracking || bIsVisibleThisUpdate)
 							{
-								if (abs(trackerPoseEstimateRef.projection.shape.ellipse.center.x - occluded_projection_tracker_ids[tracker_id][controller_id][0]) 
-											< trackerMgrConfig.min_occluded_area_on_loss
-									&& abs(trackerPoseEstimateRef.projection.shape.ellipse.center.y - occluded_projection_tracker_ids[tracker_id][controller_id][1]) 
-											< trackerMgrConfig.min_occluded_area_on_loss)
+								bool bInArea = (abs(trackerPoseEstimateRef.projection.shape.ellipse.center.x - occluded_projection_tracker_ids[tracker_id][controller_id][0])
+													< trackerMgrConfig.occluded_area_on_loss_size
+												&& abs(trackerPoseEstimateRef.projection.shape.ellipse.center.y - occluded_projection_tracker_ids[tracker_id][controller_id][1])
+													< trackerMgrConfig.occluded_area_on_loss_size);
+								
+								bool bRegain = (fmaxf(trackerPoseEstimateRef.projection.screen_area, trackerMgrConfig.min_valid_projection_area) 
+													> trackerMgrConfig.occluded_area_regain_projection_size);
+
+								if (bInArea && !bRegain)
 								{
 									bIsOccluded = true;
 
-									trackerPoseEstimateRef.occlusionAreaSize = trackerMgrConfig.min_occluded_area_on_loss;
+									trackerPoseEstimateRef.occlusionAreaSize = trackerMgrConfig.occluded_area_on_loss_size;
 									trackerPoseEstimateRef.occlusionAreaPos.x = occluded_projection_tracker_ids[tracker_id][controller_id][0];
 									trackerPoseEstimateRef.occlusionAreaPos.y = occluded_projection_tracker_ids[tracker_id][controller_id][1];
 								}
@@ -597,7 +602,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 					}
 
 					// Ignore projections that are occluded BUT always pass atleast 2 biggest projected trackers.
-					if (!bIsOccluded || projections_found < 2)
+					if (!bIsOccluded || projections_found < trackerMgrConfig.occluded_area_ignore_trackers)
 					{
 						bOccluded = false;
 

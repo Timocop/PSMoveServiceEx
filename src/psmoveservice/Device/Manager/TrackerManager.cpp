@@ -31,7 +31,9 @@ TrackerManagerConfig::TrackerManagerConfig(const std::string &fnamebase)
 	use_bgr_to_hsv_lookup_table = true;
 	exclude_opposed_cameras = false;
 	min_valid_projection_area = 6;
-	min_occluded_area_on_loss = 4;
+	occluded_area_on_loss_size = 4.f;
+	occluded_area_ignore_trackers = 0;
+	occluded_area_regain_projection_size = 16.f;
 	min_points_in_contour = 4;
 	max_tracker_position_deviation = 12.0f;
 	disable_roi = false;
@@ -68,7 +70,9 @@ TrackerManagerConfig::config2ptree()
 	pt.put("excluded_opposed_cameras", exclude_opposed_cameras);
 
 	pt.put("min_valid_projection_area", min_valid_projection_area);
-	pt.put("min_occluded_area_on_loss", min_occluded_area_on_loss);
+	pt.put("occluded_area_on_loss_size", occluded_area_on_loss_size);
+	pt.put("occluded_area_ignore_trackers", occluded_area_ignore_trackers);
+	pt.put("occluded_area_regain_projection_size", occluded_area_regain_projection_size);
 	pt.put("min_points_in_contour", min_points_in_contour);
 	pt.put("max_tracker_position_deviation", max_tracker_position_deviation);
 
@@ -107,7 +111,9 @@ TrackerManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
 		exclude_opposed_cameras = pt.get<bool>("excluded_opposed_cameras", exclude_opposed_cameras);
 
 		min_valid_projection_area = pt.get<float>("min_valid_projection_area", min_valid_projection_area);
-		min_occluded_area_on_loss = pt.get<float>("min_occluded_area_on_loss", min_occluded_area_on_loss);
+		occluded_area_on_loss_size = pt.get<float>("occluded_area_on_loss_size", occluded_area_on_loss_size);
+		occluded_area_ignore_trackers = pt.get<int>("occluded_area_ignore_trackers", occluded_area_ignore_trackers);
+		occluded_area_regain_projection_size = pt.get<float>("occluded_area_regain_projection_size", occluded_area_regain_projection_size);
 		min_points_in_contour = pt.get<int>("min_points_in_contour", min_points_in_contour);
 		max_tracker_position_deviation = pt.get<float>("max_tracker_position_deviation", max_tracker_position_deviation);
 

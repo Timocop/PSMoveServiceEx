@@ -231,7 +231,9 @@ TrackerConfig::config2ptree()
 	pt.put("excluded_opposed_cameras", exclude_opposed_cameras);
 
 	pt.put("min_valid_projection_area", min_valid_projection_area);
-	pt.put("min_occluded_area_on_loss", min_occluded_area_on_loss);
+	pt.put("occluded_area_on_loss_size", occluded_area_on_loss_size);
+	pt.put("occluded_area_ignore_trackers", occluded_area_ignore_trackers);
+	pt.put("occluded_area_regain_projection_size", occluded_area_regain_projection_size);
 	pt.put("min_points_in_contour", min_points_in_contour);
 	pt.put("max_tracker_position_deviation", max_tracker_position_deviation);
 
@@ -260,7 +262,9 @@ TrackerConfig::ptree2config(const boost::property_tree::ptree &pt)
 	exclude_opposed_cameras = pt.get<bool>("excluded_opposed_cameras", exclude_opposed_cameras);
 
 	min_valid_projection_area = pt.get<float>("min_valid_projection_area", min_valid_projection_area);
-	min_occluded_area_on_loss = pt.get<float>("min_occluded_area_on_loss", min_occluded_area_on_loss);
+	occluded_area_on_loss_size = pt.get<float>("occluded_area_on_loss_size", occluded_area_on_loss_size);
+	occluded_area_ignore_trackers = pt.get<int>("occluded_area_ignore_trackers", occluded_area_ignore_trackers);
+	occluded_area_regain_projection_size = pt.get<float>("occluded_area_regain_projection_size", occluded_area_regain_projection_size);
 	min_points_in_contour = pt.get<int>("min_points_in_contour", min_points_in_contour);
 	max_tracker_position_deviation = pt.get<float>("max_tracker_position_deviation", max_tracker_position_deviation);
 
@@ -618,12 +622,12 @@ void AppStage_AdvancedSettings::renderUI()
 				}
 
 				{
-					ImGui::Text("Minimum occluded area on tracking loss:");
+					ImGui::Text("Occluded area size on tracking loss:");
 					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 					ImGui::PushItemWidth(100.f);
-					if (ImGui::InputFloat("##MinimumOccludedAreaOnLoss", &cfg_tracker.min_occluded_area_on_loss, 1.f, 4.f, 2))
+					if (ImGui::InputFloat("##OccludedAreaOnLossSize", &cfg_tracker.occluded_area_on_loss_size, 1.f, 4.f, 2))
 					{
-						cfg_tracker.min_occluded_area_on_loss = static_cast<float>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.min_occluded_area_on_loss)));
+						cfg_tracker.occluded_area_on_loss_size = static_cast<float>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.occluded_area_on_loss_size)));
 					}
 					ImGui::PopItemWidth();
 
@@ -633,6 +637,41 @@ void AppStage_AdvancedSettings::renderUI()
 							"The tracker will not re-gain its projection if the projection is near the tracker's occlusion area.\n"
 							"This will help avoid position jitter on continuous tracking loss.\n"
 							"(The default value is 4)"
+						);
+				}
+
+				{
+					ImGui::Text("Occluded area number of ignored trackers:");
+					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+					ImGui::PushItemWidth(100.f);
+					if (ImGui::InputInt("##OccludedAreaIgnoreTrackers", &cfg_tracker.occluded_area_ignore_trackers, 1, 5))
+					{
+						cfg_tracker.occluded_area_ignore_trackers = static_cast<int>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.occluded_area_ignore_trackers)));
+					}
+					ImGui::PopItemWidth();
+
+					if (ImGui::IsItemHovered())
+						ImGui::SetTooltip(
+							"The number of trackers that will ignore occluded areas (sorted by biggest projection).\n"
+							"(The default value is 0)"
+						);
+				}
+
+				{
+					ImGui::Text("Occluded area regain projection size:");
+					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+					ImGui::PushItemWidth(100.f);
+					if (ImGui::InputFloat("##OccludedAreaRegainProjectionSize", &cfg_tracker.occluded_area_regain_projection_size, 1.f, 4.f, 2))
+					{
+						cfg_tracker.occluded_area_regain_projection_size = static_cast<float>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.occluded_area_regain_projection_size)));
+					}
+					ImGui::PopItemWidth();
+
+					if (ImGui::IsItemHovered())
+						ImGui::SetTooltip(
+							"The tracker will regain the projection and remove its occlusion\n"
+							"if the projection size is bigger than the giving value.\n"
+							"(The default value is 16)"
 						);
 				}
 

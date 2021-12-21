@@ -39,7 +39,7 @@ public:
 
 		virtual_tracker_count = 0;
 		controller_position_smoothing = 0.f;
-		controller_position_prediction = 0.0f;
+		controller_position_prediction = 0.f;
 		controller_position_prediction_history = 5;
 		ignore_pose_from_one_tracker = true;
 		optical_tracking_timeout = 100;
@@ -47,7 +47,9 @@ public:
 		use_bgr_to_hsv_lookup_table = true;
 		exclude_opposed_cameras = false;
 		min_valid_projection_area = 6;
-		min_occluded_area_on_loss = 4;
+		occluded_area_on_loss_size = 4.f;
+		occluded_area_ignore_trackers = 0;
+		occluded_area_regain_projection_size = 16.f;
 		min_points_in_contour = 4;
 		max_tracker_position_deviation = 12.0f;
 		disable_roi = false;
@@ -70,7 +72,9 @@ public:
 	bool use_bgr_to_hsv_lookup_table;
 	bool exclude_opposed_cameras;
 	float min_valid_projection_area;
-	float min_occluded_area_on_loss;
+	float occluded_area_on_loss_size;
+	int occluded_area_ignore_trackers;
+	float occluded_area_regain_projection_size;
 	int min_points_in_contour;
 	float max_tracker_position_deviation;
 	bool disable_roi;
