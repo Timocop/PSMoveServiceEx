@@ -38,6 +38,7 @@ TrackerManagerConfig::TrackerManagerConfig(const std::string &fnamebase)
 	max_tracker_position_deviation = 12.0f;
 	disable_roi = false;
 	optimized_roi = true;
+	roi_edge_offset = 4;
 	default_tracker_profile.frame_width = 640;
 	//default_tracker_profile.frame_height = 480;
 	default_tracker_profile.frame_rate = 30;
@@ -78,6 +79,7 @@ TrackerManagerConfig::config2ptree()
 
 	pt.put("disable_roi", disable_roi);
 	pt.put("optimized_roi", optimized_roi);
+	pt.put("roi_edge_offset", roi_edge_offset);
 
 	pt.put("default_tracker_profile.frame_width", default_tracker_profile.frame_width);
 	//pt.put("default_tracker_profile.frame_height", default_tracker_profile.frame_height);
@@ -119,6 +121,7 @@ TrackerManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
 
 		disable_roi = pt.get<bool>("disable_roi", disable_roi);
 		optimized_roi = pt.get<bool>("optimized_roi", optimized_roi);
+		roi_edge_offset = pt.get<int>("roi_edge_offset", roi_edge_offset);
 
 		default_tracker_profile.frame_width = pt.get<float>("default_tracker_profile.frame_width", 640);
 		//default_tracker_profile.frame_height = pt.get<float>("default_tracker_profile.frame_height", 480);

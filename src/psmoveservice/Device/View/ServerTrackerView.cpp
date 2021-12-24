@@ -799,6 +799,7 @@ static bool computeTrackerRelativePointCloudContourPose(
 static cv::Rect2i computeTrackerROIForPoseProjection(
 	const int roi_index,
 	const bool disabled_roi,
+	const int roi_edge_offset,
     const ServerTrackerView *tracker,
     const IPoseFilter* pose_filter,
     const CommonDeviceTrackingProjection *prior_tracking_projection,
@@ -1324,6 +1325,7 @@ ServerTrackerView::computeProjectionForController(
     const TrackerManagerConfig &trackerMgrConfig= DeviceManager::getInstance()->m_tracker_manager->getConfig();
 	const bool bRoiDisabled = tracked_controller->getIsROIDisabled() || trackerMgrConfig.disable_roi;
 	const bool bRoiOptimized = trackerMgrConfig.optimized_roi;
+	const int iRoiEdgeOffset = static_cast<int>(std::fmax(0, std::fmin(64, trackerMgrConfig.roi_edge_offset)));
 
     const ControllerOpticalPoseEstimation *priorPoseEst= 
         tracked_controller->getTrackerPoseEstimate(this->getDeviceID());
@@ -1336,6 +1338,7 @@ ServerTrackerView::computeProjectionForController(
     cv::Rect2i ROI= computeTrackerROIForPoseProjection(
 		(bRoiOptimized) ? tracked_controller->getDeviceID() : -1,
         bRoiDisabled,
+		iRoiEdgeOffset,
         this,		
         ((bIsTracking || bIsOccluded) && !bEnforceNewROI) ? (tracked_controller->getPoseFilter()) : (nullptr),
         ((bIsTracking || bIsOccluded) && !bEnforceNewROI) ? (&priorPoseEst->projection) : (nullptr),
@@ -1521,6 +1524,7 @@ bool ServerTrackerView::computeProjectionForHMD(
     // Compute a region of interest in the tracker buffer around where we expect to find the tracking shape
     const TrackerManagerConfig &trackerMgrConfig= DeviceManager::getInstance()->m_tracker_manager->getConfig();
     const bool bRoiDisabled = tracked_hmd->getIsROIDisabled() || trackerMgrConfig.disable_roi;
+	const int iRoiEdgeOffset = static_cast<int>(std::fmax(0, std::fmin(64, trackerMgrConfig.roi_edge_offset)));
 
     const HMDOpticalPoseEstimation *priorPoseEst= 
         tracked_hmd->getTrackerPoseEstimate(this->getDeviceID());
@@ -1529,6 +1533,7 @@ bool ServerTrackerView::computeProjectionForHMD(
     cv::Rect2i ROI = computeTrackerROIForPoseProjection(
 		-1,
         bRoiDisabled,
+		iRoiEdgeOffset,
         this, 
         bIsTracking ? tracked_hmd->getPoseFilter() : nullptr,
         bIsTracking ? &priorPoseEst->projection : nullptr,
@@ -2394,6 +2399,7 @@ static bool computeTrackerRelativePointCloudContourPose(
 static cv::Rect2i computeTrackerROIForPoseProjection(
 	const int roi_index,
     const bool roi_disabled,
+	const int roi_edge_offset,
     const ServerTrackerView *tracker,
     const IPoseFilter* pose_filter,
     const CommonDeviceTrackingProjection *prior_tracking_projection,
@@ -2406,7 +2412,12 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
     // Default to full screen.
     float screenWidth, screenHeight;
     tracker->getPixelDimensions(screenWidth, screenHeight);
-    cv::Rect2i ROI(0, 0, static_cast<int>(screenWidth), static_cast<int>(screenHeight));
+    cv::Rect2i ROI(
+		roi_edge_offset, 
+		roi_edge_offset, 
+		static_cast<int>(screenWidth) - roi_edge_offset, 
+		static_cast<int>(screenHeight) - roi_edge_offset
+	);
 
 	int trackerId = tracker->getDeviceID();
 
@@ -2430,56 +2441,56 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
 		switch (roi_counter[trackerId][roi_index]++ % 9) {
 		case 0:
 			ROI = cv::Rect2i(
-				0, 0,
-				roi_size[0], roi_size[1]
+				roi_edge_offset, roi_edge_offset,
+				roi_size[0] - roi_edge_offset, roi_size[1] - roi_edge_offset
 			);
 			break;
 		case 1:
 			ROI = cv::Rect2i(
-				roi_size[0], 0,	
-				roi_size[0], roi_size[1]
+				roi_size[0], roi_edge_offset,
+				roi_size[0], roi_size[1] - roi_edge_offset
 			);
 			break;
 		case 2:
 			ROI = cv::Rect2i(
-				roi_size[0] * 2, 0, 
-				roi_size[0], roi_size[1]
+				roi_size[0] * 2, roi_edge_offset,
+				roi_size[0] - roi_edge_offset, roi_size[1] - roi_edge_offset
 			);
 			break;
 		case 3:
 			ROI = cv::Rect2i(
-				0, roi_size[1], 
-				roi_size[0], roi_size[1]
+				roi_edge_offset, roi_size[1],
+				roi_size[0] - roi_edge_offset, roi_size[1]
 			);
 			break;
 		case 4:
 			ROI = cv::Rect2i(
-				roi_size[0], roi_size[1], 
+				roi_size[0], roi_size[1],
 				roi_size[0], roi_size[1]
 			);
 			break;
 		case 5:
 			ROI = cv::Rect2i(
-				roi_size[0] * 2, roi_size[1], 
-				roi_size[0], roi_size[1]
+				roi_size[0] * 2, roi_size[1],
+				roi_size[0] - roi_edge_offset, roi_size[1]
 			);
 			break;
 		case 6:
 			ROI = cv::Rect2i(
-				0, roi_size[1] * 2, 
-				roi_size[0], roi_size[1]
+				roi_edge_offset, roi_size[1] * 2,
+				roi_size[0] - roi_edge_offset, roi_size[1] - roi_edge_offset
 			);
 			break;
 		case 7:
 			ROI = cv::Rect2i(
 				roi_size[0], roi_size[1] * 2, 
-				roi_size[0], roi_size[1]
+				roi_size[0], roi_size[1] - roi_edge_offset
 			);
 			break;
 		case 8:
 			ROI = cv::Rect2i(
 				roi_size[0] * 2, roi_size[1] * 2,
-				roi_size[0], roi_size[1]
+				roi_size[0] - roi_edge_offset, roi_size[1] - roi_edge_offset
 			);
 			break;
 		}

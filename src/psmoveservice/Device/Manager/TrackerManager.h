@@ -67,6 +67,7 @@ public:
 	float max_tracker_position_deviation;
 	bool disable_roi;
 	bool optimized_roi;
+	int roi_edge_offset;
     TrackerProfile default_tracker_profile;
 	float global_forward_degrees;
 

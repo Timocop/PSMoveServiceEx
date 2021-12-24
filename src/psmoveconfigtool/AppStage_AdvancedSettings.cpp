@@ -239,6 +239,7 @@ TrackerConfig::config2ptree()
 
 	pt.put("disable_roi", disable_roi);
 	pt.put("optimized_roi", optimized_roi);
+	pt.put("roi_edge_offset", roi_edge_offset);
 
 	pt.put("global_forward_degrees", global_forward_degrees);
 
@@ -270,6 +271,7 @@ TrackerConfig::ptree2config(const boost::property_tree::ptree &pt)
 
 	disable_roi = pt.get<bool>("disable_roi", disable_roi);
 	optimized_roi = pt.get<bool>("optimized_roi", optimized_roi);
+	roi_edge_offset = pt.get<int>("roi_edge_offset", roi_edge_offset);
 
 	global_forward_degrees = pt.get<float>("global_forward_degrees", global_forward_degrees);
 }
@@ -745,6 +747,24 @@ void AppStage_AdvancedSettings::renderUI()
 						);
 				}
 				ImGui::Unindent();
+
+				{
+					ImGui::Text("ROI (region of interest) tracker edge offset:");
+					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+					ImGui::PushItemWidth(100.f);
+					if (ImGui::InputInt("##ROIEdgeOffset", &cfg_tracker.roi_edge_offset, 1, 4))
+					{
+						cfg_tracker.roi_edge_offset = static_cast<int>(std::fmax(0, std::fmin(64, cfg_tracker.roi_edge_offset)));
+					}
+					ImGui::PopItemWidth();
+
+					if (ImGui::IsItemHovered())
+						ImGui::SetTooltip(
+							"Adds an offset to the ROI (region of interest) on tracker edges.\n"
+							"Adding an slight offset can help avoid tracking jitter nearby tracker edges.\n"
+							"(The default value is 4)"
+						);
+				}
 
 				{
 					ImGui::Text("Global forward degrees:");
