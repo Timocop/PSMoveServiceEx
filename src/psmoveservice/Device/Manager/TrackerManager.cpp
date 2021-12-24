@@ -33,7 +33,7 @@ TrackerManagerConfig::TrackerManagerConfig(const std::string &fnamebase)
 	min_valid_projection_area = 6;
 	occluded_area_on_loss_size = 4.f;
 	occluded_area_ignore_trackers = 0;
-	occluded_area_regain_projection_size = 16.f;
+	occluded_area_regain_projection_size = 32.f;
 	min_points_in_contour = 4;
 	max_tracker_position_deviation = 12.0f;
 	disable_roi = false;

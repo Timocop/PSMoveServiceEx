@@ -673,7 +673,7 @@ void AppStage_AdvancedSettings::renderUI()
 						ImGui::SetTooltip(
 							"The tracker will regain the projection and remove its occlusion\n"
 							"if the projection size is bigger than the giving value.\n"
-							"(The default value is 16)"
+							"(The default value is 32)"
 						);
 				}
 
