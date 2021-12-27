@@ -2415,8 +2415,8 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
     cv::Rect2i ROI(
 		roi_edge_offset, 
 		roi_edge_offset, 
-		static_cast<int>(screenWidth) - roi_edge_offset, 
-		static_cast<int>(screenHeight) - roi_edge_offset
+		static_cast<int>(screenWidth) - (roi_edge_offset * 2), 
+		static_cast<int>(screenHeight) - (roi_edge_offset * 2)
 	);
 
 	int trackerId = tracker->getDeviceID();
