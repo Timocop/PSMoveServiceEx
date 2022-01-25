@@ -347,21 +347,15 @@ void ServerHMDView::updateOpticalPoseEstimation(TrackerManager* tracker_manager)
 
                     // If the projection isn't too old (or updated this tick), 
                     // say we have a valid tracked location
-                    if (bWasTracking || bIsVisibleThisUpdate)
+                    if (bIsVisibleThisUpdate)
                     {
-                        const std::chrono::duration<float, std::milli> timeSinceLastVisibleMillis= 
-                            now - trackerPoseEstimateRef.last_visible_timestamp;
+                        // If this tracker has a valid projection for the controller
+                        // add it to the tracker id list
+                        valid_projection_tracker_ids[projections_found] = tracker_id;
+                        ++projections_found;
 
-                        if (timeSinceLastVisibleMillis.count() < timeoutMilli)
-                        {
-                            // If this tracker has a valid projection for the controller
-                            // add it to the tracker id list
-                            valid_projection_tracker_ids[projections_found] = tracker_id;
-                            ++projections_found;
-
-                            // Flag this pose estimate as invalid
-                            bCurrentlyTracking = true;
-                        }
+                        // Flag this pose estimate as invalid
+                        bCurrentlyTracking = true;
                     }
                 }
             }
