@@ -26,14 +26,14 @@
 static const int k_default_controller_reconnect_interval= 1000; // ms
 static const int k_default_controller_poll_interval= 2; // ms
 static const int k_default_tracker_reconnect_interval= 10000; // ms
-static const int k_default_tracker_poll_interval= 13; // 1000/75 ms
+static const int k_default_tracker_poll_interval= 4; // 1000/250 ms
 static const int k_default_hmd_reconnect_interval= 10000; // ms
 static const int k_default_hmd_poll_interval= 2; // ms
 
 class DeviceManagerConfig : public PSMoveConfig
 {
 public:
-    static const int CONFIG_VERSION= 1;
+    static const int CONFIG_VERSION= 2;
 
     DeviceManagerConfig(const std::string &fnamebase = "DeviceManagerConfig")
         : PSMoveConfig(fnamebase)
