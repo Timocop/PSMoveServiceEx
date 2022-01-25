@@ -26,7 +26,7 @@
 static const int k_default_controller_reconnect_interval= 1000; // ms
 static const int k_default_controller_poll_interval= 2; // ms
 static const int k_default_tracker_reconnect_interval= 10000; // ms
-static const int k_default_tracker_poll_interval= 4; // 1000/250 ms
+static const int k_default_tracker_poll_interval= 3; // 1000/333 ms
 static const int k_default_hmd_reconnect_interval= 10000; // ms
 static const int k_default_hmd_poll_interval= 2; // ms
 
