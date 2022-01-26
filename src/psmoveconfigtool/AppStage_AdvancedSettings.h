@@ -122,6 +122,40 @@ public:
 	int virtual_hmd_count;
 };
 
+class DeviceConfig : public PSMoveConfig
+{
+public:
+	DeviceConfig(const std::string &fnamebase = "DeviceManagerConfig")
+		: PSMoveConfig(fnamebase)
+	{
+		isLoaded = false;
+
+		controller_reconnect_interval = 1000;
+		controller_poll_interval = 2;
+		tracker_reconnect_interval = 10000;
+		tracker_poll_interval = 13;
+		hmd_reconnect_interval = 10000;
+		hmd_poll_interval = 2;
+		gamepad_api_enabled = true;
+		platform_api_enabled = true;
+	};
+
+	virtual const boost::property_tree::ptree config2ptree();
+	virtual void ptree2config(const boost::property_tree::ptree &pt);
+
+	bool isLoaded;
+
+	int controller_reconnect_interval;
+	int controller_poll_interval;
+	int tracker_reconnect_interval;
+	int tracker_poll_interval;
+	int hmd_reconnect_interval;
+	int hmd_poll_interval;
+	bool gamepad_api_enabled;
+	bool platform_api_enabled;
+};
+
+
 
 class AppStage_AdvancedSettings : public AppStage
 {
@@ -147,6 +181,7 @@ protected:
 	TrackerConfig cfg_tracker;
 	ControllerConfig cfg_controller;
 	HMDConfig cfg_hmd;
+	DeviceConfig cfg_device;
 private:
 	void RestartService();
 };
