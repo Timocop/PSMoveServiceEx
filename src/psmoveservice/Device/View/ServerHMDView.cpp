@@ -323,26 +323,31 @@ void ServerHMDView::updateOpticalPoseEstimation(TrackerManager* tracker_manager)
                     // Initially the newTrackerPoseEstimate is a copy of the existing pose
                     bool bIsVisibleThisUpdate= false;
 
-                    // Create a copy of the pose estimate state so that in event of a 
-                    // failure part way through computing the projection we don't
-                    // set partially valid state
-                    HMDOpticalPoseEstimation newTrackerPoseEstimate= trackerPoseEstimateRef;
+					// If a new video frame is available this tick, 
+					// attempt to update the tracking location
+					if (tracker->getHasUnpublishedState())
+					{
+						// Create a copy of the pose estimate state so that in event of a 
+						// failure part way through computing the projection we don't
+						// set partially valid state
+						HMDOpticalPoseEstimation newTrackerPoseEstimate = trackerPoseEstimateRef;
 
-                    if (tracker->computeProjectionForHMD(
-                            this, 
-                            &trackingShape,
-                            &newTrackerPoseEstimate))
-                    {
-                        bIsVisibleThisUpdate= true;
+						if (tracker->computeProjectionForHMD(
+							this,
+							&trackingShape,
+							&newTrackerPoseEstimate))
+						{
+							bIsVisibleThisUpdate = true;
 
-                        // Actually apply the pose estimate state
-                        trackerPoseEstimateRef= newTrackerPoseEstimate;
-                        trackerPoseEstimateRef.last_visible_timestamp = now;
-                    }
+							// Actually apply the pose estimate state
+							trackerPoseEstimateRef = newTrackerPoseEstimate;
+							trackerPoseEstimateRef.last_visible_timestamp = now;
+						}
+					}
 
                     // If the projection isn't too old (or updated this tick), 
                     // say we have a valid tracked location
-                    if (bIsVisibleThisUpdate)
+					if ((bWasTracking && !tracker->getHasUnpublishedState()) || bIsVisibleThisUpdate)
                     {
                         // If this tracker has a valid projection for the controller
                         // add it to the tracker id list
