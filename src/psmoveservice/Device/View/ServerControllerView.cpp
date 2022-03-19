@@ -871,6 +871,9 @@ void ServerControllerView::updateStateAndPredict()
 		{
 			PoseFilterPacket filter_packet;
 			filter_packet.clear();
+		
+			// Ship device id with the packet. We ned it for "OrientationExternal" filter.
+			filter_packet.deviceId = this->getDeviceID();
 
 			// Create a filter input packet from the sensor data 
 			// and the filter's previous orientation and position
@@ -881,7 +884,7 @@ void ServerControllerView::updateStateAndPredict()
 			// Process the filter packet
 			m_pose_filter->update(time_delta_seconds, filter_packet);
 		}
-
+		
 		// Flag the state as unpublished, which will trigger an update to the client
 		markStateAsUnpublished();
 	}
@@ -1338,7 +1341,7 @@ void ServerControllerView::generate_controller_data_frame_for_stream(
     controller_data_frame->set_controller_id(controller_view->getDeviceID());
     controller_data_frame->set_sequence_num(controller_view->m_sequence_number);
     controller_data_frame->set_isconnected(controller_view->getDevice()->getIsOpen());
-
+	
     switch (controller_view->getControllerDeviceType())
     {
     case CommonControllerState::PSMove:
@@ -1863,134 +1866,270 @@ static void generate_virtual_controller_data_frame_for_stream(
     const CommonControllerState *controller_state= controller_view->getState();
     const CommonDevicePose controller_pose = controller_view->getFilteredPose(controller_config->prediction_time);
 
-    auto *controller_data_frame= data_frame->mutable_controller_data_packet();
-    auto *virtual_controller_data_frame = controller_data_frame->mutable_virtualcontroller_state();
-   
-    if (controller_state != nullptr)
-    {        
-        assert(controller_state->DeviceType == CommonDeviceState::VirtualController);
-        const VirtualControllerState * virtual_controller_state= static_cast<const VirtualControllerState *>(controller_state);
+	// ###Externet $TODO Emulate PSmove so we can transmit orientation data without changing the protocol.
+	//					 This is super hacky. Sadly the gamepad functionality falls away(?).
+	//					 Very untested!! May could be ustable but so far it works fine.
+	if (controller_config->psmove_emulation)
+	{
+		auto *controller_data_frame = data_frame->mutable_controller_data_packet();
+		auto *psmove_data_frame = controller_data_frame->mutable_psmove_state();
 
-        virtual_controller_data_frame->set_iscurrentlytracking(controller_view->getIsCurrentlyTracking());
-        virtual_controller_data_frame->set_istrackingenabled(controller_view->getIsTrackingEnabled());
-        virtual_controller_data_frame->set_ispositionvalid(pose_filter->getIsPositionStateValid());
+		if (controller_state != nullptr)
+		{
+			assert(controller_state->DeviceType == CommonDeviceState::VirtualController);
+			const VirtualControllerState * virtual_controller_state = static_cast<const VirtualControllerState *>(controller_state);
 
-        if (stream_info->include_position_data)
-        {
-            virtual_controller_data_frame->mutable_position_cm()->set_x(controller_pose.PositionCm.x);
-            virtual_controller_data_frame->mutable_position_cm()->set_y(controller_pose.PositionCm.y);
-            virtual_controller_data_frame->mutable_position_cm()->set_z(controller_pose.PositionCm.z);
-        }
-        else
-        {
-            virtual_controller_data_frame->mutable_position_cm()->set_x(0);
-            virtual_controller_data_frame->mutable_position_cm()->set_y(0);
-            virtual_controller_data_frame->mutable_position_cm()->set_z(0);
-        }
+			psmove_data_frame->set_validhardwarecalibration(true);
+			psmove_data_frame->set_iscurrentlytracking(controller_view->getIsCurrentlyTracking());
+			psmove_data_frame->set_istrackingenabled(controller_view->getIsTrackingEnabled());
+			psmove_data_frame->set_isorientationvalid(pose_filter->getIsOrientationStateValid());
+			psmove_data_frame->set_ispositionvalid(pose_filter->getIsPositionStateValid());
 
-        // Always send the gamepad data
-        controller_data_frame->set_button_down_bitmask(controller_state->AllButtons);
+			psmove_data_frame->mutable_orientation()->set_w(controller_pose.Orientation.w);
+			psmove_data_frame->mutable_orientation()->set_x(controller_pose.Orientation.x);
+			psmove_data_frame->mutable_orientation()->set_y(controller_pose.Orientation.y);
+			psmove_data_frame->mutable_orientation()->set_z(controller_pose.Orientation.z);
 
-        virtual_controller_data_frame->set_numbuttons(virtual_controller_state->numButtons);
-        virtual_controller_data_frame->set_productid(virtual_controller_state->productID);
-        virtual_controller_data_frame->set_vendorid(virtual_controller_state->vendorID);
+			if (stream_info->include_position_data)
+			{
+				psmove_data_frame->mutable_position_cm()->set_x(controller_pose.PositionCm.x);
+				psmove_data_frame->mutable_position_cm()->set_y(controller_pose.PositionCm.y);
+				psmove_data_frame->mutable_position_cm()->set_z(controller_pose.PositionCm.z);
+			}
+			else
+			{
+				psmove_data_frame->mutable_position_cm()->set_x(0);
+				psmove_data_frame->mutable_position_cm()->set_y(0);
+				psmove_data_frame->mutable_position_cm()->set_z(0);
+			}
 
-        for (int axisIndex = 0; axisIndex < virtual_controller_state->numAxes; ++axisIndex)
-        {
-            virtual_controller_data_frame->add_axisstates(virtual_controller_state->axisStates[axisIndex]);
-        }
+			// ###Externet $TODO Re-route gamepad buttons to emulated PSmove controller?
+			controller_data_frame->set_button_down_bitmask(0);
 
-        // If requested, get the raw tracker data for the controller
-        if (stream_info->include_raw_tracker_data)
-        {
-            auto *raw_tracker_data = virtual_controller_data_frame->mutable_raw_tracker_data();
-            int selectedTrackerId= stream_info->selected_tracker_index;
-            unsigned int validTrackerBitmask= 0;
+			// If requested, get the raw tracker data for the controller
+			if (stream_info->include_raw_tracker_data)
+			{
+				auto *raw_tracker_data = psmove_data_frame->mutable_raw_tracker_data();
+				int selectedTrackerId = stream_info->selected_tracker_index;
+				unsigned int validTrackerBitmask = 0;
 
-            for (int trackerId = 0; trackerId < TrackerManager::k_max_devices; ++trackerId)
-            {
-                const ControllerOpticalPoseEstimation *positionEstimate= 
-                    controller_view->getTrackerPoseEstimate(trackerId);
+				for (int trackerId = 0; trackerId < TrackerManager::k_max_devices; ++trackerId)
+				{
+					const ControllerOpticalPoseEstimation *positionEstimate =
+						controller_view->getTrackerPoseEstimate(trackerId);
 
-                if (positionEstimate != nullptr && positionEstimate->bCurrentlyTracking)
-                {
-                    validTrackerBitmask&= (1 << trackerId);
+					if (positionEstimate != nullptr && positionEstimate->bCurrentlyTracking)
+					{
+						validTrackerBitmask &= (1 << trackerId);
 
-                    if (trackerId == selectedTrackerId)
-                    {
-                        const CommonDevicePosition &trackerRelativePosition = positionEstimate->position_cm;
-                        const ServerTrackerViewPtr tracker_view = DeviceManager::getInstance()->getTrackerViewPtr(trackerId);
+						if (trackerId == selectedTrackerId)
+						{
+							const CommonDevicePosition &trackerRelativePosition = positionEstimate->position_cm;
+							const ServerTrackerViewPtr tracker_view = DeviceManager::getInstance()->getTrackerViewPtr(trackerId);
 
-                        // Project the 3d camera position back onto the tracker screen
-                        {
-                            const CommonDeviceScreenLocation trackerScreenLocation =
-                                tracker_view->projectTrackerRelativePosition(&trackerRelativePosition);
-                            PSMoveProtocol::Pixel *pixel = raw_tracker_data->mutable_screen_location();
+							// Project the 3d camera position back onto the tracker screen
+							{
+								const CommonDeviceScreenLocation trackerScreenLocation =
+									tracker_view->projectTrackerRelativePosition(&trackerRelativePosition);
+								PSMoveProtocol::Pixel *pixel = raw_tracker_data->mutable_screen_location();
 
-                            pixel->set_x(trackerScreenLocation.x);
-                            pixel->set_y(trackerScreenLocation.y);
-                        }
+								pixel->set_x(trackerScreenLocation.x);
+								pixel->set_y(trackerScreenLocation.y);
+							}
 
-                        // Add the tracker relative 3d position
-                        {
-                            PSMoveProtocol::Position *position_cm= raw_tracker_data->mutable_relative_position_cm();
-                        
-                            position_cm->set_x(trackerRelativePosition.x);
-                            position_cm->set_y(trackerRelativePosition.y);
-                            position_cm->set_z(trackerRelativePosition.z);
-                        }
+							// Add the tracker relative 3d position
+							{
+								PSMoveProtocol::Position *position_cm = raw_tracker_data->mutable_relative_position_cm();
 
-                        // Add the tracker relative projection shapes
-                        {
-                            const CommonDeviceTrackingProjection &trackerRelativeProjection = 
-                                positionEstimate->projection;
+								position_cm->set_x(trackerRelativePosition.x);
+								position_cm->set_y(trackerRelativePosition.y);
+								position_cm->set_z(trackerRelativePosition.z);
+							}
 
-                            assert(trackerRelativeProjection.shape_type == eCommonTrackingProjectionType::ProjectionType_Ellipse);
-                            PSMoveProtocol::Ellipse *ellipse= raw_tracker_data->mutable_projected_sphere();
-                                
-                            ellipse->mutable_center()->set_x(trackerRelativeProjection.shape.ellipse.center.x);
-                            ellipse->mutable_center()->set_y(trackerRelativeProjection.shape.ellipse.center.y);
-                            ellipse->set_half_x_extent(trackerRelativeProjection.shape.ellipse.half_x_extent);
-                            ellipse->set_half_y_extent(trackerRelativeProjection.shape.ellipse.half_y_extent);
-                            ellipse->set_angle(trackerRelativeProjection.shape.ellipse.angle);
-                        }
+							// Add the tracker relative projection shapes
+							{
+								const CommonDeviceTrackingProjection &trackerRelativeProjection =
+									positionEstimate->projection;
 
-                        raw_tracker_data->set_tracker_id(selectedTrackerId);
-                    }
-                }
-            }
-            raw_tracker_data->set_valid_tracker_bitmask(validTrackerBitmask);
+								assert(trackerRelativeProjection.shape_type == eCommonTrackingProjectionType::ProjectionType_Ellipse);
+								PSMoveProtocol::Ellipse *ellipse = raw_tracker_data->mutable_projected_sphere();
 
-            {
-                const ControllerOpticalPoseEstimation *poseEstimate = controller_view->getMulticamPoseEstimate();
+								ellipse->mutable_center()->set_x(trackerRelativeProjection.shape.ellipse.center.x);
+								ellipse->mutable_center()->set_y(trackerRelativeProjection.shape.ellipse.center.y);
+								ellipse->set_half_x_extent(trackerRelativeProjection.shape.ellipse.half_x_extent);
+								ellipse->set_half_y_extent(trackerRelativeProjection.shape.ellipse.half_y_extent);
+								ellipse->set_angle(trackerRelativeProjection.shape.ellipse.angle);
+							}
 
-                if (poseEstimate->bCurrentlyTracking)
-                {
-                    PSMoveProtocol::Position *position_cm = raw_tracker_data->mutable_multicam_position_cm();
-                    position_cm->set_x(poseEstimate->position_cm.x);
-                    position_cm->set_y(poseEstimate->position_cm.y);
-                    position_cm->set_z(poseEstimate->position_cm.z);
-                }
-            }
-        }
+							raw_tracker_data->set_tracker_id(selectedTrackerId);
+						}
+					}
+				}
+				raw_tracker_data->set_valid_tracker_bitmask(validTrackerBitmask);
 
-        // if requested, get the physics data for the controller
-        if (stream_info->include_physics_data)
-        {
-            const CommonDevicePhysics controller_physics = controller_view->getFilteredPhysics();
-            auto *physics_data = virtual_controller_data_frame->mutable_physics_data();
+				{
+					const ControllerOpticalPoseEstimation *poseEstimate = controller_view->getMulticamPoseEstimate();
 
-            physics_data->mutable_velocity_cm_per_sec()->set_i(controller_physics.VelocityCmPerSec.i);
-            physics_data->mutable_velocity_cm_per_sec()->set_j(controller_physics.VelocityCmPerSec.j);
-            physics_data->mutable_velocity_cm_per_sec()->set_k(controller_physics.VelocityCmPerSec.k);
+					if (poseEstimate->bCurrentlyTracking)
+					{
+						PSMoveProtocol::Position *position_cm = raw_tracker_data->mutable_multicam_position_cm();
+						position_cm->set_x(poseEstimate->position_cm.x);
+						position_cm->set_y(poseEstimate->position_cm.y);
+						position_cm->set_z(poseEstimate->position_cm.z);
+					}
+				}
+			}
 
-            physics_data->mutable_acceleration_cm_per_sec_sqr()->set_i(controller_physics.AccelerationCmPerSecSqr.i);
-            physics_data->mutable_acceleration_cm_per_sec_sqr()->set_j(controller_physics.AccelerationCmPerSecSqr.j);
-            physics_data->mutable_acceleration_cm_per_sec_sqr()->set_k(controller_physics.AccelerationCmPerSecSqr.k);
-        }
-    }   
+			// if requested, get the physics data for the controller
+			if (stream_info->include_physics_data)
+			{
+				const CommonDevicePhysics controller_physics = controller_view->getFilteredPhysics();
+				auto *physics_data = psmove_data_frame->mutable_physics_data();
 
-    controller_data_frame->set_controller_type(PSMoveProtocol::VIRTUALCONTROLLER);
+				physics_data->mutable_velocity_cm_per_sec()->set_i(controller_physics.VelocityCmPerSec.i);
+				physics_data->mutable_velocity_cm_per_sec()->set_j(controller_physics.VelocityCmPerSec.j);
+				physics_data->mutable_velocity_cm_per_sec()->set_k(controller_physics.VelocityCmPerSec.k);
+
+				physics_data->mutable_acceleration_cm_per_sec_sqr()->set_i(controller_physics.AccelerationCmPerSecSqr.i);
+				physics_data->mutable_acceleration_cm_per_sec_sqr()->set_j(controller_physics.AccelerationCmPerSecSqr.j);
+				physics_data->mutable_acceleration_cm_per_sec_sqr()->set_k(controller_physics.AccelerationCmPerSecSqr.k);
+			}
+		}
+
+		controller_data_frame->set_controller_type(PSMoveProtocol::PSMOVE);
+	}
+	else
+	{
+		auto *controller_data_frame = data_frame->mutable_controller_data_packet();
+		auto *virtual_controller_data_frame = controller_data_frame->mutable_virtualcontroller_state();
+
+		if (controller_state != nullptr)
+		{
+			assert(controller_state->DeviceType == CommonDeviceState::VirtualController);
+			const VirtualControllerState * virtual_controller_state = static_cast<const VirtualControllerState *>(controller_state);
+
+			virtual_controller_data_frame->set_iscurrentlytracking(controller_view->getIsCurrentlyTracking());
+			virtual_controller_data_frame->set_istrackingenabled(controller_view->getIsTrackingEnabled());
+			virtual_controller_data_frame->set_ispositionvalid(pose_filter->getIsPositionStateValid());
+
+			if (stream_info->include_position_data)
+			{
+				virtual_controller_data_frame->mutable_position_cm()->set_x(controller_pose.PositionCm.x);
+				virtual_controller_data_frame->mutable_position_cm()->set_y(controller_pose.PositionCm.y);
+				virtual_controller_data_frame->mutable_position_cm()->set_z(controller_pose.PositionCm.z);
+			}
+			else
+			{
+				virtual_controller_data_frame->mutable_position_cm()->set_x(0);
+				virtual_controller_data_frame->mutable_position_cm()->set_y(0);
+				virtual_controller_data_frame->mutable_position_cm()->set_z(0);
+			}
+
+			// Always send the gamepad data
+			controller_data_frame->set_button_down_bitmask(controller_state->AllButtons);
+
+			virtual_controller_data_frame->set_numbuttons(virtual_controller_state->numButtons);
+			virtual_controller_data_frame->set_productid(virtual_controller_state->productID);
+			virtual_controller_data_frame->set_vendorid(virtual_controller_state->vendorID);
+
+			for (int axisIndex = 0; axisIndex < virtual_controller_state->numAxes; ++axisIndex)
+			{
+				virtual_controller_data_frame->add_axisstates(virtual_controller_state->axisStates[axisIndex]);
+			}
+
+			// If requested, get the raw tracker data for the controller
+			if (stream_info->include_raw_tracker_data)
+			{
+				auto *raw_tracker_data = virtual_controller_data_frame->mutable_raw_tracker_data();
+				int selectedTrackerId = stream_info->selected_tracker_index;
+				unsigned int validTrackerBitmask = 0;
+
+				for (int trackerId = 0; trackerId < TrackerManager::k_max_devices; ++trackerId)
+				{
+					const ControllerOpticalPoseEstimation *positionEstimate =
+						controller_view->getTrackerPoseEstimate(trackerId);
+
+					if (positionEstimate != nullptr && positionEstimate->bCurrentlyTracking)
+					{
+						validTrackerBitmask &= (1 << trackerId);
+
+						if (trackerId == selectedTrackerId)
+						{
+							const CommonDevicePosition &trackerRelativePosition = positionEstimate->position_cm;
+							const ServerTrackerViewPtr tracker_view = DeviceManager::getInstance()->getTrackerViewPtr(trackerId);
+
+							// Project the 3d camera position back onto the tracker screen
+							{
+								const CommonDeviceScreenLocation trackerScreenLocation =
+									tracker_view->projectTrackerRelativePosition(&trackerRelativePosition);
+								PSMoveProtocol::Pixel *pixel = raw_tracker_data->mutable_screen_location();
+
+								pixel->set_x(trackerScreenLocation.x);
+								pixel->set_y(trackerScreenLocation.y);
+							}
+
+							// Add the tracker relative 3d position
+							{
+								PSMoveProtocol::Position *position_cm = raw_tracker_data->mutable_relative_position_cm();
+
+								position_cm->set_x(trackerRelativePosition.x);
+								position_cm->set_y(trackerRelativePosition.y);
+								position_cm->set_z(trackerRelativePosition.z);
+							}
+
+							// Add the tracker relative projection shapes
+							{
+								const CommonDeviceTrackingProjection &trackerRelativeProjection =
+									positionEstimate->projection;
+
+								assert(trackerRelativeProjection.shape_type == eCommonTrackingProjectionType::ProjectionType_Ellipse);
+								PSMoveProtocol::Ellipse *ellipse = raw_tracker_data->mutable_projected_sphere();
+
+								ellipse->mutable_center()->set_x(trackerRelativeProjection.shape.ellipse.center.x);
+								ellipse->mutable_center()->set_y(trackerRelativeProjection.shape.ellipse.center.y);
+								ellipse->set_half_x_extent(trackerRelativeProjection.shape.ellipse.half_x_extent);
+								ellipse->set_half_y_extent(trackerRelativeProjection.shape.ellipse.half_y_extent);
+								ellipse->set_angle(trackerRelativeProjection.shape.ellipse.angle);
+							}
+
+							raw_tracker_data->set_tracker_id(selectedTrackerId);
+						}
+					}
+				}
+				raw_tracker_data->set_valid_tracker_bitmask(validTrackerBitmask);
+
+				{
+					const ControllerOpticalPoseEstimation *poseEstimate = controller_view->getMulticamPoseEstimate();
+
+					if (poseEstimate->bCurrentlyTracking)
+					{
+						PSMoveProtocol::Position *position_cm = raw_tracker_data->mutable_multicam_position_cm();
+						position_cm->set_x(poseEstimate->position_cm.x);
+						position_cm->set_y(poseEstimate->position_cm.y);
+						position_cm->set_z(poseEstimate->position_cm.z);
+					}
+				}
+			}
+
+			// if requested, get the physics data for the controller
+			if (stream_info->include_physics_data)
+			{
+				const CommonDevicePhysics controller_physics = controller_view->getFilteredPhysics();
+				auto *physics_data = virtual_controller_data_frame->mutable_physics_data();
+
+				physics_data->mutable_velocity_cm_per_sec()->set_i(controller_physics.VelocityCmPerSec.i);
+				physics_data->mutable_velocity_cm_per_sec()->set_j(controller_physics.VelocityCmPerSec.j);
+				physics_data->mutable_velocity_cm_per_sec()->set_k(controller_physics.VelocityCmPerSec.k);
+
+				physics_data->mutable_acceleration_cm_per_sec_sqr()->set_i(controller_physics.AccelerationCmPerSecSqr.i);
+				physics_data->mutable_acceleration_cm_per_sec_sqr()->set_j(controller_physics.AccelerationCmPerSecSqr.j);
+				physics_data->mutable_acceleration_cm_per_sec_sqr()->set_k(controller_physics.AccelerationCmPerSecSqr.k);
+			}
+		}
+
+		controller_data_frame->set_controller_type(PSMoveProtocol::VIRTUALCONTROLLER);
+	}
+
 }
 
 static IPoseFilter *
@@ -2101,10 +2240,14 @@ pose_filter_factory(
         {
             orientation_filter_enum= OrientationFilterTypeComplementaryMARG;
         }
-        else if (orientation_filter_type == "OrientationKalman")
-        {
-            orientation_filter_enum = OrientationFilterTypeKalman;
-        }
+		else if (orientation_filter_type == "OrientationKalman")
+		{
+			orientation_filter_enum = OrientationFilterTypeKalman;
+		}
+		else if (orientation_filter_type == "OrientationExternal")
+		{
+			orientation_filter_enum = OrientationFilterTypeExternal;
+		}
         else
         {
             SERVER_LOG_INFO("pose_filter_factory()") << 
@@ -2120,7 +2263,7 @@ pose_filter_factory(
                 orientation_filter_enum= OrientationFilterTypeComplementaryOpticalARG;
                 break;
             case CommonDeviceState::VirtualController:
-                orientation_filter_enum= OrientationFilterTypeNone;
+                orientation_filter_enum= OrientationFilterTypeExternal;
                 break;
             default:
                 assert(0 && "unreachable");
@@ -2310,7 +2453,7 @@ static void init_filters_for_virtual_controller(
 	*out_pose_filter = pose_filter_factory(
 		CommonDeviceState::eDeviceType::VirtualController,
 		controller_config->position_filter_type,
-		"",
+		"OrientationExternal",
 		constants);
 }
 
@@ -2536,7 +2679,7 @@ static void post_optical_filter_packet_for_virtual_controller(
 
 	// Virtual controllers don't currently support an optical orientation
 	sensor_packet.optical_orientation = Eigen::Quaternionf::Identity();
-
+	
     if (pose_estimation->bCurrentlyTracking)
     {
 		sensor_packet.optical_position_cm =
@@ -2840,8 +2983,8 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
     }
 
     // No orientation for the sphere projection
-    multicam_pose_estimation->orientation.clear();
-    multicam_pose_estimation->bOrientationValid = false;
+	multicam_pose_estimation->orientation.clear();
+	multicam_pose_estimation->bOrientationValid = false;
 
     // Compute the average projection area.
     // This is proportional to our position tracking quality.

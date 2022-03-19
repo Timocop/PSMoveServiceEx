@@ -10,7 +10,7 @@ class OrientationFilter : public IOrientationFilter
 {
 public:
     OrientationFilter();
-    virtual ~OrientationFilter();
+    ~OrientationFilter();
 
     //-- IStateFilter --
     bool getIsStateValid() const override;
@@ -21,6 +21,7 @@ public:
     // -- IOrientationFilter --
     bool init(const OrientationFilterConstants &constant) override;
 	bool init(const OrientationFilterConstants &constant, const Eigen::Quaternionf &initial_orientation) override;
+
     Eigen::Quaternionf getOrientation(float time = 0.f) const override;
     Eigen::Vector3f getAngularVelocityRadPerSec() const override;
     Eigen::Vector3f getAngularAccelerationRadPerSecSqr() const override;

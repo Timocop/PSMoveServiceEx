@@ -23,6 +23,7 @@ VirtualControllerConfig::config2ptree()
     pt.put("version", VirtualControllerConfig::CONFIG_VERSION);
 
     pt.put("gamepad_index", gamepad_index);
+	pt.put("psmove_emulation", psmove_emulation);
 
     pt.put("Calibration.Position.VarianceExpFitA", position_variance_exp_fit_a);
     pt.put("Calibration.Position.VarianceExpFitB", position_variance_exp_fit_b);
@@ -51,7 +52,8 @@ VirtualControllerConfig::ptree2config(const boost::property_tree::ptree &pt)
     {
         is_valid = pt.get<bool>("is_valid", false);
 
-        gamepad_index = pt.get<int>("gamepad_index", -1);
+		gamepad_index = pt.get<int>("gamepad_index", -1);
+		psmove_emulation = pt.get<bool>("psmove_emulation", false);
 
         prediction_time = pt.get<float>("prediction_time", 0.f);
 

@@ -103,6 +103,8 @@ struct PoseSensorPacket
 /// used to update a state filter
 struct PoseFilterPacket : PoseSensorPacket
 {
+	int deviceId = -1;
+
     /// The current orientation of the controller
     Eigen::Quaternionf current_orientation;
 
@@ -121,6 +123,7 @@ struct PoseFilterPacket : PoseSensorPacket
 	inline void clear()
 	{
 		PoseSensorPacket::clear();
+		deviceId = -1;
 		current_orientation= Eigen::Quaternionf::Identity();
 		current_position_cm= Eigen::Vector3f::Zero();
 		current_linear_velocity_cm_s= Eigen::Vector3f::Zero();
@@ -292,6 +295,11 @@ struct PoseFilterConstants
 class IStateFilter
 {
 public:
+	IStateFilter()
+	{ }
+	virtual ~IStateFilter()
+	{ }
+
     /// Not true until the filter has updated at least once
     virtual bool getIsStateValid() const = 0;
 

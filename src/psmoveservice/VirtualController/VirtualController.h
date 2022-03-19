@@ -23,6 +23,7 @@ public:
 		, is_valid(false)
 		, version(CONFIG_VERSION)
         , gamepad_index(-1)
+		, psmove_emulation(false)
 		, position_filter_type("LowPassOptical")
         , max_velocity(1.f)
 		, mean_update_time_delta(0.008333f)
@@ -43,6 +44,7 @@ public:
 
     // The index of gamepad attached to the PC to poll buttons from
     int gamepad_index;
+	bool psmove_emulation;
 
 	// The type of position filter to use
 	std::string position_filter_type;

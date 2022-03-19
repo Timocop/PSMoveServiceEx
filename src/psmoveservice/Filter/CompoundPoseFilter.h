@@ -14,6 +14,7 @@ enum OrientationFilterType {
     OrientationFilterTypeComplementaryOpticalARG,
     OrientationFilterTypeComplementaryMARG,
 	OrientationFilterTypeKalman,
+	OrientationFilterTypeExternal,
 };
 
 enum PositionFilterType {
@@ -33,9 +34,11 @@ public:
     CompoundPoseFilter() 
         : m_position_filter(nullptr)
         , m_orientation_filter(nullptr)
-    {}
-    virtual ~CompoundPoseFilter()
-    { dispose_filters(); }
+    { }
+    ~CompoundPoseFilter()
+    {
+		dispose_filters();
+	}
 
     bool init(
 		const CommonDeviceState::eDeviceType deviceType,

@@ -4,6 +4,7 @@
 #include "PositionFilter.h"
 #include "KalmanPositionFilter.h"
 #include "KalmanOrientationFilter.h"
+#include "ExternalOrientationFilter.h"
 
 // -- public interface --
 bool CompoundPoseFilter::init(
@@ -96,6 +97,9 @@ void CompoundPoseFilter::allocate_filters(
 				assert(0 && "unreachable");
 			}
 		}
+		break;
+	case OrientationFilterTypeExternal:
+		m_orientation_filter = new OrientationFilterExternal;
 		break;
 	default:
 		assert(0 && "unreachable");

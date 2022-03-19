@@ -23,6 +23,7 @@ public:
     // -- IOrientationFilter --
     bool init(const PositionFilterConstants &constant) override;
 	bool init(const PositionFilterConstants &constant, const Eigen::Vector3f &initial_position) override;
+
     Eigen::Vector3f getPositionCm(float time = 0.f) const override;
     Eigen::Vector3f getVelocityCmPerSec() const override;
     Eigen::Vector3f getAccelerationCmPerSecSqr() const override;
