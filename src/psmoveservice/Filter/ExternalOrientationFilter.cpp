@@ -356,12 +356,16 @@ void OrientationFilterExternal::update(const float delta_time, const PoseFilterP
 	if (vector.size() != 4)
 		return;
 
+	_locale_t inv = _create_locale(LC_NUMERIC, "C");
+
 	Eigen::Quaternionf new_orientation;
-	new_orientation.x() = (float)atof(vector[0].c_str());
-	new_orientation.y() = (float)atof(vector[1].c_str());
-	new_orientation.z() = (float)atof(vector[2].c_str());
-	new_orientation.w() = (float)atof(vector[3].c_str());
+	new_orientation.x() = (float)_atof_l(vector[0].c_str(), inv);
+	new_orientation.y() = (float)_atof_l(vector[1].c_str(), inv);
+	new_orientation.z() = (float)_atof_l(vector[2].c_str(), inv);
+	new_orientation.w() = (float)_atof_l(vector[3].c_str(), inv);
 
 	m_state->apply_optical_state(new_orientation, delta_time);
+
+	_free_locale(inv);
 #endif
 }
