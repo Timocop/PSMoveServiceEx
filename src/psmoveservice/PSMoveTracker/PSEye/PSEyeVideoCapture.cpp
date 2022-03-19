@@ -472,8 +472,9 @@ protected:
 class PSEYECaptureCAM_VIRTUAL : public cv::IVideoCapture
 {
 public:
-	PSEYECaptureCAM_VIRTUAL(int _index)
-		: m_index(-1)
+	PSEYECaptureCAM_VIRTUAL(int _index) : 
+		m_index(-1),
+		capturePipe(INVALID_HANDLE_VALUE)
 	{
 		//CoInitialize(NULL);
 		open(_index);
@@ -526,7 +527,7 @@ public:
 
 	bool retrieveFrame(int outputType, cv::OutputArray outArray)
 	{
-		if (hPipe == INVALID_HANDLE_VALUE)
+		if (capturePipe == INVALID_HANDLE_VALUE)
 		{
 			capFrame.setTo(cv::Scalar(0, 0, 0));
 			cv::putText(
@@ -543,7 +544,7 @@ public:
 			return true;
 		}
 
-		BOOL connected = ConnectNamedPipe(hPipe, NULL);
+		BOOL connected = ConnectNamedPipe(capturePipe, NULL);
 		if (connected)
 			std::cout << "ps3eye::VIRTUAL() ConnectNamedPipe success, index " << m_index << std::endl;
 
@@ -555,7 +556,7 @@ public:
 			if (GetLastError() != ERROR_PIPE_LISTENING) {
 				std::cout << "ps3eye::VIRTUAL() ConnectNamedPipe failed, index " << m_index << ", GLE=" << GetLastError() << "." << std::endl;
 
-				DisconnectNamedPipe(hPipe);
+				DisconnectNamedPipe(capturePipe);
 			}
 		}
 
@@ -576,7 +577,8 @@ public:
 			return true;
 		}
 
-		BOOL success = ReadFile(hPipe, pipeBuffer, VRIT_BUFF_SIZE, dwRead, NULL);
+		DWORD dwRead;
+		BOOL success = ReadFile(capturePipe, pipeBuffer, VRIT_BUFF_SIZE, &dwRead, NULL);
 		if (!success)
 		{
 			bool bDisplayText = true;
@@ -672,7 +674,7 @@ protected:
 		char indexStr[20];
 		pipeName.append(itoa(m_index, indexStr, 10));
 
-		hPipe = CreateNamedPipe(
+		capturePipe = CreateNamedPipe(
 			pipeName.c_str(),
 			PIPE_ACCESS_INBOUND,
 			PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_NOWAIT,
@@ -683,7 +685,7 @@ protected:
 			NULL
 		);
 
-		if (hPipe != INVALID_HANDLE_VALUE)
+		if (capturePipe != INVALID_HANDLE_VALUE)
 		{
 			std::cout << "ps3eye::VIRTUAL() " << pipeName.c_str() << " pipe created." << std::endl;
 			return true;
@@ -697,12 +699,12 @@ protected:
 
 	void close()
 	{
-		if (hPipe != INVALID_HANDLE_VALUE)
+		if (capturePipe != INVALID_HANDLE_VALUE)
 		{
-			DisconnectNamedPipe(hPipe);
-			CloseHandle(hPipe);
+			DisconnectNamedPipe(capturePipe);
+			CloseHandle(capturePipe);
 
-			hPipe = INVALID_HANDLE_VALUE;
+			capturePipe = INVALID_HANDLE_VALUE;
 		}
 
 		m_index = -1;
@@ -712,9 +714,8 @@ protected:
 
 	int m_index;
 
-	HANDLE hPipe = INVALID_HANDLE_VALUE;
+	HANDLE capturePipe;
 	char pipeBuffer[VRIT_BUFF_SIZE];
-	LPDWORD dwRead;
 	cv::Mat capFrame;
 };
 
