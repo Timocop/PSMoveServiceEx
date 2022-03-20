@@ -353,9 +353,6 @@ void OrientationFilterExternal::update(const float delta_time, const PoseFilterP
 		p += vector.back().size() + 1;
 	}
 
-	if (vector.size() >= 4)
-		return;
-
 	_locale_t inv = _create_locale(LC_NUMERIC, "C");
 
 	if (vector.size() >= 4)
