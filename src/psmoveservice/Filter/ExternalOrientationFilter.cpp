@@ -353,19 +353,36 @@ void OrientationFilterExternal::update(const float delta_time, const PoseFilterP
 		p += vector.back().size() + 1;
 	}
 
-	if (vector.size() != 4)
+	if (vector.size() >= 4)
 		return;
 
 	_locale_t inv = _create_locale(LC_NUMERIC, "C");
 
-	Eigen::Quaternionf new_orientation;
-	new_orientation.x() = (float)_atof_l(vector[0].c_str(), inv);
-	new_orientation.y() = (float)_atof_l(vector[1].c_str(), inv);
-	new_orientation.z() = (float)_atof_l(vector[2].c_str(), inv);
-	new_orientation.w() = (float)_atof_l(vector[3].c_str(), inv);
+	if (vector.size() >= 4)
+	{
+		Eigen::Quaternionf new_orientation;
+		new_orientation.x() = (float)_atof_l(vector[0].c_str(), inv);
+		new_orientation.y() = (float)_atof_l(vector[1].c_str(), inv);
+		new_orientation.z() = (float)_atof_l(vector[2].c_str(), inv);
+		new_orientation.w() = (float)_atof_l(vector[3].c_str(), inv);
 
-	m_state->apply_optical_state(new_orientation, delta_time);
+		m_state->apply_optical_state(new_orientation, delta_time);
+	}
 
+	if (vector.size() >= 8)
+	{
+		Eigen::Quaternionf reset_orientation;
+		reset_orientation.x() = (float)_atof_l(vector[4].c_str(), inv);
+		reset_orientation.y() = (float)_atof_l(vector[5].c_str(), inv);
+		reset_orientation.z() = (float)_atof_l(vector[6].c_str(), inv);
+		reset_orientation.w() = (float)_atof_l(vector[7].c_str(), inv);
+
+		Eigen::Quaternionf q_inverse = reset_orientation.conjugate();
+
+		eigen_quaternion_normalize_with_default(q_inverse, Eigen::Quaternionf::Identity());
+		m_state->reset_orientation = q_inverse;
+	}
+	 
 	_free_locale(inv);
 #endif
 }
