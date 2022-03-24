@@ -147,6 +147,10 @@ ExternalOrientationFilter::ExternalOrientationFilter() :
 	orientationPipe(INVALID_HANDLE_VALUE),
 	showMessage(true)
 {
+#ifdef WIN32
+	localeInvariant = _create_locale(LC_NUMERIC, "C");
+#endif
+
 	memset(&m_constants, 0, sizeof(OrientationFilterConstants));
 	resetState();
 }
@@ -154,6 +158,12 @@ ExternalOrientationFilter::ExternalOrientationFilter() :
 ExternalOrientationFilter::~ExternalOrientationFilter()
 {
 #ifdef WIN32
+	if (localeInvariant != NULL)
+	{
+		_free_locale(localeInvariant);
+		localeInvariant = NULL;
+	}
+
 	if (orientationPipe != INVALID_HANDLE_VALUE)
 	{
 		DisconnectNamedPipe(orientationPipe);
@@ -353,15 +363,15 @@ void OrientationFilterExternal::update(const float delta_time, const PoseFilterP
 		p += vector.back().size() + 1;
 	}
 
-	_locale_t inv = _create_locale(LC_NUMERIC, "C");
+	
 
 	if (vector.size() >= 4)
 	{
 		Eigen::Quaternionf new_orientation;
-		new_orientation.x() = (float)_atof_l(vector[0].c_str(), inv);
-		new_orientation.y() = (float)_atof_l(vector[1].c_str(), inv);
-		new_orientation.z() = (float)_atof_l(vector[2].c_str(), inv);
-		new_orientation.w() = (float)_atof_l(vector[3].c_str(), inv);
+		new_orientation.x() = (float)_atof_l(vector[0].c_str(), localeInvariant);
+		new_orientation.y() = (float)_atof_l(vector[1].c_str(), localeInvariant);
+		new_orientation.z() = (float)_atof_l(vector[2].c_str(), localeInvariant);
+		new_orientation.w() = (float)_atof_l(vector[3].c_str(), localeInvariant);
 
 		m_state->apply_optical_state(new_orientation, delta_time);
 	}
@@ -369,17 +379,15 @@ void OrientationFilterExternal::update(const float delta_time, const PoseFilterP
 	if (vector.size() >= 8)
 	{
 		Eigen::Quaternionf reset_orientation;
-		reset_orientation.x() = (float)_atof_l(vector[4].c_str(), inv);
-		reset_orientation.y() = (float)_atof_l(vector[5].c_str(), inv);
-		reset_orientation.z() = (float)_atof_l(vector[6].c_str(), inv);
-		reset_orientation.w() = (float)_atof_l(vector[7].c_str(), inv);
+		reset_orientation.x() = (float)_atof_l(vector[4].c_str(), localeInvariant);
+		reset_orientation.y() = (float)_atof_l(vector[5].c_str(), localeInvariant);
+		reset_orientation.z() = (float)_atof_l(vector[6].c_str(), localeInvariant);
+		reset_orientation.w() = (float)_atof_l(vector[7].c_str(), localeInvariant);
 
 		Eigen::Quaternionf q_inverse = reset_orientation.conjugate();
 
 		eigen_quaternion_normalize_with_default(q_inverse, Eigen::Quaternionf::Identity());
 		m_state->reset_orientation = q_inverse;
 	}
-	 
-	_free_locale(inv);
 #endif
 }

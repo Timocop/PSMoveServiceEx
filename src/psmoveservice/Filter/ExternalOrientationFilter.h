@@ -38,6 +38,10 @@ public:
 	char pipeBuffer[128];
 	bool showMessage;
 
+#ifdef WIN32
+	_locale_t localeInvariant;
+#endif
+
 protected:
 	OrientationFilterConstants m_constants;
 	struct ExternalOrientationFilterState *m_state;
