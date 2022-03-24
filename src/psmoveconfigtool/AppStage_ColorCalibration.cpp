@@ -1702,13 +1702,38 @@ void AppStage_ColorCalibration::renderUI()
 		m_bDetectingCancel = false;
 
 		int stable_controllers = 0;
+		int stable_total_controllers = 0;
 
-		for (int i = 0; i < m_controllerViews.size(); i++)
+		if (m_bAutoChangeTracker || m_bAutoChangeController)
 		{
-			PSMController *controllerView = m_controllerViews[i];
+			stable_total_controllers = m_controllerViews.size();
+
+			for (int i = 0; i < m_controllerViews.size(); i++)
+			{
+				PSMController *controllerView = m_controllerViews[i];
+
+				bool bIsStable;
+				bool bCanBeStabilized = (PSM_GetIsControllerStable(controllerView->ControllerID, &bIsStable) == PSMResult_Success);
+
+				if (bCanBeStabilized)
+				{
+					if (bIsStable)
+					{
+						stable_controllers++;
+					}
+				}
+				else
+				{
+					stable_controllers++;
+				}
+			}
+		}
+		else
+		{
+			stable_total_controllers = 1;
 
 			bool bIsStable;
-			bool bCanBeStabilized = (PSM_GetIsControllerStable(controllerView->ControllerID, &bIsStable) == PSMResult_Success);
+			bool bCanBeStabilized = (PSM_GetIsControllerStable(m_masterControllerView->ControllerID, &bIsStable) == PSMResult_Success);
 
 			if (bCanBeStabilized)
 			{
@@ -1731,19 +1756,19 @@ void AppStage_ColorCalibration::renderUI()
 
 		ImGui::Spacing();
 
-		ImGui::Text("Stable controllers: %d / %d", stable_controllers, m_controllerViews.size());
+		ImGui::Text("Stable controllers: %d / %d", stable_controllers, stable_total_controllers);
 
-		if (stable_controllers == m_controllerViews.size())
+		if (stable_controllers == stable_total_controllers)
 		{
 			if (ImGui::Button("Start Sampling Colors"))
 			{
 				if (m_bAutoChangeTracker)
 				{
-					m_iDetectingControllersLeft = static_cast<int>(m_controllerViews.size() * tracker_count);
+					m_iDetectingControllersLeft = static_cast<int>(stable_total_controllers * tracker_count);
 				}
 				else if (m_bAutoChangeController)
 				{
-					m_iDetectingControllersLeft = static_cast<int>(m_controllerViews.size());
+					m_iDetectingControllersLeft = static_cast<int>(stable_total_controllers);
 				}
 				else
 				{
@@ -1760,11 +1785,11 @@ void AppStage_ColorCalibration::renderUI()
 			{
 				if (m_bAutoChangeTracker)
 				{
-					m_iDetectingControllersLeft = static_cast<int>(m_controllerViews.size() * tracker_count);
+					m_iDetectingControllersLeft = static_cast<int>(stable_total_controllers * tracker_count);
 				}
 				else if(m_bAutoChangeController)
 				{
-					m_iDetectingControllersLeft = static_cast<int>(m_controllerViews.size());
+					m_iDetectingControllersLeft = static_cast<int>(stable_total_controllers);
 				}
 				else 
 				{
