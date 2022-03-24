@@ -1149,7 +1149,7 @@ void AppStage_ColorCalibration::renderUI()
 					m_bAlignDetectColor = true;
 				}
 
-				if (ImGui::CollapsingHeader("Automatic Detection Settings", 0, true, false))
+				if (ImGui::CollapsingHeader("Automatic Detection Settings", 0, true, true))
 				{
 					int adjustMethod = m_iDetectingAdjustMethod;
 					ImGui::Text("Automatic exposure/gain options:");
@@ -1159,7 +1159,7 @@ void AppStage_ColorCalibration::renderUI()
 					}
 				}
 
-				if (ImGui::CollapsingHeader("Automatic/Manual Detection Settings", 0, true, false))
+				if (ImGui::CollapsingHeader("Automatic/Manual Detection Settings", 0, true, true))
 				{
 					int colorSensitivity = m_iColorSensitivity;
 					ImGui::Text("Color detection sensitivity:");
