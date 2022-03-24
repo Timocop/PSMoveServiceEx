@@ -235,6 +235,7 @@ private:
 
             // We need to close the socket used in the previous connection attempt
             // before starting a new one.
+            m_tcp_socket.shutdown(asio::socket_base::shutdown_both);
             m_tcp_socket.close();
 
             // Try the next available endpoint.
