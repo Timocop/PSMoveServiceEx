@@ -908,7 +908,9 @@ void AppStage_ControllerSettings::request_set_orientation_filter(
     request->mutable_request_set_orientation_filter()->set_controller_id(controller_id);
     request->mutable_request_set_orientation_filter()->set_orientation_filter(filter_name);
 
-    PSM_SendOpaqueRequest(&request, nullptr);
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_EatResponse(request_id);
 }
 
 void AppStage_ControllerSettings::request_set_position_filter(
@@ -921,7 +923,9 @@ void AppStage_ControllerSettings::request_set_position_filter(
     request->mutable_request_set_position_filter()->set_controller_id(controller_id);
     request->mutable_request_set_position_filter()->set_position_filter(filter_name);
 
-    PSM_SendOpaqueRequest(&request, nullptr);
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_EatResponse(request_id);
 }
 
 void AppStage_ControllerSettings::request_set_gyroscope_gain_setting(
@@ -939,7 +943,9 @@ void AppStage_ControllerSettings::request_set_gyroscope_gain_setting(
     calibration->set_variance(-1.f); // keep existing variance
     calibration->set_gyro_gain_setting(gain_setting);
 
-    PSM_SendOpaqueRequest(&request, nullptr);
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_EatResponse(request_id);
 }
 
 void AppStage_ControllerSettings::request_set_controller_prediction(
@@ -955,7 +961,9 @@ void AppStage_ControllerSettings::request_set_controller_prediction(
     calibration->set_controller_id(controller_id);
     calibration->set_prediction_time(prediction_time); // keep existing drift
 
-    PSM_SendOpaqueRequest(&request, nullptr);
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_EatResponse(request_id);
 }
 
 void AppStage_ControllerSettings::request_set_controller_gamepad_index(
@@ -971,7 +979,9 @@ void AppStage_ControllerSettings::request_set_controller_gamepad_index(
     gamepad_request->set_controller_id(controller_id);
     gamepad_request->set_gamepad_index(gamepad_index);
 
-    PSM_SendOpaqueRequest(&request, nullptr);
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_EatResponse(request_id);
 }
 
 void AppStage_ControllerSettings::request_set_controller_hand(
@@ -987,7 +997,9 @@ void AppStage_ControllerSettings::request_set_controller_hand(
     hand_request->set_controller_id(controller_id);
     hand_request->set_controller_hand(static_cast<PSMoveProtocol::ControllerHand>(controller_hand));
 
-    PSM_SendOpaqueRequest(&request, nullptr);
+	PSMRequestID request_id;
+    PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_EatResponse(request_id);
 }
 
 void AppStage_ControllerSettings::handle_controller_list_response(
@@ -1295,7 +1307,9 @@ void AppStage_ControllerSettings::request_set_controller_tracking_color_id(
     request->mutable_set_led_tracking_color_request()->set_color_type(
         static_cast<PSMoveProtocol::TrackingColorType>(tracking_color_type));
 
-    PSM_SendOpaqueRequest(&request, nullptr);
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_EatResponse(request_id);
 }
 
 void AppStage_ControllerSettings::request_set_parent_controller_id(
@@ -1309,6 +1323,8 @@ void AppStage_ControllerSettings::request_set_parent_controller_id(
         request->mutable_request_set_attached_controller()->set_child_controller_id(ControllerID);
         request->mutable_request_set_attached_controller()->set_parent_controller_id(ParentControllerID);
 
-        PSM_SendOpaqueRequest(&request, nullptr);
+		PSMRequestID request_id;
+		PSM_SendOpaqueRequest(&request, &request_id);
+		PSM_EatResponse(request_id);
     }
 }
