@@ -34,6 +34,10 @@ public:
 	Eigen::Vector3f getAngularVelocityRadPerSec() const override;
 	Eigen::Vector3f getAngularAccelerationRadPerSecSqr() const override;
 
+protected:
+	OrientationFilterConstants m_constants;
+	struct ExternalOrientationFilterState *m_state;
+
 	HANDLE orientationPipe;
 	char pipeBuffer[128];
 	bool showMessage;
@@ -41,10 +45,6 @@ public:
 #ifdef WIN32
 	_locale_t localeInvariant;
 #endif
-
-protected:
-	OrientationFilterConstants m_constants;
-	struct ExternalOrientationFilterState *m_state;
 };
 
 /// Just use the optical orientation passed in unfiltered

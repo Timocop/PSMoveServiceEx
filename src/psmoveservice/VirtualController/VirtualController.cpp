@@ -105,6 +105,7 @@ VirtualController::VirtualController()
     , NextPollSequenceNumber(0)
     , bIsOpen(false)
     , bIsTracking(false)
+	, m_controllerListener(nullptr)
 {
 	memset(&ControllerState, 0, sizeof(VirtualControllerState));
 }
@@ -204,7 +205,7 @@ VirtualController::setTrackingColorID(const eCommonTrackingColorID tracking_colo
 
 void VirtualController::setControllerListener(IControllerListener *listener)
 {
-	// Do nothing. VirtualController doesn't provide IMU data.
+	m_controllerListener = listener;
 }
 
 // Getters
@@ -309,6 +310,13 @@ VirtualController::poll()
 
         // Cache the new controller state
         ControllerState= newState;
+
+		// Send the sensor data for processing by filter
+		if (m_controllerListener != nullptr)
+		{
+			m_controllerListener->notifySensorDataReceived(&newState);
+
+		}
     }
 
     return result;

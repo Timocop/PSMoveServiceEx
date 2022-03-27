@@ -76,6 +76,12 @@ static void post_optical_filter_packet_for_ds4(
     const t_high_resolution_timepoint now,
     const ControllerOpticalPoseEstimation *poseEstimation,
 	t_controller_pose_optical_queue *pose_filter_queue);
+static void post_imu_filter_packets_for_virtual_controller(
+	const VirtualController *psmove,
+	const VirtualControllerState *psmoveState,
+	const t_high_resolution_timepoint now,
+	const t_high_resolution_duration duration_since_last_update,
+	t_controller_pose_sensor_queue *pose_filter_queue);
 
 static void post_optical_filter_packet_for_virtual_controller(
     const VirtualController *ds4,
@@ -187,6 +193,8 @@ bool ServerControllerView::allocate_device_interface(
     case CommonDeviceState::VirtualController:
         {
             m_device = new VirtualController();
+			m_device->setControllerListener(this); // Enforce updates for virtual controllers. Send fake IMU packets.
+
             m_tracker_pose_estimations = new ControllerOpticalPoseEstimation[TrackerManager::k_max_devices];
             m_pose_filter = nullptr; // no pose filter until the device is opened
 
@@ -779,18 +787,30 @@ ServerControllerView::notifySensorDataReceived(const CommonDeviceState *sensor_s
                 now, durationSinceLastUpdate,
 				&m_PoseSensorIMUPacketQueue);
         } break;
-    case CommonDeviceState::PSDualShock4:
-        {
-            const PSDualShock4Controller *ds4 = this->castCheckedConst<PSDualShock4Controller>();
-            const DualShock4ControllerInputState *ds4State = 
-				static_cast<const DualShock4ControllerInputState *>(sensor_state);
+	case CommonDeviceState::PSDualShock4:
+	{
+		const PSDualShock4Controller *ds4 = this->castCheckedConst<PSDualShock4Controller>();
+		const DualShock4ControllerInputState *ds4State =
+			static_cast<const DualShock4ControllerInputState *>(sensor_state);
 
-            // Only update the position filter when tracking is enabled
-            post_imu_filter_packets_for_ds4(
-                ds4, ds4State,
-                now, durationSinceLastUpdate,
-				&m_PoseSensorIMUPacketQueue);
-        } break;
+		// Only update the position filter when tracking is enabled
+		post_imu_filter_packets_for_ds4(
+			ds4, ds4State,
+			now, durationSinceLastUpdate,
+			&m_PoseSensorIMUPacketQueue);
+	} break;
+	case CommonDeviceState::VirtualController:
+	{
+		const VirtualController *virt = this->castCheckedConst<VirtualController>();
+		const VirtualControllerState *virtState =
+			static_cast<const VirtualControllerState *>(sensor_state);
+
+		// Only update the position filter when tracking is enabled
+		post_imu_filter_packets_for_virtual_controller(
+			virt, virtState,
+			now, durationSinceLastUpdate,
+			&m_PoseSensorIMUPacketQueue);
+	} break;
     default:
         assert(0 && "Unhandled Controller Type");
     }
@@ -809,6 +829,7 @@ void ServerControllerView::updateStateAndPredict()
 	{
 		timeSortedPackets.push_back(packet);
 	}
+
 	//TODO: m_PoseSensorOpticalPacketQueue is currently getting filled on the main thread by
 	// updateOpticalPoseEstimation() when triangulating the optical pose estimates.
 	// Eventually this work will move to it's own camera processing thread 
@@ -871,7 +892,7 @@ void ServerControllerView::updateStateAndPredict()
 		{
 			PoseFilterPacket filter_packet;
 			filter_packet.clear();
-		
+
 			// Ship device id with the packet. We ned it for "OrientationExternal" filter.
 			filter_packet.deviceId = this->getDeviceID();
 
@@ -1743,7 +1764,7 @@ static void generate_psdualshock4_data_frame_for_stream(
                             const CommonDevicePosition &trackerRelativePosition = poseEstimate->position_cm;
                             const CommonDeviceQuaternion &trackerRelativeOrientation = poseEstimate->orientation;
                             const ServerTrackerViewPtr tracker_view = DeviceManager::getInstance()->getTrackerViewPtr(selectedTrackerId);
-
+							
                             // Add the tracker relative 3d pose
                             {
                                 PSMoveProtocol::Position *position = raw_tracker_data->mutable_relative_position_cm();
@@ -2190,10 +2211,14 @@ pose_filter_factory(
         {
             position_filter_enum= PositionFilterTypeComplimentaryOpticalIMU;
         }
-        else if (position_filter_type == "PositionKalman")
-        {
-            position_filter_enum= PositionFilterTypeKalman;
-        }
+		else if (position_filter_type == "PositionKalman")
+		{
+			position_filter_enum = PositionFilterTypeKalman;
+		}
+		else if (position_filter_type == "PositionExternalAttachment")
+		{
+			position_filter_enum = PositionFilterTypeExternalAttachment;
+		}
         else
         {
             SERVER_LOG_INFO("pose_filter_factory()") << 
@@ -2622,6 +2647,22 @@ static void post_imu_filter_packets_for_ds4(
 	sensor_packet.has_gyroscope_measurement= true;
 
     pose_filter_queue->enqueue(sensor_packet);
+}
+
+// Send dummy IMU packets to force filters to work.
+static void post_imu_filter_packets_for_virtual_controller(
+	const VirtualController *psmove,
+	const VirtualControllerState *psmoveState,
+	const t_high_resolution_timepoint now,
+	const t_high_resolution_duration duration_since_last_update,
+	t_controller_pose_sensor_queue *pose_filter_queue)
+{
+	PoseSensorPacket sensor_packet;
+	sensor_packet.clear();
+
+	sensor_packet.timestamp = now;
+
+	pose_filter_queue->enqueue(sensor_packet);
 }
 
 static void post_optical_filter_packet_for_ds4(

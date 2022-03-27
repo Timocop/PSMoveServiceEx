@@ -363,8 +363,6 @@ void OrientationFilterExternal::update(const float delta_time, const PoseFilterP
 		p += vector.back().size() + 1;
 	}
 
-	
-
 	if (vector.size() >= 4)
 	{
 		Eigen::Quaternionf new_orientation;

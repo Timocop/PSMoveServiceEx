@@ -179,5 +179,6 @@ private:
     VirtualControllerState ControllerState;
 
 	bool bIsTracking;
+	IControllerListener* m_controllerListener;
 };
 #endif // VIRTUAL_CONTROLLER_h

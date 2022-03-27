@@ -4,7 +4,11 @@
 #include "PositionFilter.h"
 #include "KalmanPositionFilter.h"
 #include "KalmanOrientationFilter.h"
+
+#if !defined(IS_TESTING_KALMAN)
 #include "ExternalOrientationFilter.h"
+#include "PositionExternalAttachment.h"
+#endif
 
 // -- public interface --
 bool CompoundPoseFilter::init(
@@ -69,7 +73,7 @@ void CompoundPoseFilter::allocate_filters(
 		m_orientation_filter = nullptr;
 		break;
     case OrientationFilterTypePassThru:
-		m_orientation_filter = new OrientationFilterPassThru();
+		m_orientation_filter = new OrientationFilterPassThru;
 		break;
     case OrientationFilterTypeMadgwickARG:
 		m_orientation_filter = new OrientationFilterMadgwickARG;
@@ -99,7 +103,11 @@ void CompoundPoseFilter::allocate_filters(
 		}
 		break;
 	case OrientationFilterTypeExternal:
+#if !defined(IS_TESTING_KALMAN)
 		m_orientation_filter = new OrientationFilterExternal;
+#else
+		m_orientation_filter = nullptr;
+#endif
 		break;
 	default:
 		assert(0 && "unreachable");
@@ -127,6 +135,13 @@ void CompoundPoseFilter::allocate_filters(
 		break;
 	case PositionFilterTypeKalman:
 		m_position_filter = new KalmanPositionFilter;
+		break;
+	case PositionFilterTypeExternalAttachment:
+#if !defined(IS_TESTING_KALMAN)
+		m_position_filter = new PositionFilterExternalAttachment;
+#else
+		m_position_filter = nullptr;
+#endif
 		break;
 	default:
 		assert(0 && "unreachable");
