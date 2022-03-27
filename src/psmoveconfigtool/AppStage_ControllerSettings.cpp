@@ -766,14 +766,25 @@ void AppStage_ControllerSettings::renderUI()
 							}
 						}
 
-						if (controllerInfo.ControllerType == PSMController_DualShock4 ||
-							controllerInfo.ControllerType == PSMController_Virtual)
+						if (controllerInfo.ControllerType == PSMController_DualShock4)
 						{
 							if (ImGui::Button("Test Orientation"))
 							{
 								m_app->getAppStage<AppStage_GyroscopeCalibration>()->setBypassCalibrationFlag(true);
 								m_app->setAppStage(AppStage_GyroscopeCalibration::APP_STAGE_NAME);
 							}
+						}
+
+						if (controllerInfo.ControllerType == PSMController_Virtual)
+						{
+							if (ImGui::Button("Test Orientation"))
+							{
+								m_app->getAppStage<AppStage_GyroscopeCalibration>()->setBypassCalibrationFlag(true);
+								m_app->setAppStage(AppStage_GyroscopeCalibration::APP_STAGE_NAME);
+							}
+
+							ImGui::SameLine();
+							ImGui::TextDisabled("(Requires PSmove Emulation)");
 						}
 
 						if (controllerInfo.ControllerType == PSMController_Move || 
