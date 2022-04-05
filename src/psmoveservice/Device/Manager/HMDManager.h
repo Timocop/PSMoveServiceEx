@@ -9,6 +9,7 @@
 #include "DeviceEnumerator.h"
 #include "PSMoveConfig.h"
 #include "PSMoveProtocol.pb.h"
+#include "TrackerManager.h"
 
 //-- typedefs -----
 class ServerHMDView;

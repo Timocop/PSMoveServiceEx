@@ -328,7 +328,7 @@ void PositionFilterPassThru::update(
 {
 	const int history_queue_length = 5;
 
-	if (packet.has_optical_measurement())
+	if (packet.has_optical_measurement() && packet.isSynced)
 	{
 		Eigen::Vector3f old_position_meters;
 		Eigen::Vector3f new_position_meters = packet.get_optical_position_in_meters();
@@ -376,8 +376,8 @@ void PositionFilterLowPassOptical::update(
 {
 	const int history_queue_length = 5;
 
-    if (packet.has_optical_measurement())
-    {
+	if (packet.has_optical_measurement() && packet.isSynced)
+	{
 		Eigen::Vector3f old_position_meters;
 		Eigen::Vector3f new_position_meters;
 		Eigen::Vector3f new_position_meters_sec;
@@ -433,8 +433,8 @@ void PositionFilterLowPassIMU::update(
 	const float delta_time,
 	const PoseFilterPacket &packet)
 {
-    if (packet.has_optical_measurement())
-    {        
+	if (packet.has_optical_measurement() && packet.isSynced)
+	{
 		// Use the raw optical position unfiltered
 		const Eigen::Vector3f new_position_meters= packet.get_optical_position_in_meters();
 
@@ -475,8 +475,8 @@ void PositionFilterComplimentaryOpticalIMU::update(const float delta_time, const
 {
 	static float g_max_unseen_position_timeout= k_max_unseen_position_timeout;
 
-	if (packet.has_optical_measurement())
-    {
+	if (packet.has_optical_measurement() && packet.isSynced)
+	{
 		Eigen::Vector3f new_position_meters;
 
 		if (m_state->bIsValid &&
@@ -535,7 +535,7 @@ void PositionFilterLowPassExponential::update(const float delta_time, const Pose
 {
 	const int history_queue_length = 20;
 
-	if (packet.has_optical_measurement())
+	if (packet.has_optical_measurement() && packet.isSynced)
     {        
 		Eigen::Vector3f new_position_meters;
 		Eigen::Vector3f new_velocity_m_per_sec= Eigen::Vector3f::Zero();

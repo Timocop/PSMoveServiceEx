@@ -194,21 +194,32 @@ DeviceManager::startup()
 void
 DeviceManager::update()
 {
+	bool isSynced = m_tracker_manager->trackersSynced();
+
 	if (m_platform_api != nullptr)
 	{
 		m_platform_api->poll(); // Send device hotplug events
 	}
 
-    m_controller_manager->poll(); // Update controller counts and poll button/IMU state
-    m_tracker_manager->poll(); // Update tracker count and poll video frames
-    m_hmd_manager->poll(); // Update HMD count and poll IMU state
 
-    m_controller_manager->updateStateAndPredict(m_tracker_manager); // Compute pose/prediction of tracking blob+IMU state
-    m_hmd_manager->updateStateAndPredict(m_tracker_manager); // Compute pose/prediction of tracking blobs+IMU state
+	m_controller_manager->poll(); // Update controller counts and poll button/IMU state
+
+	if (isSynced)
+	{
+		m_tracker_manager->poll(); // Update tracker count and poll video frames
+	}
+
+	m_hmd_manager->poll(); // Update HMD count and poll IMU state
+
+	m_controller_manager->updateStateAndPredict(m_tracker_manager); // Compute pose/prediction of tracking blob+IMU state
+	m_hmd_manager->updateStateAndPredict(m_tracker_manager); // Compute pose/prediction of tracking blobs+IMU state
 
     m_controller_manager->publish(); // publish controller state to any listening clients  (common case)
     m_tracker_manager->publish(); // publish tracker state to any listening clients (probably only used by ConfigTool)
     m_hmd_manager->publish(); // publish hmd state to any listening clients (common case)
+
+	if (isSynced)
+		m_tracker_manager->trackerSyncedReset();
 }
 
 void

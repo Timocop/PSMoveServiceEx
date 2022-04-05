@@ -895,6 +895,7 @@ void ServerControllerView::updateStateAndPredict()
 
 			// Ship device id with the packet. We ned it for "OrientationExternal" filter.
 			filter_packet.deviceId = this->getDeviceID();
+			filter_packet.isSynced = TrackerManager::isTrackerSynced();
 
 			// Create a filter input packet from the sensor data 
 			// and the filter's previous orientation and position
@@ -902,6 +903,7 @@ void ServerControllerView::updateStateAndPredict()
 				sensorPacket,
 				m_pose_filter,
 				filter_packet);
+
 			// Process the filter packet
 			m_pose_filter->update(time_delta_seconds, filter_packet);
 		}

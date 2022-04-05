@@ -178,6 +178,8 @@ TrackerManagerConfig::get_global_down_axis() const
 }
 
 //-- Tracker Manager -----
+bool TrackerManager::m_isTrackerSycned = false;
+
 TrackerManager::TrackerManager()
     : DeviceTypeManager(10000, 13)
     , m_tracker_list_dirty(false)
@@ -430,4 +432,42 @@ TrackerManager::freeTrackingColorID(eCommonTrackingColorID color_id)
 {
     assert(std::find(m_available_color_ids.begin(), m_available_color_ids.end(), color_id) == m_available_color_ids.end());
     m_available_color_ids.push_back(color_id);
+}
+
+bool
+TrackerManager::trackersSynced()
+{
+	double lowestFps = -1.f;
+	for (int i = 0; i < getMaxDevices(); i++)
+	{
+		const ServerTrackerViewPtr tracker = getTrackerViewPtr(i);
+		if (tracker->getIsOpen())
+		{
+			const double fps = tracker->getFrameRate();
+
+			if (lowestFps < 0.f || lowestFps > fps)
+				lowestFps = fps;
+		}
+	}
+
+	const std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+	const std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastSync;
+
+	if (timeSinceLast.count() > (1000.f / lowestFps))
+	{
+		m_isTrackerSycned = true;
+		return true;
+	}
+
+	m_isTrackerSycned = false;
+	return false;
+}
+
+void
+TrackerManager::trackerSyncedReset()
+{
+	const std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+	m_lastSync = now;
+
+	m_isTrackerSycned = false;
 }

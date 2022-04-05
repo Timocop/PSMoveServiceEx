@@ -112,10 +112,17 @@ public:
         return cfg;
     }
 
+	inline static bool isTrackerSynced()
+	{
+		return m_isTrackerSycned;
+	}
+
     eCommonTrackingColorID allocateTrackingColorID();
     bool claimTrackingColorID(const class ServerControllerView *controller_view, eCommonTrackingColorID color_id);
     bool claimTrackingColorID(const class ServerHMDView *hmd_view, eCommonTrackingColorID color_id);
     void freeTrackingColorID(eCommonTrackingColorID color_id);
+	bool TrackerManager::trackersSynced();
+	void TrackerManager::trackerSyncedReset();
 
 protected:
     bool can_update_connected_devices() override;
@@ -130,6 +137,8 @@ private:
     std::deque<eCommonTrackingColorID> m_available_color_ids;
     TrackerManagerConfig cfg;
     bool m_tracker_list_dirty;
+	std::chrono::time_point<std::chrono::high_resolution_clock> m_lastSync;
+	static bool m_isTrackerSycned;
 };
 
 #endif // TRACKER_MANAGER_H

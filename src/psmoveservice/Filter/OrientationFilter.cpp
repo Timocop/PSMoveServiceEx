@@ -240,7 +240,7 @@ Eigen::Vector3f OrientationFilter::getAngularAccelerationRadPerSecSqr() const
 // -- OrientationFilterPassThru --
 void OrientationFilterPassThru::update(const float delta_time, const PoseFilterPacket &packet)
 {
-	if (packet.has_optical_measurement())
+	if (packet.has_optical_measurement() && packet.isSynced)
 	{
 		const Eigen::Quaternionf &new_orientation= packet.optical_orientation;
 
@@ -468,7 +468,7 @@ void OrientationFilterMadgwickMARG::update(const float delta_time, const PoseFil
 void OrientationFilterComplementaryOpticalARG::update(const float delta_time, const PoseFilterPacket &packet)
 {
 	// Blend with optical yaw
-	if (packet.has_optical_measurement())
+	if (packet.has_optical_measurement() && packet.isSynced)
     {
 		Eigen::Quaternionf new_orientation;
 
