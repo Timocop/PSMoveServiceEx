@@ -133,7 +133,6 @@ public:
 		controller_reconnect_interval = 1000;
 		controller_poll_interval = 2;
 		tracker_reconnect_interval = 10000;
-		tracker_poll_interval = 13;
 		hmd_reconnect_interval = 10000;
 		hmd_poll_interval = 2;
 		gamepad_api_enabled = true;
@@ -148,7 +147,6 @@ public:
 	int controller_reconnect_interval;
 	int controller_poll_interval;
 	int tracker_reconnect_interval;
-	int tracker_poll_interval;
 	int hmd_reconnect_interval;
 	int hmd_poll_interval;
 	bool gamepad_api_enabled;
