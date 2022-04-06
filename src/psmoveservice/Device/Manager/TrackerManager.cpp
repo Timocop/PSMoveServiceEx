@@ -451,23 +451,18 @@ TrackerManager::trackersSynced()
 	}
 
 	const std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
-	const std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastSync;
+	const std::chrono::duration<double, std::milli> timeSinceLast = now - m_lastSync;
 
-	if (timeSinceLast.count() > (1000.f / lowestFps))
+	//###Externet $TODO Use real tracker fps instead not absolute fps?
+	// Removing 1 frame removes some weird frame buffer glitch. Unsure what causes this.
+	// Needs to be investigated.
+	if (timeSinceLast.count() < (1000.f / lowestFps - 1.f))
 	{
-		m_isTrackerSycned = true;
-		return true;
+		m_isTrackerSycned = false;
+		return false;
 	}
 
-	m_isTrackerSycned = false;
-	return false;
-}
-
-void
-TrackerManager::trackerSyncedReset()
-{
-	const std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+	m_isTrackerSycned = true;
 	m_lastSync = now;
-
-	m_isTrackerSycned = false;
+	return true;
 }

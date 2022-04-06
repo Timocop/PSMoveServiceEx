@@ -67,12 +67,20 @@ public:
                 m_status = context.find<boost::application::status>();
 
 				const TrackerManagerConfig &cfg = DeviceManager::getInstance()->m_tracker_manager->getConfig();
+				std::chrono::time_point<std::chrono::high_resolution_clock> m_lastSync;
 
                 while (m_status->state() != boost::application::status::stoped)
                 {
                     if (m_status->state() != boost::application::status::paused)
                     {
+						const std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+						const std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastSync;
+
                         update();
+
+						//printf("Thread FPS: %f\n", 1000.f / timeSinceLast.count());
+
+						m_lastSync = now;
                     }
 
 					std::this_thread::sleep_for(std::chrono::milliseconds(cfg.tracker_sleep_ms));
@@ -202,6 +210,9 @@ private:
     /// Called in the application loop.
     void update()
     {
+		/** Check if trackers are synced and ready for polling frames and processing */
+		m_device_manager.m_tracker_manager->trackersSynced();
+		
         /** Update an async requests still waiting to complete */
         m_request_handler.update();
 
