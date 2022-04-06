@@ -404,17 +404,18 @@ IDeviceInterface::ePollResult PS3EyeTracker::poll()
 
     if (getIsOpen())
     {
-        if (!VideoCapture->grab() || 
-            !VideoCapture->retrieve(CaptureData->frame, cv::CAP_OPENNI_BGR_IMAGE))
-        {
-            // Device still in valid state
-            result = IControllerInterface::_PollResultSuccessNoData;
-        }
-        else
-        {
-            // New data available. Keep iterating.
-            result = IControllerInterface::_PollResultSuccessNewData;
-        }
+		if (!VideoCapture->grab() ||
+			!TrackerManager::isTrackerSynced() ||
+			!VideoCapture->retrieve(CaptureData->frame, cv::CAP_OPENNI_BGR_IMAGE))
+		{
+			// Device still in valid state
+			result = IControllerInterface::_PollResultSuccessNoData;
+		}
+		else
+		{
+			// New data available. Keep iterating.
+			result = IControllerInterface::_PollResultSuccessNewData;
+		}
 
         {
             PS3EyeTrackerState newState;

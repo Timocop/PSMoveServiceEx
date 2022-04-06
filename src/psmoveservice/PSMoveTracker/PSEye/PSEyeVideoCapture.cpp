@@ -3,6 +3,7 @@
 #include <opencv2/videoio/videoio_c.h>
 #include "opencv2/imgproc.hpp"
 #include <iostream>
+#include <chrono>
 #ifdef HAVE_PS3EYE
 #include "ps3eye.h"
 #endif
@@ -497,7 +498,7 @@ public:
 		case CV_CAP_PROP_EXPOSURE:
 			return 0;
 		case CV_CAP_PROP_FPS:
-			return 0;
+			return 30;
 		case CV_CAP_PROP_FRAME_HEIGHT:
 			return 480;
 		case CV_CAP_PROP_FRAME_WIDTH:
@@ -522,11 +523,7 @@ public:
 
 	bool grabFrame()
 	{
-		return true;
-	}
 
-	bool retrieveFrame(int outputType, cv::OutputArray outArray)
-	{
 		if (capturePipe == INVALID_HANDLE_VALUE)
 		{
 			capFrame.setTo(cv::Scalar(0, 0, 0));
@@ -540,7 +537,6 @@ public:
 				2
 			);
 
-			capFrame.copyTo(outArray);
 			return true;
 		}
 
@@ -573,7 +569,6 @@ public:
 				2
 			);
 
-			capFrame.copyTo(outArray);
 			return true;
 		}
 
@@ -620,14 +615,17 @@ public:
 					2
 				);
 
-				capFrame.copyTo(outArray);
 				return true;
 			}
 
-			return false;
+			return true;
 		}
 
+		return true;
+	}
 
+	bool retrieveFrame(int outputType, cv::OutputArray outArray)
+	{
 		memcpy((uchar*)capFrame.data, pipeBuffer, VRIT_BUFF_SIZE);
 
 		// ###Externet We need to flip the input image because PSEyes do so too.

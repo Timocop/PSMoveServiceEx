@@ -122,7 +122,6 @@ public:
     bool claimTrackingColorID(const class ServerHMDView *hmd_view, eCommonTrackingColorID color_id);
     void freeTrackingColorID(eCommonTrackingColorID color_id);
 	bool TrackerManager::trackersSynced();
-	void TrackerManager::trackerSyncedReset();
 
 protected:
     bool can_update_connected_devices() override;
