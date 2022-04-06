@@ -26,7 +26,6 @@
 static const int k_default_controller_reconnect_interval= 1000; // ms
 static const int k_default_controller_poll_interval= 2; // ms
 static const int k_default_tracker_reconnect_interval= 10000; // ms
-static const int k_default_tracker_poll_interval= 13; // 1000/75 ms
 static const int k_default_hmd_reconnect_interval= 10000; // ms
 static const int k_default_hmd_poll_interval= 2; // ms
 
@@ -40,7 +39,6 @@ public:
         , controller_reconnect_interval(k_default_controller_reconnect_interval)
         , controller_poll_interval(k_default_controller_poll_interval)
         , tracker_reconnect_interval(k_default_tracker_reconnect_interval)
-        , tracker_poll_interval(k_default_tracker_poll_interval)
         , hmd_reconnect_interval(k_default_hmd_reconnect_interval)
         , hmd_poll_interval(k_default_hmd_poll_interval)
 		, gamepad_api_enabled(true)
@@ -56,7 +54,6 @@ public:
         pt.put("controller_reconnect_interval", controller_reconnect_interval);
         pt.put("controller_poll_interval", controller_poll_interval);
         pt.put("tracker_reconnect_interval", tracker_reconnect_interval);
-        pt.put("tracker_poll_interval", tracker_poll_interval);
         pt.put("hmd_reconnect_interval", hmd_reconnect_interval);
         pt.put("hmd_poll_interval", hmd_poll_interval); 
 		pt.put("gamepad_api_enabled", gamepad_api_enabled);
@@ -75,7 +72,6 @@ public:
             controller_reconnect_interval = pt.get<int>("controller_reconnect_interval", k_default_controller_reconnect_interval);
             controller_poll_interval = pt.get<int>("controller_poll_interval", k_default_controller_poll_interval);
             tracker_reconnect_interval = pt.get<int>("tracker_reconnect_interval", k_default_tracker_reconnect_interval);
-            tracker_poll_interval = pt.get<int>("tracker_poll_interval", k_default_tracker_poll_interval);
             hmd_reconnect_interval = pt.get<int>("hmd_reconnect_interval", k_default_hmd_reconnect_interval);
             hmd_poll_interval = pt.get<int>("hmd_poll_interval", k_default_hmd_poll_interval);
 		    gamepad_api_enabled = pt.get<bool>("gamepad_api_enabled", gamepad_api_enabled);
@@ -93,7 +89,6 @@ public:
     int controller_reconnect_interval;
     int controller_poll_interval;
     int tracker_reconnect_interval;
-    int tracker_poll_interval;
     int hmd_reconnect_interval;
     int hmd_poll_interval;    
 	bool gamepad_api_enabled;
@@ -179,7 +174,7 @@ DeviceManager::startup()
     success &= m_controller_manager->startup();
     
     m_tracker_manager->reconnect_interval = tracker_reconnect_interval;
-    m_tracker_manager->poll_interval = m_config->tracker_poll_interval;
+    m_tracker_manager->poll_interval = 0;
     success &= m_tracker_manager->startup();
 
     m_hmd_manager->reconnect_interval = hmd_reconnect_interval;
