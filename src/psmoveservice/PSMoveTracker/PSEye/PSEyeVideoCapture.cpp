@@ -523,6 +523,14 @@ public:
 
 	bool grabFrame()
 	{
+		const std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+		const std::chrono::duration<double, std::milli> timeSinceLast = now - m_lastRequest;
+		if (timeSinceLast.count() < 2.f)
+		{
+			return true;
+		}
+
+		m_lastRequest = now;
 
 		if (capturePipe == INVALID_HANDLE_VALUE)
 		{
@@ -715,6 +723,7 @@ protected:
 	HANDLE capturePipe;
 	char pipeBuffer[VRIT_BUFF_SIZE];
 	cv::Mat capFrame;
+	std::chrono::time_point<std::chrono::high_resolution_clock> m_lastRequest;
 };
 
 static bool usingCLEyeDriver()
