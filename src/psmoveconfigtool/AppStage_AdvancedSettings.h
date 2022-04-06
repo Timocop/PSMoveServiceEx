@@ -43,7 +43,7 @@ public:
 		controller_position_prediction_history = 5;
 		ignore_pose_from_one_tracker = true;
 		optical_tracking_timeout = 100;
-		tracker_sleep_ms = 1;
+		thread_sleep_ms = 1;
 		use_bgr_to_hsv_lookup_table = true;
 		exclude_opposed_cameras = false;
 		min_valid_projection_area = 6;
@@ -69,7 +69,7 @@ public:
 	int controller_position_prediction_history;
 	bool ignore_pose_from_one_tracker;
 	int optical_tracking_timeout;
-	int tracker_sleep_ms;
+	int thread_sleep_ms;
 	bool use_bgr_to_hsv_lookup_table;
 	bool exclude_opposed_cameras;
 	float min_valid_projection_area;

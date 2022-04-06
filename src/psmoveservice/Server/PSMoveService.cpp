@@ -83,7 +83,7 @@ public:
 						m_lastSync = now;
                     }
 
-					std::this_thread::sleep_for(std::chrono::milliseconds(cfg.tracker_sleep_ms));
+					std::this_thread::sleep_for(std::chrono::milliseconds(cfg.thread_sleep_ms));
                 }
             }
             else

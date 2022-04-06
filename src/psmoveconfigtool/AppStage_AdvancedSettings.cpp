@@ -226,7 +226,7 @@ TrackerConfig::config2ptree()
 	pt.put("ignore_pose_from_one_tracker", ignore_pose_from_one_tracker);
 	pt.put("optical_tracking_timeout", optical_tracking_timeout);
 	pt.put("use_bgr_to_hsv_lookup_table", use_bgr_to_hsv_lookup_table);
-	pt.put("tracker_sleep_ms", tracker_sleep_ms);
+	pt.put("thread_sleep_ms", thread_sleep_ms);
 
 	pt.put("excluded_opposed_cameras", exclude_opposed_cameras);
 
@@ -258,7 +258,7 @@ TrackerConfig::ptree2config(const boost::property_tree::ptree &pt)
 	ignore_pose_from_one_tracker = pt.get<bool>("ignore_pose_from_one_tracker", ignore_pose_from_one_tracker);
 	optical_tracking_timeout = pt.get<int>("optical_tracking_timeout", optical_tracking_timeout);
 	use_bgr_to_hsv_lookup_table = pt.get<bool>("use_bgr_to_hsv_lookup_table", use_bgr_to_hsv_lookup_table);
-	tracker_sleep_ms = pt.get<int>("tracker_sleep_ms", tracker_sleep_ms);
+	thread_sleep_ms = pt.get<int>("thread_sleep_ms", thread_sleep_ms);
 
 	exclude_opposed_cameras = pt.get<bool>("excluded_opposed_cameras", exclude_opposed_cameras);
 
@@ -599,12 +599,12 @@ void AppStage_AdvancedSettings::renderUI()
 				}
 
 				{
-					ImGui::Text("Tracker sleep (ms):");
+					ImGui::Text("Processing thread sleep (ms):");
 					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 					ImGui::PushItemWidth(100.f);
-					if (ImGui::InputInt("##TrackerSleep", &cfg_tracker.tracker_sleep_ms))
+					if (ImGui::InputInt("##ThreadSleep", &cfg_tracker.thread_sleep_ms))
 					{
-						cfg_tracker.tracker_sleep_ms = static_cast<int>(std::fmax(0, std::fmin(99999, cfg_tracker.tracker_sleep_ms)));
+						cfg_tracker.thread_sleep_ms = static_cast<int>(std::fmax(0, std::fmin(99999, cfg_tracker.thread_sleep_ms)));
 					}
 					ImGui::PopItemWidth();
 
