@@ -272,7 +272,7 @@ class PSEYECaptureCAM_PS3EYE : public cv::IVideoCapture
 {
 public:
     PSEYECaptureCAM_PS3EYE(int _index)
-    : m_index(-1), m_width(-1), m_height(-1), m_widthStep(-1), m_frameAvailable(false),
+    : m_index(-1), m_width(-1), m_height(-1), m_widthStep(-1), m_frameAvailable(false), m_waitFrame(false),
     m_size(-1), m_MatBayer(0, 0, CV_8UC1)
     {
         //CoInitialize(NULL);
@@ -311,6 +311,8 @@ public:
             return (double)(eye->getSharpness())*256.0 / 64.0;
 		case CV_CAP_PROP_FRAMEAVAILABLE:
 			return (bool)m_frameAvailable;
+		case CV_CAP_PROP_WAITFRAME:
+			return (bool)m_waitFrame;
         }
         return 0;
     }
@@ -369,6 +371,8 @@ public:
             eye->setSharpness((int)round(value));
 		case CV_CAP_PROP_FRAMEAVAILABLE:
 			m_frameAvailable = (bool)value;
+		case CV_CAP_PROP_WAITFRAME:
+			m_waitFrame = (bool)value;
         }
         
         refreshDimensions();
@@ -381,10 +385,10 @@ public:
 		if (!eye->isStreaming())
 			return false;
 
-		if (m_frameAvailable)
+		if (!m_waitFrame && m_frameAvailable)
 			return true;
 
-		bool success = eye->getFrame(m_MatBayer.data);
+		bool success = eye->getFrame(m_MatBayer.data, m_waitFrame);
 		if (!success)
 			return false;
 
@@ -395,7 +399,7 @@ public:
 
     bool retrieveFrame(int outputType, cv::OutputArray outArray)
     {
-		if (!m_frameAvailable)
+		if (!m_waitFrame && !m_frameAvailable)
 			return false;
 
 		capFrame.copyTo(outArray);
@@ -477,7 +481,7 @@ protected:
     }
 
     int m_index, m_width, m_height, m_widthStep;
-	bool m_frameAvailable;
+	bool m_frameAvailable, m_waitFrame;
 
     size_t m_size;
     cv::Mat m_MatBayer;

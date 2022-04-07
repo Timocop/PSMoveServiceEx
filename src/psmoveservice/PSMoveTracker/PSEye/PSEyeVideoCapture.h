@@ -6,6 +6,7 @@
 enum
 {
 	CV_CAP_PROP_FRAMEAVAILABLE = -999,
+	CV_CAP_PROP_WAITFRAME,
 };
 
 /// Video capture class that prioritizes PS3 Eye devices.

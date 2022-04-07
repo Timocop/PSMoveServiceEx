@@ -85,6 +85,9 @@ int main(int, char**)
 			if (camera->get(CV_CAP_PROP_FPS) != frame_rate_init)
 				camera->set(CV_CAP_PROP_FPS, frame_rate_init);
 
+			// Make sure we wait for frames. This test app has no async logic.
+			camera->set(CV_CAP_PROP_WAITFRAME, true);
+
 			auto last_ticks = std::chrono::high_resolution_clock::now();
 			int last_frames = 0;
 
