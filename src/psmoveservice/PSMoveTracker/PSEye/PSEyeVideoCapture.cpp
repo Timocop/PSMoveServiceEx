@@ -272,7 +272,7 @@ class PSEYECaptureCAM_PS3EYE : public cv::IVideoCapture
 {
 public:
     PSEYECaptureCAM_PS3EYE(int _index)
-    : m_index(-1), m_width(-1), m_height(-1), m_widthStep(-1),
+    : m_index(-1), m_width(-1), m_height(-1), m_widthStep(-1), m_frameAvailable(false),
     m_size(-1), m_MatBayer(0, 0, CV_8UC1)
     {
         //CoInitialize(NULL);
@@ -309,6 +309,8 @@ public:
         case CV_CAP_PROP_SHARPNESS:
             // [0, 63] -> [0, 255]
             return (double)(eye->getSharpness())*256.0 / 64.0;
+		case CV_CAP_PROP_FRAMEAVAILABLE:
+			return (bool)m_frameAvailable;
         }
         return 0;
     }
@@ -365,6 +367,8 @@ public:
             // [0, 255] -> [0, 63] [0]
             val = (int)(value * 64.0 / 256.0);
             eye->setSharpness((int)round(value));
+		case CV_CAP_PROP_FRAMEAVAILABLE:
+			m_frameAvailable = (bool)value;
         }
         
         refreshDimensions();
@@ -374,14 +378,27 @@ public:
 
     bool grabFrame()
     {
-        return eye->isStreaming();
+		if (!eye->isStreaming())
+			return false;
+
+		if (m_frameAvailable)
+			return true;
+
+		bool success = eye->getFrame(m_MatBayer.data);
+		if (!success)
+			return false;
+
+		cv::cvtColor(m_MatBayer, capFrame, CV_BayerGB2BGR);
+		m_frameAvailable = true;
+		return true;
     }
 
     bool retrieveFrame(int outputType, cv::OutputArray outArray)
     {
-        eye->getFrame(m_MatBayer.data);
+		if (!m_frameAvailable)
+			return false;
 
-        cv::cvtColor(m_MatBayer, outArray, CV_BayerGB2BGR);
+		capFrame.copyTo(outArray);
         return true;
     }
 
@@ -410,11 +427,12 @@ public:
 
         return identifier;
     }
-
 protected:
     
     bool open(int _index)
     {
+		capFrame = cv::Mat(480, 640, CV_8UC3, CvScalar(0, 0, 0));
+
         // Enumerate libusb devices
         std::vector<ps3eye::PS3EYECam::PS3EYERef> devices = ps3eye::PS3EYECam::getDevices();
 		std::cout << "ps3eye::PS3EYECam::getDevices() found " << devices.size() << " devices." << std::endl;
@@ -459,8 +477,11 @@ protected:
     }
 
     int m_index, m_width, m_height, m_widthStep;
+	bool m_frameAvailable;
+
     size_t m_size;
     cv::Mat m_MatBayer;
+	cv::Mat capFrame;
     ps3eye::PS3EYECam::PS3EYERef eye;
 };
 
@@ -474,7 +495,7 @@ class PSEYECaptureCAM_VIRTUAL : public cv::IVideoCapture
 {
 public:
 	PSEYECaptureCAM_VIRTUAL(int _index) : 
-		m_index(-1),
+		m_index(-1), m_frameAvailable(false),
 		capturePipe(INVALID_HANDLE_VALUE)
 	{
 		//CoInitialize(NULL);
@@ -511,6 +532,8 @@ public:
 			return 0;
 		case CV_CAP_PROP_FORMAT:
 			return cv::CAP_MODE_RGB;
+		case CV_CAP_PROP_FRAMEAVAILABLE:
+			return (bool)m_frameAvailable;
 		}
 		return 0;
 	}
@@ -518,19 +541,17 @@ public:
 	// Currently there is no way to get/set properties on virtual trackers.
 	bool setProperty(int property_id, double value)
 	{
+		switch (property_id)
+		{
+		case CV_CAP_PROP_FRAMEAVAILABLE:
+			m_frameAvailable = (bool)value;
+		}
+
 		return false;
 	}
 
 	bool grabFrame()
 	{
-		const std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
-		const std::chrono::duration<double, std::milli> timeSinceLast = now - m_lastRequest;
-		if (timeSinceLast.count() < 2.f)
-		{
-			return true;
-		}
-
-		m_lastRequest = now;
 
 		if (capturePipe == INVALID_HANDLE_VALUE)
 		{
@@ -545,6 +566,7 @@ public:
 				2
 			);
 
+			m_frameAvailable = true;
 			return true;
 		}
 
@@ -577,6 +599,7 @@ public:
 				2
 			);
 
+			m_frameAvailable = true;
 			return true;
 		}
 
@@ -623,18 +646,26 @@ public:
 					2
 				);
 
+				m_frameAvailable = true;
 				return true;
 			}
 
 			return true;
 		}
 
+		if (m_frameAvailable)
+			return true;
+
+		memcpy((uchar*)capFrame.data, pipeBuffer, VRIT_BUFF_SIZE);
+
+		m_frameAvailable = true;
 		return true;
 	}
 
 	bool retrieveFrame(int outputType, cv::OutputArray outArray)
 	{
-		memcpy((uchar*)capFrame.data, pipeBuffer, VRIT_BUFF_SIZE);
+		if (!m_frameAvailable)
+			return false;
 
 		// ###Externet We need to flip the input image because PSEyes do so too.
 		// If we dont do this the Y axis will be flipped on pose calibration.
@@ -719,6 +750,7 @@ protected:
 	void refreshDimensions() {}
 
 	int m_index;
+	bool m_frameAvailable;
 
 	HANDLE capturePipe;
 	char pipeBuffer[VRIT_BUFF_SIZE];
@@ -806,6 +838,7 @@ bool PSEyeVideoCapture::open(int index)
 #ifdef WIN32
 		icap = cv::makePtr<PSEYECaptureCAM_VIRTUAL>(index);
 		m_indentifier = icap.dynamicCast<PSEYECaptureCAM_VIRTUAL>()->getUniqueIndentifier();
+		m_index = index;
 
 		return (!icap.empty());
 #else
@@ -905,6 +938,11 @@ std::string PSEyeVideoCapture::getUniqueIndentifier() const
     return m_indentifier;
 }
 
+int PSEyeVideoCapture::getIndex() const
+{
+	return m_index;
+}
+
 cv::Ptr<cv::IVideoCapture> PSEyeVideoCapture::pseyeVideoCapture_create(int index)
 {
     // https://github.com/Itseez/opencv/blob/09e6c82190b558e74e2e6a53df09844665443d6d/modules/videoio/src/cap.cpp#L432
@@ -940,6 +978,7 @@ cv::Ptr<cv::IVideoCapture> PSEyeVideoCapture::pseyeVideoCapture_create(int index
                 {
                     capture = cv::makePtr<PSEYECaptureCAM_CLMULTI>(index);
                     m_indentifier = capture.dynamicCast<PSEYECaptureCAM_CLMULTI>()->getUniqueIndentifier();
+					m_index = index;
                 }
                 break;
 
@@ -953,6 +992,7 @@ cv::Ptr<cv::IVideoCapture> PSEyeVideoCapture::pseyeVideoCapture_create(int index
 
                     m_indentifier = "opencv_";
                     m_indentifier.append(std::to_string(index));
+					m_index = index;
 
                     return capture;
                 }
@@ -963,6 +1003,7 @@ cv::Ptr<cv::IVideoCapture> PSEyeVideoCapture::pseyeVideoCapture_create(int index
                 {
                     capture = cv::makePtr<PSEYECaptureCAM_PS3EYE>(index);
                     m_indentifier = capture.dynamicCast<PSEYECaptureCAM_PS3EYE>()->getUniqueIndentifier();
+					m_index = index;
                 }
                 break;
 #endif

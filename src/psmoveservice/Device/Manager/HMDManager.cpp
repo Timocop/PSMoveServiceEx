@@ -91,7 +91,7 @@ HMDManager::updateStateAndPredict(TrackerManager* tracker_manager)
 
 		if (hmdView->getIsOpen())
 		{
-			if (TrackerManager::isTrackerSynced())
+			if (TrackerManager::trackersSynced())
 			{
 				hmdView->updateOpticalPoseEstimation(tracker_manager);
 			}

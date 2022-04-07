@@ -3,6 +3,11 @@
 
 #include <opencv2/videoio.hpp>
 
+enum
+{
+	CV_CAP_PROP_FRAMEAVAILABLE = -999,
+};
+
 /// Video capture class that prioritizes PS3 Eye devices.
 /**
 Device opening priority:
@@ -56,6 +61,8 @@ public:
 
     /// Use cv::VideoCapture::get() unless \ref eyeType == PSEYE_CLEYE_DRIVER
     double get(int propId) const override;
+
+	int getIndex() const;
 
     /// Get the unique identifier for the camera
     std::string getUniqueIndentifier() const;

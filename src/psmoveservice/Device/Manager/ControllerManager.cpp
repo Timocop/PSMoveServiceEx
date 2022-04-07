@@ -133,7 +133,7 @@ ControllerManager::updateStateAndPredict(TrackerManager* tracker_manager)
 			controllerView->getControllerDeviceType() != CommonDeviceState::PSNavi &&
             (controllerView->getIsBluetooth() || controllerView->getIsVirtualController()))
 		{
-			if (TrackerManager::isTrackerSynced())
+			if (TrackerManager::trackersSynced())
 			{
 				controllerView->updateOpticalPoseEstimation(tracker_manager);
 			}

@@ -178,7 +178,9 @@ TrackerManagerConfig::get_global_down_axis() const
 }
 
 //-- Tracker Manager -----
-bool TrackerManager::m_isTrackerSycned = false;
+bool TrackerManager::m_trackersSynced = true;
+bool TrackerManager::m_isTrackerFrameAvailable[TrackerManager::k_max_devices];
+bool TrackerManager::m_readyToReceive = false;
 
 TrackerManager::TrackerManager()
     : DeviceTypeManager(10000, 13)
@@ -214,6 +216,36 @@ TrackerManager::startup()
     }
 
     return bSuccess;
+}
+
+void TrackerManager::poll_devices()
+{
+	m_trackersSynced = false;
+	m_readyToReceive = true;
+	for (int i = 0; i < getMaxDevices(); i++)
+	{
+		const ServerTrackerViewPtr tracker = getTrackerViewPtr(i);
+		if (tracker->getIsOpen())
+		{
+			if (!m_isTrackerFrameAvailable[tracker->getDeviceID()])
+			{
+				m_readyToReceive = false;
+				break;
+			}
+		}
+	}
+
+	DeviceTypeManager::poll_devices();
+
+	if (m_readyToReceive)
+	{
+		for (int i = 0; i < getMaxDevices(); i++)
+		{
+			m_isTrackerFrameAvailable[i] = false;
+		}
+		m_readyToReceive = false;
+		m_trackersSynced = true;
+	}
 }
 
 void
@@ -432,37 +464,4 @@ TrackerManager::freeTrackingColorID(eCommonTrackingColorID color_id)
 {
     assert(std::find(m_available_color_ids.begin(), m_available_color_ids.end(), color_id) == m_available_color_ids.end());
     m_available_color_ids.push_back(color_id);
-}
-
-bool
-TrackerManager::trackersSynced()
-{
-	double lowestFps = -1.f;
-	for (int i = 0; i < getMaxDevices(); i++)
-	{
-		const ServerTrackerViewPtr tracker = getTrackerViewPtr(i);
-		if (tracker->getIsOpen())
-		{
-			const double fps = tracker->getFrameRate();
-
-			if (lowestFps < 0.f || lowestFps > fps)
-				lowestFps = fps;
-		}
-	}
-
-	const std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
-	const std::chrono::duration<double, std::milli> timeSinceLast = now - m_lastSync;
-
-	//###Externet $TODO Use real tracker fps instead not absolute fps?
-	// Removing 1 frame removes some weird frame buffer glitch. Unsure what causes this.
-	// Needs to be investigated.
-	if (timeSinceLast.count() < (1000.f / lowestFps - 1.f))
-	{
-		m_isTrackerSycned = false;
-		return false;
-	}
-
-	m_isTrackerSycned = true;
-	m_lastSync = now;
-	return true;
 }
