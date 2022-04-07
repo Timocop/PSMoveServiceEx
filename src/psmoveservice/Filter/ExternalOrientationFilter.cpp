@@ -254,13 +254,13 @@ Eigen::Vector3f ExternalOrientationFilter::getAngularAccelerationRadPerSecSqr() 
 void OrientationFilterExternal::update(const float delta_time, const PoseFilterPacket &packet)
 {
 #ifdef WIN32
-	if (packet.deviceId < 0)
+	if (packet.controllerDeviceId < 0)
 		return;
 
 	std::string pipeName = "\\\\.\\pipe\\PSMoveSerivceEx\\VirtPSmoveStream_";
 
 	char indexStr[20];
-	pipeName.append(itoa(packet.deviceId, indexStr, 10));
+	pipeName.append(itoa(packet.controllerDeviceId, indexStr, 10));
 
 	if (orientationPipe == INVALID_HANDLE_VALUE)
 	{
@@ -299,7 +299,7 @@ void OrientationFilterExternal::update(const float delta_time, const PoseFilterP
 
 	BOOL connected = ConnectNamedPipe(orientationPipe, NULL);
 	if (connected)
-		SERVER_LOG_INFO("OrientationFilterExternal::update") << "ConnectNamedPipe success, index " << packet.deviceId;
+		SERVER_LOG_INFO("OrientationFilterExternal::update") << "ConnectNamedPipe success, index " << packet.controllerDeviceId;
 
 	if (!connected)
 		connected = (GetLastError() == ERROR_PIPE_CONNECTED);
@@ -308,7 +308,7 @@ void OrientationFilterExternal::update(const float delta_time, const PoseFilterP
 	{
 		if (GetLastError() != ERROR_PIPE_LISTENING) {
 			if(showMessage)
-				SERVER_LOG_ERROR("OrientationFilterExternal::update") << "ConnectNamedPipe failed, index " << packet.deviceId << ", GLE=" << GetLastError() << ".";
+				SERVER_LOG_ERROR("OrientationFilterExternal::update") << "ConnectNamedPipe failed, index " << packet.controllerDeviceId << ", GLE=" << GetLastError() << ".";
 
 			showMessage = false;
 			DisconnectNamedPipe(orientationPipe);
@@ -327,7 +327,7 @@ void OrientationFilterExternal::update(const float delta_time, const PoseFilterP
 			case ERROR_BROKEN_PIPE:
 			{
 				if(showMessage)
-					SERVER_LOG_ERROR("OrientationFilterExternal::update") << "Client disconnected, index " << packet.deviceId << ".";
+					SERVER_LOG_ERROR("OrientationFilterExternal::update") << "Client disconnected, index " << packet.controllerDeviceId << ".";
 
 				showMessage = false;
 				break;
@@ -343,7 +343,7 @@ void OrientationFilterExternal::update(const float delta_time, const PoseFilterP
 			default:
 			{
 				if(showMessage)
-					SERVER_LOG_ERROR("OrientationFilterExternal::update") << "ReadFile failed, index " << packet.deviceId << ", GLE=" << GetLastError() << ".";
+					SERVER_LOG_ERROR("OrientationFilterExternal::update") << "ReadFile failed, index " << packet.controllerDeviceId << ", GLE=" << GetLastError() << ".";
 
 				showMessage = false;
 				break;

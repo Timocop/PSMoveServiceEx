@@ -26,10 +26,12 @@ static IPoseFilter *pose_filter_factory(
 	const std::string &position_filter_type, const std::string &orientation_filter_type,
 	const PoseFilterConstants &constants);
 static void update_filters_for_morpheus_hmd(
+	const ServerHMDView *hmd,
 	const MorpheusHMD *morpheusHMD, const MorpheusHMDState *morpheusHMDState,
 	const float delta_time,
 	const HMDOpticalPoseEstimation *poseEstimation, const PoseFilterSpace *poseFilterSpace, IPoseFilter *poseFilter);
 static void update_filters_for_virtual_hmd(
+	const ServerHMDView *hmd,
 	const VirtualHMD *virtualHMD, const VirtualHMDState *virtualHMDState,
 	const float delta_time,
 	const HMDOpticalPoseEstimation *poseEstimation, const PoseFilterSpace *poseFilterSpace, IPoseFilter *poseFilter);
@@ -496,6 +498,7 @@ void ServerHMDView::updateStateAndPredict()
 
 			    // Only update the position filter when tracking is enabled
 			    update_filters_for_morpheus_hmd(
+					this,
 				    morpheusHMD, morpheusHMDState,
 				    per_state_time_delta_seconds,
 				    m_multicam_pose_estimation,
@@ -506,9 +509,10 @@ void ServerHMDView::updateStateAndPredict()
 		    {
 			    const VirtualHMD *virtualHMD = this->castCheckedConst<VirtualHMD>();
 			    const VirtualHMDState *virtualHMDState = static_cast<const VirtualHMDState *>(hmdState);
-
+				
 			    // Only update the position filter when tracking is enabled
 			    update_filters_for_virtual_hmd(
+					this,
 				    virtualHMD, virtualHMDState,
 				    per_state_time_delta_seconds,
 				    m_multicam_pose_estimation,
@@ -966,6 +970,7 @@ pose_filter_factory(
 
 static void
 update_filters_for_morpheus_hmd(
+	const ServerHMDView *hmd,
     const MorpheusHMD *morpheusHMD,
     const MorpheusHMDState *morpheusHMDState,
 	const float delta_time,
@@ -1030,6 +1035,10 @@ update_filters_for_morpheus_hmd(
 
 			{
 				PoseFilterPacket filterPacket;
+				filterPacket.clear();
+
+				filterPacket.hmdDeviceId = hmd->getDeviceID();
+				filterPacket.isSynced = TrackerManager::trackersSynced();
 
 				// Create a filter input packet from the sensor data 
 				// and the filter's previous orientation and position
@@ -1046,6 +1055,7 @@ update_filters_for_morpheus_hmd(
 
 static void
 update_filters_for_virtual_hmd(
+	const ServerHMDView *hmd,
     const VirtualHMD *virtualHMD,
     const VirtualHMDState *virtualHMDState,
 	const float delta_time,
@@ -1084,6 +1094,10 @@ update_filters_for_virtual_hmd(
 
 		{
 			PoseFilterPacket filterPacket;
+			filterPacket.clear();
+
+			filterPacket.hmdDeviceId = hmd->getDeviceID();
+			filterPacket.isSynced = TrackerManager::trackersSynced();
 
 			// Create a filter input packet from the sensor data 
 			// and the filter's previous orientation and position

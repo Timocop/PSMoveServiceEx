@@ -323,13 +323,13 @@ void PositionFilterExternalAttachment::update(
 		return;
 
 #ifdef WIN32
-	if (packet.deviceId < 0)
+	if (packet.controllerDeviceId < 0)
 	{
 		return;
 	}
 
 	ControllerManager *controllerManager = DeviceManager::getInstance()->m_controller_manager;
-	ServerControllerViewPtr current_controller_view = controllerManager->getControllerViewPtr(packet.deviceId);
+	ServerControllerViewPtr current_controller_view = controllerManager->getControllerViewPtr(packet.controllerDeviceId);
 	if (!current_controller_view ||
 		!current_controller_view->getIsOpen())
 	{
@@ -338,7 +338,7 @@ void PositionFilterExternalAttachment::update(
 	std::string pipeName = "\\\\.\\pipe\\PSMoveSerivceEx\\AttachPSmoveStream_";
 
 	char indexStr[20];
-	pipeName.append(itoa(packet.deviceId, indexStr, 10));
+	pipeName.append(itoa(packet.controllerDeviceId, indexStr, 10));
 
 	if (attachmentPipe == INVALID_HANDLE_VALUE)
 	{
@@ -377,7 +377,7 @@ void PositionFilterExternalAttachment::update(
 
 	BOOL connected = ConnectNamedPipe(attachmentPipe, NULL);
 	if (connected)
-		SERVER_LOG_INFO("OrientationFilterExternal::update") << "ConnectNamedPipe success, index " << packet.deviceId;
+		SERVER_LOG_INFO("OrientationFilterExternal::update") << "ConnectNamedPipe success, index " << packet.controllerDeviceId;
 
 	if (!connected)
 		connected = (GetLastError() == ERROR_PIPE_CONNECTED);
@@ -386,7 +386,7 @@ void PositionFilterExternalAttachment::update(
 	{
 		if (GetLastError() != ERROR_PIPE_LISTENING) {
 			if (showMessage)
-				SERVER_LOG_ERROR("OrientationFilterExternal::update") << "ConnectNamedPipe failed, index " << packet.deviceId << ", GLE=" << GetLastError() << ".";
+				SERVER_LOG_ERROR("OrientationFilterExternal::update") << "ConnectNamedPipe failed, index " << packet.controllerDeviceId << ", GLE=" << GetLastError() << ".";
 
 			showMessage = false;
 			DisconnectNamedPipe(attachmentPipe);
@@ -405,7 +405,7 @@ void PositionFilterExternalAttachment::update(
 		case ERROR_BROKEN_PIPE:
 		{
 			if (showMessage)
-				SERVER_LOG_ERROR("OrientationFilterExternal::update") << "Client disconnected, index " << packet.deviceId << ".";
+				SERVER_LOG_ERROR("OrientationFilterExternal::update") << "Client disconnected, index " << packet.controllerDeviceId << ".";
 
 			showMessage = false;
 			break;
@@ -421,7 +421,7 @@ void PositionFilterExternalAttachment::update(
 		default:
 		{
 			if (showMessage)
-				SERVER_LOG_ERROR("OrientationFilterExternal::update") << "ReadFile failed, index " << packet.deviceId << ", GLE=" << GetLastError() << ".";
+				SERVER_LOG_ERROR("OrientationFilterExternal::update") << "ReadFile failed, index " << packet.controllerDeviceId << ", GLE=" << GetLastError() << ".";
 
 			showMessage = false;
 			break;
@@ -453,7 +453,7 @@ void PositionFilterExternalAttachment::update(
 	}
 
 	// Disallow self-parenting.
-	if (targetId == packet.deviceId)
+	if (targetId == packet.controllerDeviceId)
 	{
 		return;
 	}
