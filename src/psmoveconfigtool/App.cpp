@@ -105,6 +105,7 @@ int App::exec(int argc, char** argv)
 			setAppStage(AppStage_MainMenu::APP_STAGE_NAME);
 		}
 
+		std::chrono::time_point<std::chrono::high_resolution_clock> m_lastSync;
 
         while (!m_bShutdownRequested) 
         {
@@ -123,7 +124,17 @@ int App::exec(int argc, char** argv)
             }
 
             update();
-            render();
+
+			const std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+			const std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastSync;
+
+			/// 60 fps lock
+			if (timeSinceLast.count() > (1000.f / 60.f))
+			{
+				render();
+
+				m_lastSync = now;
+			}
         }
     }
     else
