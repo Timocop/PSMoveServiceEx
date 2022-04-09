@@ -319,11 +319,14 @@ public:
 
     bool setProperty(int property_id, double value)
     {
-        int val;
         if (!eye)
         {
             return false;
         }
+
+		int val;
+		bool refresh = true;
+
         switch (property_id)
         {
         case CV_CAP_PROP_BRIGHTNESS:
@@ -369,13 +372,21 @@ public:
             // [0, 255] -> [0, 63] [0]
             val = (int)(value * 64.0 / 256.0);
             eye->setSharpness((int)round(value));
+			break;
 		case CV_CAP_PROP_FRAMEAVAILABLE:
 			m_frameAvailable = (bool)value;
+			refresh = false;
+			break;
 		case CV_CAP_PROP_WAITFRAME:
 			m_waitFrame = (bool)value;
+			refresh = false;
+			break;
         }
         
-        refreshDimensions();
+		if (refresh)
+		{
+			refreshDimensions();
+		}
         
         return true;
     }

@@ -210,9 +210,6 @@ private:
     /// Called in the application loop.
     void update()
     {
-		/** Check if trackers are synced and ready for polling frames and processing */
-		m_device_manager.m_tracker_manager->trackersSynced();
-		
         /** Update an async requests still waiting to complete */
         m_request_handler.update();
 
