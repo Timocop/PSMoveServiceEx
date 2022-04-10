@@ -65,13 +65,6 @@ public:
     {
 		BOOST_APPLICATION_FEATURE_SELECT
 
-#if defined(WIN32)
-		//###Externet Change the minimum resolution for periodic timers on Windows to 1ms.
-		// On some windows systems the default minimum resolution is ~15ms which can have undesiered effects for tracking.
-		// This is needed for Windows 10 2004 and prior versions since any app can change the minimum resolution globaly.
-		timeBeginPeriod(1);
-#endif
-
         // Attempt to start and run the service
         try 
         {
@@ -84,6 +77,13 @@ public:
 
                 while (m_status->state() != boost::application::status::stoped)
                 {
+#if defined(WIN32)
+					//###Externet Change the minimum resolution for periodic timers on Windows to 1ms.
+					// On some windows systems the default minimum resolution is ~15ms which can have undesiered effects for tracking.
+					// This is needed for Windows 10 2004 and prior versions since any app can change the minimum resolution globaly.
+					timeBeginPeriod(1);
+#endif
+
 					//const std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
 					//const std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastSync;
 					//m_lastSync = now;
@@ -97,6 +97,9 @@ public:
                     }
 
 					std::this_thread::sleep_for(std::chrono::milliseconds(cfg.thread_sleep_ms));
+#if defined(WIN32)
+					timeEndPeriod(1);
+#endif
                 }
             }
             else
