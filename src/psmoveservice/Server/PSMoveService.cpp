@@ -21,6 +21,12 @@
 #include <thread>
 #include <signal.h>
 
+
+#if defined(WIN32)
+#include <Windows.h>
+#include <mmsystem.h>
+#endif
+
 // provide setup example for windows service   
 #if defined(BOOST_WINDOWS_API)      
 #include "setup/windows/setup/service_setup.hpp"
@@ -57,7 +63,14 @@ public:
     /// Entry point into boost::application
     int operator()(boost::application::context& context)
     {
-        BOOST_APPLICATION_FEATURE_SELECT
+		BOOST_APPLICATION_FEATURE_SELECT
+
+#if defined(WIN32)
+		//###Externet Change the minimum resolution for periodic timers on Windows to 1ms.
+		// On some windows systems the default minimum resolution is ~15ms which can have undesiered effects for tracking.
+		// This is needed for Windows 10 2004 and prior versions since any app can change the minimum resolution globaly.
+		timeBeginPeriod(1);
+#endif
 
         // Attempt to start and run the service
         try 
@@ -67,20 +80,20 @@ public:
                 m_status = context.find<boost::application::status>();
 
 				const TrackerManagerConfig &cfg = DeviceManager::getInstance()->m_tracker_manager->getConfig();
-				std::chrono::time_point<std::chrono::high_resolution_clock> m_lastSync;
+				//std::chrono::time_point<std::chrono::high_resolution_clock> m_lastSync;
 
                 while (m_status->state() != boost::application::status::stoped)
                 {
+					//const std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+					//const std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastSync;
+					//m_lastSync = now;
+
                     if (m_status->state() != boost::application::status::paused)
                     {
-						const std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
-						const std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastSync;
-
                         update();
 
-						//printf("Thread FPS: %f\n", 1000.f / timeSinceLast.count());
+						//printf("Thread FPS: %f\nSleep MS: %d\n", 1000.f / timeSinceLast.count(), cfg.thread_sleep_ms);
 
-						m_lastSync = now;
                     }
 
 					std::this_thread::sleep_for(std::chrono::milliseconds(cfg.thread_sleep_ms));
@@ -108,7 +121,7 @@ public:
 
         return 0;
     }
-    
+
     bool stop(boost::application::context& context)
     {
         if (m_status->state() != boost::application::status::stoped)
