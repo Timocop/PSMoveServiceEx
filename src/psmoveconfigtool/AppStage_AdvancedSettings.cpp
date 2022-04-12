@@ -333,11 +333,11 @@ DeviceConfig::config2ptree()
 	}
 
 	pt.put("controller_reconnect_interval", controller_reconnect_interval);
-	pt.put("controller_poll_interval", controller_poll_interval);
+	//pt.put("controller_poll_interval", controller_poll_interval);
 	pt.put("tracker_reconnect_interval", tracker_reconnect_interval);
-	pt.put("tracker_poll_interval", tracker_poll_interval);
+	//pt.put("tracker_poll_interval", tracker_poll_interval);
 	pt.put("hmd_reconnect_interval", hmd_reconnect_interval);
-	pt.put("hmd_poll_interval", hmd_poll_interval);
+	//pt.put("hmd_poll_interval", hmd_poll_interval);
 	pt.put("gamepad_api_enabled", gamepad_api_enabled);
 	pt.put("platform_api_enabled", platform_api_enabled);
 
@@ -350,11 +350,11 @@ DeviceConfig::ptree2config(const boost::property_tree::ptree &pt)
 	map_flatten(pt, "");
 
 	controller_reconnect_interval = pt.get<int>("controller_reconnect_interval", controller_reconnect_interval);
-	controller_poll_interval = pt.get<int>("controller_poll_interval", controller_poll_interval);
+	//controller_poll_interval = pt.get<int>("controller_poll_interval", controller_poll_interval);
 	tracker_reconnect_interval = pt.get<int>("tracker_reconnect_interval", tracker_reconnect_interval);
-	tracker_poll_interval = pt.get<int>("tracker_poll_interval", tracker_poll_interval);
+	//tracker_poll_interval = pt.get<int>("tracker_poll_interval", tracker_poll_interval);
 	hmd_reconnect_interval = pt.get<int>("hmd_reconnect_interval", hmd_reconnect_interval);
-	hmd_poll_interval = pt.get<int>("hmd_poll_interval", hmd_poll_interval);
+	//hmd_poll_interval = pt.get<int>("hmd_poll_interval", hmd_poll_interval);
 	gamepad_api_enabled = pt.get<bool>("gamepad_api_enabled", gamepad_api_enabled);
 	platform_api_enabled = pt.get<bool>("platform_api_enabled", platform_api_enabled);
 }
@@ -880,7 +880,7 @@ void AppStage_AdvancedSettings::renderUI()
 						);
 				}
 
-				{
+				/*{
 					ImGui::Text("Controller poll interval (ms):");
 					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 					ImGui::PushItemWidth(100.f);
@@ -894,7 +894,7 @@ void AppStage_AdvancedSettings::renderUI()
 						ImGui::SetTooltip(
 							"(The default value is 2)"
 						);
-				}
+				}*/
 
 				{
 					ImGui::Text("Tracker reconnect interval (ms):");
@@ -912,7 +912,7 @@ void AppStage_AdvancedSettings::renderUI()
 						);
 				}
 
-				{
+				/*{
 					ImGui::Text("Tracker poll interval (ms):");
 					ImGui::SameLine();
 
@@ -941,7 +941,7 @@ void AppStage_AdvancedSettings::renderUI()
 						ImGui::SetTooltip(
 							"(The default value is 13)"
 						);
-				}
+				}*/
 
 				{
 					ImGui::Text("HMD reconnect interval (ms):");
@@ -959,7 +959,7 @@ void AppStage_AdvancedSettings::renderUI()
 						);
 				}
 
-				{
+				/*{
 					ImGui::Text("HMD poll interval (ms):");
 					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 					ImGui::PushItemWidth(100.f);
@@ -973,7 +973,7 @@ void AppStage_AdvancedSettings::renderUI()
 						ImGui::SetTooltip(
 							"(The default value is 2)"
 						);
-				}
+				}*/
 
 				{
 					ImGui::Text("Enable gamepad API:");
