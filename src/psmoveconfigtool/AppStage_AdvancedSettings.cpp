@@ -335,6 +335,7 @@ DeviceConfig::config2ptree()
 	pt.put("controller_reconnect_interval", controller_reconnect_interval);
 	pt.put("controller_poll_interval", controller_poll_interval);
 	pt.put("tracker_reconnect_interval", tracker_reconnect_interval);
+	pt.put("tracker_poll_interval", tracker_poll_interval);
 	pt.put("hmd_reconnect_interval", hmd_reconnect_interval);
 	pt.put("hmd_poll_interval", hmd_poll_interval);
 	pt.put("gamepad_api_enabled", gamepad_api_enabled);
@@ -351,6 +352,7 @@ DeviceConfig::ptree2config(const boost::property_tree::ptree &pt)
 	controller_reconnect_interval = pt.get<int>("controller_reconnect_interval", controller_reconnect_interval);
 	controller_poll_interval = pt.get<int>("controller_poll_interval", controller_poll_interval);
 	tracker_reconnect_interval = pt.get<int>("tracker_reconnect_interval", tracker_reconnect_interval);
+	tracker_poll_interval = pt.get<int>("tracker_poll_interval", tracker_poll_interval);
 	hmd_reconnect_interval = pt.get<int>("hmd_reconnect_interval", hmd_reconnect_interval);
 	hmd_poll_interval = pt.get<int>("hmd_poll_interval", hmd_poll_interval);
 	gamepad_api_enabled = pt.get<bool>("gamepad_api_enabled", gamepad_api_enabled);
@@ -907,6 +909,37 @@ void AppStage_AdvancedSettings::renderUI()
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip(
 							"(The default value is 10000)"
+						);
+				}
+
+				{
+					ImGui::Text("Tracker poll interval (ms):");
+					ImGui::SameLine();
+
+					if (ImGui::Button("Max. 75 Hz"))
+					{
+						cfg_device.tracker_poll_interval = 13;
+					}
+
+					ImGui::SameLine();
+
+					if (ImGui::Button("Max. 187 Hz"))
+					{
+						cfg_device.tracker_poll_interval = 5;
+					}
+
+					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+					ImGui::PushItemWidth(100.f);
+
+					if (ImGui::InputInt("##TrackerPollInterval", &cfg_device.tracker_poll_interval))
+					{
+						cfg_device.tracker_poll_interval = static_cast<int>(std::fmax(0, std::fmin(999999, cfg_device.tracker_poll_interval)));
+					}
+					ImGui::PopItemWidth();
+
+					if (ImGui::IsItemHovered())
+						ImGui::SetTooltip(
+							"(The default value is 13)"
 						);
 				}
 
