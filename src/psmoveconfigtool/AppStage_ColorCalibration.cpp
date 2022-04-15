@@ -1580,12 +1580,16 @@ void AppStage_ColorCalibration::renderUI()
 					case PSMTrackingColorType::PSMTrackingColorType_Custom8:
 					case PSMTrackingColorType::PSMTrackingColorType_Custom9:
 					{
-						ImGui::ColorButton(colorBlue, true);
-						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
-						ImGui::SameLine();
-						ImGui::TextWrapped(
-							"Custom preset color set. Device LED is has been turned off."
-						);
+						if (m_masterControllerView != nullptr && m_masterControllerView->ControllerType == PSMController_Move)
+						{
+							ImGui::ColorButton(colorBlue, true);
+							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::SameLine();
+							ImGui::TextWrapped(
+								"Custom preset color set. PSmove bulb has been turned off."
+							);
+						}
+
 						break;
 					}
 					}

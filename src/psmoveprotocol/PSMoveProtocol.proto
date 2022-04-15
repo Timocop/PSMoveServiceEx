@@ -91,7 +91,17 @@ enum TrackingColorType {
     Red = 3;
     Green = 4;
     Blue = 5;
-    MAX_PSMOVE_COLOR_PRESETS = 6;
+	Custom0 = 6;
+	Custom1 = 7;
+	Custom2 = 8;
+	Custom3 = 9;
+	Custom4 = 10;
+	Custom5 = 11;
+	Custom6 = 12;
+	Custom7 = 13;
+	Custom8 = 14;
+	Custom9 = 15;
+    MAX_PSMOVE_COLOR_PRESETS = 16;
 };
 
 message TrackingColorPreset {
