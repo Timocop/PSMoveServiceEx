@@ -8,7 +8,7 @@
 #define MAX_INPUT_DATA_FRAME_MESSAGE_SIZE 64
 
 // See ControllerManager.h in PSMoveService
-#define PSMOVESERVICE_MAX_CONTROLLER_COUNT  6
+#define PSMOVESERVICE_MAX_CONTROLLER_COUNT  10
 
 // See TrackerManager.h in PSMoveService
 #define PSMOVESERVICE_MAX_TRACKER_COUNT  8
