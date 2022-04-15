@@ -790,7 +790,9 @@ void AppStage_ColorCalibration::renderUI()
 				{
 					if (is_tracker_virtual())
 					{
+						ImGui::PushTextWrapPos();
 						ImGui::TextDisabled("Virtual Trackers do not have any properties.");
+						ImGui::PopTextWrapPos();
 					}
 					else
 					{
