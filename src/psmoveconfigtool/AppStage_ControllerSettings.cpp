@@ -672,7 +672,7 @@ void AppStage_ControllerSettings::renderUI()
 									ImGui::PushTextWrapPos();
 									ImGui::TextDisabled(
 										"This positional filter will overwrite the optical tracking behavior.\n"
-										"It's recommended to turn of 'Enable optical tracking' when using this positional filter."
+										"It's recommended to turn off 'Enable optical tracking' when using this positional filter."
 									);
 									ImGui::PopTextWrapPos();
 									ImGui::Spacing();
