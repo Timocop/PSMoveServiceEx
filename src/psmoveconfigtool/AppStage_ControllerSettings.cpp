@@ -405,6 +405,11 @@ void AppStage_ControllerSettings::renderUI()
                     {
                         int newTrackingColorType = controllerInfo.TrackingColorType;
 
+						if (ImGui::Checkbox("Enable optical tracking", &controllerInfo.OpticalTracking))
+						{
+							request_set_controller_opticaltracking(controllerInfo.ControllerID, controllerInfo.OpticalTracking);
+						}
+
                         if (ImGui::Combo("Tracking Color", &newTrackingColorType, "Magenta\0Cyan\0Yellow\0Red\0Green\0Blue\0Custom0\0Custom1\0Custom2\0Custom3\0Custom4\0Custom5\0Custom6\0Custom7\0Custom8\0Custom9\0\0"))
                         {
                             controllerInfo.TrackingColorType = static_cast<PSMTrackingColorType>(newTrackingColorType);
@@ -960,17 +965,35 @@ void AppStage_ControllerSettings::request_set_gyroscope_gain_setting(
 }
 
 void AppStage_ControllerSettings::request_set_controller_prediction(
-    const int controller_id,
-    const float prediction_time)
+	const int controller_id,
+	const float prediction_time)
 {
-    RequestPtr request(new PSMoveProtocol::Request());
-    request->set_type(PSMoveProtocol::Request_RequestType_SET_CONTROLLER_PREDICTION_TIME);
+	RequestPtr request(new PSMoveProtocol::Request());
+	request->set_type(PSMoveProtocol::Request_RequestType_SET_CONTROLLER_PREDICTION_TIME);
 
-    PSMoveProtocol::Request_RequestSetControllerPredictionTime *calibration =
-        request->mutable_request_set_controller_prediction_time();
+	PSMoveProtocol::Request_RequestSetControllerPredictionTime *calibration =
+		request->mutable_request_set_controller_prediction_time();
 
-    calibration->set_controller_id(controller_id);
-    calibration->set_prediction_time(prediction_time); // keep existing drift
+	calibration->set_controller_id(controller_id);
+	calibration->set_prediction_time(prediction_time); // keep existing drift
+
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_EatResponse(request_id);
+}
+
+void AppStage_ControllerSettings::request_set_controller_opticaltracking(
+	const int controller_id,
+	const bool enabled)
+{
+	RequestPtr request(new PSMoveProtocol::Request());
+	request->set_type(PSMoveProtocol::Request_RequestType_SET_CONTROLLER_OPTICAL_TRACKING);
+
+	PSMoveProtocol::Request_RequestSetControllerOpticalTracking *calibration =
+		request->mutable_request_set_controller_optical_tracking();
+
+	calibration->set_controller_id(controller_id);
+	calibration->set_enabled(enabled);
 
 	PSMRequestID request_id;
 	PSM_SendOpaqueRequest(&request, &request_id);
@@ -1075,10 +1098,10 @@ void AppStage_ControllerSettings::handle_controller_list_response(
                 ControllerInfo.OrientationFilterName= ControllerResponse.orientation_filter();
                 ControllerInfo.PositionFilterName = ControllerResponse.position_filter();
                 ControllerInfo.GyroGainSetting = ControllerResponse.gyro_gain_setting();
-                ControllerInfo.PredictionTime = ControllerResponse.prediction_time();
+				ControllerInfo.PredictionTime = ControllerResponse.prediction_time();
                 ControllerInfo.GamepadIndex = ControllerResponse.gamepad_index();
-				ControllerInfo.ControllerHand = 
-					static_cast<PSMControllerHand>(ControllerResponse.controller_hand());
+				ControllerInfo.ControllerHand = static_cast<PSMControllerHand>(ControllerResponse.controller_hand());
+				ControllerInfo.OpticalTracking = ControllerResponse.opticaltracking();
 
                 if (ControllerInfo.ControllerType == PSMController_Move)
                 {

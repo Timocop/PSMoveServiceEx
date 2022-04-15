@@ -159,7 +159,7 @@ public:
     bool setTrackingColorID(eCommonTrackingColorID colorID);
 
     // Get the tracking is enabled on this controller
-    inline bool getIsTrackingEnabled() const { return m_tracking_enabled && m_multicam_pose_estimation != nullptr && getControllerOpticalTrackingEnabled(); }
+	inline bool getIsTrackingEnabled() const { return m_tracking_enabled && m_multicam_pose_estimation != nullptr; }
 
     // Increment the position tracking listener count
     // Starts position tracking this controller if the count was zero

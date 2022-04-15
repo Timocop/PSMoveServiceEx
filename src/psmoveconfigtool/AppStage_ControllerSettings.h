@@ -38,6 +38,7 @@ public:
 		std::string GyroGainSetting;
 		float PredictionTime;
         int GamepadIndex;
+		bool OpticalTracking;
 
 		static bool ParentControllerComboItemGetter(void* userdata, int index, const char** out_string)
 		{
@@ -105,6 +106,7 @@ protected:
 	void request_set_position_filter(const int controller_id, const std::string &filter_name);
 	void request_set_gyroscope_gain_setting(const int controller_id, const std::string& gain_setting);
 	void request_set_controller_prediction(const int controller_id, float prediction_time);
+	void request_set_controller_opticaltracking(const int controller_id, bool enabled);
     void request_set_controller_gamepad_index(const int controller_id, const int gamepad_index);
 	void request_set_controller_hand(const int controller_id, const PSMControllerHand controller_hand);
 

@@ -380,6 +380,13 @@ public:
                 handle_request__get_service_version(context, response);
                 break;
 
+			// PSMoveServiceEx
+
+			case PSMoveProtocol::Request_RequestType_SET_CONTROLLER_OPTICAL_TRACKING:
+				response = new PSMoveProtocol::Response;
+				handle_request__set_controller_optical_tracking(context, response);
+				break;
+
             default:
                 assert(0 && "Whoops, bad request!");
         }
@@ -654,6 +661,7 @@ protected:
 				std::string controller_hand= "";
 
                 float prediction_time = 0.f;
+				bool enable_optical_tracking = true;
 
                 int gamepad_index= -1;
 
@@ -668,7 +676,8 @@ protected:
                         position_filter = config->position_filter_type;
                         firmware_version = config->firmware_version;
                         firmware_revision = config->firmware_revision;
-                        prediction_time = config->prediction_time;
+						prediction_time = config->prediction_time;
+						enable_optical_tracking = config->enable_optical_tracking;
 						controller_hand= config->hand;
                         has_magnetometer = controller->getSupportsMagnetometer();
 
@@ -735,6 +744,7 @@ protected:
 
                         position_filter = config->position_filter_type;
                         prediction_time = config->prediction_time;
+						enable_optical_tracking = config->enable_optical_tracking;
 
                         controller_info->set_controller_type(PSMoveProtocol::VIRTUALCONTROLLER);
                         gamepad_index= config->gamepad_index;
@@ -764,6 +774,7 @@ protected:
                 controller_info->set_gyro_gain_setting(gyro_gain_setting);
                 controller_info->set_prediction_time(prediction_time);
                 controller_info->set_gamepad_index(gamepad_index);
+				controller_info->set_opticaltracking(enable_optical_tracking);
 
 				if (controller_hand == "Left")
 					controller_info->set_controller_hand(PSMoveProtocol::HAND_LEFT);
@@ -1538,69 +1549,119 @@ protected:
         }
     }
 
-    void handle_request__set_controller_prediction_time(
-        const RequestContext &context,
-        PSMoveProtocol::Response *response)
-    {
-        const int controller_id = context.request->request_set_controller_prediction_time().controller_id();
+	void handle_request__set_controller_prediction_time(
+		const RequestContext &context,
+		PSMoveProtocol::Response *response)
+	{
+		const int controller_id = context.request->request_set_controller_prediction_time().controller_id();
 
-        ServerControllerViewPtr ControllerView = m_device_manager.getControllerViewPtr(controller_id);
-        const PSMoveProtocol::Request_RequestSetControllerPredictionTime &request =
-            context.request->request_set_controller_prediction_time();
+		ServerControllerViewPtr ControllerView = m_device_manager.getControllerViewPtr(controller_id);
+		const PSMoveProtocol::Request_RequestSetControllerPredictionTime &request =
+			context.request->request_set_controller_prediction_time();
 
-        if (ControllerView && ControllerView->getIsOpen())
-        {
-            if (ControllerView->getControllerDeviceType() == CommonDeviceState::PSDualShock4)
-            {
-                PSDualShock4Controller *controller = ControllerView->castChecked<PSDualShock4Controller>();
-                PSDualShock4ControllerConfig config = *controller->getConfig();
+		if (ControllerView && ControllerView->getIsOpen())
+		{
+			if (ControllerView->getControllerDeviceType() == CommonDeviceState::PSDualShock4)
+			{
+				PSDualShock4Controller *controller = ControllerView->castChecked<PSDualShock4Controller>();
+				PSDualShock4ControllerConfig config = *controller->getConfig();
 
-                if (config.prediction_time != request.prediction_time())
-                {
-                    config.prediction_time = request.prediction_time();
-
-					controller->setConfig(&config);
-                }
-
-                response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
-            }
-            else if (ControllerView->getControllerDeviceType() == CommonDeviceState::PSMove)
-            {
-                PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
-                PSMoveControllerConfig config = *controller->getConfig();
-
-                if (config.prediction_time != request.prediction_time())
-                {
-                    config.prediction_time = request.prediction_time();
+				if (config.prediction_time != request.prediction_time())
+				{
+					config.prediction_time = request.prediction_time();
 
 					controller->setConfig(&config);
-                }
+				}
 
-                response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
-            }
-            else if (ControllerView->getControllerDeviceType() == CommonDeviceState::VirtualController)
-            {
-                VirtualController *controller = ControllerView->castChecked<VirtualController>();
-                VirtualControllerConfig *config = controller->getConfigMutable();
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+			}
+			else if (ControllerView->getControllerDeviceType() == CommonDeviceState::PSMove)
+			{
+				PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
+				PSMoveControllerConfig config = *controller->getConfig();
 
-                if (config->prediction_time != request.prediction_time())
-                {
-                    config->prediction_time = request.prediction_time();
-                    config->save();
-                }
+				if (config.prediction_time != request.prediction_time())
+				{
+					config.prediction_time = request.prediction_time();
 
-                response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
-            }
-            else
-            {
-                response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
-            }
-        }
-        else
-        {
-            response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
-        }
-    }
+					controller->setConfig(&config);
+				}
+
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+			}
+			else if (ControllerView->getControllerDeviceType() == CommonDeviceState::VirtualController)
+			{
+				VirtualController *controller = ControllerView->castChecked<VirtualController>();
+				VirtualControllerConfig *config = controller->getConfigMutable();
+
+				if (config->prediction_time != request.prediction_time())
+				{
+					config->prediction_time = request.prediction_time();
+					config->save();
+				}
+
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+			}
+			else
+			{
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+			}
+		}
+		else
+		{
+			response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+		}
+	}
+
+	void handle_request__set_controller_optical_tracking(
+		const RequestContext &context,
+		PSMoveProtocol::Response *response)
+	{
+		const int controller_id = context.request->request_set_controller_optical_tracking().controller_id();
+
+		ServerControllerViewPtr ControllerView = m_device_manager.getControllerViewPtr(controller_id);
+		const PSMoveProtocol::Request_RequestSetControllerOpticalTracking &request =
+			context.request->request_set_controller_optical_tracking();
+
+		if (ControllerView && ControllerView->getIsOpen())
+		{
+			if (ControllerView->getControllerDeviceType() == CommonDeviceState::PSMove)
+			{
+				PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
+				PSMoveControllerConfig config = *controller->getConfig();
+
+				if (config.enable_optical_tracking != request.enabled())
+				{
+					config.enable_optical_tracking = request.enabled();
+
+					controller->setConfig(&config);
+				}
+
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+			}
+			else if (ControllerView->getControllerDeviceType() == CommonDeviceState::VirtualController)
+			{
+				VirtualController *controller = ControllerView->castChecked<VirtualController>();
+				VirtualControllerConfig *config = controller->getConfigMutable();
+				
+				if (config->enable_optical_tracking != request.enabled())
+				{
+					config->enable_optical_tracking = request.enabled();
+					config->save();
+				}
+
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+			}
+			else
+			{
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+			}
+		}
+		else
+		{
+			response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+		}
+	}
 
     void handle_request__set_attached_controller(
         const RequestContext &context,

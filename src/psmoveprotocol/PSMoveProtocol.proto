@@ -170,6 +170,10 @@ message Request {
         SET_TRACKER_FRAME_RATE = 45;
         SET_TRACKER_FRAME_WIDTH = 46;
         SET_TRACKER_FRAME_HEIGHT = 47;
+		
+		// PSMoveServiceEx
+
+		SET_CONTROLLER_OPTICAL_TRACKING = 48;
     }
     RequestType type = 2;
 
@@ -528,6 +532,17 @@ message Request {
         bool save_setting= 3;
     }
     RequestSetTrackerFrameHeight request_set_tracker_frame_height = 47;    
+	
+
+	// PSMoveServiceEx
+
+    // Parameters for SET_CONTROLLER_PREDICTION_TIME
+    message RequestSetControllerOpticalTracking {
+        int32 controller_id = 1;
+        bool enabled = 2;
+    }
+    RequestSetControllerOpticalTracking request_set_controller_optical_tracking = 48;
+
 }
 
 // Reliable (TCP) responses to requests
@@ -609,6 +624,10 @@ message Response {
             string gyro_gain_setting = 15;
             float prediction_time = 16;
             int32 gamepad_index = 17;
+			
+			// PSMoveServiceEx
+
+			bool opticaltracking = 18;
         }
         repeated ControllerInfo controllers = 1;
         string host_serial = 2;
