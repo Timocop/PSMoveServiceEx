@@ -1418,8 +1418,8 @@ void AppStage_ControllerSettings::show_position_filter_tooltip(const std::string
 	if (name == "PassThru")
 	{
 		ImGui::SetTooltip(
-			"Direct pass through of optical position. No smoothing applied.\n"
-			"The most responsive position filter but doesn't try to remove any jitter."
+			"Direct pass through of optical position.\n"
+			"The most responsive position filter but does not smooth optical jitter."
 		);
 	}
 	else if (name == "LowPassOptical")
@@ -1434,7 +1434,7 @@ void AppStage_ControllerSettings::show_position_filter_tooltip(const std::string
 	else if (name == "LowPassIMU")
 	{
 		ImGui::SetTooltip(
-			"Predictive smoothing filter using device Accelerometer.\n"
+			"Predictive smoothing filter using device accelerometer.\n"
 			"Uses the device's accelerometer to predict and smooth optical movement."
 		);
 	}
@@ -1468,7 +1468,7 @@ void AppStage_ControllerSettings::show_position_filter_tooltip(const std::string
 		ImGui::SetTooltip(
 			"Parents this controller to another and overwrites the optical tracking behavior.\n"
 			"It's recommended to turn off 'Enable Optical Tracking' when using this filter.\n"
-			"(Requires 'PSmoveServiceEX Virtual Device Manager' found on GitHub)"
+			"(Requires 'PSMoveServiceEx Virtual Device Manager')"
 		);
 	}
 }
@@ -1479,7 +1479,7 @@ void AppStage_ControllerSettings::show_orientation_filter_tooltip(const std::str
 	{
 		ImGui::SetTooltip(
 			"Direct pass through optical orientation filter.\n"
-			"Only works with PSVR HMDs and PS4 gamepads. Does not work on PSmove controllers, virtual controllers and virtual HMDs.\n"
+			"Only works with Morpheus HMDs and DualShock4 controllers.\n"
 			"[Optical]"
 		);
 	}
@@ -1510,7 +1510,7 @@ void AppStage_ControllerSettings::show_orientation_filter_tooltip(const std::str
 		ImGui::SetTooltip(
 			"Optical orientation filter using variance curve and madgwick.\n"
 			"Smooths optical orintation and reduces optical orintation noise by tracker projection and distance.\n"
-			"Only works with PSVR HMDs and PS4 gamepads. Does not work on PSmove controllers, virtual controllers and virtual HMDs.\n"
+			"Only works with Morpheus HMDs and DualShock4 controllers.\n"
 			"Requires calibration.\n"
 			"[Optical; Gyro]\n"
 			"(Use 'Calibrate Optical Noise' to calibrate)"
@@ -1523,14 +1523,14 @@ void AppStage_ControllerSettings::show_orientation_filter_tooltip(const std::str
 			"Smooths optical orintation and reduces optical orintation noise by tracker projection and distance.\n"
 			"Requires calibration.\n"
 			"[Optical; Gyro; Accelerometer; Magnetometer]\n"
-			"(Use 'Calibrate Optical Noise' to calibrate)"
+			"(Use 'Calibrate Optical Noise' to calibrate / Experimental)"
 		);
 	}
 	else if (name == "OrientationExternal")
 	{
 		ImGui::SetTooltip(
-			"Allows external source for orientation data (OwOTrack/SlimeVR).\n"
-			"(Requires 'PSmoveServiceEX Virtual Device Manager' found on GitHub)"
+			"Allows external source for orientation data (e.g. OwOTrack, SlimeVR).\n"
+			"(Requires 'PSMoveServiceEx Virtual Device Manager')"
 		);
 	}
 }
