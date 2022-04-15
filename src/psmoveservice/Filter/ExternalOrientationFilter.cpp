@@ -371,7 +371,10 @@ void OrientationFilterExternal::update(const float delta_time, const PoseFilterP
 		new_orientation.z() = (float)_atof_l(vector[2].c_str(), localeInvariant);
 		new_orientation.w() = (float)_atof_l(vector[3].c_str(), localeInvariant);
 
-		m_state->apply_optical_state(new_orientation, delta_time);
+		if (eigen_quaternion_is_valid(new_orientation))
+		{
+			m_state->apply_optical_state(new_orientation, delta_time);
+		}
 	}
 
 	if (vector.size() >= 8)
@@ -382,10 +385,13 @@ void OrientationFilterExternal::update(const float delta_time, const PoseFilterP
 		reset_orientation.z() = (float)_atof_l(vector[6].c_str(), localeInvariant);
 		reset_orientation.w() = (float)_atof_l(vector[7].c_str(), localeInvariant);
 
-		Eigen::Quaternionf q_inverse = reset_orientation.conjugate();
+		if (eigen_quaternion_is_valid(reset_orientation))
+		{
+			Eigen::Quaternionf q_inverse = reset_orientation.conjugate();
 
-		eigen_quaternion_normalize_with_default(q_inverse, Eigen::Quaternionf::Identity());
-		m_state->reset_orientation = q_inverse;
+			eigen_quaternion_normalize_with_default(q_inverse, Eigen::Quaternionf::Identity());
+			m_state->reset_orientation = q_inverse;
+		}
 	}
 #endif
 }
