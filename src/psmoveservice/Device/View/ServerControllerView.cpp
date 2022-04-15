@@ -1192,26 +1192,27 @@ void ServerControllerView::set_tracking_enabled_internal(bool bEnabled)
 
             switch (tracking_color_id)
             {
-            case PSMoveProtocol::Magenta:
+			case eCommonTrackingColorID::Magenta:
                 m_tracking_color= std::make_tuple(0xFF, 0x00, 0xFF);
                 break;
-            case PSMoveProtocol::Cyan:
+            case eCommonTrackingColorID::Cyan:
                 m_tracking_color = std::make_tuple(0x00, 0xFF, 0xFF);
                 break;
-            case PSMoveProtocol::Yellow:
+            case eCommonTrackingColorID::Yellow:
                 m_tracking_color = std::make_tuple(0xFF, 0xFF, 0x00);
                 break;
-            case PSMoveProtocol::Red:
+            case eCommonTrackingColorID::Red:
                 m_tracking_color = std::make_tuple(0xFF, 0x00, 0x00);
                 break;
-            case PSMoveProtocol::Green:
+            case eCommonTrackingColorID::Green:
                 m_tracking_color = std::make_tuple(0x00, 0xFF, 0x00);
                 break;
-            case PSMoveProtocol::Blue:
-                m_tracking_color = std::make_tuple(0x00, 0x00, 0xFF);
-                break;
+			case eCommonTrackingColorID::Blue:
+				m_tracking_color = std::make_tuple(0x00, 0x00, 0xFF);
+				break;
             default:
-                assert(0 && "unreachable");
+				m_tracking_color = std::make_tuple(0x00, 0x00, 0x00);
+				break;
             }
         }
         else

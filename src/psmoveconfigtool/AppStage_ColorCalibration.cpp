@@ -47,7 +47,18 @@ static const char *k_tracking_color_names[] = {
     "Yellow",
     "Red",
     "Green",
-    "Blue"
+	"Blue",
+
+	"Custom0",
+	"Custom1",
+	"Custom2",
+	"Custom3",
+	"Custom4",
+	"Custom5",
+	"Custom6",
+	"Custom7",
+	"Custom8",
+	"Custom9"
 };
 
 //-- private definitions -----
@@ -1558,6 +1569,25 @@ void AppStage_ColorCalibration::renderUI()
 
 						break;
 					}
+					case PSMTrackingColorType::PSMTrackingColorType_Custom0:
+					case PSMTrackingColorType::PSMTrackingColorType_Custom1:
+					case PSMTrackingColorType::PSMTrackingColorType_Custom2:
+					case PSMTrackingColorType::PSMTrackingColorType_Custom3:
+					case PSMTrackingColorType::PSMTrackingColorType_Custom4:
+					case PSMTrackingColorType::PSMTrackingColorType_Custom5:
+					case PSMTrackingColorType::PSMTrackingColorType_Custom6:
+					case PSMTrackingColorType::PSMTrackingColorType_Custom7:
+					case PSMTrackingColorType::PSMTrackingColorType_Custom8:
+					case PSMTrackingColorType::PSMTrackingColorType_Custom9:
+					{
+						ImGui::ColorButton(colorBlue, true);
+						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+						ImGui::SameLine();
+						ImGui::TextWrapped(
+							"Custom preset color set. Device LED is has been turned off."
+						);
+						break;
+					}
 					}
 				}
 
@@ -1642,20 +1672,20 @@ void AppStage_ColorCalibration::renderUI()
             static_cast<PSMTrackingColorType>(
             (m_masterTrackingColorType + 1) % PSMTrackingColorType_MaxColorTypes);
 
-        ImVec2 dispSize = ImGui::GetIO().DisplaySize;
-        int img_x = (static_cast<int>(m_mAlignPosition[0]) * m_video_buffer_state->hsvBuffer->cols) / static_cast<int>(dispSize.x);
-        int img_y = (static_cast<int>(m_mAlignPosition[1]) * m_video_buffer_state->hsvBuffer->rows) / static_cast<int>(dispSize.y);
-        cv::Vec< unsigned char, 3 > hsv_pixel = m_video_buffer_state->hsvBuffer->at<cv::Vec< unsigned char, 3 >>(cv::Point(img_x, img_y));
+		ImVec2 dispSize = ImGui::GetIO().DisplaySize;
+		int img_x = (static_cast<int>(m_mAlignPosition[0]) * m_video_buffer_state->hsvBuffer->cols) / static_cast<int>(dispSize.x);
+		int img_y = (static_cast<int>(m_mAlignPosition[1]) * m_video_buffer_state->hsvBuffer->rows) / static_cast<int>(dispSize.y);
+		cv::Vec< unsigned char, 3 > hsv_pixel = m_video_buffer_state->hsvBuffer->at<cv::Vec< unsigned char, 3 >>(cv::Point(img_x, img_y));
 
-        TrackerColorPreset preset = getColorPreset();
-        preset.hue_center = hsv_pixel[0];
-        preset.saturation_center = hsv_pixel[1];
-        preset.value_center = hsv_pixel[2];
+		TrackerColorPreset preset = getColorPreset();
+		preset.hue_center = hsv_pixel[0];
+		preset.saturation_center = hsv_pixel[1];
+		preset.value_center = hsv_pixel[2];
 
 		auto_adjust_color_sensitivity(preset);
 
-        request_tracker_set_color_preset(m_masterTrackingColorType, preset);
-        request_set_controller_tracking_color(m_masterControllerView, new_color);
+		request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+		request_set_controller_tracking_color(m_masterControllerView, new_color);
 
         if (new_color == PSMTrackingColorType_Magenta) 
 		{
@@ -2028,9 +2058,10 @@ void AppStage_ColorCalibration::renderUI()
 				break;
 			}
 
+			// We dont want to search for custom colors presets
 			PSMTrackingColorType new_color =
 				static_cast<PSMTrackingColorType>(
-				(m_masterTrackingColorType + 1) % PSMTrackingColorType_MaxColorTypes);
+				(m_masterTrackingColorType + 1) % PSMTrackingColorType_Custom0); //PSMTrackingColorType_MaxColorTypes
 
 			ImVec2 dispSize = ImGui::GetIO().DisplaySize;
 			int img_x = (contures[0][0] * m_video_buffer_state->hsvBuffer->cols) / static_cast<int>(dispSize.x);
@@ -2392,26 +2423,27 @@ void AppStage_ColorCalibration::request_set_controller_tracking_color(
 
     switch (tracking_color)
     {
-    case PSMoveProtocol::Magenta:
+    case PSMTrackingColorType::PSMTrackingColorType_Magenta:
         r = 0xFF; g = 0x00; b = 0xFF;
         break;
-    case PSMoveProtocol::Cyan:
+    case PSMTrackingColorType::PSMTrackingColorType_Cyan:
         r = 0x00; g = 0xFF; b = 0xFF;
         break;
-    case PSMoveProtocol::Yellow:
+    case PSMTrackingColorType::PSMTrackingColorType_Yellow:
         r = 0xFF; g = 0xFF; b = 0x00;
         break;
-    case PSMoveProtocol::Red:
+    case PSMTrackingColorType::PSMTrackingColorType_Red:
         r = 0xFF; g = 0x00; b = 0x00;
         break;
-    case PSMoveProtocol::Green:
+    case PSMTrackingColorType::PSMTrackingColorType_Green:
         r = 0x00; g = 0xFF; b = 0x00;
         break;
-    case PSMoveProtocol::Blue:
+    case PSMTrackingColorType::PSMTrackingColorType_Blue:
         r = 0x00; g = 0x00; b = 0xFF;
         break;
     default:
-        assert(0 && "unreachable");
+		r = 0x00; g = 0x00; b = 0x00;
+		break;
     }
 
     PSM_SetControllerLEDOverrideColor(controllerView->ControllerID, r, g, b);

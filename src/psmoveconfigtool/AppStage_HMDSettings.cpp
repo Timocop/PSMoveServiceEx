@@ -179,7 +179,7 @@ void AppStage_HMDSettings::renderUI()
                 int newTrackingColorType = hmdInfo.TrackingColorType;
 
                 ImGui::PushItemWidth(195);
-                if (ImGui::Combo("Tracking Color", &newTrackingColorType, "Magenta\0Cyan\0Yellow\0Red\0Green\0Blue\0\0"))
+                if (ImGui::Combo("Tracking Color", &newTrackingColorType, "Magenta\0Cyan\0Yellow\0Red\0Green\0Blue\0Custom0\0Custom1\0Custom2\0Custom3\0Custom4\0Custom5\0Custom6\0Custom7\0Custom8\0Custom9\0\0"))
                 {
                     hmdInfo.TrackingColorType = static_cast<PSMTrackingColorType>(newTrackingColorType);
 
@@ -209,9 +209,39 @@ void AppStage_HMDSettings::renderUI()
                 case PSMTrackingColorType_Green:
                     ImGui::BulletText("Tracking Color: Green");
                     break;
-                case PSMTrackingColorType_Blue:
-                    ImGui::BulletText("Tracking Color: Blue");
-                    break;
+				case PSMTrackingColorType_Blue:
+					ImGui::BulletText("Tracking Color: Blue");
+					break;
+				case PSMTrackingColorType_Custom0:
+					ImGui::BulletText("Tracking Color: Custom0");
+					break;
+				case PSMTrackingColorType_Custom1:
+					ImGui::BulletText("Tracking Color: Custom1");
+					break;
+				case PSMTrackingColorType_Custom2:
+					ImGui::BulletText("Tracking Color: Custom2");
+					break;
+				case PSMTrackingColorType_Custom3:
+					ImGui::BulletText("Tracking Color: Custom3");
+					break;
+				case PSMTrackingColorType_Custom4:
+					ImGui::BulletText("Tracking Color: Custom4");
+					break;
+				case PSMTrackingColorType_Custom5:
+					ImGui::BulletText("Tracking Color: Custom5");
+					break;
+				case PSMTrackingColorType_Custom6:
+					ImGui::BulletText("Tracking Color: Custom6");
+					break;
+				case PSMTrackingColorType_Custom7:
+					ImGui::BulletText("Tracking Color: Custom7");
+					break;
+				case PSMTrackingColorType_Custom8:
+					ImGui::BulletText("Tracking Color: Custom8");
+					break;
+				case PSMTrackingColorType_Custom9:
+					ImGui::BulletText("Tracking Color: Custom9");
+					break;
                 }
             }
 

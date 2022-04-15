@@ -12,12 +12,24 @@
 // Hue angle reference: http://i.imgur.com/PKjgfFXm.jpg 
 // Hue angles divide by 2 for opencv which remaps hue range to [0,180]
 const CommonHSVColorRange g_default_color_presets[] = {
-    { { 300 / 2, 10 }, { 255, 32 }, { 255, 32 } }, // Magenta
-    { { 180 / 2, 10 }, { 255, 32 }, { 255, 32 } }, // Cyan
-    { { 60 / 2, 10 }, { 255, 32 }, { 255, 32 } }, // Yellow
-    { { 0, 10 }, { 255, 32 }, { 255, 32 } }, // Red
-    { { 120 / 2, 10 }, { 255, 32 }, { 255, 32 } }, // Green
-    { { 240 / 2, 10 }, { 255, 32 }, { 255, 32 } }, // Blue
+    { { 300 / 2, 10 },	{ 255, 32 },	{ 255, 32 } }, // Magenta
+    { { 180 / 2, 10 },	{ 255, 32 },	{ 255, 32 } }, // Cyan
+    { { 60 / 2, 10 },	{ 255, 32 },	{ 255, 32 } }, // Yellow
+    { { 0, 10 },		{ 255, 32 },	{ 255, 32 } }, // Red
+    { { 120 / 2, 10 },	{ 255, 32 },	{ 255, 32 } }, // Green
+	{ { 240 / 2, 10 },	{ 255, 32 },	{ 255, 32 } }, // Blue
+
+	// Custom colors. Mostly for virtual devices because it turns of PSmove LEDs.
+	{ { 0, 10 },		{ 255, 32 },	{ 255, 32 } }, // Custom0
+	{ { 0, 10 },		{ 255, 32 },	{ 255, 32 } }, // Custom1
+	{ { 0, 10 },		{ 255, 32 },	{ 255, 32 } }, // Custom2
+	{ { 0, 10 },		{ 255, 32 },	{ 255, 32 } }, // Custom3
+	{ { 0, 10 },		{ 255, 32 },	{ 255, 32 } }, // Custom4
+	{ { 0, 10 },		{ 255, 32 },	{ 255, 32 } }, // Custom5
+	{ { 0, 10 },		{ 255, 32 },	{ 255, 32 } }, // Custom6
+	{ { 0, 10 },		{ 255, 32 },	{ 255, 32 } }, // Custom7
+	{ { 0, 10 },		{ 255, 32 },	{ 255, 32 } }, // Custom8
+	{ { 0, 10 },		{ 255, 32 },	{ 255, 32 } }, // Custom9
 };
 const CommonHSVColorRange *k_default_color_presets = g_default_color_presets;
 
@@ -87,7 +99,18 @@ PSMoveConfig::writeColorPropertyPresetTable(
     writeColorPreset(pt, profile_name, "yellow", &table->color_presets[eCommonTrackingColorID::Yellow]);
     writeColorPreset(pt, profile_name, "red", &table->color_presets[eCommonTrackingColorID::Red]);
     writeColorPreset(pt, profile_name, "green", &table->color_presets[eCommonTrackingColorID::Green]);
-    writeColorPreset(pt, profile_name, "blue", &table->color_presets[eCommonTrackingColorID::Blue]);
+	writeColorPreset(pt, profile_name, "blue", &table->color_presets[eCommonTrackingColorID::Blue]);
+
+	writeColorPreset(pt, profile_name, "custom0", &table->color_presets[eCommonTrackingColorID::Custom0]);
+	writeColorPreset(pt, profile_name, "custom1", &table->color_presets[eCommonTrackingColorID::Custom1]);
+	writeColorPreset(pt, profile_name, "custom2", &table->color_presets[eCommonTrackingColorID::Custom2]);
+	writeColorPreset(pt, profile_name, "custom3", &table->color_presets[eCommonTrackingColorID::Custom3]);
+	writeColorPreset(pt, profile_name, "custom4", &table->color_presets[eCommonTrackingColorID::Custom4]);
+	writeColorPreset(pt, profile_name, "custom5", &table->color_presets[eCommonTrackingColorID::Custom5]);
+	writeColorPreset(pt, profile_name, "custom6", &table->color_presets[eCommonTrackingColorID::Custom6]);
+	writeColorPreset(pt, profile_name, "custom7", &table->color_presets[eCommonTrackingColorID::Custom7]);
+	writeColorPreset(pt, profile_name, "custom8", &table->color_presets[eCommonTrackingColorID::Custom8]);
+	writeColorPreset(pt, profile_name, "custom9", &table->color_presets[eCommonTrackingColorID::Custom9]);
 }
 
 void
@@ -102,7 +125,18 @@ PSMoveConfig::readColorPropertyPresetTable(
     readColorPreset(pt, profile_name, "yellow", &table->color_presets[eCommonTrackingColorID::Yellow], &k_default_color_presets[eCommonTrackingColorID::Yellow]);
     readColorPreset(pt, profile_name, "red", &table->color_presets[eCommonTrackingColorID::Red], &k_default_color_presets[eCommonTrackingColorID::Red]);
     readColorPreset(pt, profile_name, "green", &table->color_presets[eCommonTrackingColorID::Green], &k_default_color_presets[eCommonTrackingColorID::Green]);
-    readColorPreset(pt, profile_name, "blue", &table->color_presets[eCommonTrackingColorID::Blue], &k_default_color_presets[eCommonTrackingColorID::Blue]);
+	readColorPreset(pt, profile_name, "blue", &table->color_presets[eCommonTrackingColorID::Blue], &k_default_color_presets[eCommonTrackingColorID::Blue]);
+
+	readColorPreset(pt, profile_name, "custom0", &table->color_presets[eCommonTrackingColorID::Custom0], &k_default_color_presets[eCommonTrackingColorID::Custom0]);
+	readColorPreset(pt, profile_name, "custom1", &table->color_presets[eCommonTrackingColorID::Custom1], &k_default_color_presets[eCommonTrackingColorID::Custom1]);
+	readColorPreset(pt, profile_name, "custom2", &table->color_presets[eCommonTrackingColorID::Custom2], &k_default_color_presets[eCommonTrackingColorID::Custom2]);
+	readColorPreset(pt, profile_name, "custom3", &table->color_presets[eCommonTrackingColorID::Custom3], &k_default_color_presets[eCommonTrackingColorID::Custom3]);
+	readColorPreset(pt, profile_name, "custom4", &table->color_presets[eCommonTrackingColorID::Custom4], &k_default_color_presets[eCommonTrackingColorID::Custom4]);
+	readColorPreset(pt, profile_name, "custom5", &table->color_presets[eCommonTrackingColorID::Custom5], &k_default_color_presets[eCommonTrackingColorID::Custom5]);
+	readColorPreset(pt, profile_name, "custom6", &table->color_presets[eCommonTrackingColorID::Custom6], &k_default_color_presets[eCommonTrackingColorID::Custom6]);
+	readColorPreset(pt, profile_name, "custom7", &table->color_presets[eCommonTrackingColorID::Custom7], &k_default_color_presets[eCommonTrackingColorID::Custom7]);
+	readColorPreset(pt, profile_name, "custom8", &table->color_presets[eCommonTrackingColorID::Custom8], &k_default_color_presets[eCommonTrackingColorID::Custom8]);
+	readColorPreset(pt, profile_name, "custom9", &table->color_presets[eCommonTrackingColorID::Custom9], &k_default_color_presets[eCommonTrackingColorID::Custom9]);
 }
 
 void
@@ -132,6 +166,36 @@ PSMoveConfig::writeTrackingColor(
 		break;
 	case eCommonTrackingColorID::Blue:
 		pt.put("tracking_color", "blue");
+		break;
+	case eCommonTrackingColorID::Custom0:
+		pt.put("tracking_color", "custom0");
+		break;
+	case eCommonTrackingColorID::Custom1:
+		pt.put("tracking_color", "custom1");
+		break;
+	case eCommonTrackingColorID::Custom2:
+		pt.put("tracking_color", "custom2");
+		break;
+	case eCommonTrackingColorID::Custom3:
+		pt.put("tracking_color", "custom3");
+		break;
+	case eCommonTrackingColorID::Custom4:
+		pt.put("tracking_color", "custom4");
+		break;
+	case eCommonTrackingColorID::Custom5:
+		pt.put("tracking_color", "custom5");
+		break;
+	case eCommonTrackingColorID::Custom6:
+		pt.put("tracking_color", "custom6");
+		break;
+	case eCommonTrackingColorID::Custom7:
+		pt.put("tracking_color", "custom7");
+		break;
+	case eCommonTrackingColorID::Custom8:
+		pt.put("tracking_color", "custom8");
+		break;
+	case eCommonTrackingColorID::Custom9:
+		pt.put("tracking_color", "custom9");
 		break;
 	default:
 		assert(false && "unreachable");
@@ -168,6 +232,46 @@ PSMoveConfig::readTrackingColor(
 	else if (tracking_color_string == "blue")
 	{
 		tracking_color_id = eCommonTrackingColorID::Blue;
+	}
+	else if (tracking_color_string == "custom0")
+	{
+		tracking_color_id = eCommonTrackingColorID::Custom0;
+	}
+	else if (tracking_color_string == "custom1")
+	{
+		tracking_color_id = eCommonTrackingColorID::Custom1;
+	}
+	else if (tracking_color_string == "custom2")
+	{
+		tracking_color_id = eCommonTrackingColorID::Custom2;
+	}
+	else if (tracking_color_string == "custom3")
+	{
+		tracking_color_id = eCommonTrackingColorID::Custom3;
+	}
+	else if (tracking_color_string == "custom4")
+	{
+		tracking_color_id = eCommonTrackingColorID::Custom4;
+	}
+	else if (tracking_color_string == "custom5")
+	{
+		tracking_color_id = eCommonTrackingColorID::Custom5;
+	}
+	else if (tracking_color_string == "custom6")
+	{
+		tracking_color_id = eCommonTrackingColorID::Custom6;
+	}
+	else if (tracking_color_string == "custom7")
+	{
+		tracking_color_id = eCommonTrackingColorID::Custom7;
+	}
+	else if (tracking_color_string == "custom8")
+	{
+		tracking_color_id = eCommonTrackingColorID::Custom8;
+	}
+	else if (tracking_color_string == "custom9")
+	{
+		tracking_color_id = eCommonTrackingColorID::Custom9;
 	}
 
 	return tracking_color_id;

@@ -83,8 +83,19 @@ typedef enum
     PSMTrackingColorType_Yellow,     ///< R:0xFF, G:0xFF, B:0x00
     PSMTrackingColorType_Red,        //</ R:0xFF, G:0x00, B:0x00
     PSMTrackingColorType_Green,      ///< R:0x00, G:0xFF, B:0x00
-    PSMTrackingColorType_Blue,       ///< R:0x00, G:0x00, B:0xFF
-	
+	PSMTrackingColorType_Blue,       ///< R:0x00, G:0x00, B:0xFF
+
+	PSMTrackingColorType_Custom0,
+	PSMTrackingColorType_Custom1,
+	PSMTrackingColorType_Custom2,
+	PSMTrackingColorType_Custom3,
+	PSMTrackingColorType_Custom4,
+	PSMTrackingColorType_Custom5,
+	PSMTrackingColorType_Custom6,
+	PSMTrackingColorType_Custom7,
+	PSMTrackingColorType_Custom8,
+	PSMTrackingColorType_Custom9,
+
 	PSMTrackingColorType_MaxColorTypes
 } PSMTrackingColorType;
 

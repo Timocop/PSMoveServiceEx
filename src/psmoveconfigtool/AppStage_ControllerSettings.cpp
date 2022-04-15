@@ -405,7 +405,7 @@ void AppStage_ControllerSettings::renderUI()
                     {
                         int newTrackingColorType = controllerInfo.TrackingColorType;
 
-                        if (ImGui::Combo("Tracking Color", &newTrackingColorType, "Magenta\0Cyan\0Yellow\0Red\0Green\0Blue\0\0"))
+                        if (ImGui::Combo("Tracking Color", &newTrackingColorType, "Magenta\0Cyan\0Yellow\0Red\0Green\0Blue\0Custom0\0Custom1\0Custom2\0Custom3\0Custom4\0Custom5\0Custom6\0Custom7\0Custom8\0Custom9\0\0"))
                         {
                             controllerInfo.TrackingColorType = static_cast<PSMTrackingColorType>(newTrackingColorType);
 

@@ -352,7 +352,10 @@ void AppStage_TrackerSettings::renderUI()
 
 							if (0 <= controllerInfo.TrackingColorType && controllerInfo.TrackingColorType < PSMTrackingColorType_MaxColorTypes)
 							{
-								const char *colors[] = { "Magenta","Cyan","Yellow","Red","Green","Blue" };
+								const char *colors[] = {
+									"Magenta","Cyan","Yellow","Red","Green","Blue",
+									"Custom0" ,"Custom1" ,"Custom2" ,"Custom3" ,"Custom4" ,"Custom5" ,"Custom6" ,"Custom7" ,"Custom8" ,"Custom9"
+								};
 
 								ImGui::Text("Controller: %d (%s) - %s",
 									m_selectedControllerIndex,
@@ -500,7 +503,10 @@ void AppStage_TrackerSettings::renderUI()
 					if (m_selectedHmdIndex != -1)
 					{
 						const AppStage_TrackerSettings::HMDInfo &hmdInfo = m_hmdInfos[m_selectedHmdIndex];
-						const char *colors[] = { "Magenta","Cyan","Yellow","Red","Green","Blue" };
+						const char *colors[] = {
+							"Magenta","Cyan","Yellow","Red","Green","Blue",
+							"Custom0" ,"Custom1" ,"Custom2" ,"Custom3" ,"Custom4" ,"Custom5" ,"Custom6" ,"Custom7" ,"Custom8" ,"Custom9"
+						};
 
 						if (hmdInfo.HmdType == PSMHmd_Morpheus)
 						{
