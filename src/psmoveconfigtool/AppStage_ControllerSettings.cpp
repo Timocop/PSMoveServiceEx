@@ -666,6 +666,18 @@ void AppStage_ControllerSettings::renderUI()
 							        controllerInfo.PositionFilterName = k_controller_position_filter_names[controllerInfo.PositionFilterIndex];
 							        request_set_position_filter(controllerInfo.ControllerID, controllerInfo.PositionFilterName);
 						        }
+
+								if (controllerInfo.PositionFilterName == "PositionExternalAttachment")
+								{
+									ImGui::PushTextWrapPos();
+									ImGui::TextDisabled(
+										"This positional filter will overwrite the optical tracking behavior.\n"
+										"It's recommended to turn of 'Enable optical tracking' when using this positional filter."
+									);
+									ImGui::PopTextWrapPos();
+									ImGui::Spacing();
+								}
+
 						        if (controllerInfo.ControllerType == PSMController_Move)
 						        {
 							        if (ImGui::Combo("Orientation Filter", &controllerInfo.OrientationFilterIndex, k_psmove_orientation_filter_names, UI_ARRAYSIZE(k_psmove_orientation_filter_names)))
