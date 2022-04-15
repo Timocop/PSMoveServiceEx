@@ -159,7 +159,7 @@ public:
     bool setTrackingColorID(eCommonTrackingColorID colorID);
 
     // Get the tracking is enabled on this controller
-    inline bool getIsTrackingEnabled() const { return m_tracking_enabled && m_multicam_pose_estimation != nullptr; }
+    inline bool getIsTrackingEnabled() const { return m_tracking_enabled && m_multicam_pose_estimation != nullptr && getControllerOpticalTrackingEnabled(); }
 
     // Increment the position tracking listener count
     // Starts position tracking this controller if the count was zero
@@ -200,7 +200,10 @@ public:
     }
 
     // Set the rumble value between 0.f-1.f on a channel
-    bool setControllerRumble(float rumble_amount, CommonControllerState::RumbleChannel channel);
+	bool setControllerRumble(float rumble_amount, CommonControllerState::RumbleChannel channel);
+
+	// Gets if the controller optical tracking is enabled or not
+	bool getControllerOpticalTrackingEnabled();
 
     // Helper used to publish the current controller state to the given output data frame
     static void generate_controller_data_frame_for_stream(

@@ -46,6 +46,9 @@ public:
     int gamepad_index;
 	bool psmove_emulation;
 
+	// Enable or disable optical tracking.
+	bool enable_optical_tracking;
+
 	// The type of position filter to use
 	std::string position_filter_type;
 

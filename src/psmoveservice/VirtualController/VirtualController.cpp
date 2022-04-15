@@ -24,6 +24,7 @@ VirtualControllerConfig::config2ptree()
 
     pt.put("gamepad_index", gamepad_index);
 	pt.put("psmove_emulation", psmove_emulation);
+	pt.put("enable_optical_tracking", enable_optical_tracking);
 
     pt.put("Calibration.Position.VarianceExpFitA", position_variance_exp_fit_a);
     pt.put("Calibration.Position.VarianceExpFitB", position_variance_exp_fit_b);
@@ -54,6 +55,7 @@ VirtualControllerConfig::ptree2config(const boost::property_tree::ptree &pt)
 
 		gamepad_index = pt.get<int>("gamepad_index", -1);
 		psmove_emulation = pt.get<bool>("psmove_emulation", false);
+		enable_optical_tracking = pt.get<bool>("enable_optical_tracking", true);
 
         prediction_time = pt.get<float>("prediction_time", 0.f);
 

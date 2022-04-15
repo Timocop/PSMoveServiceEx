@@ -96,6 +96,9 @@ public:
 
 	// The amount of prediction to apply to the controller pose after filtering
     float prediction_time;
+	
+	// Enable or disable optical tracking.
+	bool enable_optical_tracking;
 
 	// The type of position filter to use
 	std::string position_filter_type;

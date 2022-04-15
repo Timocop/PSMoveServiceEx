@@ -457,7 +457,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
     // If velocity is too high, don't bother getting a new position.
     // Though it may be enough to just use the camera ROI as the limit.
     
-    if (getIsTrackingEnabled())
+    if (getIsTrackingEnabled() && getControllerOpticalTrackingEnabled())
     {
         int valid_projection_tracker_ids[TrackerManager::k_max_devices];
         int projections_found = 0;
@@ -1291,59 +1291,87 @@ float ServerControllerView::getROIPredictionTime() const
 
 // Set the rumble value between 0.f - 1.f on a given channel
 bool ServerControllerView::setControllerRumble(
-    float rumble_amount,
-    CommonControllerState::RumbleChannel channel)
+	float rumble_amount,
+	CommonControllerState::RumbleChannel channel)
 {
-    bool result= false;
+	bool result = false;
 
-    if (getIsOpen())
-    {
-        switch(getControllerDeviceType())
-        {
-        case CommonDeviceState::PSMove:
-            {
-                unsigned char rumble_byte= static_cast<unsigned char>(clampf01(rumble_amount)*255.f);
+	if (getIsOpen())
+	{
+		switch (getControllerDeviceType())
+		{
+		case CommonDeviceState::PSMove:
+		{
+			unsigned char rumble_byte = static_cast<unsigned char>(clampf01(rumble_amount)*255.f);
 
-                static_cast<PSMoveController *>(m_device)->setRumbleIntensity(rumble_byte);
-                result = true;
-            } break;
+			static_cast<PSMoveController *>(m_device)->setRumbleIntensity(rumble_byte);
+			result = true;
+		} break;
 
-        case CommonDeviceState::PSNavi:
-            {
-                result= false; // No rumble on the navi
-            } break;
+		case CommonDeviceState::PSNavi:
+		{
+			result = false; // No rumble on the navi
+		} break;
 
-        case CommonDeviceState::PSDualShock4:
-            {
-                unsigned char rumble_byte = static_cast<unsigned char>(clampf01(rumble_amount)*255.f);
-                PSDualShock4Controller *controller= static_cast<PSDualShock4Controller *>(m_device);
+		case CommonDeviceState::PSDualShock4:
+		{
+			unsigned char rumble_byte = static_cast<unsigned char>(clampf01(rumble_amount)*255.f);
+			PSDualShock4Controller *controller = static_cast<PSDualShock4Controller *>(m_device);
 
-                if (channel == CommonControllerState::RumbleChannel::ChannelLeft ||
-                    channel == CommonControllerState::RumbleChannel::ChannelAll)
-                {
-                    controller->setLeftRumbleIntensity(rumble_byte);
-                }
+			if (channel == CommonControllerState::RumbleChannel::ChannelLeft ||
+				channel == CommonControllerState::RumbleChannel::ChannelAll)
+			{
+				controller->setLeftRumbleIntensity(rumble_byte);
+			}
 
-                if (channel == CommonControllerState::RumbleChannel::ChannelRight ||
-                    channel == CommonControllerState::RumbleChannel::ChannelAll)
-                {
-                    controller->setRightRumbleIntensity(rumble_byte);
-                }
+			if (channel == CommonControllerState::RumbleChannel::ChannelRight ||
+				channel == CommonControllerState::RumbleChannel::ChannelAll)
+			{
+				controller->setRightRumbleIntensity(rumble_byte);
+			}
 
-                result = true;
-            } break;
+			result = true;
+		} break;
 
-        case CommonDeviceState::VirtualController:
-            {
-                result= false; // No rumble on the virtual controller
-            } break;
+		case CommonDeviceState::VirtualController:
+		{
+			result = false; // No rumble on the virtual controller
+		} break;
 
-        default:
-            assert(false && "Unhanded controller type!");
-        }
-    }
+		default:
+			assert(false && "Unhanded controller type!");
+		}
+	}
 
-    return result;
+	return result;
+}
+
+// Gets if the controller optical tracking is enabled or not
+bool ServerControllerView::getControllerOpticalTrackingEnabled()
+{
+	bool result = true;
+
+	if (getIsOpen())
+	{
+		switch (getControllerDeviceType())
+		{
+			case CommonDeviceState::PSMove:
+			{
+				PSMoveController *controller = static_cast<PSMoveController *>(m_device);
+
+				result = controller->getConfig()->enable_optical_tracking;
+			} break;
+
+			case CommonDeviceState::VirtualController:
+			{
+				VirtualController *controller = static_cast<VirtualController *>(m_device);
+
+				result = controller->getConfig()->enable_optical_tracking;
+			} break;
+		}
+	}
+
+	return result;
 }
 
 void ServerControllerView::publish_device_data_frame()
