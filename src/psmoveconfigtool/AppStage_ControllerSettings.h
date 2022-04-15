@@ -121,6 +121,9 @@ protected:
 		int ControllerID,
 		int ParentControllerID);
 
+	void show_position_filter_tooltip(const std::string name);
+	void show_orientation_filter_tooltip(const std::string name);
+
 private:
     enum eControllerMenuState
     {

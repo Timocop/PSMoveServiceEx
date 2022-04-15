@@ -411,6 +411,10 @@ void AppStage_ControllerSettings::renderUI()
 							{
 								request_set_controller_psmove_emulation(controllerInfo.ControllerID, controllerInfo.PSmoveEmulation);
 							}
+							if (ImGui::IsItemHovered())
+							{
+								ImGui::SetTooltip("Enables orientation for virtual controllers using external sources.");
+							}
 						}
 
 						if (ImGui::Checkbox("Enable Optical Tracking", &controllerInfo.OpticalTracking))
@@ -674,16 +678,9 @@ void AppStage_ControllerSettings::renderUI()
 							        controllerInfo.PositionFilterName = k_controller_position_filter_names[controllerInfo.PositionFilterIndex];
 							        request_set_position_filter(controllerInfo.ControllerID, controllerInfo.PositionFilterName);
 						        }
-
-								if (controllerInfo.PositionFilterName == "PositionExternalAttachment")
+								if (ImGui::IsItemHovered())
 								{
-									ImGui::PushTextWrapPos();
-									ImGui::TextDisabled(
-										"This positional filter will overwrite the optical tracking behavior.\n"
-										"It's recommended to turn off 'Enable Optical Tracking' when using this positional filter."
-									);
-									ImGui::PopTextWrapPos();
-									ImGui::Spacing();
+									show_position_filter_tooltip(controllerInfo.PositionFilterName);
 								}
 
 						        if (controllerInfo.ControllerType == PSMController_Move)
@@ -693,6 +690,10 @@ void AppStage_ControllerSettings::renderUI()
 								        controllerInfo.OrientationFilterName = k_psmove_orientation_filter_names[controllerInfo.OrientationFilterIndex];
 								        request_set_orientation_filter(controllerInfo.ControllerID, controllerInfo.OrientationFilterName);
 							        }
+									if (ImGui::IsItemHovered())
+									{
+										show_orientation_filter_tooltip(controllerInfo.OrientationFilterName);
+									}
 						        }
 						        if (ImGui::SliderFloat("Prediction Time", &controllerInfo.PredictionTime, 0.f, k_max_hmd_prediction_time))
 						        {
@@ -721,11 +722,21 @@ void AppStage_ControllerSettings::renderUI()
 							        controllerInfo.PositionFilterName = k_controller_position_filter_names[controllerInfo.PositionFilterIndex];
 							        request_set_position_filter(controllerInfo.ControllerID, controllerInfo.PositionFilterName);
 						        }
+								if (ImGui::IsItemHovered())
+								{
+									show_position_filter_tooltip(controllerInfo.PositionFilterName);
+								}
+
 						        if (ImGui::Combo("Orientation Filter", &controllerInfo.OrientationFilterIndex, k_ds4_orientation_filter_names, UI_ARRAYSIZE(k_ds4_orientation_filter_names)))
 						        {
 							        controllerInfo.OrientationFilterName = k_ds4_orientation_filter_names[controllerInfo.OrientationFilterIndex];
 							        request_set_orientation_filter(controllerInfo.ControllerID, controllerInfo.OrientationFilterName);
 						        }
+								if (ImGui::IsItemHovered())
+								{
+									show_orientation_filter_tooltip(controllerInfo.OrientationFilterName);
+								}
+
 						        if (ImGui::Combo("Gyro Gain", &controllerInfo.GyroGainIndex, k_ds4_gyro_gain_setting_labels, UI_ARRAYSIZE(k_ds4_gyro_gain_setting_labels)))
 						        {
 							        controllerInfo.GyroGainSetting = k_ds4_gyro_gain_setting_labels[controllerInfo.GyroGainIndex];
@@ -1400,4 +1411,126 @@ void AppStage_ControllerSettings::request_set_parent_controller_id(
 		PSM_SendOpaqueRequest(&request, &request_id);
 		PSM_EatResponse(request_id);
     }
+}
+
+void AppStage_ControllerSettings::show_position_filter_tooltip(const std::string name)
+{
+	if (name == "PassThru")
+	{
+		ImGui::SetTooltip(
+			"Direct pass through filter. No smoothing applied.\n"
+			"Its the fastest filter but does not smooth any optical jitter."
+		);
+	}
+	else if (name == "LowPassOptical")
+	{
+		ImGui::SetTooltip(
+			"Optical smoothing filter using distance.\n"
+			"Smoothes smaller movments to reduce optical jitter\n"
+			"but behaves like PassThru on quick movements.\n"
+			"(Recommended)"
+		);
+	}
+	else if (name == "LowPassIMU")
+	{
+		ImGui::SetTooltip(
+			"Optical smoothing filter using IMU.\n"
+			"Uses the device accelerometer to smooth and predict optical movement."
+		);
+	}
+	else if (name == "LowPassExponential")
+	{
+		ImGui::SetTooltip(
+			"Optical smoothing filter using exponential curve for smoothing.\n"
+			"Reduces optical jitter greatly but also causes springy tracking and over prediction."
+		);
+	}
+	else if (name == "ComplimentaryOpticalIMU")
+	{
+		ImGui::SetTooltip(
+			"Optical smoothing filter using variance curve and IMU for smoothing.\n"
+			"Smoothes optical tracking and reduces optical noise by tracker projection, distance and IMU.\n"
+			"Requires calibration.\n"
+			"(Use 'Calibrate Optical Noise' to calibrate)"
+		);
+	}
+	else if (name == "PositionKalman")
+	{
+		ImGui::SetTooltip(
+			"Optical smoothing filter using kalman and IMU.\n"
+			"Smoothes optical tracking and reduces optical noise by tracker projection, distance and IMU.\n"
+			"Requires calibration.\n"
+			"(Use 'Calibrate Optical Noise' to calibrate / Experimental)"
+		);
+	}
+	else if (name == "PositionExternalAttachment")
+	{
+		ImGui::SetTooltip(
+			"Will attach this controller to another and overwrites the optical tracking behavior.\n"
+			"It's recommended to turn off 'Enable Optical Tracking' when using this filter.\n"
+			"(Requires 'Virtual Device Manager')"
+		);
+	}
+}
+
+void AppStage_ControllerSettings::show_orientation_filter_tooltip(const std::string name)
+{
+	if (name == "PassThru")
+	{
+		ImGui::SetTooltip(
+			"Direct pass through optical orientation filter.\n"
+			"Does not work on PSmove controllers, virtual controllers and virtual HMDs.\n"
+			"[Optical]"
+		);
+	}
+	else if (name == "MadgwickARG")
+	{
+		ImGui::SetTooltip(
+			"IMU orientation filter using madgwick.\n"
+			"[Gyro]"
+		);
+	}
+	else if (name == "MadgwickMARG")
+	{
+		ImGui::SetTooltip(
+			"IMU orientation filter using madgwick.\n"
+			"[Gyro; Accelerometer; Magnetometer]"
+		);
+	}
+	else if (name == "ComplementaryMARG")
+	{
+		ImGui::SetTooltip(
+			"Simple IMU orientation filter.\n"
+			"[Gyro; Accelerometer; Magnetometer]\n"
+			"(Recommended)"
+		);
+	}
+	else if (name == "ComplementaryOpticalARG")
+	{
+		ImGui::SetTooltip(
+			"Optical orientation filter using variance curve and madgwick.\n"
+			"Smoothes optical orintation and reduces optical orintation noise by tracker projection and distance.\n"
+			"Does not work on PSmove controllers, virtual controllers and virtual HMDs.\n"
+			"Requires calibration.\n"
+			"[Optical; Gyro]\n"
+			"(Use 'Calibrate Optical Noise' to calibrate)"
+		);
+	}
+	else if (name == "OrientationKalman")
+	{
+		ImGui::SetTooltip(
+			"Optical orientation filter using kalman.\n"
+			"Smoothes optical orintation and reduces optical orintation noise by tracker projection and distance.\n"
+			"Requires calibration.\n"
+			"[Optical; Gyro; Accelerometer; Magnetometer]\n"
+			"(Use 'Calibrate Optical Noise' to calibrate)"
+		);
+	}
+	else if (name == "OrientationExternal")
+	{
+		ImGui::SetTooltip(
+			"Uses external sources for orientation.\n"
+			"(Requires 'Virtual Device Manager')"
+		);
+	}
 }
