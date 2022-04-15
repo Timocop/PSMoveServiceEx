@@ -405,7 +405,15 @@ void AppStage_ControllerSettings::renderUI()
                     {
                         int newTrackingColorType = controllerInfo.TrackingColorType;
 
-						if (ImGui::Checkbox("Enable optical tracking", &controllerInfo.OpticalTracking))
+						if (controllerInfo.ControllerType == PSMController_Virtual)
+						{
+							if (ImGui::Checkbox("Enable PSmove Emulation", &controllerInfo.PSmoveEmulation))
+							{
+								request_set_controller_psmove_emulation(controllerInfo.ControllerID, controllerInfo.PSmoveEmulation);
+							}
+						}
+
+						if (ImGui::Checkbox("Enable Optical Tracking", &controllerInfo.OpticalTracking))
 						{
 							request_set_controller_opticaltracking(controllerInfo.ControllerID, controllerInfo.OpticalTracking);
 						}
@@ -672,7 +680,7 @@ void AppStage_ControllerSettings::renderUI()
 									ImGui::PushTextWrapPos();
 									ImGui::TextDisabled(
 										"This positional filter will overwrite the optical tracking behavior.\n"
-										"It's recommended to turn off 'Enable optical tracking' when using this positional filter."
+										"It's recommended to turn off 'Enable Optical Tracking' when using this positional filter."
 									);
 									ImGui::PopTextWrapPos();
 									ImGui::Spacing();
@@ -1012,6 +1020,24 @@ void AppStage_ControllerSettings::request_set_controller_opticaltracking(
 	PSM_EatResponse(request_id);
 }
 
+void AppStage_ControllerSettings::request_set_controller_psmove_emulation(
+	const int controller_id,
+	const bool enabled)
+{
+	RequestPtr request(new PSMoveProtocol::Request());
+	request->set_type(PSMoveProtocol::Request_RequestType_SET_CONTROLLER_PSMOVE_EMULATION);
+
+	PSMoveProtocol::Request_RequestSetControllerPSmoveEmulation *calibration =
+		request->mutable_request_set_controller_psmove_emulation();
+
+	calibration->set_controller_id(controller_id);
+	calibration->set_enabled(enabled);
+
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_EatResponse(request_id);
+}
+
 void AppStage_ControllerSettings::request_set_controller_gamepad_index(
     const int controller_id, 
     const int gamepad_index)
@@ -1114,6 +1140,7 @@ void AppStage_ControllerSettings::handle_controller_list_response(
                 ControllerInfo.GamepadIndex = ControllerResponse.gamepad_index();
 				ControllerInfo.ControllerHand = static_cast<PSMControllerHand>(ControllerResponse.controller_hand());
 				ControllerInfo.OpticalTracking = ControllerResponse.opticaltracking();
+				ControllerInfo.PSmoveEmulation = ControllerResponse.psmove_emulation();
 
                 if (ControllerInfo.ControllerType == PSMController_Move)
                 {

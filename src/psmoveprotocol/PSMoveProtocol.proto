@@ -174,6 +174,7 @@ message Request {
 		// PSMoveServiceEx
 
 		SET_CONTROLLER_OPTICAL_TRACKING = 48;
+		SET_CONTROLLER_PSMOVE_EMULATION = 49;
     }
     RequestType type = 2;
 
@@ -536,12 +537,19 @@ message Request {
 
 	// PSMoveServiceEx
 
-    // Parameters for SET_CONTROLLER_PREDICTION_TIME
+    // Parameters for SET_CONTROLLER_OPTICAL_TRACKING
     message RequestSetControllerOpticalTracking {
         int32 controller_id = 1;
         bool enabled = 2;
     }
     RequestSetControllerOpticalTracking request_set_controller_optical_tracking = 48;
+	
+    // Parameters for SET_CONTROLLER_PSMOVE_EMULATION
+    message RequestSetControllerPSmoveEmulation {
+        int32 controller_id = 1;
+        bool enabled = 2;
+    }
+    RequestSetControllerPSmoveEmulation request_set_controller_psmove_emulation = 49;
 
 }
 
@@ -628,6 +636,7 @@ message Response {
 			// PSMoveServiceEx
 
 			bool opticaltracking = 18;
+			bool psmove_emulation = 19;
         }
         repeated ControllerInfo controllers = 1;
         string host_serial = 2;

@@ -386,6 +386,10 @@ public:
 				response = new PSMoveProtocol::Response;
 				handle_request__set_controller_optical_tracking(context, response);
 				break;
+			case PSMoveProtocol::Request_RequestType_SET_CONTROLLER_PSMOVE_EMULATION:
+				response = new PSMoveProtocol::Response;
+				handle_request__set_controller_psmove_emulation(context, response);
+				break;
 
             default:
                 assert(0 && "Whoops, bad request!");
@@ -662,6 +666,7 @@ protected:
 
                 float prediction_time = 0.f;
 				bool enable_optical_tracking = true;
+				bool psmove_emulation = false;
 
                 int gamepad_index= -1;
 
@@ -745,6 +750,7 @@ protected:
                         position_filter = config->position_filter_type;
                         prediction_time = config->prediction_time;
 						enable_optical_tracking = config->enable_optical_tracking;
+						psmove_emulation = config->psmove_emulation;
 
                         controller_info->set_controller_type(PSMoveProtocol::VIRTUALCONTROLLER);
                         gamepad_index= config->gamepad_index;
@@ -775,6 +781,7 @@ protected:
                 controller_info->set_prediction_time(prediction_time);
                 controller_info->set_gamepad_index(gamepad_index);
 				controller_info->set_opticaltracking(enable_optical_tracking);
+				controller_info->set_psmove_emulation(psmove_emulation);
 
 				if (controller_hand == "Left")
 					controller_info->set_controller_hand(PSMoveProtocol::HAND_LEFT);
@@ -1643,10 +1650,46 @@ protected:
 			{
 				VirtualController *controller = ControllerView->castChecked<VirtualController>();
 				VirtualControllerConfig *config = controller->getConfigMutable();
-				
+
 				if (config->enable_optical_tracking != request.enabled())
 				{
 					config->enable_optical_tracking = request.enabled();
+					config->save();
+				}
+
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+			}
+			else
+			{
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+			}
+		}
+		else
+		{
+			response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+		}
+	}
+
+	void handle_request__set_controller_psmove_emulation(
+		const RequestContext &context,
+		PSMoveProtocol::Response *response)
+	{
+		const int controller_id = context.request->request_set_controller_psmove_emulation().controller_id();
+
+		ServerControllerViewPtr ControllerView = m_device_manager.getControllerViewPtr(controller_id);
+		const PSMoveProtocol::Request_RequestSetControllerPSmoveEmulation &request =
+			context.request->request_set_controller_psmove_emulation();
+
+		if (ControllerView && ControllerView->getIsOpen())
+		{
+			if (ControllerView->getControllerDeviceType() == CommonDeviceState::VirtualController)
+			{
+				VirtualController *controller = ControllerView->castChecked<VirtualController>();
+				VirtualControllerConfig *config = controller->getConfigMutable();
+
+				if (config->psmove_emulation != request.enabled())
+				{
+					config->psmove_emulation = request.enabled();
 					config->save();
 				}
 
