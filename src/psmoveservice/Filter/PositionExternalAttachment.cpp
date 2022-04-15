@@ -468,40 +468,43 @@ void PositionFilterExternalAttachment::update(
 	tracker_offset[1] = (float)_atof_l(vector[5].c_str(), localeInvariant);
 	tracker_offset[2] = (float)_atof_l(vector[6].c_str(), localeInvariant);
 
-
-	ServerControllerViewPtr controller_view = controllerManager->getControllerViewPtr(targetId);
-	if (!controller_view ||
-		!controller_view->getIsOpen())
+	if (eigen_vector3f_is_valid(joint_offset) && eigen_vector3f_is_valid(tracker_offset))
 	{
-		return;
+		ServerControllerViewPtr controller_view = controllerManager->getControllerViewPtr(targetId);
+		if (!controller_view ||
+			!controller_view->getIsOpen())
+		{
+			return;
+		}
+
+		IControllerInterface *current_controller = current_controller_view->castChecked<IControllerInterface>();
+
+		Eigen::Vector3f new_position_meters = Eigen::Vector3f::Zero();
+
+		Eigen::Vector3f joint_position = controller_view->getPoseFilter()->getPositionCm(current_controller->getPredictionTime());
+		Eigen::Quaternionf joint_orientation = controller_view->getPoseFilter()->getOrientation();
+
+		Eigen::Vector3f prime;
+
+		rotate_vector_by_quaternion(joint_offset, joint_orientation, prime);
+
+
+
+		Eigen::Vector3f tracker_position = Eigen::Vector3f::Zero(); // = current_controller_view->getPoseFilter()->getPositionCm(current_controller->getPredictionTime());
+		Eigen::Quaternionf tracker_orientation = current_controller_view->getPoseFilter()->getOrientation();
+
+		tracker_position += joint_position + prime;
+
+		rotate_vector_by_quaternion(tracker_offset, tracker_orientation, prime);
+
+
+		new_position_meters = tracker_position + prime;
+		new_position_meters *= k_centimeters_to_meters;
+
+		Eigen::Vector3f new_position_meters_sec = Eigen::Vector3f::Zero();
+		m_state->apply_optical_state(new_position_meters, new_position_meters_sec, delta_time);
 	}
 
-	IControllerInterface *current_controller = current_controller_view->castChecked<IControllerInterface>();
-	
-	Eigen::Vector3f new_position_meters = Eigen::Vector3f::Zero();
-	
-	Eigen::Vector3f joint_position = controller_view->getPoseFilter()->getPositionCm(current_controller->getPredictionTime());
-	Eigen::Quaternionf joint_orientation = controller_view->getPoseFilter()->getOrientation();
-	
-	Eigen::Vector3f prime;
-
-	rotate_vector_by_quaternion(joint_offset, joint_orientation, prime);
-
-
-
-	Eigen::Vector3f tracker_position = Eigen::Vector3f::Zero(); // = current_controller_view->getPoseFilter()->getPositionCm(current_controller->getPredictionTime());
-	Eigen::Quaternionf tracker_orientation = current_controller_view->getPoseFilter()->getOrientation();
-
-	tracker_position += joint_position + prime;
-
-	rotate_vector_by_quaternion(tracker_offset, tracker_orientation, prime);
-
-
-	new_position_meters = tracker_position + prime;
-	new_position_meters *= k_centimeters_to_meters;
-
-	Eigen::Vector3f new_position_meters_sec = Eigen::Vector3f::Zero();
-	m_state->apply_optical_state(new_position_meters, new_position_meters_sec, delta_time);
 #endif
 }
 
