@@ -1418,38 +1418,38 @@ void AppStage_ControllerSettings::show_position_filter_tooltip(const std::string
 	if (name == "PassThru")
 	{
 		ImGui::SetTooltip(
-			"Direct pass through filter. No smoothing applied.\n"
-			"Its the fastest filter but does not smooth any optical jitter."
+			"Direct pass through of optical position. No smoothing applied.\n"
+			"The most responsive position filter but doesn't try to remove any jitter."
 		);
 	}
 	else if (name == "LowPassOptical")
 	{
 		ImGui::SetTooltip(
 			"Optical smoothing filter using distance.\n"
-			"Smoothes smaller movments to reduce optical jitter\n"
-			"but behaves like PassThru on quick movements.\n"
+			"Smooths smaller movements within short distances to reduce position jitter,\n"
+			"but behaves like PassThru on larger quicker movements.\n"
 			"(Recommended)"
 		);
 	}
 	else if (name == "LowPassIMU")
 	{
 		ImGui::SetTooltip(
-			"Optical smoothing filter using IMU.\n"
-			"Uses the device accelerometer to smooth and predict optical movement."
+			"Predictive smoothing filter using device Accelerometer.\n"
+			"Uses the device's accelerometer to predict and smooth optical movement."
 		);
 	}
 	else if (name == "LowPassExponential")
 	{
 		ImGui::SetTooltip(
-			"Optical smoothing filter using exponential curve for smoothing.\n"
-			"Reduces optical jitter greatly but also causes springy tracking and over prediction."
+			"Optical smoothing filter using exponential curve.\n"
+			"Reduces optical jitter greatly but can also causes springy tracking and over prediction."
 		);
 	}
 	else if (name == "ComplimentaryOpticalIMU")
 	{
 		ImGui::SetTooltip(
 			"Optical smoothing filter using variance curve and IMU for smoothing.\n"
-			"Smoothes optical tracking and reduces optical noise by tracker projection, distance and IMU.\n"
+			"Smooths optical tracking and reduces optical noise by tracker projection, distance and IMU.\n"
 			"Requires calibration.\n"
 			"(Use 'Calibrate Optical Noise' to calibrate)"
 		);
@@ -1458,7 +1458,7 @@ void AppStage_ControllerSettings::show_position_filter_tooltip(const std::string
 	{
 		ImGui::SetTooltip(
 			"Optical smoothing filter using kalman and IMU.\n"
-			"Smoothes optical tracking and reduces optical noise by tracker projection, distance and IMU.\n"
+			"Smooths optical tracking and reduces optical noise by tracker projection, distance and IMU.\n"
 			"Requires calibration.\n"
 			"(Use 'Calibrate Optical Noise' to calibrate / Experimental)"
 		);
@@ -1466,9 +1466,9 @@ void AppStage_ControllerSettings::show_position_filter_tooltip(const std::string
 	else if (name == "PositionExternalAttachment")
 	{
 		ImGui::SetTooltip(
-			"Will attach this controller to another and overwrites the optical tracking behavior.\n"
+			"Parents this controller to another and overwrites the optical tracking behavior.\n"
 			"It's recommended to turn off 'Enable Optical Tracking' when using this filter.\n"
-			"(Requires 'Virtual Device Manager')"
+			"(Requires 'PSmoveServiceEX Virtual Device Manager' found on GitHub)"
 		);
 	}
 }
@@ -1479,7 +1479,7 @@ void AppStage_ControllerSettings::show_orientation_filter_tooltip(const std::str
 	{
 		ImGui::SetTooltip(
 			"Direct pass through optical orientation filter.\n"
-			"Does not work on PSmove controllers, virtual controllers and virtual HMDs.\n"
+			"Only works with PSVR HMDs and PS4 gamepads. Does not work on PSmove controllers, virtual controllers and virtual HMDs.\n"
 			"[Optical]"
 		);
 	}
@@ -1509,8 +1509,8 @@ void AppStage_ControllerSettings::show_orientation_filter_tooltip(const std::str
 	{
 		ImGui::SetTooltip(
 			"Optical orientation filter using variance curve and madgwick.\n"
-			"Smoothes optical orintation and reduces optical orintation noise by tracker projection and distance.\n"
-			"Does not work on PSmove controllers, virtual controllers and virtual HMDs.\n"
+			"Smooths optical orintation and reduces optical orintation noise by tracker projection and distance.\n"
+			"Only works with PSVR HMDs and PS4 gamepads. Does not work on PSmove controllers, virtual controllers and virtual HMDs.\n"
 			"Requires calibration.\n"
 			"[Optical; Gyro]\n"
 			"(Use 'Calibrate Optical Noise' to calibrate)"
@@ -1520,7 +1520,7 @@ void AppStage_ControllerSettings::show_orientation_filter_tooltip(const std::str
 	{
 		ImGui::SetTooltip(
 			"Optical orientation filter using kalman.\n"
-			"Smoothes optical orintation and reduces optical orintation noise by tracker projection and distance.\n"
+			"Smooths optical orintation and reduces optical orintation noise by tracker projection and distance.\n"
 			"Requires calibration.\n"
 			"[Optical; Gyro; Accelerometer; Magnetometer]\n"
 			"(Use 'Calibrate Optical Noise' to calibrate)"
@@ -1529,8 +1529,8 @@ void AppStage_ControllerSettings::show_orientation_filter_tooltip(const std::str
 	else if (name == "OrientationExternal")
 	{
 		ImGui::SetTooltip(
-			"Uses external sources for orientation.\n"
-			"(Requires 'Virtual Device Manager')"
+			"Allows external source for orientation data (OwOTrack/SlimeVR).\n"
+			"(Requires 'PSmoveServiceEX Virtual Device Manager' found on GitHub)"
 		);
 	}
 }
