@@ -41,7 +41,7 @@ protected:
     struct ExternalAttachmentPositionFilterState *m_state;
 
 	HANDLE attachmentPipe;
-	char pipeBuffer[128];
+	char pipeBuffer[512];
 	bool showMessage;
 
 #ifdef WIN32

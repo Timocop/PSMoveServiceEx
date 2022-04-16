@@ -397,7 +397,7 @@ void PositionFilterExternalAttachment::update(
 		return;
 
 	DWORD dwRead;
-	BOOL success = ReadFile(attachmentPipe, pipeBuffer, 128, &dwRead, NULL);
+	BOOL success = ReadFile(attachmentPipe, pipeBuffer, sizeof(pipeBuffer), &dwRead, NULL);
 	if (!success)
 	{
 		switch (GetLastError())
@@ -441,7 +441,7 @@ void PositionFilterExternalAttachment::update(
 		p += vector.back().size() + 1;
 	}
 
-	if (vector.size() != 7)
+	if (vector.size() != 15)
 	{
 		return;
 	}
@@ -468,7 +468,22 @@ void PositionFilterExternalAttachment::update(
 	tracker_offset[1] = (float)_atof_l(vector[5].c_str(), localeInvariant);
 	tracker_offset[2] = (float)_atof_l(vector[6].c_str(), localeInvariant);
 
-	if (eigen_vector3f_is_valid(joint_offset) && eigen_vector3f_is_valid(tracker_offset))
+	Eigen::Quaternionf joint_yaw_offset;
+	joint_yaw_offset.x() = (float)_atof_l(vector[7].c_str(), localeInvariant);
+	joint_yaw_offset.y() = (float)_atof_l(vector[8].c_str(), localeInvariant);
+	joint_yaw_offset.z() = (float)_atof_l(vector[9].c_str(), localeInvariant);
+	joint_yaw_offset.w() = (float)_atof_l(vector[10].c_str(), localeInvariant);
+
+	Eigen::Quaternionf tracker_yaw_offset;
+	tracker_yaw_offset.x() = (float)_atof_l(vector[11].c_str(), localeInvariant);
+	tracker_yaw_offset.y() = (float)_atof_l(vector[12].c_str(), localeInvariant);
+	tracker_yaw_offset.z() = (float)_atof_l(vector[13].c_str(), localeInvariant);
+	tracker_yaw_offset.w() = (float)_atof_l(vector[14].c_str(), localeInvariant);
+
+	if (eigen_vector3f_is_valid(joint_offset) && 
+		eigen_vector3f_is_valid(tracker_offset) && 
+		eigen_quaternion_is_valid(joint_yaw_offset) &&
+		eigen_quaternion_is_valid(tracker_yaw_offset))
 	{
 		ServerControllerViewPtr controller_view = controllerManager->getControllerViewPtr(targetId);
 		if (!controller_view ||
@@ -487,8 +502,7 @@ void PositionFilterExternalAttachment::update(
 		Eigen::Vector3f prime;
 
 		rotate_vector_by_quaternion(joint_offset, joint_orientation, prime);
-
-
+		rotate_vector_by_quaternion(prime, joint_yaw_offset, prime);
 
 		Eigen::Vector3f tracker_position = Eigen::Vector3f::Zero(); // = current_controller_view->getPoseFilter()->getPositionCm(current_controller->getPredictionTime());
 		Eigen::Quaternionf tracker_orientation = current_controller_view->getPoseFilter()->getOrientation();
@@ -496,6 +510,7 @@ void PositionFilterExternalAttachment::update(
 		tracker_position += joint_position + prime;
 
 		rotate_vector_by_quaternion(tracker_offset, tracker_orientation, prime);
+		rotate_vector_by_quaternion(prime, tracker_yaw_offset, prime);
 
 
 		new_position_meters = tracker_position + prime;
