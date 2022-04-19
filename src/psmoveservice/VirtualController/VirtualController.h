@@ -24,6 +24,7 @@ public:
 		, version(CONFIG_VERSION)
         , gamepad_index(-1)
 		, psmove_emulation(false)
+		, enable_optical_tracking(true)
 		, position_filter_type("LowPassOptical")
         , max_velocity(1.f)
 		, mean_update_time_delta(0.008333f)
