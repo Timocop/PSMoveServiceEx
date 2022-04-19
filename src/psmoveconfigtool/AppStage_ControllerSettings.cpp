@@ -405,6 +405,11 @@ void AppStage_ControllerSettings::renderUI()
                     {
                         int newTrackingColorType = controllerInfo.TrackingColorType;
 
+						if (ImGui::Checkbox("Enable Optical Tracking", &controllerInfo.OpticalTracking))
+						{
+							request_set_controller_opticaltracking(controllerInfo.ControllerID, controllerInfo.OpticalTracking);
+						}
+
 						if (controllerInfo.ControllerType == PSMController_Virtual)
 						{
 							if (ImGui::Checkbox("Enable PSmove Emulation", &controllerInfo.PSmoveEmulation))
@@ -415,11 +420,6 @@ void AppStage_ControllerSettings::renderUI()
 							{
 								ImGui::SetTooltip("Enables orientation for virtual controllers using external sources.");
 							}
-						}
-
-						if (ImGui::Checkbox("Enable Optical Tracking", &controllerInfo.OpticalTracking))
-						{
-							request_set_controller_opticaltracking(controllerInfo.ControllerID, controllerInfo.OpticalTracking);
 						}
 
                         if (ImGui::Combo("Tracking Color", &newTrackingColorType, "Magenta\0Cyan\0Yellow\0Red\0Green\0Blue\0Custom0\0Custom1\0Custom2\0Custom3\0Custom4\0Custom5\0Custom6\0Custom7\0Custom8\0Custom9\0\0"))
