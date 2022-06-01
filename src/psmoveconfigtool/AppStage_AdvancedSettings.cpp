@@ -339,6 +339,7 @@ DeviceConfig::config2ptree()
 	pt.put("hmd_reconnect_interval", hmd_reconnect_interval);
 	//pt.put("hmd_poll_interval", hmd_poll_interval);
 	pt.put("gamepad_api_enabled", gamepad_api_enabled);
+	pt.put("gamepad_api_xinput_only", gamepad_api_xinput_only);
 	pt.put("platform_api_enabled", platform_api_enabled);
 
 	return pt;
@@ -356,6 +357,7 @@ DeviceConfig::ptree2config(const boost::property_tree::ptree &pt)
 	hmd_reconnect_interval = pt.get<int>("hmd_reconnect_interval", hmd_reconnect_interval);
 	//hmd_poll_interval = pt.get<int>("hmd_poll_interval", hmd_poll_interval);
 	gamepad_api_enabled = pt.get<bool>("gamepad_api_enabled", gamepad_api_enabled);
+	gamepad_api_xinput_only = pt.get<bool>("gamepad_api_xinput_only", gamepad_api_xinput_only);
 	platform_api_enabled = pt.get<bool>("platform_api_enabled", platform_api_enabled);
 }
 
@@ -985,6 +987,21 @@ void AppStage_AdvancedSettings::renderUI()
 							"Enable to use gamepad API (e.g. PSMove or gamepad controller buttons) in PSMoveService (recommended).\n"
 							"(The default value is TRUE)"
 						);
+				}
+
+				{
+					ImGui::Indent();
+					ImGui::Text("XInput gamepads only:");
+					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+					ImGui::Checkbox("##GamepadApiXInputOnly", &cfg_device.gamepad_api_xinput_only);
+
+					if (ImGui::IsItemHovered())
+						ImGui::SetTooltip(
+							"Enable to use XInput API only. (e.g. Xbox controllers)\n"
+							"(The default value is FALSE)"
+						);
+
+					ImGui::Unindent();
 				}
 
 				{

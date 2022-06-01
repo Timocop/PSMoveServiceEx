@@ -77,6 +77,7 @@ protected:
 
 public:
 	bool gamepad_api_enabled;
+	bool gamepad_api_xinput_only;
 
 private:
     static const PSMoveProtocol::Response_ResponseType k_list_udpated_response_type = PSMoveProtocol::Response_ResponseType_CONTROLLER_LIST_UPDATED;

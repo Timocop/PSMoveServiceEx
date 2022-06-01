@@ -17,7 +17,7 @@ int main()
 {
     log_init("info");
 
-	Gamepad_init();
+	Gamepad_init(false);
 	Gamepad_processEvents();
 
     if (hid_init() == -1)
