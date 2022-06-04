@@ -40,7 +40,7 @@ public:
 		, firmware_version(0)
 		, bt_firmware_version(0)
 		, firmware_revision(0)
-		, max_poll_failure_count(100)
+		, max_poll_failure_count(1000)
         , poll_timeout_ms(1000) 
         , prediction_time(0.f)
 		, enable_optical_tracking(true)

@@ -524,7 +524,7 @@ PSDualShock4ControllerConfig::ptree2config(const boost::property_tree::ptree &pt
     {
         is_valid = pt.get<bool>("is_valid", false);
         prediction_time = pt.get<float>("prediction_time", 0.f);
-        max_poll_failure_count = pt.get<long>("max_poll_failure_count", 100);
+        max_poll_failure_count = pt.get<long>("max_poll_failure_count", 1000);
 
         // Use the current accelerometer values (constructor defaults) as the default values
         accelerometer_gain.i = pt.get<float>("Calibration.Accel.X.k", accelerometer_gain.i);

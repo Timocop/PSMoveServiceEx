@@ -36,7 +36,7 @@ const int PS3EyeTrackerConfig::LENS_CALIBRATION_VERSION= 1;
 PS3EyeTrackerConfig::PS3EyeTrackerConfig(const std::string &fnamebase)
     : PSMoveConfig(fnamebase)
     , is_valid(false)
-    , max_poll_failure_count(100)
+    , max_poll_failure_count(1000)
 	, frame_width(640)
 	, frame_height(480)
 	, frame_rate(30)
@@ -132,7 +132,7 @@ PS3EyeTrackerConfig::ptree2config(const boost::property_tree::ptree &pt)
     if (config_version == PS3EyeTrackerConfig::CONFIG_VERSION)
     {
         is_valid = pt.get<bool>("is_valid", false);
-        max_poll_failure_count = pt.get<long>("max_poll_failure_count", 100);
+        max_poll_failure_count = pt.get<long>("max_poll_failure_count", 1000);
 		frame_width = pt.get<double>("frame_width", 640);
 		frame_height = pt.get<double>("frame_height", 480);
 		frame_rate = pt.get<double>("frame_rate", 30);

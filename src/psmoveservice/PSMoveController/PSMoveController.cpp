@@ -609,7 +609,7 @@ PSMoveControllerConfig::ptree2config(const boost::property_tree::ptree &pt)
 		firmware_revision = pt.get<unsigned short>("firmware_revision", 0);
 
         prediction_time = pt.get<float>("prediction_time", 0.f);
-		max_poll_failure_count = pt.get<long>("max_poll_failure_count", 100);
+		max_poll_failure_count = pt.get<long>("max_poll_failure_count", 1000);
 		poll_timeout_ms = pt.get<long>("poll_timeout_ms", 1000);
 		enable_optical_tracking = pt.get<bool>("enable_optical_tracking", true);
 

@@ -35,7 +35,7 @@ public:
 		, position_variance_exp_fit_a(0.0994158462f)
 		, position_variance_exp_fit_b(-0.000567041978f)
 		, orientation_variance(0.005f)
-        , max_poll_failure_count(100)
+        , max_poll_failure_count(1000)
         , prediction_time(0.f)
 		, tracking_color_id(eCommonTrackingColorID::Blue)
     {
