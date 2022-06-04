@@ -969,6 +969,7 @@ void AppStage_ColorCalibration::renderUI()
 								m_blacklisted_projection[i].y = 0.f;
 								m_blacklisted_projection[i].w = 0.f;
 								m_blacklisted_projection[i].h = 0.f;
+								request_tracker_set_projectionblacklist(m_blacklisted_projection);
 							}
 							ImGui::PopID();
 						}
