@@ -56,6 +56,7 @@ public:
     double distortionP1;
     double distortionP2;
 
+	CommonDeviceBlacklistProjection projection_blacklist[eCommonBlacklistProjection::MAX_BLACKLIST_PROJECTIONS];
     eFOVSetting fovSetting;
     CommonDevicePose pose;
 	CommonHSVColorRangeTable SharedColorPresets;
@@ -137,6 +138,8 @@ public:
     void gatherTrackingColorPresets(const std::string &controller_serial, PSMoveProtocol::Response_ResultTrackerSettings* settings) const override;
     void setTrackingColorPreset(const std::string &controller_serial, eCommonTrackingColorID color, const CommonHSVColorRange *preset) override;
     void getTrackingColorPreset(const std::string &controller_serial, eCommonTrackingColorID color, CommonHSVColorRange *out_preset) const override;
+	void setBlacklistProjection(const int index, const float x, const float y, const float w, const float h) override;
+	bool getBlacklistProjection(const int index, float &x, float &y, float &w, float &h) const override;
 
     // -- Getters
     inline const PS3EyeTrackerConfig &getConfig() const

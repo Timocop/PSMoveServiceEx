@@ -754,6 +754,21 @@ public:
 		cv::line(*bgrShmemBuffer, cv::Point(rec.x, rec.y + rec.height - 1), cv::Point(rec.x + rec.width - 1, rec.y), cv::Scalar(0, 0, 255));
 	}
 
+	void
+	draw_pose_blacklist(CommonDeviceBlacklistProjection proj_rec)
+	{
+		cv::Rect rec;
+		rec.x = static_cast<int>(proj_rec.x);
+		rec.y = static_cast<int>(proj_rec.y);
+		rec.width = static_cast<int>(proj_rec.w);
+		rec.height = static_cast<int>(proj_rec.h);
+
+		//Draw occlusion rectangle on bgrShmemBuffer
+		cv::rectangle(*bgrShmemBuffer, rec, cv::Scalar(0, 0, 255));
+		cv::line(*bgrShmemBuffer, cv::Point(rec.x, rec.y), cv::Point(rec.x + rec.width - 1, rec.y + rec.height - 1), cv::Scalar(0, 0, 255));
+		cv::line(*bgrShmemBuffer, cv::Point(rec.x, rec.y + rec.height - 1), cv::Point(rec.x + rec.width - 1, rec.y), cv::Scalar(0, 0, 255));
+	}
+
     int frameWidth;
     int frameHeight;
 
@@ -1297,6 +1312,16 @@ void ServerTrackerView::getHMDTrackingColorPreset(
     return m_device->getTrackingColorPreset(hmd_id, color, out_preset);
 }
 
+void ServerTrackerView::setBlacklistProjection(const int index, const float x, const float y, const float w, const float h)
+{
+	m_device->setBlacklistProjection(index, x, y, w, h);
+}
+
+bool ServerTrackerView::getBlacklistProjection(const int index, float &x, float &y, float &w, float &h)
+{
+	return m_device->getBlacklistProjection(index, x, y, w, h);
+}
+
 bool
 ServerTrackerView::computeProjectionForController(
     const ServerControllerView* tracked_controller,
@@ -1332,16 +1357,18 @@ ServerTrackerView::computeProjectionForController(
 	const bool bIsTracking = priorPoseEst->bCurrentlyTracking;
 	const bool bEnforceNewROI = priorPoseEst->bEnforceNewROI;
 	const bool bIsOccluded = priorPoseEst->bIsOccluded;
+	const bool bIsBlacklisted = priorPoseEst->bIsBlacklisted;
 	const CommonDeviceScreenLocation mOcclusionAreaPos = priorPoseEst->occlusionAreaPos;
 	const float fOcclusionAreaSize = priorPoseEst->occlusionAreaSize;
+	const CommonDeviceBlacklistProjection mBlacklistedAreaRec = priorPoseEst->blacklistedAreaRec;
 
     cv::Rect2i ROI= computeTrackerROIForPoseProjection(
 		(bRoiOptimized) ? tracked_controller->getDeviceID() : -1,
         bRoiDisabled,
 		iRoiEdgeOffset,
         this,		
-        ((bIsTracking || bIsOccluded) && !bEnforceNewROI) ? (tracked_controller->getPoseFilter()) : (nullptr),
-        ((bIsTracking || bIsOccluded) && !bEnforceNewROI) ? (&priorPoseEst->projection) : (nullptr),
+        ((bIsTracking || bIsOccluded || bIsBlacklisted) && !bEnforceNewROI) ? (tracked_controller->getPoseFilter()) : (nullptr),
+        ((bIsTracking || bIsOccluded || bIsBlacklisted) && !bEnforceNewROI) ? (&priorPoseEst->projection) : (nullptr),
         tracking_shape);
 
     m_opencv_buffer_state->applyROI(ROI);
@@ -1479,6 +1506,11 @@ ServerTrackerView::computeProjectionForController(
 	if (bIsOccluded)
 	{
 		m_opencv_buffer_state->draw_pose_occlusion(mOcclusionAreaPos, fOcclusionAreaSize);
+	}
+
+	if (bIsBlacklisted)
+	{
+		m_opencv_buffer_state->draw_pose_blacklist(mBlacklistedAreaRec);
 	}
 
 

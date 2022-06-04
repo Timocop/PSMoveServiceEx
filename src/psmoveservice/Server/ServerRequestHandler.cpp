@@ -390,6 +390,10 @@ public:
 				response = new PSMoveProtocol::Response;
 				handle_request__set_controller_psmove_emulation(context, response);
 				break;
+			case PSMoveProtocol::Request_RequestType_SET_TRACKER_PROJECTIONBLACKLIST:
+				response = new PSMoveProtocol::Response;
+				handle_request__set_tracker_projectionblacklist(context, response);
+				break;
 
             default:
                 assert(0 && "Whoops, bad request!");
@@ -1885,22 +1889,22 @@ protected:
 	}
 
     // -- tracker requests -----
-    inline void common_device_pose_to_protocol_pose(
-        const CommonDevicePose &pose, 
-        PSMoveProtocol::Pose *result)
-    {
-        PSMoveProtocol::Orientation *orietation = result->mutable_orientation();
-        PSMoveProtocol::Position *position = result->mutable_position();
+	inline void common_device_pose_to_protocol_pose(
+		const CommonDevicePose &pose,
+		PSMoveProtocol::Pose *result)
+	{
+		PSMoveProtocol::Orientation *orietation = result->mutable_orientation();
+		PSMoveProtocol::Position *position = result->mutable_position();
 
-        orietation->set_w(pose.Orientation.w);
-        orietation->set_x(pose.Orientation.x);
-        orietation->set_y(pose.Orientation.y);
-        orietation->set_z(pose.Orientation.z);
+		orietation->set_w(pose.Orientation.w);
+		orietation->set_x(pose.Orientation.x);
+		orietation->set_y(pose.Orientation.y);
+		orietation->set_z(pose.Orientation.z);
 
-        position->set_x(pose.PositionCm.x);
-        position->set_y(pose.PositionCm.y);
-        position->set_z(pose.PositionCm.z);
-    }
+		position->set_x(pose.PositionCm.x);
+		position->set_y(pose.PositionCm.y);
+		position->set_z(pose.PositionCm.z);
+	}
 
     void handle_request__get_tracker_list(
         const RequestContext &context,
@@ -2001,7 +2005,7 @@ protected:
                     CommonDevicePose pose= tracker_view->getTrackerPose();
 
                     common_device_pose_to_protocol_pose(pose, tracker_info->mutable_tracker_pose());
-                }                
+                }
             }
         }
 
@@ -2111,7 +2115,7 @@ protected:
                 settings->set_exposure(static_cast<float>(tracker_view->getExposure()));
                 settings->set_gain(static_cast<float>(tracker_view->getGain()));
                 tracker_view->gatherTrackerOptions(settings);
-
+				
                 switch (context.request->request_get_tracker_settings().device_category())
                 {
                 case PSMoveProtocol::Request_RequestGetTrackerSettings_DeviceCategory_CONTROLLER:
@@ -2127,6 +2131,57 @@ protected:
                         tracker_view->gatherTrackingColorPresets(hmd_view, settings);
                     } break;
                 }
+
+				for (int i = 0; i < eCommonBlacklistProjection::MAX_BLACKLIST_PROJECTIONS; ++i)
+				{
+					float x, y, w, h;
+					if (tracker_view->getBlacklistProjection(i, x, y, w, h))
+					{
+						switch (i)
+						{
+						case 0: {
+							PSMoveProtocol::ProjectionBlacklist *proj_blacklist = settings->mutable_projection_blacklist()->mutable__1();
+							proj_blacklist->set_x(x);
+							proj_blacklist->set_y(y);
+							proj_blacklist->set_w(w);
+							proj_blacklist->set_h(h);
+							break;
+						}
+						case 1: {
+							PSMoveProtocol::ProjectionBlacklist *proj_blacklist = settings->mutable_projection_blacklist()->mutable__2();
+							proj_blacklist->set_x(x);
+							proj_blacklist->set_y(y);
+							proj_blacklist->set_w(w);
+							proj_blacklist->set_h(h);
+							break;
+						}
+						case 2: {
+							PSMoveProtocol::ProjectionBlacklist *proj_blacklist = settings->mutable_projection_blacklist()->mutable__3();
+							proj_blacklist->set_x(x);
+							proj_blacklist->set_y(y);
+							proj_blacklist->set_w(w);
+							proj_blacklist->set_h(h);
+							break;
+						}
+						case 3: {
+							PSMoveProtocol::ProjectionBlacklist *proj_blacklist = settings->mutable_projection_blacklist()->mutable__4();
+							proj_blacklist->set_x(x);
+							proj_blacklist->set_y(y);
+							proj_blacklist->set_w(w);
+							proj_blacklist->set_h(h);
+							break;
+						}
+						case 4: {
+							PSMoveProtocol::ProjectionBlacklist *proj_blacklist = settings->mutable_projection_blacklist()->mutable__5();
+							proj_blacklist->set_x(x);
+							proj_blacklist->set_y(y);
+							proj_blacklist->set_w(w);
+							proj_blacklist->set_h(h);
+							break;
+						}
+						}
+					}
+				}
 
                 response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
             }
@@ -2503,51 +2558,140 @@ protected:
         }
     }
 
-    inline CommonDevicePose protocol_pose_to_common_device_pose(const PSMoveProtocol::Pose &pose)
-    {
-        CommonDevicePose result;
+	inline CommonDevicePose protocol_pose_to_common_device_pose(const PSMoveProtocol::Pose &pose)
+	{
+		CommonDevicePose result;
 
-        result.Orientation.w = pose.orientation().w();
-        result.Orientation.x = pose.orientation().x();
-        result.Orientation.y = pose.orientation().y();
-        result.Orientation.z = pose.orientation().z();
+		result.Orientation.w = pose.orientation().w();
+		result.Orientation.x = pose.orientation().x();
+		result.Orientation.y = pose.orientation().y();
+		result.Orientation.z = pose.orientation().z();
 
-        result.PositionCm.x = pose.position().x();
-        result.PositionCm.y = pose.position().y();
-        result.PositionCm.z = pose.position().z();
+		result.PositionCm.x = pose.position().x();
+		result.PositionCm.y = pose.position().y();
+		result.PositionCm.z = pose.position().z();
 
-        return result;
-    }
+		return result;
+	}
 
-    void handle_request__set_tracker_pose(
-        const RequestContext &context,
-        PSMoveProtocol::Response *response)
-    {
-        const int tracker_id = context.request->request_set_tracker_pose().tracker_id();
-        if (ServerUtility::is_index_valid(tracker_id, m_device_manager.getTrackerViewMaxCount()))
-        {
-            ServerTrackerViewPtr tracker_view = m_device_manager.getTrackerViewPtr(tracker_id);
-            if (tracker_view->getIsOpen())
-            {
-                const PSMoveProtocol::Pose &srcPose = 
-                    context.request->request_set_tracker_pose().pose();
-                CommonDevicePose destPose = protocol_pose_to_common_device_pose(srcPose);
+	void handle_request__set_tracker_pose(
+		const RequestContext &context,
+		PSMoveProtocol::Response *response)
+	{
+		const int tracker_id = context.request->request_set_tracker_pose().tracker_id();
+		if (ServerUtility::is_index_valid(tracker_id, m_device_manager.getTrackerViewMaxCount()))
+		{
+			ServerTrackerViewPtr tracker_view = m_device_manager.getTrackerViewPtr(tracker_id);
+			if (tracker_view->getIsOpen())
+			{
+				const PSMoveProtocol::Pose &srcPose =
+					context.request->request_set_tracker_pose().pose();
+				CommonDevicePose destPose = protocol_pose_to_common_device_pose(srcPose);
 
-                tracker_view->setTrackerPose(&destPose);
-                tracker_view->saveSettings();
+				tracker_view->setTrackerPose(&destPose);
+				tracker_view->saveSettings();
 
-                response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
-            }
-            else
-            {
-                response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
-            }
-        }
-        else
-        {
-            response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
-        }
-    }
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+			}
+			else
+			{
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+			}
+		}
+		else
+		{
+			response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+		}
+	}
+
+	void handle_request__set_tracker_projectionblacklist(
+		const RequestContext &context,
+		PSMoveProtocol::Response *response)
+	{
+		const int tracker_id = context.request->request_set_tracker_projection_blacklist().tracker_id();
+		if (ServerUtility::is_index_valid(tracker_id, m_device_manager.getTrackerViewMaxCount()))
+		{
+			ServerTrackerViewPtr tracker_view = m_device_manager.getTrackerViewPtr(tracker_id);
+			if (tracker_view->getIsOpen())
+			{
+				const PSMoveProtocol::ProjectionBlacklistList &proj_blacklist =
+					context.request->request_set_tracker_projection_blacklist().projection_blacklist();
+
+				for (int i = 0; i < eCommonBlacklistProjection::MAX_BLACKLIST_PROJECTIONS; ++i)
+				{
+					switch (i)
+					{
+					case 0: {
+						const PSMoveProtocol::ProjectionBlacklist proj_blacklist_2 = proj_blacklist._1();
+
+						tracker_view->setBlacklistProjection(
+							i, 
+							proj_blacklist_2.x(), 
+							proj_blacklist_2.y(), 
+							proj_blacklist_2.w(), 
+							proj_blacklist_2.h());
+						break;
+					}
+					case 1: {
+						const PSMoveProtocol::ProjectionBlacklist proj_blacklist_2 = proj_blacklist._2();
+
+						tracker_view->setBlacklistProjection(
+							i, 
+							proj_blacklist_2.x(), 
+							proj_blacklist_2.y(), 
+							proj_blacklist_2.w(),
+							proj_blacklist_2.h());
+						break;
+					}
+					case 2: {
+						const PSMoveProtocol::ProjectionBlacklist proj_blacklist_2 = proj_blacklist._3();
+
+						tracker_view->setBlacklistProjection(
+							i, 
+							proj_blacklist_2.x(), 
+							proj_blacklist_2.y(), 
+							proj_blacklist_2.w(), 
+							proj_blacklist_2.h());
+						break;
+					}
+					case 3: {
+						const PSMoveProtocol::ProjectionBlacklist proj_blacklist_2 = proj_blacklist._4();
+
+						tracker_view->setBlacklistProjection(
+							i, 
+							proj_blacklist_2.x(), 
+							proj_blacklist_2.y(), 
+							proj_blacklist_2.w(), 
+							proj_blacklist_2.h());
+						break;
+					}
+					case 4: {
+						const PSMoveProtocol::ProjectionBlacklist proj_blacklist_2 = proj_blacklist._5();
+
+						tracker_view->setBlacklistProjection(
+							i,
+							proj_blacklist_2.x(), 
+							proj_blacklist_2.y(), 
+							proj_blacklist_2.w(), 
+							proj_blacklist_2.h());
+						break;
+					}
+					}
+				}
+				tracker_view->saveSettings();
+
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+			}
+			else
+			{
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+			}
+		}
+		else
+		{
+			response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+		}
+	}
 
     void handle_request__set_tracker_intrinsics(
         const RequestContext &context,

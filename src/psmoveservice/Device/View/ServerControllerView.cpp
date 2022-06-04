@@ -517,6 +517,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
             // Assume we're going to lose tracking this frame
             bool bCurrentlyTracking = false;
 			bool bOccluded = false;
+			bool bBlacklisted = false;
 
             if (tracker->getIsOpen())
             {
@@ -559,6 +560,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 					}
 
 					bool bIsOccluded = false;
+					bool bIsBlacklisted = false;
 
 					//Create an occlusion area at the last seen valid tracked projection.
 					//If the projection center is near the occluded area it will not mark the projection as valid.
@@ -609,27 +611,65 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 						}
 					}
 
-					// Ignore projections that are occluded BUT always pass atleast 2 biggest projected trackers.
-					if (!bIsOccluded || projections_found < trackerMgrConfig.occluded_area_ignore_trackers)
+					if (bWasTracking || bIsVisibleThisUpdate)
 					{
-						bOccluded = false;
-
-						// If the projection isn't too old (or updated this tick), 
-						// say we have a valid tracked location
-						if ((bWasTracking && !tracker->getHasUnpublishedState()) || bIsVisibleThisUpdate)
+						for (int i = 0; i < eCommonBlacklistProjection::MAX_BLACKLIST_PROJECTIONS; ++i)
 						{
-							// If this tracker has a valid projection for the controller
-							// add it to the tracker id list
-							valid_projection_tracker_ids[projections_found] = tracker_id;
-							++projections_found;
+							float x, y, w, h;
+							if (tracker->getBlacklistProjection(i, x, y, w, h))
+							{
+								const float tracker_x = trackerPoseEstimateRef.projection.shape.ellipse.center.x;
+								const float tracker_y = trackerPoseEstimateRef.projection.shape.ellipse.center.y;
 
-							// Flag this pose estimate as invalid
-							bCurrentlyTracking = true;
+								bool bInArea = (tracker_x > x)
+									&& (tracker_y > y)
+									&& (tracker_x < x + w)
+									&& (tracker_y < y + h);
+
+								if (bInArea)
+								{
+									trackerPoseEstimateRef.blacklistedAreaRec.x = x;
+									trackerPoseEstimateRef.blacklistedAreaRec.y = y;
+									trackerPoseEstimateRef.blacklistedAreaRec.w = w;
+									trackerPoseEstimateRef.blacklistedAreaRec.h = h;
+
+									bIsBlacklisted = true;
+									break;
+								}
+							}
 						}
+					}
+
+					// Ignore projections that are occluded BUT always pass atleast 2 biggest projected trackers.
+					if (bIsBlacklisted)
+					{
+						bBlacklisted = true;
 					}
 					else
 					{
-						bOccluded = true;
+						bBlacklisted = false;
+
+						if (!bIsOccluded || projections_found < trackerMgrConfig.occluded_area_ignore_trackers)
+						{
+							bOccluded = false;
+
+							// If the projection isn't too old (or updated this tick), 
+							// say we have a valid tracked location
+							if ((bWasTracking && !tracker->getHasUnpublishedState()) || bIsVisibleThisUpdate)
+							{
+								// If this tracker has a valid projection for the controller
+								// add it to the tracker id list
+								valid_projection_tracker_ids[projections_found] = tracker_id;
+								++projections_found;
+
+								// Flag this pose estimate as invalid
+								bCurrentlyTracking = true;
+							}
+						}
+						else
+						{
+							bOccluded = true;
+						}
 					}
                 }
             }
@@ -639,6 +679,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
             trackerPoseEstimateRef.bValidTimestamps = true;
             trackerPoseEstimateRef.bCurrentlyTracking = bCurrentlyTracking;
 			trackerPoseEstimateRef.bIsOccluded = bOccluded;
+			trackerPoseEstimateRef.bIsBlacklisted = bBlacklisted;
         }
 
         // How we compute the final world pose estimate varies based on
@@ -2926,7 +2967,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
                 ServerTrackerView::triangulateWorldPosition(
                     tracker.get(), &screen_location,
                     other_tracker.get(), &other_screen_location);
-
+			
 			// Check how much the trangulation deviates from other trackers.
 			// Ignore its position if it deviates too much and renew its ROI.
 			if (pair_count > 0 && cfg.max_tracker_position_deviation > 0.01f)

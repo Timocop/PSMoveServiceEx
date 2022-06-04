@@ -54,6 +54,11 @@ public:
 	}
 
 protected:
+	enum eCommonBlacklistProjection
+	{
+		MAX_BLACKLIST_PROJECTIONS = 5
+	};
+
     enum eMenuState
     {
         inactive,
@@ -147,6 +152,24 @@ protected:
         float value_range;
     };
 
+	struct CommonDeviceBlacklistProjection
+	{
+		float x, y, w, h;
+
+		inline void clear()
+		{
+			x = y = w = h = 0.f;
+		}
+
+		inline void set(float _x, float _y, float _w, float _h)
+		{
+			x = _x;
+			y = _y;
+			w = _w;
+			h = _h;
+		}
+	};
+
     void setState(eMenuState newState);
 
     void request_start_controller_streams();
@@ -186,10 +209,12 @@ protected:
         const PSMResponseMessage *response,
         void *userdata);
 
-    void request_tracker_set_option(TrackerOption &option, int new_option_index);
-    static void handle_tracker_set_option_response(
-        const PSMResponseMessage *response,
-        void *userdata);
+	void request_tracker_set_option(TrackerOption &option, int new_option_index);
+	static void handle_tracker_set_option_response(
+		const PSMResponseMessage *response,
+		void *userdata);
+
+	void request_tracker_set_projectionblacklist(CommonDeviceBlacklistProjection projection_blacklisted[eCommonBlacklistProjection::MAX_BLACKLIST_PROJECTIONS]);
 
     void request_tracker_set_color_preset(PSMTrackingColorType color_type, TrackerColorPreset &color_preset);
     static void handle_tracker_set_color_preset_response(
@@ -252,6 +277,8 @@ private:
     double m_trackerGain;
     std::vector<TrackerOption> m_trackerOptions;
     TrackerColorPreset m_colorPresets[PSMTrackingColorType_MaxColorTypes];
+	CommonDeviceBlacklistProjection m_blacklisted_projection[eCommonBlacklistProjection::MAX_BLACKLIST_PROJECTIONS];
+	
 	int tracker_count;
 	int tracker_index;
 
@@ -277,6 +304,7 @@ private:
 	bool m_bColorCollisionPrevent;
 	bool m_bColorCollsionShow;
 	std::vector<std::vector<int>> m_mDetectedContures;
+	bool m_bProjectionBlacklistedShow;
 
 	// Auto detect color
 	bool m_bDetectingColors;

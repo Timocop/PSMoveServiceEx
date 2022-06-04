@@ -13,6 +13,11 @@ namespace PSMoveProtocol
 };
 
 // -- constants -----
+enum eCommonBlacklistProjection
+{
+	MAX_BLACKLIST_PROJECTIONS = 5
+};
+
 enum eCommonTrackingColorID {
     INVALID_COLOR= -1,
     
@@ -156,6 +161,24 @@ struct CommonDeviceScreenLocation
         x = _x;
         y = _y;
     }
+};
+
+struct CommonDeviceBlacklistProjection
+{
+	float x, y, w, h;
+
+	inline void clear()
+	{
+		x = y = w = h = 0.f;
+	}
+
+	inline void set(float _x, float _y, float _w, float _h)
+	{
+		x = _x;
+		y = _y;
+		w = _w;
+		h = _h;
+	}
 };
 
 struct CommonDeviceQuaternion
@@ -623,6 +646,8 @@ public:
     virtual void gatherTrackingColorPresets(const std::string &controller_serial, PSMoveProtocol::Response_ResultTrackerSettings* settings) const = 0;
     virtual void setTrackingColorPreset(const std::string &controller_serial, eCommonTrackingColorID color, const CommonHSVColorRange *preset) = 0;
     virtual void getTrackingColorPreset(const std::string &controller_serial, eCommonTrackingColorID color, CommonHSVColorRange *out_preset) const = 0;
+	virtual void setBlacklistProjection(const int index, const float x, const float y, const float w, const float h) = 0;
+	virtual bool getBlacklistProjection(const int index, float &x, float &y, float &w, float &h) const = 0;
 };
 
 /// Abstract class for HMD interface. Implemented HMD classes

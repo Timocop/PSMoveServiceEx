@@ -57,13 +57,15 @@ PS3EyeTrackerConfig::PS3EyeTrackerConfig(const std::string &fnamebase)
     , distortionP2(0.00010589254816295579)
     , fovSetting(BlueDot)
 {
+	memset(projection_blacklist, 0, sizeof(projection_blacklist));
+
     pose.clear();
 
 	SharedColorPresets.table_name.clear();
-    for (int preset_index = 0; preset_index < eCommonTrackingColorID::MAX_TRACKING_COLOR_TYPES; ++preset_index)
-    {
-        SharedColorPresets.color_presets[preset_index] = k_default_color_presets[preset_index];
-    }
+	for (int i = 0; i < eCommonTrackingColorID::MAX_TRACKING_COLOR_TYPES; ++i)
+	{
+		SharedColorPresets.color_presets[i] = k_default_color_presets[i];
+	}
 };
 
 const boost::property_tree::ptree
@@ -110,6 +112,16 @@ PS3EyeTrackerConfig::config2ptree()
 		writeColorPropertyPresetTable(&controller_preset_table, pt);
 	}
 
+	for (int i = 0; i < eCommonBlacklistProjection::MAX_BLACKLIST_PROJECTIONS; ++i)
+	{
+		std::string key_name = "blacklist_projections.";
+		key_name.append(std::to_string(i));
+		
+		pt.put(key_name + std::string(".x"), projection_blacklist[i].x);
+		pt.put(key_name + std::string(".y"), projection_blacklist[i].y);
+		pt.put(key_name + std::string(".w"), projection_blacklist[i].w);
+		pt.put(key_name + std::string(".h"), projection_blacklist[i].h);
+	}
     return pt;
 }
 
@@ -188,6 +200,19 @@ PS3EyeTrackerConfig::ptree2config(const boost::property_tree::ptree &pt)
 
 				DeviceColorPresets.push_back(table);
 			}
+		}
+
+		for (int i = 0; i < eCommonBlacklistProjection::MAX_BLACKLIST_PROJECTIONS; ++i)
+		{
+			std::string key_name = "blacklist_projections.";
+			key_name.append(std::to_string(i));
+
+			projection_blacklist[i].clear();
+
+			projection_blacklist[i].x = pt.get<float>(key_name + std::string(".x"), 0.0);
+			projection_blacklist[i].y = pt.get<float>(key_name + std::string(".y"), 0.0);
+			projection_blacklist[i].w = pt.get<float>(key_name + std::string(".w"), 0.0);
+			projection_blacklist[i].h = pt.get<float>(key_name + std::string(".h"), 0.0);
 		}
     }
     else
@@ -859,4 +884,32 @@ void PS3EyeTracker::getTrackingColorPreset(
 	const CommonHSVColorRangeTable *table= cfg.getColorRangeTable(controller_serial);
 
     *out_preset = table->color_presets[color];
+}
+
+void PS3EyeTracker::setBlacklistProjection(const int index, const float x, const float y, const float w, const float h)
+{
+	if (index < 0 || index > eCommonBlacklistProjection::MAX_BLACKLIST_PROJECTIONS - 1)
+	{
+		return;
+	}
+
+	cfg.projection_blacklist[index].clear();
+	cfg.projection_blacklist[index].x = x;
+	cfg.projection_blacklist[index].y = y;
+	cfg.projection_blacklist[index].w = w;
+	cfg.projection_blacklist[index].h = h;
+}
+
+bool PS3EyeTracker::getBlacklistProjection(const int index, float &x, float &y, float &w, float &h) const
+{
+	if (index < 0 || index > eCommonBlacklistProjection::MAX_BLACKLIST_PROJECTIONS - 1)
+	{
+		return false;
+	}
+
+	x = cfg.projection_blacklist[index].x;
+	y = cfg.projection_blacklist[index].y;
+	w = cfg.projection_blacklist[index].w;
+	h = cfg.projection_blacklist[index].h;
+	return true;
 }

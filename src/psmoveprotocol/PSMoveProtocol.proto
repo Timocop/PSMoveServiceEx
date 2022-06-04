@@ -73,6 +73,21 @@ message Pose {
     Position position= 2;
 }
 
+message ProjectionBlacklistList {
+	ProjectionBlacklist _1 = 1;
+	ProjectionBlacklist _2 = 2;
+	ProjectionBlacklist _3 = 3;
+	ProjectionBlacklist _4 = 4;
+	ProjectionBlacklist _5 = 5;
+}
+
+message ProjectionBlacklist {
+	float x = 1;
+	float y = 2;
+	float w = 3;
+	float h = 4;
+}
+
 enum TrackerType {
     PS3EYE = 0;
 }
@@ -185,6 +200,7 @@ message Request {
 
 		SET_CONTROLLER_OPTICAL_TRACKING = 48;
 		SET_CONTROLLER_PSMOVE_EMULATION = 49;
+		SET_TRACKER_PROJECTIONBLACKLIST = 50;
     }
     RequestType type = 2;
 
@@ -561,6 +577,12 @@ message Request {
     }
     RequestSetControllerPSmoveEmulation request_set_controller_psmove_emulation = 49;
 
+    // Parameters for SET_TRACKER_PROJECTIONBLACKLIST
+    message RequestSetTrackerProjectionBlacklist {
+        int32 tracker_id = 1;
+        ProjectionBlacklistList projection_blacklist = 2;
+    }
+    RequestSetTrackerProjectionBlacklist request_set_tracker_projection_blacklist = 50;
 }
 
 // Reliable (TCP) responses to requests
@@ -712,6 +734,9 @@ message Response {
         float frame_rate= 5;
         float frame_width= 6;
         float frame_height= 7;
+			
+		// Tracker Projection Blacklist
+		ProjectionBlacklistList projection_blacklist = 8;
     }
     ResultTrackerSettings result_tracker_settings = 25;
 

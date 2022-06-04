@@ -197,8 +197,11 @@ AppStage_ColorCalibration::AppStage_ColorCalibration(App *app)
 	, m_iDetectingAdjustMethod(eDetectionAdjustMethod::adjust_exposure)
 	, m_bDetectingCancel(false)
 	, m_iDetectingFailReason(eDetectionFailReason::failreason_unknown)
+	, m_bProjectionBlacklistedShow(true)
 {
 	memset(m_colorPresets, 0, sizeof(m_colorPresets));
+	memset(m_blacklisted_projection, 0, sizeof(m_blacklisted_projection));
+
 	m_mAlignPosition[0] = 0.0f;
 	m_mAlignPosition[1] = 0.0f;
 }
@@ -401,6 +404,99 @@ void AppStage_ColorCalibration::update()
 
 			get_contures_lower(0, 2, m_mDetectedContures);
 
+
+			if (!m_bAlignDetectColor)
+			{
+				if (m_bProjectionBlacklistedShow)
+				{
+					for (int i = 0; i < eCommonBlacklistProjection::MAX_BLACKLIST_PROJECTIONS; ++i)
+					{
+						float proj_x, proj_y, proj_w, proj_h;
+						proj_x = m_blacklisted_projection[i].x;
+						proj_y = m_blacklisted_projection[i].y;
+						proj_w = m_blacklisted_projection[i].w;
+						proj_h = m_blacklisted_projection[i].h;
+
+						cv::Rect rect = cv::Rect(proj_x, proj_y, proj_w, proj_h);
+
+						cv::rectangle(
+							*m_video_buffer_state->bgrBuffer,
+							rect,
+							cv::Scalar(0, 255, 255)
+						);
+					}
+				}
+
+				if (m_bColorCollsionShow || m_bDetectingColors)
+				{
+					float align_window_size = 32.f;
+
+					int detect_count = 0;
+
+					for (std::vector<int> item : m_mDetectedContures)
+					{
+						ImVec2 dispSize = ImGui::GetIO().DisplaySize;
+						int img_x = (static_cast<int>(item[0]) * m_video_buffer_state->bgrBuffer->cols) / static_cast<int>(dispSize.x);
+						int img_y = (static_cast<int>(item[1]) * m_video_buffer_state->bgrBuffer->rows) / static_cast<int>(dispSize.y);
+						ImVec2 wndCenter = ImVec2(static_cast<float>(img_x), static_cast<float>(img_y));
+
+						if (detect_count++ == 0)
+						{
+							cv::Rect rect = cv::Rect(
+								wndCenter.x - (align_window_size / 2),
+								wndCenter.y - (align_window_size / 2),
+								align_window_size,
+								align_window_size);
+
+							cv::rectangle(
+								*m_video_buffer_state->bgrBuffer,
+								rect,
+								cv::Scalar(0, 255, 0)
+							);
+						}
+						else
+						{
+							cv::Rect rect = cv::Rect(
+								wndCenter.x - (align_window_size / 2),
+								wndCenter.y - (align_window_size / 2),
+								align_window_size,
+								align_window_size);
+
+							cv::rectangle(
+								*m_video_buffer_state->bgrBuffer,
+								rect,
+								cv::Scalar(0, 0, 255)
+							);
+						}
+					}
+				}
+				else
+				{
+					float align_window_size = 32.f;
+
+					for (std::vector<int> item : m_mDetectedContures)
+					{
+						ImVec2 dispSize = ImGui::GetIO().DisplaySize;
+						int img_x = (static_cast<int>(item[0]) * m_video_buffer_state->bgrBuffer->cols) / static_cast<int>(dispSize.x);
+						int img_y = (static_cast<int>(item[1]) * m_video_buffer_state->bgrBuffer->rows) / static_cast<int>(dispSize.y);
+						ImVec2 wndCenter = ImVec2(static_cast<float>(img_x), static_cast<float>(img_y));
+
+						cv::Rect rect = cv::Rect(
+							wndCenter.x - (align_window_size / 2),
+							wndCenter.y - (align_window_size / 2),
+							align_window_size,
+							align_window_size);
+
+						cv::rectangle(
+							*m_video_buffer_state->bgrBuffer,
+							rect,
+							cv::Scalar(255, 255, 255)
+						);
+						break;
+					}
+				}
+			}
+
             switch (m_videoDisplayMode)
             {
             case AppStage_ColorCalibration::mode_bgr:
@@ -532,109 +628,6 @@ void AppStage_ColorCalibration::renderUI()
 		ImGui::End();
 		ImGui::GetStyle().WindowFillAlphaDefault = prevAlpha;
 		ImGui::GetStyle().WindowRounding = prevRound;
-	}
-
-	if ((m_bColorCollsionShow || m_bDetectingColors) && m_video_buffer_state != nullptr)
-	{
-		float align_window_size = 32.f;
-
-		int detect_count = 0;
-
-		for (std::vector<int> item : m_mDetectedContures)
-		{
-			ImVec2 wndCenter = ImVec2(static_cast<float>(item[0]), static_cast<float>(item[1]));
-			ImVec2 wndPos = ImVec2(wndCenter.x - align_window_size, wndCenter.y - align_window_size);
-			ImVec2 wndSize = ImVec2(align_window_size * 2, align_window_size * 2);
-
-			float prevAlpha = ImGui::GetStyle().WindowFillAlphaDefault;
-			float prevRound = ImGui::GetStyle().WindowRounding;
-
-			ImGui::GetStyle().WindowFillAlphaDefault = 0.f;
-
-			ImGui::SetNextWindowPos(wndPos);
-			ImGui::SetNextWindowSize(wndSize);
-
-			ImGui::Begin("Collision Rec", nullptr,
-				ImGuiWindowFlags_NoBringToFrontOnFocus |
-				ImGuiWindowFlags_NoFocusOnAppearing |
-				ImGuiWindowFlags_NoTitleBar |
-				ImGuiWindowFlags_NoResize |
-				ImGuiWindowFlags_NoMove |
-				ImGuiWindowFlags_NoScrollbar |
-				ImGuiWindowFlags_NoCollapse |
-				ImGuiWindowFlags_NoSavedSettings);
-
-			if (detect_count++ == 0)
-			{
-				ImGui::GetWindowDrawList()->AddRect(
-					ImVec2(wndCenter.x - (align_window_size / 2), wndCenter.y - (align_window_size / 2)),
-					ImVec2(wndCenter.x + (align_window_size / 2), wndCenter.y + (align_window_size / 2)),
-					ImColor(0.f, 1.f, 0.f, 1.f), 0.f, 0
-				);
-				ImGui::GetWindowDrawList()->AddRectFilled(
-					ImVec2(wndCenter.x - (align_window_size / 2), wndCenter.y - (align_window_size / 2)),
-					ImVec2(wndCenter.x + (align_window_size / 2), wndCenter.y + (align_window_size / 2)),
-					ImColor(0.f, 1.f, 0.f, 0.25f), 0.f, 0
-				);
-			}
-			else 
-			{
-				ImGui::GetWindowDrawList()->AddRect(
-					ImVec2(wndCenter.x - (align_window_size / 2), wndCenter.y - (align_window_size / 2)),
-					ImVec2(wndCenter.x + (align_window_size / 2), wndCenter.y + (align_window_size / 2)),
-					ImColor(1.f, 0.f, 0.f, 1.f), 0.f, 0
-				);
-				ImGui::GetWindowDrawList()->AddRectFilled(
-					ImVec2(wndCenter.x - (align_window_size / 2), wndCenter.y - (align_window_size / 2)),
-					ImVec2(wndCenter.x + (align_window_size / 2), wndCenter.y + (align_window_size / 2)),
-					ImColor(1.f, 0.f, 0.f, 0.25f), 0.f, 0
-				);
-			}
-
-
-			ImGui::End();
-			ImGui::GetStyle().WindowFillAlphaDefault = prevAlpha;
-		}
-	}
-
-	if (!m_bColorCollsionShow && !m_bDetectingColors && m_video_buffer_state != nullptr)
-	{
-		float align_window_size = 32.f;
-
-		for (std::vector<int> item : m_mDetectedContures)
-		{
-			ImVec2 wndCenter = ImVec2(static_cast<float>(item[0]), static_cast<float>(item[1]));
-			ImVec2 wndPos = ImVec2(wndCenter.x - align_window_size, wndCenter.y - align_window_size);
-			ImVec2 wndSize = ImVec2(align_window_size * 2, align_window_size * 2);
-
-			float prevAlpha = ImGui::GetStyle().WindowFillAlphaDefault;
-			float prevRound = ImGui::GetStyle().WindowRounding;
-
-			ImGui::GetStyle().WindowFillAlphaDefault = 0.f;
-
-			ImGui::SetNextWindowPos(wndPos);
-			ImGui::SetNextWindowSize(wndSize);
-
-			ImGui::Begin("Target Controller", nullptr,
-				ImGuiWindowFlags_NoBringToFrontOnFocus |
-				ImGuiWindowFlags_NoFocusOnAppearing |
-				ImGuiWindowFlags_NoTitleBar |
-				ImGuiWindowFlags_NoResize |
-				ImGuiWindowFlags_NoMove |
-				ImGuiWindowFlags_NoScrollbar |
-				ImGuiWindowFlags_NoCollapse |
-				ImGuiWindowFlags_NoSavedSettings);
-
-			ImGui::GetWindowDrawList()->AddRect(
-				ImVec2(wndCenter.x - (align_window_size / 2), wndCenter.y - (align_window_size / 2)),
-				ImVec2(wndCenter.x + (align_window_size / 2), wndCenter.y + (align_window_size / 2)),
-				ImColor(1.f, 1.f, 1.f, 1.f), 0.f, 0
-			);
-
-			ImGui::End();
-			ImGui::GetStyle().WindowFillAlphaDefault = prevAlpha;
-			break;
-		}
 	}
 
     const float k_panel_width = 300.f;
@@ -910,6 +903,77 @@ void AppStage_ColorCalibration::renderUI()
 							ImGui::PopID();
 						}
 					}
+				}
+
+				if (ImGui::CollapsingHeader("Blacklisted Areas", 0, true, false))
+				{
+					ImGui::Indent();
+					ImGui::Checkbox("Show Blacklisted Areas", &m_bProjectionBlacklistedShow);
+
+					for (int i = 0; i < eCommonBlacklistProjection::MAX_BLACKLIST_PROJECTIONS; ++i)
+					{
+						std::string option_name = std::to_string(i);
+
+						ImGui::PushID(option_name.c_str());
+						if (ImGui::CollapsingHeader(option_name.c_str(), 0, true, true))
+						{
+							float val;
+
+							ImGui::Text("X: ");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(120.f);
+							val = m_blacklisted_projection[i].x;
+							if (ImGui::InputFloat("##BlacklistedAreaX", &val, 4.f, 32.f, 2))
+							{
+								m_blacklisted_projection[i].x = fmaxf(0.f, val);
+								request_tracker_set_projectionblacklist(m_blacklisted_projection);
+							}
+							ImGui::PopItemWidth();
+
+							ImGui::Text("Y: ");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(120.f);
+							val = m_blacklisted_projection[i].y;
+							if (ImGui::InputFloat("##BlacklistedAreaY", &val, 4.f, 32.f, 2))
+							{
+								m_blacklisted_projection[i].y = fmaxf(0.f, val);
+								request_tracker_set_projectionblacklist(m_blacklisted_projection);
+							}
+							ImGui::PopItemWidth();
+
+							ImGui::Text("Width: ");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(120.f);
+							val = m_blacklisted_projection[i].w;
+							if (ImGui::InputFloat("##BlacklistedAreaW", &val, 4.f, 32.f, 2))
+							{
+								m_blacklisted_projection[i].w = fmaxf(0.f, val);
+								request_tracker_set_projectionblacklist(m_blacklisted_projection);
+							}
+							ImGui::PopItemWidth();
+
+							ImGui::Text("Height: ");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(120.f);
+							val = m_blacklisted_projection[i].h;
+							if (ImGui::InputFloat("##BlacklistedAreaH", &val, 4.f, 32.f, 2))
+							{
+								m_blacklisted_projection[i].h = fmaxf(0.f, val);
+								request_tracker_set_projectionblacklist(m_blacklisted_projection);
+							}
+							ImGui::PopItemWidth();
+
+							if (ImGui::Button("Reset"))
+							{
+								m_blacklisted_projection[i].x = 0.f;
+								m_blacklisted_projection[i].y = 0.f;
+								m_blacklisted_projection[i].w = 0.f;
+								m_blacklisted_projection[i].h = 0.f;
+							}
+							ImGui::PopID();
+						}
+					}
+					ImGui::Unindent();
 				}
 
 				if (m_masterControllerView != nullptr)
@@ -1733,6 +1797,7 @@ void AppStage_ColorCalibration::renderUI()
 		m_videoDisplayMode = eVideoDisplayMode::mode_bgr;
 		m_bTurnOnAllControllers = false;
 		m_bColorCollsionShow = false;
+		m_bProjectionBlacklistedShow = false;
 		request_turn_on_all_tracking_bulbs(false);
 
 		m_bDetectingCancel = false;
@@ -2767,6 +2832,62 @@ void AppStage_ColorCalibration::handle_tracker_set_option_response(
     }
 }
 
+void AppStage_ColorCalibration::request_tracker_set_projectionblacklist(
+	CommonDeviceBlacklistProjection projection_blacklisted[eCommonBlacklistProjection::MAX_BLACKLIST_PROJECTIONS])
+{
+	// Tell the psmove service that we want to change gain.
+	RequestPtr request(new PSMoveProtocol::Request());
+	request->set_type(PSMoveProtocol::Request_RequestType_SET_TRACKER_PROJECTIONBLACKLIST);
+	request->mutable_request_set_tracker_projection_blacklist()->set_tracker_id(m_trackerView->tracker_info.tracker_id);
+	PSMoveProtocol::ProjectionBlacklistList *proj_blacklist = request->mutable_request_set_tracker_projection_blacklist()->mutable_projection_blacklist();
+
+	for (int i = 0; i < eCommonBlacklistProjection::MAX_BLACKLIST_PROJECTIONS; ++i)
+	{
+		switch (i)
+		{
+		case 0: {
+			proj_blacklist->mutable__1()->set_x(projection_blacklisted[i].x);
+			proj_blacklist->mutable__1()->set_y(projection_blacklisted[i].y);
+			proj_blacklist->mutable__1()->set_w(projection_blacklisted[i].w);
+			proj_blacklist->mutable__1()->set_h(projection_blacklisted[i].h);
+			break;
+		}
+		case 1: {
+			proj_blacklist->mutable__2()->set_x(projection_blacklisted[i].x);
+			proj_blacklist->mutable__2()->set_y(projection_blacklisted[i].y);
+			proj_blacklist->mutable__2()->set_w(projection_blacklisted[i].w);
+			proj_blacklist->mutable__2()->set_h(projection_blacklisted[i].h);
+			break;
+		}
+		case 2: {
+			proj_blacklist->mutable__3()->set_x(projection_blacklisted[i].x);
+			proj_blacklist->mutable__3()->set_y(projection_blacklisted[i].y);
+			proj_blacklist->mutable__3()->set_w(projection_blacklisted[i].w);
+			proj_blacklist->mutable__3()->set_h(projection_blacklisted[i].h);
+			break;
+		}
+		case 3: {
+			proj_blacklist->mutable__4()->set_x(projection_blacklisted[i].x);
+			proj_blacklist->mutable__4()->set_y(projection_blacklisted[i].y);
+			proj_blacklist->mutable__4()->set_w(projection_blacklisted[i].w);
+			proj_blacklist->mutable__4()->set_h(projection_blacklisted[i].h);
+			break;
+		}
+		case 4: {
+			proj_blacklist->mutable__5()->set_x(projection_blacklisted[i].x);
+			proj_blacklist->mutable__5()->set_y(projection_blacklisted[i].y);
+			proj_blacklist->mutable__5()->set_w(projection_blacklisted[i].w);
+			proj_blacklist->mutable__5()->set_h(projection_blacklisted[i].h);
+			break;
+		}
+		}
+	}
+
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_EatResponse(request_id);
+}
+
 void AppStage_ColorCalibration::request_tracker_set_color_preset(
     PSMTrackingColorType color_type,
     TrackerColorPreset &color_preset)
@@ -2880,7 +3001,7 @@ void AppStage_ColorCalibration::handle_tracker_get_settings_response(
             thisPtr->m_trackerFrameRate = response->result_tracker_settings().frame_rate();
             thisPtr->m_trackerExposure = response->result_tracker_settings().exposure();
             thisPtr->m_trackerGain = response->result_tracker_settings().gain();
-
+			
             thisPtr->m_trackerOptions.clear();
             for (auto it = response->result_tracker_settings().option_sets().begin();
                 it != response->result_tracker_settings().option_sets().end();
@@ -2919,6 +3040,51 @@ void AppStage_ColorCalibration::handle_tracker_get_settings_response(
                 destPreset.value_center = srcPreset.value_center();
                 destPreset.value_range = srcPreset.value_range();
             }
+
+			for (int i = 0; i < eCommonBlacklistProjection::MAX_BLACKLIST_PROJECTIONS; ++i)
+			{
+				const PSMoveProtocol::ProjectionBlacklistList proj_blacklist = response->result_tracker_settings().projection_blacklist();
+
+				switch (i)
+				{
+				case 0: {
+					thisPtr->m_blacklisted_projection[i].x = proj_blacklist._1().x();
+					thisPtr->m_blacklisted_projection[i].y = proj_blacklist._1().y();
+					thisPtr->m_blacklisted_projection[i].w = proj_blacklist._1().w();
+					thisPtr->m_blacklisted_projection[i].h = proj_blacklist._1().h();
+					break;
+				}
+				case 1: {
+					thisPtr->m_blacklisted_projection[i].x = proj_blacklist._2().x();
+					thisPtr->m_blacklisted_projection[i].y = proj_blacklist._2().y();
+					thisPtr->m_blacklisted_projection[i].w = proj_blacklist._2().w();
+					thisPtr->m_blacklisted_projection[i].h = proj_blacklist._2().h();
+					break;
+				}
+				case 2: {
+					thisPtr->m_blacklisted_projection[i].x = proj_blacklist._3().x();
+					thisPtr->m_blacklisted_projection[i].y = proj_blacklist._3().y();
+					thisPtr->m_blacklisted_projection[i].w = proj_blacklist._3().w();
+					thisPtr->m_blacklisted_projection[i].h = proj_blacklist._3().h();
+					break;
+				}
+				case 3: {
+					thisPtr->m_blacklisted_projection[i].x = proj_blacklist._4().x();
+					thisPtr->m_blacklisted_projection[i].y = proj_blacklist._4().y();
+					thisPtr->m_blacklisted_projection[i].w = proj_blacklist._4().w();
+					thisPtr->m_blacklisted_projection[i].h = proj_blacklist._4().h();
+					break;
+				}
+				case 4: {
+					thisPtr->m_blacklisted_projection[i].x = proj_blacklist._5().x();
+					thisPtr->m_blacklisted_projection[i].y = proj_blacklist._5().y();
+					thisPtr->m_blacklisted_projection[i].w = proj_blacklist._5().w();
+					thisPtr->m_blacklisted_projection[i].h = proj_blacklist._5().h();
+					break;
+				}
+				}
+			}
+			
         } break;
     case PSMResult_Error:
     case PSMResult_Canceled:

@@ -137,6 +137,9 @@ public:
 
 	void setHMDTrackingColorPreset(const class ServerHMDView *controller, eCommonTrackingColorID color, const CommonHSVColorRange *preset);
 	void getHMDTrackingColorPreset(const class ServerHMDView *controller, eCommonTrackingColorID color, CommonHSVColorRange *out_preset) const;
+	
+	void setBlacklistProjection(const int index, const float x, const float y, const float w, const float h);
+	bool getBlacklistProjection(const int index, float &x, float &y, float &w, float &h);
 
 protected:
     bool allocate_device_interface(const class DeviceEnumerator *enumerator) override;
