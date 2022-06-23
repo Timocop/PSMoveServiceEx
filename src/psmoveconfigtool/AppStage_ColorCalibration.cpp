@@ -1759,7 +1759,7 @@ void AppStage_ColorCalibration::renderUI()
 
         PSMTrackingColorType new_color =
             static_cast<PSMTrackingColorType>(
-            (m_masterTrackingColorType + 1) % PSMTrackingColorType_MaxColorTypes);
+            (m_masterTrackingColorType + 1) % PSMTrackingColorType_Custom0); //PSMTrackingColorType_MaxColorTypes
 
 		ImVec2 dispSize = ImGui::GetIO().DisplaySize;
 		int img_x = (static_cast<int>(m_mAlignPosition[0]) * m_video_buffer_state->hsvBuffer->cols) / static_cast<int>(dispSize.x);
