@@ -419,10 +419,28 @@ void AppStage_ColorCalibration::update()
 
 						cv::Rect rect = cv::Rect(proj_x, proj_y, proj_w, proj_h);
 
+						if (rect.width < 1 || rect.height < 1)
+						{
+							continue;
+						}
+
 						cv::rectangle(
 							*m_video_buffer_state->bgrBuffer,
 							rect,
 							cv::Scalar(0, 255, 255)
+						);
+
+						std::string strIndex = std::to_string(i);
+						strIndex.append("#");
+
+						cv::putText(
+							*m_video_buffer_state->bgrBuffer,
+							strIndex,
+							cv::Point(proj_x + 2.0, proj_y + 10.0),
+							cv::FONT_HERSHEY_PLAIN,
+							0.75,
+							CvScalar(0, 255, 255),
+							1
 						);
 					}
 				}
