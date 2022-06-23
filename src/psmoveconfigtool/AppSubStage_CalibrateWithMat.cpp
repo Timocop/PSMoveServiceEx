@@ -369,7 +369,7 @@ void AppSubStage_CalibrateWithMat::update()
 
 			bool bIsStable= false;
 			bool bCanBeStable= PSM_GetIsControllerStable(ControllerView->ControllerID, &bIsStable) == PSMResult_Success;
-
+			
             // See if any tracker needs more samples
             if (m_bNeedMoreSamplesAtLocation)
             {
@@ -417,7 +417,14 @@ void AppSubStage_CalibrateWithMat::update()
 
                         if (bCanBeTracked && bIsTracking)
                         {
-							m_deviceTrackerPoseStats[trackerIndex]->addControllerSample(trackerView, ControllerView, m_sampleLocationIndex);
+							std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+							static std::chrono::high_resolution_clock::time_point lastSampleDuration;
+
+							if (lastSampleDuration < now)
+							{
+								lastSampleDuration = (now + std::chrono::milliseconds(15));
+								m_deviceTrackerPoseStats[trackerIndex]->addControllerSample(trackerView, ControllerView, m_sampleLocationIndex);
+							}
                         }
                     }
                 }
@@ -569,7 +576,14 @@ void AppSubStage_CalibrateWithMat::update()
 
                         if (bCanBeTracked && bIsTracking)
                         {
-							m_deviceTrackerPoseStats[trackerIndex]->addHmdSample(trackerView, HmdView, m_sampleLocationIndex);
+							std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+							static std::chrono::high_resolution_clock::time_point lastSampleDuration;
+
+							if (lastSampleDuration < now)
+							{
+								lastSampleDuration = (now + std::chrono::milliseconds(15));
+								m_deviceTrackerPoseStats[trackerIndex]->addHmdSample(trackerView, HmdView, m_sampleLocationIndex);
+							}
                         }
                     }
                 }
