@@ -1367,8 +1367,8 @@ ServerTrackerView::computeProjectionForController(
         bRoiDisabled,
 		iRoiEdgeOffset,
         this,		
-        ((bIsTracking || bIsOccluded || bIsBlacklisted) && !bEnforceNewROI) ? (tracked_controller->getPoseFilter()) : (nullptr),
-        ((bIsTracking || bIsOccluded || bIsBlacklisted) && !bEnforceNewROI) ? (&priorPoseEst->projection) : (nullptr),
+        ((bIsTracking || bIsOccluded) && !bIsBlacklisted && !bEnforceNewROI) ? (tracked_controller->getPoseFilter()) : (nullptr),
+        ((bIsTracking || bIsOccluded) && !bIsBlacklisted && !bEnforceNewROI) ? (&priorPoseEst->projection) : (nullptr),
         tracking_shape);
 
     m_opencv_buffer_state->applyROI(ROI);
