@@ -11,7 +11,7 @@
 // Current version of this release
 #define PSM_RELEASE_VERSION_MAJOR		0
 #define PSM_RELEASE_VERSION_MINOR		15
-#define PSM_RELEASE_VERSION_BUILD		6
+#define PSM_RELEASE_VERSION_BUILD		7
 #define PSM_RELEASE_VERSION_REVISION	0
 
 /// "Product.Major-Phase Minor.Release.Hotfix"
