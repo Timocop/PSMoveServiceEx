@@ -180,7 +180,7 @@ struct TrackerRelativePoseStatistics
 		bValidTrackerPose = false;
 	}
 
-	void addControllerSample(const PSMTracker *trackerView, const PSMController *controllerView, const int sampleLocationIndex)
+	bool addControllerSample(const PSMTracker *trackerView, const PSMController *controllerView, const int sampleLocationIndex)
 	{
 		const int sampleTrackerID= trackerView->tracker_info.tracker_id;
         int streamTrackerID= -1;
@@ -218,10 +218,14 @@ struct TrackerRelativePoseStatistics
 					avgScreenSpacePointAtLocation[sampleLocationIndex] = avg;
 				}
 			}
+
+			return true;
 		}
+
+		return false;
 	}
 
-	void addHmdSample(const PSMTracker *trackerView, const PSMHeadMountedDisplay *hmdView, const int sampleLocationIndex)
+	bool addHmdSample(const PSMTracker *trackerView, const PSMHeadMountedDisplay *hmdView, const int sampleLocationIndex)
 	{
 		const int sampleTrackerID= trackerView->tracker_info.tracker_id;
         int streamTrackerID= -1;
@@ -259,7 +263,11 @@ struct TrackerRelativePoseStatistics
 					avgScreenSpacePointAtLocation[sampleLocationIndex] = avg;
 				}
 			}
+
+			return true;
 		}
+
+		return false;
 	}
 };
 
@@ -422,8 +430,11 @@ void AppSubStage_CalibrateWithMat::update()
 
 							if (lastSampleDuration < now)
 							{
-								lastSampleDuration = (now + std::chrono::milliseconds(15));
-								m_deviceTrackerPoseStats[trackerIndex]->addControllerSample(trackerView, ControllerView, m_sampleLocationIndex);
+								if (m_deviceTrackerPoseStats[trackerIndex]->addControllerSample(trackerView, ControllerView, m_sampleLocationIndex))
+								{
+									// Full sample a second
+									lastSampleDuration = (now + std::chrono::milliseconds(1000 / k_mat_calibration_sample_count));
+								}
 							}
                         }
                     }
@@ -581,8 +592,11 @@ void AppSubStage_CalibrateWithMat::update()
 
 							if (lastSampleDuration < now)
 							{
-								lastSampleDuration = (now + std::chrono::milliseconds(15));
-								m_deviceTrackerPoseStats[trackerIndex]->addHmdSample(trackerView, HmdView, m_sampleLocationIndex);
+								if (m_deviceTrackerPoseStats[trackerIndex]->addHmdSample(trackerView, HmdView, m_sampleLocationIndex))
+								{
+									// Full sample a second
+									lastSampleDuration = (now + std::chrono::milliseconds(1000 / k_mat_calibration_sample_count));
+								}
 							}
                         }
                     }
