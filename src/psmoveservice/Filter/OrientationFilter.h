@@ -22,7 +22,8 @@ public:
     bool init(const OrientationFilterConstants &constant) override;
 	bool init(const OrientationFilterConstants &constant, const Eigen::Quaternionf &initial_orientation) override;
 
-    Eigen::Quaternionf getOrientation(float time = 0.f) const override;
+	Eigen::Quaternionf getOrientation(float time = 0.f, float offset_x = 0.f, float offset_y = 0.f, float offset_z = 0.f) const override;
+	Eigen::Quaternionf getResetOrientation() const override;
     Eigen::Vector3f getAngularVelocityRadPerSec() const override;
     Eigen::Vector3f getAngularAccelerationRadPerSecSqr() const override;
 

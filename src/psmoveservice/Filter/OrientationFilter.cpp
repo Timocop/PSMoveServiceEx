@@ -203,28 +203,38 @@ bool OrientationFilter::init(const OrientationFilterConstants &constants, const 
 	return true;
 }
 
-Eigen::Quaternionf OrientationFilter::getOrientation(float time) const
+Eigen::Quaternionf OrientationFilter::getOrientation(float time, float offset_x, float offset_y, float offset_z) const
 {
-    Eigen::Quaternionf result = Eigen::Quaternionf::Identity();
+	Eigen::Quaternionf result = Eigen::Quaternionf::Identity();
 
-    if (m_state->bIsValid)
-    {
-        Eigen::Quaternionf predicted_orientation = m_state->orientation;
+	if (m_state->bIsValid)
+	{
+		Eigen::Quaternionf predicted_orientation = m_state->orientation;
 
-        if (fabsf(time) > k_real_epsilon)
-        {
-            const Eigen::Quaternionf &quaternion_derivative=
-                eigen_angular_velocity_to_quaternion_derivative(m_state->orientation, m_state->angular_velocity);
+		if (fabsf(time) > k_real_epsilon)
+		{
+			const Eigen::Quaternionf &quaternion_derivative =
+				eigen_angular_velocity_to_quaternion_derivative(m_state->orientation, m_state->angular_velocity);
 
-            predicted_orientation= Eigen::Quaternionf(
-                m_state->orientation.coeffs()
-                + quaternion_derivative.coeffs()*time).normalized();
-        }
+			predicted_orientation = Eigen::Quaternionf(
+				m_state->orientation.coeffs()
+				+ quaternion_derivative.coeffs()*time).normalized();
+		}
 
-        result = m_state->reset_orientation * predicted_orientation;
-    }
+		// Apply offsets to reset orientation
+		const Eigen::EulerAnglesf offset_euler(offset_x, offset_y, offset_z);
+		const Eigen::Quaternionf offset_quat = eigen_euler_angles_to_quaternionf(offset_euler);
+		const Eigen::Quaternionf reset_quat = m_state->reset_orientation * offset_quat;
 
-    return result;
+		result = reset_quat * predicted_orientation;
+	}
+
+	return result;
+}
+
+Eigen::Quaternionf OrientationFilter::getResetOrientation() const
+{
+	return m_state->reset_orientation;
 }
 
 Eigen::Vector3f OrientationFilter::getAngularVelocityRadPerSec() const

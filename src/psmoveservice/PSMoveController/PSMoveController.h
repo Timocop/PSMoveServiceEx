@@ -71,6 +71,10 @@ public:
         magnetometer_basis_z.clear();
         magnetometer_extents.clear();
         magnetometer_identity.clear();
+
+		offset_position.set(0.0, 0.0, 0.0);
+		offset_orientation.set(0.0, 0.0, 0.0);
+		offset_scale.set(1.0, 1.0, 1.0);
     };
 
     virtual const boost::property_tree::ptree config2ptree();
@@ -121,6 +125,11 @@ public:
     CommonDeviceVector magnetometer_basis_y;
     CommonDeviceVector magnetometer_basis_z;
     CommonDeviceVector magnetometer_extents;
+
+	// The offset added in post
+	CommonDevicePosition offset_position;
+	CommonDevicePosition offset_orientation;
+	CommonDevicePosition offset_scale;
 
 	// The squared error of the magnetometer fit ellipsoid
     float magnetometer_fit_error;

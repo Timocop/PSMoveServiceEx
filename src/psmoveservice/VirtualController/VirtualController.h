@@ -35,6 +35,9 @@ public:
         , bulb_radius(2.25f) // The radius of the psmove tracking bulb in cm
 		, hand("Any")
     {
+		offset_position.set(0.0, 0.0, 0.0);
+		offset_orientation.set(0.0, 0.0, 0.0);
+		offset_scale.set(1.0, 1.0, 1.0);
     };
 
     virtual const boost::property_tree::ptree config2ptree();
@@ -66,6 +69,11 @@ public:
 	inline float get_position_variance(float projection_area) const {
 		return position_variance_exp_fit_a*exp(position_variance_exp_fit_b*projection_area);
 	}
+
+	// The offset added in post
+	CommonDevicePosition offset_position;
+	CommonDevicePosition offset_orientation;
+	CommonDevicePosition offset_scale;
 
 	float prediction_time;
 

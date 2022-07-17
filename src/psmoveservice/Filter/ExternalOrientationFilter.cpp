@@ -216,7 +216,7 @@ bool ExternalOrientationFilter::init(const OrientationFilterConstants &constants
 	return true;
 }
 
-Eigen::Quaternionf ExternalOrientationFilter::getOrientation(float time) const
+Eigen::Quaternionf ExternalOrientationFilter::getOrientation(float time, float offset_x, float offset_y, float offset_z) const
 {
 	Eigen::Quaternionf result = Eigen::Quaternionf::Identity();
 
@@ -234,10 +234,20 @@ Eigen::Quaternionf ExternalOrientationFilter::getOrientation(float time) const
 				+ quaternion_derivative.coeffs()*time).normalized();
 		}
 
-		result = m_state->reset_orientation * predicted_orientation;
+		// Apply offsets to reset orientation
+		const Eigen::EulerAnglesf offset_euler(offset_x, offset_y, offset_z);
+		const Eigen::Quaternionf offset_quat = eigen_euler_angles_to_quaternionf(offset_euler);
+		const Eigen::Quaternionf reset_quat = m_state->reset_orientation * offset_quat;
+
+		result = reset_quat * predicted_orientation;
 	}
 
 	return result;
+}
+
+Eigen::Quaternionf ExternalOrientationFilter::getResetOrientation() const
+{
+	return m_state->reset_orientation;
 }
 
 Eigen::Vector3f ExternalOrientationFilter::getAngularVelocityRadPerSec() const

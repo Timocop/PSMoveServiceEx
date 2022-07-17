@@ -1066,29 +1066,34 @@ void KalmanPoseFilter::recenterOrientation(const Eigen::Quaternionf& q_pose)
     m_filter->ukf.init(PoseStateVectord::Identity());
 }
 
-Eigen::Quaternionf KalmanPoseFilter::getOrientation(float time) const
+Eigen::Quaternionf KalmanPoseFilter::getOrientation(float time, float offset_x, float offset_y, float offset_z) const
 {
-    Eigen::Quaternionf result = Eigen::Quaternionf::Identity();
+	Eigen::Quaternionf result = Eigen::Quaternionf::Identity();
 
-    if (m_filter->bIsValid)
-    {
-        const Eigen::Quaternionf state_orientation = m_filter->compute_net_world_quaternion().cast<float>();
-        Eigen::Quaternionf predicted_orientation = state_orientation;
+	if (m_filter->bIsValid)
+	{
+		const Eigen::Quaternionf state_orientation = m_filter->compute_net_world_quaternion().cast<float>();
+		Eigen::Quaternionf predicted_orientation = state_orientation;
 
-        if (fabsf(time) > k_real_epsilon)
-        {
-            const Eigen::Quaternionf &quaternion_derivative =
-                eigen_angular_velocity_to_quaternion_derivative(result, getAngularVelocityRadPerSec());
+		if (fabsf(time) > k_real_epsilon)
+		{
+			const Eigen::Quaternionf &quaternion_derivative =
+				eigen_angular_velocity_to_quaternion_derivative(result, getAngularVelocityRadPerSec());
 
-            predicted_orientation = Eigen::Quaternionf(
-                state_orientation.coeffs()
-                + quaternion_derivative.coeffs()*time).normalized();
-        }
+			predicted_orientation = Eigen::Quaternionf(
+				state_orientation.coeffs()
+				+ quaternion_derivative.coeffs()*time).normalized();
+		}
 
-        result = predicted_orientation;
-    }
+		result = predicted_orientation;
+	}
 
-    return result;
+	return result;
+}
+
+Eigen::Quaternionf KalmanPoseFilter::getResetOrientation() const
+{
+	return Eigen::Quaternionf::Identity();
 }
 
 Eigen::Vector3f KalmanPoseFilter::getAngularVelocityRadPerSec() const

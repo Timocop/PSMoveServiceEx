@@ -972,17 +972,100 @@ ServerControllerView::getFilteredPose(float time) const
 
     if (m_pose_filter != nullptr)
     {
-        const Eigen::Quaternionf orientation= m_pose_filter->getOrientation(time);
-        const Eigen::Vector3f position_cm= m_pose_filter->getPositionCm(time);
+		switch (m_device->getDeviceType())
+		{
+		case CommonDeviceState::PSMove:
+		{
+			const PSMoveController *psmove = this->castCheckedConst<PSMoveController>();
+			const CommonDevicePosition offset_position = psmove->getConfig()->offset_position;
+			const CommonDevicePosition offset_orientation = psmove->getConfig()->offset_orientation;
+			const CommonDevicePosition offset_scale = psmove->getConfig()->offset_scale;
 
-        pose.Orientation.w= orientation.w();
-        pose.Orientation.x= orientation.x();
-        pose.Orientation.y= orientation.y();
-        pose.Orientation.z= orientation.z();
+			const Eigen::EulerAnglesf offset_euler(
+				offset_orientation.x * k_degrees_to_radians,
+				offset_orientation.y * k_degrees_to_radians, 
+				offset_orientation.z * k_degrees_to_radians
+			);
+			const Eigen::Quaternionf orientation = m_pose_filter->getOrientation(time, offset_euler.x(), offset_euler.y(), offset_euler.z());
+			const Eigen::Vector3f position_cm = m_pose_filter->getPositionCm(time);
 
-        pose.PositionCm.x= position_cm.x();
-        pose.PositionCm.y= position_cm.y();
-        pose.PositionCm.z= position_cm.z();
+			pose.Orientation.w = orientation.w();
+			pose.Orientation.x = orientation.x();
+			pose.Orientation.y = orientation.y();
+			pose.Orientation.z = orientation.z();
+
+			pose.PositionCm.x = (position_cm.x() + offset_position.x) * offset_scale.x;
+			pose.PositionCm.y = (position_cm.y() + offset_position.y) * offset_scale.y;
+			pose.PositionCm.z = (position_cm.z() + offset_position.z) * offset_scale.z;
+
+			break;
+		}
+		case CommonDeviceState::PSDualShock4:
+		{
+			const PSDualShock4Controller *ds4 = this->castCheckedConst<PSDualShock4Controller>();
+			const CommonDevicePosition offset_position = ds4->getConfig()->offset_position;
+			const CommonDevicePosition offset_orientation = ds4->getConfig()->offset_orientation;
+			const CommonDevicePosition offset_scale = ds4->getConfig()->offset_scale;
+
+			const Eigen::EulerAnglesf offset_euler(
+				offset_orientation.x * k_degrees_to_radians,
+				offset_orientation.y * k_degrees_to_radians, 
+				offset_orientation.z * k_degrees_to_radians
+			);
+			const Eigen::Quaternionf orientation = m_pose_filter->getOrientation(time, offset_euler.x(), offset_euler.y(), offset_euler.z());
+			const Eigen::Vector3f position_cm = m_pose_filter->getPositionCm(time);
+
+			pose.Orientation.w = orientation.w();
+			pose.Orientation.x = orientation.x();
+			pose.Orientation.y = orientation.y();
+			pose.Orientation.z = orientation.z();
+
+			pose.PositionCm.x = (position_cm.x() + offset_position.x) * offset_scale.x;
+			pose.PositionCm.y = (position_cm.y() + offset_position.y) * offset_scale.y;
+			pose.PositionCm.z = (position_cm.z() + offset_position.z) * offset_scale.z;
+
+
+			break;
+		}
+		case CommonDeviceState::VirtualController:
+		{
+			const VirtualController *virt = this->castCheckedConst<VirtualController>();
+			const CommonDevicePosition offset_position = virt->getConfig()->offset_position;
+			const CommonDevicePosition offset_orientation = virt->getConfig()->offset_orientation;
+			const CommonDevicePosition offset_scale = virt->getConfig()->offset_scale;
+
+			const Eigen::EulerAnglesf offset_euler(
+				offset_orientation.x * k_degrees_to_radians, 
+				offset_orientation.y * k_degrees_to_radians, 
+				offset_orientation.z * k_degrees_to_radians
+			);
+			const Eigen::Quaternionf orientation = m_pose_filter->getOrientation(time, offset_euler.x(), offset_euler.y(), offset_euler.z());
+			const Eigen::Vector3f position_cm = m_pose_filter->getPositionCm(time);
+
+			pose.Orientation.w = orientation.w();
+			pose.Orientation.x = orientation.x();
+			pose.Orientation.y = orientation.y();
+			pose.Orientation.z = orientation.z();
+
+			pose.PositionCm.x = (position_cm.x() + offset_position.x) * offset_scale.x;
+			pose.PositionCm.y = (position_cm.y() + offset_position.y) * offset_scale.y;
+			pose.PositionCm.z = (position_cm.z() + offset_position.z) * offset_scale.z;
+
+			break;
+		}
+		default:
+			const Eigen::Quaternionf orientation = m_pose_filter->getOrientation(time);
+			const Eigen::Vector3f position_cm = m_pose_filter->getPositionCm(time);
+
+			pose.Orientation.w = orientation.w();
+			pose.Orientation.x = orientation.x();
+			pose.Orientation.y = orientation.y();
+			pose.Orientation.z = orientation.z();
+
+			pose.PositionCm.x = position_cm.x();
+			pose.PositionCm.y = position_cm.y();
+			pose.PositionCm.z = position_cm.z();
+		}
     }
 
     return pose;

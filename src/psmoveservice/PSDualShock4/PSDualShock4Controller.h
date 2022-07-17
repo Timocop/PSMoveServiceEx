@@ -63,6 +63,10 @@ public:
 		, tracking_color_id(eCommonTrackingColorID::INVALID_COLOR)
 		, hand("Any")
     {
+		offset_position.set(0.0, 0.0, 0.0);
+		offset_orientation.set(0.0, 0.0, 0.0);
+		offset_scale.set(1.0, 1.0, 1.0);
+
         // The DS4 uses the BMI055 IMU Chip: 
         // https://www.bosch-sensortec.com/bst/products/all_products/bmi055
         //
@@ -124,6 +128,11 @@ public:
     // calibrated_acc= raw_acc*acc_gain + acc_bias
     CommonDeviceVector accelerometer_gain;
     CommonDeviceVector accelerometer_bias;
+
+	// The offset added in post
+	CommonDevicePosition offset_position;
+	CommonDevicePosition offset_orientation;
+	CommonDevicePosition offset_scale;
 
 	// The bounding radius of the accelerometer measurements 
     float accelerometer_noise_radius;

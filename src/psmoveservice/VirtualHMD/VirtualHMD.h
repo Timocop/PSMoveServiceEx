@@ -29,6 +29,9 @@ public:
 		, tracking_color_id(eCommonTrackingColorID::Blue)
         , bulb_radius(2.25f) // The radius of the psmove tracking bulb in cm
     {
+		offset_position.set(0.0, 0.0, 0.0);
+		offset_orientation.set(0.0, 0.0, 0.0);
+		offset_scale.set(1.0, 1.0, 1.0);
     };
 
     virtual const boost::property_tree::ptree config2ptree();
@@ -39,6 +42,11 @@ public:
 
 	// The type of position filter to use
 	std::string position_filter_type;
+
+	// The offset added in post
+	CommonDevicePosition offset_position;
+	CommonDevicePosition offset_orientation;
+	CommonDevicePosition offset_scale;
 
 	// Maximum velocity for the controller physics (meters/second)
 	float max_velocity;

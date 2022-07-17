@@ -39,6 +39,10 @@ public:
         , prediction_time(0.f)
 		, tracking_color_id(eCommonTrackingColorID::Blue)
     {
+		offset_position.set(0.0, 0.0, 0.0);
+		offset_orientation.set(0.0, 0.0, 0.0);
+		offset_scale.set(1.0, 1.0, 1.0);
+
 		// The Morpheus uses the BMI055 IMU Chip: 
 		// https://d3nevzfk7ii3be.cloudfront.net/igi/hnlrYUv5BUb6lMoW.huge
 		// https://www.bosch-sensortec.com/bst/products/all_products/bmi055
@@ -118,6 +122,11 @@ public:
 			accelerometer_gain.j*raw_accelerometer_variance,
 			accelerometer_gain.k*raw_accelerometer_variance);
 	}
+
+	// The offset added in post
+	CommonDevicePosition offset_position;
+	CommonDevicePosition offset_orientation;
+	CommonDevicePosition offset_scale;
 
 	// Maximum velocity for the controller physics (meters/second)
 	float max_velocity;

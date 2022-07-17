@@ -64,7 +64,8 @@ public:
     // -- IPoseFilter ---
     bool getIsPositionStateValid() const override;
     bool getIsOrientationStateValid() const override;
-    Eigen::Quaternionf getOrientation(float time = 0.f) const override;
+	Eigen::Quaternionf getOrientation(float time = 0.f, float offset_x = 0.f, float offset_y = 0.f, float offset_z = 0.f) const override;
+	Eigen::Quaternionf getResetOrientation() const override;
     Eigen::Vector3f getAngularVelocityRadPerSec() const override;
     Eigen::Vector3f getAngularAccelerationRadPerSecSqr() const override;
     Eigen::Vector3f getPositionCm(float time = 0.f) const override;

@@ -39,6 +39,16 @@ VirtualHMDConfig::config2ptree()
     pt.put("PositionFilter.FilterType", position_filter_type);
     pt.put("PositionFilter.MaxVelocity", max_velocity);
 
+	pt.put("Offsets.Position.X", offset_position.x);
+	pt.put("Offsets.Position.Y", offset_position.y);
+	pt.put("Offsets.Position.Z", offset_position.z);
+	pt.put("Offsets.Orientation.X", offset_orientation.x);
+	pt.put("Offsets.Orientation.Y", offset_orientation.y);
+	pt.put("Offsets.Orientation.Z", offset_orientation.z);
+	pt.put("Offsets.Scale.X", offset_scale.x);
+	pt.put("Offsets.Scale.Y", offset_scale.y);
+	pt.put("Offsets.Scale.Z", offset_scale.z);
+
     pt.put("prediction_time", prediction_time);
     pt.put("bulb_radius", bulb_radius);
 
@@ -65,6 +75,16 @@ VirtualHMDConfig::ptree2config(const boost::property_tree::ptree &pt)
 
         position_filter_type = pt.get<std::string>("PositionFilter.FilterType", position_filter_type);
         max_velocity = pt.get<float>("PositionFilter.MaxVelocity", max_velocity);
+
+		offset_position.x = pt.get<float>("Offsets.Position.X", offset_position.x);
+		offset_position.y = pt.get<float>("Offsets.Position.Y", offset_position.y);
+		offset_position.z = pt.get<float>("Offsets.Position.Z", offset_position.z);
+		offset_orientation.x = pt.get<float>("Offsets.Orientation.X", offset_orientation.x);
+		offset_orientation.y = pt.get<float>("Offsets.Orientation.Y", offset_orientation.y);
+		offset_orientation.z = pt.get<float>("Offsets.Orientation.Z", offset_orientation.z);
+		offset_scale.x = pt.get<float>("Offsets.Scale.X", offset_scale.x);
+		offset_scale.y = pt.get<float>("Offsets.Scale.Y", offset_scale.y);
+		offset_scale.z = pt.get<float>("Offsets.Scale.Z", offset_scale.z);
 
         // Read the tracking color
         tracking_color_id = static_cast<eCommonTrackingColorID>(readTrackingColor(pt));
