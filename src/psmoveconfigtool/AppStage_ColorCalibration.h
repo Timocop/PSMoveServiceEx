@@ -262,6 +262,9 @@ private:
 	PSMHeadMountedDisplay *m_hmdView;
 	bool m_isHmdStreamActive;
 	int m_lastHmdSeqNum;
+	int m_streamFps;
+	int m_displayFps;
+	std::chrono::time_point<std::chrono::high_resolution_clock> m_lastStreamFps;
 
     PSMTracker *m_trackerView;
 

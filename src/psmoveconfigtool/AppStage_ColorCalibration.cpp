@@ -198,6 +198,8 @@ AppStage_ColorCalibration::AppStage_ColorCalibration(App *app)
 	, m_bDetectingCancel(false)
 	, m_iDetectingFailReason(eDetectionFailReason::failreason_unknown)
 	, m_bProjectionBlacklistedShow(true)
+	, m_streamFps(0)
+	, m_displayFps(0)
 {
 	memset(m_colorPresets, 0, sizeof(m_colorPresets));
 	memset(m_blacklisted_projection, 0, sizeof(m_blacklisted_projection));
@@ -326,6 +328,8 @@ void AppStage_ColorCalibration::update()
         if (PSM_PollTrackerVideoStream(m_trackerView->tracker_info.tracker_id) == PSMResult_Success &&
             PSM_GetTrackerVideoFrameBuffer(m_trackerView->tracker_info.tracker_id, &video_buffer) == PSMResult_Success)
         {
+			m_streamFps++;
+
             const int frameWidth = static_cast<int>(m_trackerView->tracker_info.tracker_screen_dimensions.x);
             const int frameHeight = static_cast<int>(m_trackerView->tracker_info.tracker_screen_dimensions.y);
             const unsigned char *display_buffer = video_buffer;
@@ -1001,6 +1005,25 @@ void AppStage_ColorCalibration::renderUI()
 					{
 						request_turn_on_all_tracking_bulbs(m_bTurnOnAllControllers || m_bColorCollsionShow);
 					}
+				}
+
+				ImGui::Separator();
+
+				std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+				std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastStreamFps;
+				if (timeSinceLast.count() > 1000.f)
+				{
+					m_displayFps = m_streamFps;
+					m_streamFps = 0;
+					m_lastStreamFps = now;
+				}
+				if (m_displayFps < m_trackerFrameRate - 7.5f)
+				{
+					ImGui::TextColored(ImColor(1.f, 0.f, 0.f), "Tracker Frame Rate: %d", m_displayFps);
+				}
+				else
+				{
+					ImGui::Text("Tracker Frame Rate: %d", m_displayFps);
 				}
 
 				ImGui::Separator();
