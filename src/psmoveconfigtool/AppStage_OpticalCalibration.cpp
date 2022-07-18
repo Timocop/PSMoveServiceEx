@@ -495,6 +495,7 @@ void AppStage_OpticalCalibration::render()
 			}
 
 			drawTransformedAxes(glm::mat4(1.f), 200.f);
+			drawTransformeGrid(glm::mat4(1.f), 250.f);
 			drawTrackerListSelected(m_trackerList.trackers, m_trackerList.count, bCanBeTracked && bIsTracking);
 		} break;
 	case eCalibrationMenuState::measureComplete:
@@ -512,6 +513,7 @@ void AppStage_OpticalCalibration::render()
             }
 
 			drawTransformedAxes(glm::mat4(1.f), 200.f);
+			drawTransformeGrid(glm::mat4(1.f), 250.f);
 			drawTrackerListSelected(m_trackerList.trackers, m_trackerList.count, bCanBeTracked && bIsTracking);
 
         } break;
