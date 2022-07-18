@@ -764,21 +764,31 @@ void AppStage_ControllerSettings::renderUI()
 
 						if (ImGui::CollapsingHeader("Offsets", 0, true, false))
 						{
+							static int iOffsetView = 0;
+							ImGui::PushItemWidth(250);
+							ImGui::Combo("View", &iOffsetView, "Simple\0Advanced\0\0");
+							ImGui::PopItemWidth();
+
+							ImGui::Separator();
+
 							bool request_offset = false;
 
-							ImGui::Text("Orientation X: ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##OffsetOrientationX", &controllerInfo.OffsetOrientation.x, 1.f, 5.f, 2))
+							if (iOffsetView == 1)
 							{
-								while (controllerInfo.OffsetOrientation.x < 0.f)
-									controllerInfo.OffsetOrientation.x += 360.f;
-								while (controllerInfo.OffsetOrientation.x >= 360.f)
-									controllerInfo.OffsetOrientation.x -= 360.f;
+								ImGui::Text("Orientation X: ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								if (ImGui::InputFloat("##OffsetOrientationX", &controllerInfo.OffsetOrientation.x, 1.f, 5.f, 2))
+								{
+									while (controllerInfo.OffsetOrientation.x < 0.f)
+										controllerInfo.OffsetOrientation.x += 360.f;
+									while (controllerInfo.OffsetOrientation.x >= 360.f)
+										controllerInfo.OffsetOrientation.x -= 360.f;
 
-								request_offset = true;
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
 							}
-							ImGui::PopItemWidth();
 
 							ImGui::Text("Orientation Y: ");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
@@ -794,89 +804,92 @@ void AppStage_ControllerSettings::renderUI()
 							}
 							ImGui::PopItemWidth();
 
-							ImGui::Text("Orientation Z: ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##OffsetOrientationZ", &controllerInfo.OffsetOrientation.z, 1.f, 5.f, 2))
+							if (iOffsetView == 1)
 							{
-								while (controllerInfo.OffsetOrientation.z < 0.f)
-									controllerInfo.OffsetOrientation.z += 360.f;
-								while (controllerInfo.OffsetOrientation.z >= 360.f)
-									controllerInfo.OffsetOrientation.z -= 360.f;
+								ImGui::Text("Orientation Z: ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								if (ImGui::InputFloat("##OffsetOrientationZ", &controllerInfo.OffsetOrientation.z, 1.f, 5.f, 2))
+								{
+									while (controllerInfo.OffsetOrientation.z < 0.f)
+										controllerInfo.OffsetOrientation.z += 360.f;
+									while (controllerInfo.OffsetOrientation.z >= 360.f)
+										controllerInfo.OffsetOrientation.z -= 360.f;
 
-								request_offset = true;
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
+
+								ImGui::Separator();
+
+								ImGui::Text("Position X: ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								if (ImGui::InputFloat("##OffsetPositionX", &controllerInfo.OffsetPosition.x, 1.f, 5.f, 2))
+								{
+									controllerInfo.OffsetPosition.x = clampf(controllerInfo.OffsetPosition.x, -(1 << 16), (1 << 16));
+
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
+
+								ImGui::Text("Position Y: ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								if (ImGui::InputFloat("##OffsetPositionY", &controllerInfo.OffsetPosition.y, 1.f, 5.f, 2))
+								{
+									controllerInfo.OffsetPosition.y = clampf(controllerInfo.OffsetPosition.y, -(1 << 16), (1 << 16));
+
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
+
+								ImGui::Text("Position Z: ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								if (ImGui::InputFloat("##OffsetPositionZ", &controllerInfo.OffsetPosition.z, 1.f, 5.f, 2))
+								{
+									controllerInfo.OffsetPosition.z = clampf(controllerInfo.OffsetPosition.z, -(1 << 16), (1 << 16));
+
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
+
+								ImGui::Separator();
+
+								ImGui::Text("Scale X: ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								if (ImGui::InputFloat("##OffsetScaleX", &controllerInfo.OffsetScale.x, 0.01f, 0.05f, 2))
+								{
+									controllerInfo.OffsetScale.x = clampf(controllerInfo.OffsetScale.x, 0.01f, 100.0f);
+
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
+
+								ImGui::Text("Scale Y: ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								if (ImGui::InputFloat("##OffsetScaleY", &controllerInfo.OffsetScale.y, 0.01f, 0.05f, 2))
+								{
+									controllerInfo.OffsetScale.y = clampf(controllerInfo.OffsetScale.y, 0.01f, 100.0f);
+
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
+
+								ImGui::Text("Scale Z: ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								if (ImGui::InputFloat("##OffsetScaleZ", &controllerInfo.OffsetScale.z, 0.01f, 0.05f, 2))
+								{
+									controllerInfo.OffsetScale.z = clampf(controllerInfo.OffsetScale.z, 0.01f, 100.0f);
+
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
 							}
-							ImGui::PopItemWidth();
-
-							ImGui::Separator();
-
-							ImGui::Text("Position X: ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##OffsetPositionX", &controllerInfo.OffsetPosition.x, 1.f, 5.f, 2))
-							{
-								controllerInfo.OffsetPosition.x = clampf(controllerInfo.OffsetPosition.x, -(1 << 16), (1 << 16));
-
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-
-							ImGui::Text("Position Y: ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##OffsetPositionY", &controllerInfo.OffsetPosition.y, 1.f, 5.f, 2))
-							{
-								controllerInfo.OffsetPosition.y = clampf(controllerInfo.OffsetPosition.y, -(1 << 16), (1 << 16));
-
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-
-							ImGui::Text("Position Z: ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##OffsetPositionZ", &controllerInfo.OffsetPosition.z, 1.f, 5.f, 2))
-							{
-								controllerInfo.OffsetPosition.z = clampf(controllerInfo.OffsetPosition.z, -(1 << 16), (1 << 16));
-
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-
-							ImGui::Separator();
-
-							ImGui::Text("Scale X: ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##OffsetScaleX", &controllerInfo.OffsetScale.x, 0.01f, 0.05f, 2))
-							{
-								controllerInfo.OffsetScale.x = clampf(controllerInfo.OffsetScale.x, 0.01f, 100.0f);
-
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-
-							ImGui::Text("Scale Y: ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##OffsetScaleY", &controllerInfo.OffsetScale.y, 0.01f, 0.05f, 2))
-							{
-								controllerInfo.OffsetScale.y = clampf(controllerInfo.OffsetScale.y, 0.01f, 100.0f);
-
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-
-							ImGui::Text("Scale Z: ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##OffsetScaleZ", &controllerInfo.OffsetScale.z, 0.01f, 0.05f, 2))
-							{
-								controllerInfo.OffsetScale.z = clampf(controllerInfo.OffsetScale.z, 0.01f, 100.0f);
-
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
 
 							ImGui::Separator();
 
@@ -889,7 +902,30 @@ void AppStage_ControllerSettings::renderUI()
 
 								request_offset = true;
 							}
+							if (ImGui::IsItemHovered())
+							{
+								ImGui::SetTooltip("Use this setting to compensate for magnetometer drift.");
+							}
+
 							ImGui::PopItemWidth();
+
+							ImGui::Separator();
+
+							if (ImGui::Button("Reset All"))
+							{
+								controllerInfo.OffsetOrientation.x = 0.f;
+								controllerInfo.OffsetOrientation.y = 0.f;
+								controllerInfo.OffsetOrientation.z = 0.f;
+								controllerInfo.OffsetPosition.x = 0.f;
+								controllerInfo.OffsetPosition.y = 0.f;
+								controllerInfo.OffsetPosition.z = 0.f;
+								controllerInfo.OffsetScale.x = 1.f;
+								controllerInfo.OffsetScale.y = 1.f;
+								controllerInfo.OffsetScale.z = 1.f;
+								controllerInfo.OffsetMagnetometer = 0.f;
+
+								request_offset = true;
+							}
 
 							if (request_offset)
 							{
