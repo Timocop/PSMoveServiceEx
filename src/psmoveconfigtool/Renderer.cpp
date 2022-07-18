@@ -621,28 +621,59 @@ void drawTransformedAxes(const glm::mat4 &transform, float scale)
 
 void drawTransformedAxes(const glm::mat4 &transform, float xScale, float yScale, float zScale)
 {
-    assert(Renderer::getIsRenderingStage());
+	assert(Renderer::getIsRenderingStage());
 
-    glm::vec3 origin(0.f, 0.f, 0.f);
-    glm::vec3 xAxis(xScale, 0.f, 0.f);
-    glm::vec3 yAxis(0.f, yScale, 0.f);
-    glm::vec3 zAxis(0.f, 0.f, zScale);
-   
-    glPushMatrix();
-        glMultMatrixf(glm::value_ptr(transform));
-        glBegin(GL_LINES);
+	glm::vec3 origin(0.f, 0.f, 0.f);
+	glm::vec3 xAxis(xScale, 0.f, 0.f);
+	glm::vec3 yAxis(0.f, yScale, 0.f);
+	glm::vec3 zAxis(0.f, 0.f, zScale);
 
-        glColor3ub(255, 0, 0);
-        glVertex3fv(glm::value_ptr(origin)); glVertex3fv(glm::value_ptr(xAxis));
+	glPushMatrix();
+	glMultMatrixf(glm::value_ptr(transform));
+	glBegin(GL_LINES);
 
-        glColor3ub(0, 255, 0);
-        glVertex3fv(glm::value_ptr(origin)); glVertex3fv(glm::value_ptr(yAxis));
+	glColor3ub(255, 0, 0);
+	glVertex3fv(glm::value_ptr(origin)); glVertex3fv(glm::value_ptr(xAxis));
 
-        glColor3ub(0, 0, 255);
-        glVertex3fv(glm::value_ptr(origin)); glVertex3fv(glm::value_ptr(zAxis));
+	glColor3ub(0, 255, 0);
+	glVertex3fv(glm::value_ptr(origin)); glVertex3fv(glm::value_ptr(yAxis));
 
-        glEnd();
-    glPopMatrix();
+	glColor3ub(0, 0, 255);
+	glVertex3fv(glm::value_ptr(origin)); glVertex3fv(glm::value_ptr(zAxis));
+
+	glEnd();
+	glPopMatrix();
+}
+
+void drawTransformeGrid(const glm::mat4 &transform, float scale)
+{
+	assert(Renderer::getIsRenderingStage());
+
+	glPushMatrix();
+	glMultMatrixf(glm::value_ptr(transform));
+	glBegin(GL_LINES);
+
+
+	for (float i = -scale; i <= scale; i += 25.f)
+	{
+		glm::vec3 origin(i, 0.f, -scale);
+		glm::vec3 xAxis(i, 0.f, scale);
+
+		glColor3ub(125, 125, 125);
+		glVertex3fv(glm::value_ptr(origin)); glVertex3fv(glm::value_ptr(xAxis));
+	}
+
+	for (float i = -scale; i <= scale; i += 25.f)
+	{
+		glm::vec3 origin(-scale, 0.f, i);
+		glm::vec3 xAxis(scale, 0.f, i);
+
+		glColor3ub(125, 125, 125);
+		glVertex3fv(glm::value_ptr(origin)); glVertex3fv(glm::value_ptr(xAxis));
+	}
+
+	glEnd();
+	glPopMatrix();
 }
 
 void drawTransformedBox(const glm::mat4 &transform, const glm::vec3 &half_extents, const glm::vec3 &color)
