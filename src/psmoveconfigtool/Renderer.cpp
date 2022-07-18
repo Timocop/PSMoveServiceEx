@@ -41,7 +41,7 @@ static const float k_camera_vfov= 35.f;
 static const float k_camera_z_near= 0.1f;
 static const float k_camera_z_far= 5000.f;
 
-static const ImVec4 k_clear_color = ImColor(114, 144, 154);
+static const ImVec4 k_clear_color = ImColor(75, 75, 75);
 
 static const glm::vec3 k_psmove_frustum_color = glm::vec3(0.1f, 0.7f, 0.3f);
 
