@@ -707,56 +707,63 @@ void AppStage_ColorCalibration::renderUI()
 			m_bAlignPinned = false;
 		}
 
-		if (m_bAlignDetectColor && ImGui::IsMouseClicked(0))
+		if (m_video_buffer_state != nullptr)
 		{
-			ImVec2 mousePos = ImGui::GetMousePos();
-			ImVec2 dispSize = ImGui::GetIO().DisplaySize;
-			int img_x = (static_cast<int>(mousePos.x) * m_video_buffer_state->hsvBuffer->cols) / static_cast<int>(dispSize.x);
-			int img_y = (static_cast<int>(mousePos.y) * m_video_buffer_state->hsvBuffer->rows) / static_cast<int>(dispSize.y);
-			cv::Vec< unsigned char, 3 > hsv_pixel = m_video_buffer_state->hsvBuffer->at<cv::Vec< unsigned char, 3 >>(cv::Point(img_x, img_y));
-
-			TrackerColorPreset preset = getColorPreset();
-			preset.hue_center = hsv_pixel[0];
-			preset.saturation_center = hsv_pixel[1];
-			preset.value_center = hsv_pixel[2];
-
-			auto_adjust_color_sensitivity(preset);
-
-			request_tracker_set_color_preset(m_masterTrackingColorType, preset);
-
-			if (m_masterControllerView != nullptr)
+			if (m_bAlignDetectColor && ImGui::IsMouseClicked(0))
 			{
-				if (m_bAutoChangeColor) {
-					m_mAlignPosition[0] = mousePos.x;
-					m_mAlignPosition[1] = mousePos.y;
-					m_bAlignPinned = true;
+				ImVec2 mousePos = ImGui::GetMousePos();
+				ImVec2 dispSize = ImGui::GetIO().DisplaySize;
+				int img_x = (static_cast<int>(mousePos.x) * m_video_buffer_state->hsvBuffer->cols) / static_cast<int>(dispSize.x);
+				int img_y = (static_cast<int>(mousePos.y) * m_video_buffer_state->hsvBuffer->rows) / static_cast<int>(dispSize.y);
+				cv::Vec< unsigned char, 3 > hsv_pixel = m_video_buffer_state->hsvBuffer->at<cv::Vec< unsigned char, 3 >>(cv::Point(img_x, img_y));
 
-					setState(eMenuState::autoConfig_wait1);
-					request_set_controller_tracking_color(m_masterControllerView, PSMTrackingColorType_Magenta);
-					m_masterTrackingColorType = PSMTrackingColorType_Magenta;
-					std::this_thread::sleep_for(std::chrono::milliseconds(auto_calib_sleep));
-				}
-				else if (m_bAutoChangeController) {
-					setState(eMenuState::changeController);
-				}
-				else if (m_bAutoChangeTracker) {
-					setState(eMenuState::changeTracker);
-				}
-				else
+				TrackerColorPreset preset = getColorPreset();
+				preset.hue_center = hsv_pixel[0];
+				preset.saturation_center = hsv_pixel[1];
+				preset.value_center = hsv_pixel[2];
+
+				auto_adjust_color_sensitivity(preset);
+
+				request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+
+				if (m_masterControllerView != nullptr)
 				{
-					m_bAlignDetectColor = false;
+					if (m_bAutoChangeColor) {
+						m_mAlignPosition[0] = mousePos.x;
+						m_mAlignPosition[1] = mousePos.y;
+						m_bAlignPinned = true;
+
+						setState(eMenuState::autoConfig_wait1);
+						request_set_controller_tracking_color(m_masterControllerView, PSMTrackingColorType_Magenta);
+						m_masterTrackingColorType = PSMTrackingColorType_Magenta;
+						std::this_thread::sleep_for(std::chrono::milliseconds(auto_calib_sleep));
+					}
+					else if (m_bAutoChangeController) {
+						setState(eMenuState::changeController);
+					}
+					else if (m_bAutoChangeTracker) {
+						setState(eMenuState::changeTracker);
+					}
+					else
+					{
+						m_bAlignDetectColor = false;
+					}
+				}
+				else if (m_hmdView != nullptr)
+				{
+					if (m_bAutoChangeTracker) {
+						setState(eMenuState::changeTracker);
+					}
+					else
+					{
+						m_bAlignDetectColor = false;
+					}
 				}
 			}
-			else if (m_hmdView != nullptr)
-			{
-				if (m_bAutoChangeTracker) {
-					setState(eMenuState::changeTracker);
-				}
-				else
-				{
-					m_bAlignDetectColor = false;
-				}
-			}
+		}
+		else
+		{
+			m_bAlignDetectColor = false;
 		}
 
 		if (m_bAlignDetectColor && ImGui::IsMouseClicked(1))
@@ -782,7 +789,8 @@ void AppStage_ColorCalibration::renderUI()
                 request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
             }
 
-			if (m_video_buffer_state != nullptr)
+			// $TODO: Not needed?
+			/*if (m_video_buffer_state != nullptr)*/
 			{
 				if (ImGui::Button(" < ##Filter"))
 				{
@@ -1780,6 +1788,13 @@ void AppStage_ColorCalibration::renderUI()
 			break;
 		}
 
+		if (m_video_buffer_state == nullptr)
+		{
+			m_iDetectingFailReason = eDetectionFailReason::failreason_unknown;
+			setState(eMenuState::detection_fail_pre);
+			break;
+		}
+
         PSMTrackingColorType new_color =
             static_cast<PSMTrackingColorType>(
             (m_masterTrackingColorType + 1) % PSMTrackingColorType_Custom0); //PSMTrackingColorType_MaxColorTypes
@@ -2016,6 +2031,13 @@ void AppStage_ColorCalibration::renderUI()
 		break;
 	case eMenuState::detection_get_red_done:
 	{
+		if (m_video_buffer_state == nullptr)
+		{
+			m_iDetectingFailReason = eDetectionFailReason::failreason_unknown;
+			setState(eMenuState::detection_fail_pre);
+			break;
+		}
+
 		*m_video_buffer_state->detectionMaskedBuffer = cv::Scalar(0, 0, 0);
 
 		cv::threshold(*m_video_buffer_state->maskedBuffer, *m_video_buffer_state->maskedBuffer, 0, 255, CV_THRESH_BINARY);
@@ -2059,6 +2081,13 @@ void AppStage_ColorCalibration::renderUI()
 		break;
 	case eMenuState::detection_get_green_done:
 	{
+		if (m_video_buffer_state == nullptr)
+		{
+			m_iDetectingFailReason = eDetectionFailReason::failreason_unknown;
+			setState(eMenuState::detection_fail_pre);
+			break;
+		}
+
 		cv::threshold(*m_video_buffer_state->maskedBuffer, *m_video_buffer_state->maskedBuffer, 0, 255, CV_THRESH_BINARY);
 
 		cv::bitwise_and(
@@ -2100,6 +2129,13 @@ void AppStage_ColorCalibration::renderUI()
 		break;
 	case eMenuState::detection_get_blue_done:
 	{
+		if (m_video_buffer_state == nullptr)
+		{
+			m_iDetectingFailReason = eDetectionFailReason::failreason_unknown;
+			setState(eMenuState::detection_fail_pre);
+			break;
+		}
+
 		cv::threshold(*m_video_buffer_state->maskedBuffer, *m_video_buffer_state->maskedBuffer, 0, 255, CV_THRESH_BINARY);
 
 		cv::bitwise_and(
@@ -2117,6 +2153,13 @@ void AppStage_ColorCalibration::renderUI()
 	}
 	case eMenuState::detection_change_color:
 	{
+		if (m_video_buffer_state == nullptr)
+		{
+			m_iDetectingFailReason = eDetectionFailReason::failreason_unknown;
+			setState(eMenuState::detection_fail_pre);
+			break;
+		}
+
 		cv::cvtColor(*m_video_buffer_state->detectionMaskedBuffer, *m_video_buffer_state->detectionLowerBuffer, cv::COLOR_BGR2GRAY);
 		cv::threshold(*m_video_buffer_state->detectionLowerBuffer, *m_video_buffer_state->detectionLowerBuffer, 0, 255, CV_THRESH_BINARY);
 
