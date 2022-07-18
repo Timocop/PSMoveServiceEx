@@ -179,8 +179,8 @@ TrackerManagerConfig::get_global_down_axis() const
 
 //-- Tracker Manager -----
 bool TrackerManager::m_trackersSynced = true;
-bool TrackerManager::m_isTrackerFrameAvailable[TrackerManager::k_max_devices];
-bool TrackerManager::m_readyToReceive = false;
+bool TrackerManager::m_isTrackerReady[TrackerManager::k_max_devices];
+bool TrackerManager::m_isTrackerPollAllowed = false;
 
 TrackerManager::TrackerManager()
     : DeviceTypeManager(10000, 13)
@@ -221,15 +221,15 @@ TrackerManager::startup()
 void TrackerManager::poll_devices()
 {
 	m_trackersSynced = false;
-	m_readyToReceive = true;
+	m_isTrackerPollAllowed = true;
 	for (int i = 0; i < getMaxDevices(); i++)
 	{
 		const ServerTrackerViewPtr tracker = getTrackerViewPtr(i);
 		if (tracker->getIsOpen())
 		{
-			if (!m_isTrackerFrameAvailable[tracker->getDeviceID()])
+			if (!m_isTrackerReady[tracker->getDeviceID()])
 			{
-				m_readyToReceive = false;
+				m_isTrackerPollAllowed = false;
 				break;
 			}
 		}
@@ -237,13 +237,13 @@ void TrackerManager::poll_devices()
 
 	DeviceTypeManager::poll_devices();
 
-	if (m_readyToReceive)
+	if (m_isTrackerPollAllowed)
 	{
 		for (int i = 0; i < getMaxDevices(); i++)
 		{
-			m_isTrackerFrameAvailable[i] = false;
+			m_isTrackerReady[i] = false;
 		}
-		m_readyToReceive = false;
+		m_isTrackerPollAllowed = false;
 		m_trackersSynced = true;
 	}
 }

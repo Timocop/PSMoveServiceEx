@@ -60,25 +60,25 @@ bool ServerDeviceView::poll()
     {
         switch (device->poll())
         {
-        case IDeviceInterface::_PollResultSuccessNoData:
-            {
-                long max_failure= device->getMaxPollFailureCount();
-                
-                ++m_pollNoDataCount;
+		case IDeviceInterface::_PollResultSuccessNoData:
+		{
+			long max_failure = device->getMaxPollFailureCount();
 
-                if (m_pollNoDataCount > max_failure)
-                {
-                    SERVER_LOG_INFO("ServerDeviceView::poll") <<
-                        "Device id " << getDeviceID() << 
-                        " closing due to no data (" << max_failure << 
-                        " failed poll attempts)";
-                    close();
-                    
-                    bSuccessfullyUpdated= false;
-                }
-            }
-            break;
-                
+			++m_pollNoDataCount;
+
+			if (m_pollNoDataCount > max_failure)
+			{
+				SERVER_LOG_INFO("ServerDeviceView::poll") <<
+					"Device id " << getDeviceID() <<
+					" closing due to no data (" << max_failure <<
+					" failed poll attempts)";
+				close();
+
+				bSuccessfullyUpdated = false;
+			}
+		}
+		break;
+
         case IDeviceInterface::_PollResultSuccessNewData:
             {
                 m_pollNoDataCount= 0;
@@ -90,7 +90,14 @@ bool ServerDeviceView::poll()
                 bSuccessfullyUpdated= true;
             }
             break;
-                
+
+		case IDeviceInterface::_PollResultSuccessIgnore:
+		{
+			m_pollNoDataCount = 0;
+			bSuccessfullyUpdated = true;
+		}
+		break;
+
         case IDeviceInterface::_PollResultFailure:
             {
                 SERVER_LOG_INFO("ServerDeviceView::poll") <<

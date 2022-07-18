@@ -118,16 +118,15 @@ public:
 		return m_trackersSynced;
 	}
 
-	inline static void setTrackFrameAvailable(int deviceId)
+	inline static void setTrackerReady(int deviceId)
 	{
-		m_isTrackerFrameAvailable[deviceId] = true;
+		m_isTrackerReady[deviceId] = true;
 	}
 
-	inline static bool isReadyToReceive()
+	inline static bool isTrackerPollAllowed()
 	{
-		return m_readyToReceive;
+		return m_isTrackerPollAllowed;
 	}
-
 
     eCommonTrackingColorID allocateTrackingColorID();
     bool claimTrackingColorID(const class ServerControllerView *controller_view, eCommonTrackingColorID color_id);
@@ -147,10 +146,10 @@ private:
     std::deque<eCommonTrackingColorID> m_available_color_ids;
     TrackerManagerConfig cfg;
     bool m_tracker_list_dirty;
-	std::chrono::time_point<std::chrono::high_resolution_clock> m_lastSync;
+
 	static bool m_trackersSynced;
-	static bool m_isTrackerFrameAvailable[TrackerManager::k_max_devices];
-	static bool m_readyToReceive;
+	static bool m_isTrackerReady[TrackerManager::k_max_devices];
+	static bool m_isTrackerPollAllowed;
 };
 
 #endif // TRACKER_MANAGER_H

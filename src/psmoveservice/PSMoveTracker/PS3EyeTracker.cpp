@@ -434,28 +434,35 @@ IDeviceInterface::ePollResult PS3EyeTracker::poll()
 		{
 			if ((bool)VideoCapture->get(CV_CAP_PROP_FRAMEAVAILABLE))
 			{
-				TrackerManager::setTrackFrameAvailable(VideoCapture->getIndex());
+				TrackerManager::setTrackerReady(VideoCapture->getIndex());
 			}
 
 			// Only poll frames when every tracker is ready to sync freams.
-			if (!TrackerManager::isReadyToReceive() ||
-				!VideoCapture->retrieve(CaptureData->frame, cv::CAP_OPENNI_BGR_IMAGE))
+			if (!TrackerManager::isTrackerPollAllowed())
 			{
-				// Device still in valid state
-				result = IControllerInterface::_PollResultSuccessNoData;
+				// Keep iterating. Still has old data.
+				result = IControllerInterface::_PollResultSuccessNewData;
 			}
 			else
 			{
-				// New data available. Keep iterating.
-				result = IControllerInterface::_PollResultSuccessNewData;
+				if (!VideoCapture->retrieve(CaptureData->frame, cv::CAP_OPENNI_BGR_IMAGE))
+				{
+					// Device still in valid state
+					result = IControllerInterface::_PollResultSuccessIgnore;
+				}
+				else
+				{
+					// New data available. Keep iterating.
+					result = IControllerInterface::_PollResultSuccessNewData;
 
-				// We received the frame and every tracker polled. We need a new frame!
-				VideoCapture->set(CV_CAP_PROP_FRAMEAVAILABLE, false);
+					// We received the frame and every tracker polled. We need a new frame!
+					VideoCapture->set(CV_CAP_PROP_FRAMEAVAILABLE, false);
+				}
 			}
 		}
 		else
 		{
-			result = IControllerInterface::_PollResultSuccessNoData;
+			result = IControllerInterface::_PollResultSuccessIgnore;
 		}
 
         {

@@ -454,7 +454,8 @@ public:
     enum ePollResult
     {
         _PollResultSuccessNoData,
-        _PollResultSuccessNewData,
+		_PollResultSuccessNewData,
+		_PollResultSuccessIgnore,
         _PollResultFailure,
     };
     
