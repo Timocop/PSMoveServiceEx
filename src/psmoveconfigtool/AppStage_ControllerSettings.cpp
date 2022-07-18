@@ -808,6 +808,8 @@ void AppStage_ControllerSettings::renderUI()
 							}
 							ImGui::PopItemWidth();
 
+							ImGui::Separator();
+
 							ImGui::Text("Position X: ");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(120.f);
@@ -841,6 +843,8 @@ void AppStage_ControllerSettings::renderUI()
 							}
 							ImGui::PopItemWidth();
 
+							ImGui::Separator();
+
 							ImGui::Text("Scale X: ");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(120.f);
@@ -873,6 +877,8 @@ void AppStage_ControllerSettings::renderUI()
 								request_offset = true;
 							}
 							ImGui::PopItemWidth();
+
+							ImGui::Separator();
 
 							ImGui::Text("Magnetometer Yaw Center: ");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
