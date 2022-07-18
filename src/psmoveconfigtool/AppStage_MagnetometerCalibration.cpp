@@ -672,7 +672,7 @@ void AppStage_MagnetometerCalibration::renderUI()
 
             ImGui::Text("Failed to start controller stream!");
 
-            if (ImGui::Button(" Ok "))
+            if (ImGui::Button(" OK "))
             {
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }
@@ -696,7 +696,7 @@ void AppStage_MagnetometerCalibration::renderUI()
                 "Bad controller hardware calibration!\n" \
                 "Try un-pairing and re-pairing the controller.");
 
-            if (ImGui::Button(" Ok "))
+            if (ImGui::Button(" OK "))
             {
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }
@@ -749,7 +749,7 @@ void AppStage_MagnetometerCalibration::renderUI()
                 }
                 else
                 {
-                    if (ImGui::Button(" Ok "))
+                    if (ImGui::Button(" OK "))
                     {
 						PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
                         m_menuState = waitForGravityAlignment;
@@ -817,7 +817,7 @@ void AppStage_MagnetometerCalibration::renderUI()
                 ImGui::Text("Move Destabilized! Waiting for stabilization..");
             }
 
-            if (ImGui::Button("Trust me, it's stable"))
+            if (ImGui::Button("Force Continue"))
             {
                 m_bForceControllerStable= true;
             }
@@ -871,7 +871,7 @@ void AppStage_MagnetometerCalibration::renderUI()
 
             ImGui::Text("Failed to set calibration!");
 
-            if (ImGui::Button(" Ok "))
+            if (ImGui::Button(" OK "))
             {
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }
@@ -914,7 +914,7 @@ void AppStage_MagnetometerCalibration::renderUI()
 				"[Hold the Select button with controller pointed forward\n" \
 				"to recenter the controller]");
 
-            if (ImGui::Button(" Ok "))
+            if (ImGui::Button(" OK "))
             {
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }

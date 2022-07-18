@@ -413,7 +413,7 @@ void AppStage_HMDGyroscopeCalibration::renderUI()
 
             ImGui::Text("Failed to start hmd stream!");
 
-            if (ImGui::Button(" Ok "))
+            if (ImGui::Button(" OK "))
             {
                 request_exit_to_app_stage(AppStage_HMDSettings::APP_STAGE_NAME);
             }
@@ -495,7 +495,7 @@ void AppStage_HMDGyroscopeCalibration::renderUI()
                 "Sampling complete.\n" \
                 "Press OK to continue or Redo to recalibration.");
 
-            if (ImGui::Button(" Ok "))
+            if (ImGui::Button(" OK "))
             {
                 m_menuState = eCalibrationMenuState::test;
             }
@@ -528,7 +528,7 @@ void AppStage_HMDGyroscopeCalibration::renderUI()
                 ImGui::Text("Calibration of HMD ID #%d complete!", m_hmdView->HmdID);
             }
 
-            if (ImGui::Button(" Ok "))
+            if (ImGui::Button(" OK "))
             {
                 request_exit_to_app_stage(AppStage_HMDSettings::APP_STAGE_NAME);
             }

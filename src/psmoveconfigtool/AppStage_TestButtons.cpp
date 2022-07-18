@@ -169,7 +169,7 @@ void AppStage_TestButtons::renderUI()
 
             ImGui::Text("Failed to start controller stream!");
 
-            if (ImGui::Button(" Ok "))
+            if (ImGui::Button(" OK "))
             {
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }

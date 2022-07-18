@@ -420,7 +420,7 @@ void AppStage_GyroscopeCalibration::renderUI()
 
             ImGui::Text("Failed server request!");
 
-            if (ImGui::Button(" Ok "))
+            if (ImGui::Button(" OK "))
             {
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }
@@ -459,7 +459,7 @@ void AppStage_GyroscopeCalibration::renderUI()
                 ImGui::Text("Controller Destabilized! Waiting for stabilization..");
             }
 
-            if (ImGui::Button("Trust me, it's stable"))
+            if (ImGui::Button("Force Continue"))
             {
                 m_bForceControllerStable= true;
             }
@@ -507,7 +507,7 @@ void AppStage_GyroscopeCalibration::renderUI()
                 "Sampling complete.\n" \
                 "Press OK to continue or Redo to recalibration.");
 
-            if (ImGui::Button(" Ok "))
+            if (ImGui::Button(" OK "))
             {
 				PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
                 setState(eCalibrationMenuState::test);
@@ -568,7 +568,7 @@ void AppStage_GyroscopeCalibration::renderUI()
 					"to recenter the controller]");
 			}
 
-            if (ImGui::Button(" Ok "))
+            if (ImGui::Button(" OK "))
             {
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }

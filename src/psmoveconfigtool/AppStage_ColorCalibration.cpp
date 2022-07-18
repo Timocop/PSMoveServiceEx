@@ -2354,7 +2354,7 @@ void AppStage_ColorCalibration::renderUI()
 		ImGui::TextWrapped("Color sampling finished.");
 		ImGui::TextWrapped("Controller colors and tracker exposure/gain have been automatically adjusted!");
 
-		if (ImGui::Button(" Ok "))
+		if (ImGui::Button(" OK "))
 		{
 			setState(eMenuState::manualConfig);
 		}
@@ -2432,7 +2432,7 @@ void AppStage_ColorCalibration::renderUI()
             ImGui::Text("Failed to start controller stream!");
         }
 
-        if (ImGui::Button(" Ok "))
+        if (ImGui::Button(" OK "))
         {
             request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
         }

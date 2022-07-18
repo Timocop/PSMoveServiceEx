@@ -405,7 +405,7 @@ void AppStage_HMDAccelerometerCalibration::renderUI()
                 "Sampling complete.\n" \
                 "Press OK to continue or Redo to resample.");
 
-            if (ImGui::Button(" Ok "))
+            if (ImGui::Button(" OK "))
             {
                 request_exit_to_app_stage(AppStage_HMDSettings::APP_STAGE_NAME);
             }
@@ -434,7 +434,7 @@ void AppStage_HMDAccelerometerCalibration::renderUI()
                 ImGui::Text("Calibration of HMD ID #%d complete!", m_hmdView->HmdID);
             }
 
-            if (ImGui::Button(" Ok "))
+            if (ImGui::Button(" OK "))
             {
                 request_exit_to_app_stage(AppStage_HMDSettings::APP_STAGE_NAME);
             }

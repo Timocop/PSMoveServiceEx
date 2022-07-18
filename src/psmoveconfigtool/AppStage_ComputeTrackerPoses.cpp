@@ -385,7 +385,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
                 break;
             }
 
-            if (ImGui::Button(" Ok "))
+            if (ImGui::Button(" OK "))
             {
                 request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
             }
@@ -428,25 +428,27 @@ void AppStage_ComputeTrackerPoses::renderUI()
 
             if (m_trackerViews.size() > 1)
             {
-                ImGui::Text("Tracker #%d", m_renderTrackerIndex);
-
-                if (ImGui::Button("Previous Tracker"))
+				if (ImGui::Button(" < ##Previous Tracker"))
                 {
                     go_previous_tracker();
                 }
                 ImGui::SameLine();
-                if (ImGui::Button("Next Tracker"))
+				if (ImGui::Button(" > ##Next Tracker"))
                 {
                     go_next_tracker();
                 }
+				ImGui::SameLine();
+				ImGui::Text("Tracker #%d", m_renderTrackerIndex);
             }
 
-            if (ImGui::Button("Looks Good!"))
+			ImGui::Separator();
+
+            if (ImGui::Button("Start Calibration"))
             {
                 setState(eMenuState::calibrateWithMat);
             }
 
-            if (ImGui::Button("Hmm... Something is wrong."))
+            if (ImGui::Button("Return to Tracker Settings"))
             {
                 request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
             }
@@ -591,7 +593,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
                 }
             }
 
-            if (ImGui::Button("Tracker Settings"))
+            if (ImGui::Button("Return to Tracker Settings"))
             {
                 m_app->setAppStage(AppStage_TrackerSettings::APP_STAGE_NAME);
             }

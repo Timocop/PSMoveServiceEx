@@ -763,20 +763,22 @@ void AppSubStage_CalibrateWithMat::renderUI()
 
             if (m_parentStage->get_tracker_count() > 1)
             {
-                ImGui::Text("Tracker #%d", m_parentStage->get_render_tracker_index() + 1);
-
-                if (ImGui::Button("Previous Tracker"))
+				if (ImGui::Button(" < ##Previous Tracker"))
                 {
                     m_parentStage->go_previous_tracker();
                 }
                 ImGui::SameLine();
-                if (ImGui::Button("Next Tracker"))
+				if (ImGui::Button(" > ##Next Tracker"))
                 {
                     m_parentStage->go_next_tracker();
                 }
+				ImGui::SameLine();
+				ImGui::Text("Tracker #%d", m_parentStage->get_render_tracker_index() + 1);
             }
 
-            if (ImGui::Button("Trust me, it's stable"))
+			ImGui::Separator();
+
+            if (ImGui::Button("Force Continue"))
             {
                 m_bForceStable= true;
             }
@@ -804,7 +806,7 @@ void AppSubStage_CalibrateWithMat::renderUI()
     case AppSubStage_CalibrateWithMat::eMenuState::calibrationStepRecordHMD:
         {
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 200));
+            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 275));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             if (m_menuState == AppSubStage_CalibrateWithMat::eMenuState::calibrationStepRecordController)
@@ -850,18 +852,20 @@ void AppSubStage_CalibrateWithMat::renderUI()
 
             if (m_parentStage->get_tracker_count() > 1)
             {
+				if (ImGui::Button(" < ##Previous Tracker"))
+				{
+					m_parentStage->go_previous_tracker();
+				}
+				ImGui::SameLine();
+				if (ImGui::Button(" > ##Next Tracker"))
+				{
+					m_parentStage->go_next_tracker();
+				}
+				ImGui::SameLine();
                 ImGui::Text("Tracker #%d", m_parentStage->get_render_tracker_index() + 1);
-
-                if (ImGui::Button("Previous Tracker"))
-                {
-                    m_parentStage->go_previous_tracker();
-                }
-                ImGui::SameLine();
-                if (ImGui::Button("Next Tracker"))
-                {
-                    m_parentStage->go_next_tracker();
-                }
             }
+
+			ImGui::Separator();
 
             if (ImGui::Button("Cancel"))
             {

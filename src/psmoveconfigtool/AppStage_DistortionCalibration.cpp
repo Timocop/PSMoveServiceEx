@@ -671,7 +671,7 @@ void AppStage_DistortionCalibration::renderUI()
 
 			ImGui::Spacing();
 
-			if (ImGui::Button(" Ok "))
+			if (ImGui::Button(" OK "))
 			{
 				// Crank up the exposure and gain so that we can see the chessboard
 				// These overrides will get rolled back once tracker gets closed
@@ -790,7 +790,7 @@ void AppStage_DistortionCalibration::renderUI()
             ImGui::Text("Calibration complete!");
             ImGui::Text("Error: %f", m_opencv_state->reprojectionError);
 
-            if (ImGui::Button(" Ok "))
+            if (ImGui::Button(" OK "))
             {
                 request_exit();
             }
@@ -829,7 +829,7 @@ void AppStage_DistortionCalibration::renderUI()
             else
                 ImGui::Text("Failed to open tracker stream!");
 
-            if (ImGui::Button(" Ok "))
+            if (ImGui::Button(" OK "))
             {
                 m_app->setAppStage(AppStage_TrackerSettings::APP_STAGE_NAME);
             }
@@ -861,7 +861,7 @@ void AppStage_DistortionCalibration::renderUI()
 
             ImGui::Text("Failed to stop tracker stream!");
 
-            if (ImGui::Button(" Ok "))
+            if (ImGui::Button(" OK "))
             {
                 m_app->setAppStage(AppStage_TrackerSettings::APP_STAGE_NAME);
             }

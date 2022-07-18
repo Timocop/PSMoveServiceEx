@@ -91,7 +91,7 @@ void AppStage_PairController::renderUI()
 
             ImGui::Text("Failed to unpair controller!");
 
-            if (ImGui::Button(" Ok "))
+            if (ImGui::Button(" OK "))
             {
                 m_app->setAppStage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }
@@ -159,7 +159,7 @@ void AppStage_PairController::renderUI()
 
             ImGui::Text("Failed to pair controller!");
 
-            if (ImGui::Button(" Ok "))
+            if (ImGui::Button(" OK "))
             {
                 m_app->setAppStage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }
@@ -189,7 +189,7 @@ void AppStage_PairController::renderUI()
 
             ImGui::Text("Failed to cancel bluetooth operation (already completed?)");
 
-            if (ImGui::Button(" Ok "))
+            if (ImGui::Button(" OK "))
             {
                 m_app->setAppStage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }
