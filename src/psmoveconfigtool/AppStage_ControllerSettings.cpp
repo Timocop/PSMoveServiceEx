@@ -761,6 +761,135 @@ void AppStage_ControllerSettings::renderUI()
 						        ImGui::PopItemWidth();
 					        }
                         }
+
+						if (ImGui::CollapsingHeader("Offsets", 0, true, false))
+						{
+							bool request_offset = false;
+
+							ImGui::Text("Orientation X: ");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(120.f);
+							if (ImGui::InputFloat("##ControllerOffsetOrientationX", &controllerInfo.OffsetOrientation.x, 1.f, 5.f, 2))
+							{
+								while (controllerInfo.OffsetOrientation.x < 0.f)
+									controllerInfo.OffsetOrientation.x += 360.f;
+								while (controllerInfo.OffsetOrientation.x > 360.f)
+									controllerInfo.OffsetOrientation.x -= 360.f;
+
+								request_offset = true;
+							}
+							ImGui::PopItemWidth();
+
+							ImGui::Text("Orientation Y: ");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(120.f);
+							if (ImGui::InputFloat("##ControllerOffsetOrientationY", &controllerInfo.OffsetOrientation.y, 1.f, 5.f, 2))
+							{
+								while (controllerInfo.OffsetOrientation.y < 0.f)
+									controllerInfo.OffsetOrientation.y += 360.f;
+								while (controllerInfo.OffsetOrientation.y > 360.f)
+									controllerInfo.OffsetOrientation.y -= 360.f;
+
+								request_offset = true;
+							}
+							ImGui::PopItemWidth();
+
+							ImGui::Text("Orientation Z: ");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(120.f);
+							if (ImGui::InputFloat("##ControllerOffsetOrientationZ", &controllerInfo.OffsetOrientation.z, 1.f, 5.f, 2))
+							{
+								while (controllerInfo.OffsetOrientation.z < 0.f)
+									controllerInfo.OffsetOrientation.z += 360.f;
+								while (controllerInfo.OffsetOrientation.z > 360.f)
+									controllerInfo.OffsetOrientation.z -= 360.f;
+
+								request_offset = true;
+							}
+							ImGui::PopItemWidth();
+
+							ImGui::Text("Position X: ");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(120.f);
+							if (ImGui::InputFloat("##ControllerOffsetPositionX", &controllerInfo.OffsetPosition.x, 1.f, 5.f, 2))
+							{
+								controllerInfo.OffsetPosition.x = clampf(controllerInfo.OffsetPosition.x, -(1 << 16), (1 << 16));
+
+								request_offset = true;
+							}
+							ImGui::PopItemWidth();
+
+							ImGui::Text("Position Y: ");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(120.f);
+							if (ImGui::InputFloat("##ControllerOffsetPositionY", &controllerInfo.OffsetPosition.y, 1.f, 5.f, 2))
+							{
+								controllerInfo.OffsetPosition.y = clampf(controllerInfo.OffsetPosition.y, -(1 << 16), (1 << 16));
+
+								request_offset = true;
+							}
+							ImGui::PopItemWidth();
+
+							ImGui::Text("Position Z: ");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(120.f);
+							if (ImGui::InputFloat("##ControllerOffsetPositionZ", &controllerInfo.OffsetPosition.z, 1.f, 5.f, 2))
+							{
+								controllerInfo.OffsetPosition.z = clampf(controllerInfo.OffsetPosition.z, -(1 << 16), (1 << 16));
+
+								request_offset = true;
+							}
+							ImGui::PopItemWidth();
+
+							ImGui::Text("Scale X: ");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(120.f);
+							if (ImGui::InputFloat("##ControllerOffsetScaleX", &controllerInfo.OffsetScale.x, 0.05f, 0.2f, 2))
+							{
+								controllerInfo.OffsetScale.x = clampf(controllerInfo.OffsetScale.x, 0.01, 2.0f);
+
+								request_offset = true;
+							}
+							ImGui::PopItemWidth();
+
+							ImGui::Text("Scale Y: ");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(120.f);
+							if (ImGui::InputFloat("##ControllerOffsetScaleY", &controllerInfo.OffsetScale.y, 0.05f, 0.2f, 2))
+							{
+								controllerInfo.OffsetScale.y = clampf(controllerInfo.OffsetScale.y, 0.01, 2.0f);
+
+								request_offset = true;
+							}
+							ImGui::PopItemWidth();
+
+							ImGui::Text("Scale Z: ");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(120.f);
+							if (ImGui::InputFloat("##ControllerOffsetScaleZ", &controllerInfo.OffsetScale.z, 0.05f, 0.2f, 2))
+							{
+								controllerInfo.OffsetScale.z = clampf(controllerInfo.OffsetScale.z, 0.01, 2.0f);
+
+								request_offset = true;
+							}
+							ImGui::PopItemWidth();
+
+							if (request_offset)
+							{
+								request_set_controller_offsets(
+									controllerInfo.ControllerID,
+									controllerInfo.OffsetOrientation.x,
+									controllerInfo.OffsetOrientation.y,
+									controllerInfo.OffsetOrientation.z,
+									controllerInfo.OffsetPosition.x,
+									controllerInfo.OffsetPosition.y,
+									controllerInfo.OffsetPosition.z,
+									controllerInfo.OffsetScale.x,
+									controllerInfo.OffsetScale.y,
+									controllerInfo.OffsetScale.z
+								);
+							}
+						}
 				    }
                 }
 
@@ -1153,6 +1282,16 @@ void AppStage_ControllerSettings::handle_controller_list_response(
 				ControllerInfo.OpticalTracking = ControllerResponse.opticaltracking();
 				ControllerInfo.PSmoveEmulation = ControllerResponse.psmove_emulation();
 
+				ControllerInfo.OffsetOrientation.x = ControllerResponse.offset_orientation().x();
+				ControllerInfo.OffsetOrientation.y = ControllerResponse.offset_orientation().y();
+				ControllerInfo.OffsetOrientation.z = ControllerResponse.offset_orientation().z();
+				ControllerInfo.OffsetPosition.x = ControllerResponse.offset_position().x();
+				ControllerInfo.OffsetPosition.y = ControllerResponse.offset_position().y();
+				ControllerInfo.OffsetPosition.z = ControllerResponse.offset_position().z();
+				ControllerInfo.OffsetScale.x = ControllerResponse.offset_scale().x();
+				ControllerInfo.OffsetScale.y = ControllerResponse.offset_scale().y();
+				ControllerInfo.OffsetScale.z = ControllerResponse.offset_scale().z();
+
                 if (ControllerInfo.ControllerType == PSMController_Move)
                 {
                     ControllerInfo.OrientationFilterIndex =
@@ -1397,20 +1536,59 @@ void AppStage_ControllerSettings::request_set_controller_tracking_color_id(
 }
 
 void AppStage_ControllerSettings::request_set_parent_controller_id(
-    int ControllerID,
-    int ParentControllerID)
+	int ControllerID,
+	int ParentControllerID)
 {
-    if (ControllerID != -1 && ParentControllerID != -1)
-    {
-        RequestPtr request(new PSMoveProtocol::Request());
-        request->set_type(PSMoveProtocol::Request_RequestType_SET_ATTACHED_CONTROLLER);
-        request->mutable_request_set_attached_controller()->set_child_controller_id(ControllerID);
-        request->mutable_request_set_attached_controller()->set_parent_controller_id(ParentControllerID);
+	if (ControllerID != -1 && ParentControllerID != -1)
+	{
+		RequestPtr request(new PSMoveProtocol::Request());
+		request->set_type(PSMoveProtocol::Request_RequestType_SET_ATTACHED_CONTROLLER);
+		request->mutable_request_set_attached_controller()->set_child_controller_id(ControllerID);
+		request->mutable_request_set_attached_controller()->set_parent_controller_id(ParentControllerID);
 
 		PSMRequestID request_id;
 		PSM_SendOpaqueRequest(&request, &request_id);
 		PSM_EatResponse(request_id);
-    }
+	}
+}
+
+void AppStage_ControllerSettings::request_set_controller_offsets(
+	int ControllerID,
+	float offset_orientation_x,
+	float offset_orientation_y,
+	float offset_orientation_z,
+	float offset_position_x,
+	float offset_position_y,
+	float offset_position_z,
+	float offset_scale_x,
+	float offset_scale_y,
+	float offset_scale_z)
+{
+	if (ControllerID != -1)
+	{
+		RequestPtr request(new PSMoveProtocol::Request());
+		request->set_type(PSMoveProtocol::Request_RequestType_SET_CONTROLLER_OFFSETS);
+
+		PSMoveProtocol::Request_RequestSetControllerOffsets *mutable_request_set_controller_offsets = request->mutable_request_set_controller_offsets();
+		PSMoveProtocol::Euler *mutable_offset_orientation = mutable_request_set_controller_offsets->mutable_offset_orientation();
+		PSMoveProtocol::Position *mutable_offset_position = mutable_request_set_controller_offsets->mutable_offset_position();
+		PSMoveProtocol::Position *mutable_offset_scale = mutable_request_set_controller_offsets->mutable_offset_scale();
+
+		request->mutable_request_set_controller_offsets()->set_controller_id(ControllerID);
+		mutable_offset_orientation->set_x(offset_orientation_x);
+		mutable_offset_orientation->set_y(offset_orientation_y);
+		mutable_offset_orientation->set_z(offset_orientation_z);
+		mutable_offset_position->set_x(offset_position_x);
+		mutable_offset_position->set_y(offset_position_y);
+		mutable_offset_position->set_z(offset_position_z);
+		mutable_offset_scale->set_x(offset_scale_x);
+		mutable_offset_scale->set_y(offset_scale_y);
+		mutable_offset_scale->set_z(offset_scale_z);
+
+		PSMRequestID request_id;
+		PSM_SendOpaqueRequest(&request, &request_id);
+		PSM_EatResponse(request_id);
+	}
 }
 
 void AppStage_ControllerSettings::show_position_filter_tooltip(const std::string name)

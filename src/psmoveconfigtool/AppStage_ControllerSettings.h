@@ -14,6 +14,20 @@
 class AppStage_ControllerSettings : public AppStage
 {
 public:
+	struct DevicePosition
+	{
+		float x;
+		float y;
+		float z;
+	};
+
+	struct DeviceOrientation
+	{
+		float x;
+		float y;
+		float z;
+	};
+
     struct ControllerInfo
     {
         int ControllerID;
@@ -40,6 +54,10 @@ public:
         int GamepadIndex;
 		bool OpticalTracking;
 		bool PSmoveEmulation;
+
+		DeviceOrientation OffsetOrientation;
+		DevicePosition OffsetPosition;
+		DevicePosition OffsetScale;
 
 		static bool ParentControllerComboItemGetter(void* userdata, int index, const char** out_string)
 		{
@@ -120,6 +138,17 @@ protected:
 	void request_set_parent_controller_id(
 		int ControllerID,
 		int ParentControllerID);
+	void request_set_controller_offsets(
+		int ControllerID,
+		float offset_orientation_x,
+		float offset_orientation_y,
+		float offset_orientation_z,
+		float offset_position_x,
+		float offset_position_y,
+		float offset_position_z,
+		float offset_scale_x,
+		float offset_scale_y,
+		float offset_scale_z);
 
 	void show_position_filter_tooltip(const std::string name);
 	void show_orientation_filter_tooltip(const std::string name);

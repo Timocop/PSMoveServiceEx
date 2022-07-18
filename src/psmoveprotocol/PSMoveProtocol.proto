@@ -42,6 +42,12 @@ message Position {
     float z = 3;
 }
 
+message Euler {
+    float x = 1;
+    float y = 2;
+    float z = 3;
+}
+
 message Orientation{
     float x = 1;
     float y = 2;
@@ -201,6 +207,7 @@ message Request {
 		SET_CONTROLLER_OPTICAL_TRACKING = 48;
 		SET_CONTROLLER_PSMOVE_EMULATION = 49;
 		SET_TRACKER_PROJECTIONBLACKLIST = 50;
+		SET_CONTROLLER_OFFSETS = 51;
     }
     RequestType type = 2;
 
@@ -583,6 +590,15 @@ message Request {
         ProjectionBlacklistList projection_blacklist = 2;
     }
     RequestSetTrackerProjectionBlacklist request_set_tracker_projection_blacklist = 50;
+	
+    // Parameters for SET_CONTROLLER_OFFSETS
+    message RequestSetControllerOffsets {
+        int32 controller_id = 1;
+        Position offset_position = 2;
+        Euler offset_orientation = 3;
+        Position offset_scale = 4;
+    }
+    RequestSetControllerOffsets request_set_controller_offsets = 51;
 }
 
 // Reliable (TCP) responses to requests
@@ -669,6 +685,10 @@ message Response {
 
 			bool opticaltracking = 18;
 			bool psmove_emulation = 19;
+			
+			Euler offset_orientation = 20;
+			Position offset_position = 21;
+			Position offset_scale = 22;
         }
         repeated ControllerInfo controllers = 1;
         string host_serial = 2;
