@@ -769,11 +769,11 @@ void AppStage_ControllerSettings::renderUI()
 							ImGui::Text("Orientation X: ");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##ControllerOffsetOrientationX", &controllerInfo.OffsetOrientation.x, 1.f, 5.f, 2))
+							if (ImGui::InputFloat("##OffsetOrientationX", &controllerInfo.OffsetOrientation.x, 1.f, 5.f, 2))
 							{
 								while (controllerInfo.OffsetOrientation.x < 0.f)
 									controllerInfo.OffsetOrientation.x += 360.f;
-								while (controllerInfo.OffsetOrientation.x > 360.f)
+								while (controllerInfo.OffsetOrientation.x >= 360.f)
 									controllerInfo.OffsetOrientation.x -= 360.f;
 
 								request_offset = true;
@@ -783,11 +783,11 @@ void AppStage_ControllerSettings::renderUI()
 							ImGui::Text("Orientation Y: ");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##ControllerOffsetOrientationY", &controllerInfo.OffsetOrientation.y, 1.f, 5.f, 2))
+							if (ImGui::InputFloat("##OffsetOrientationY", &controllerInfo.OffsetOrientation.y, 1.f, 5.f, 2))
 							{
 								while (controllerInfo.OffsetOrientation.y < 0.f)
 									controllerInfo.OffsetOrientation.y += 360.f;
-								while (controllerInfo.OffsetOrientation.y > 360.f)
+								while (controllerInfo.OffsetOrientation.y >= 360.f)
 									controllerInfo.OffsetOrientation.y -= 360.f;
 
 								request_offset = true;
@@ -797,11 +797,11 @@ void AppStage_ControllerSettings::renderUI()
 							ImGui::Text("Orientation Z: ");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##ControllerOffsetOrientationZ", &controllerInfo.OffsetOrientation.z, 1.f, 5.f, 2))
+							if (ImGui::InputFloat("##OffsetOrientationZ", &controllerInfo.OffsetOrientation.z, 1.f, 5.f, 2))
 							{
 								while (controllerInfo.OffsetOrientation.z < 0.f)
 									controllerInfo.OffsetOrientation.z += 360.f;
-								while (controllerInfo.OffsetOrientation.z > 360.f)
+								while (controllerInfo.OffsetOrientation.z >= 360.f)
 									controllerInfo.OffsetOrientation.z -= 360.f;
 
 								request_offset = true;
@@ -811,7 +811,7 @@ void AppStage_ControllerSettings::renderUI()
 							ImGui::Text("Position X: ");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##ControllerOffsetPositionX", &controllerInfo.OffsetPosition.x, 1.f, 5.f, 2))
+							if (ImGui::InputFloat("##OffsetPositionX", &controllerInfo.OffsetPosition.x, 1.f, 5.f, 2))
 							{
 								controllerInfo.OffsetPosition.x = clampf(controllerInfo.OffsetPosition.x, -(1 << 16), (1 << 16));
 
@@ -822,7 +822,7 @@ void AppStage_ControllerSettings::renderUI()
 							ImGui::Text("Position Y: ");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##ControllerOffsetPositionY", &controllerInfo.OffsetPosition.y, 1.f, 5.f, 2))
+							if (ImGui::InputFloat("##OffsetPositionY", &controllerInfo.OffsetPosition.y, 1.f, 5.f, 2))
 							{
 								controllerInfo.OffsetPosition.y = clampf(controllerInfo.OffsetPosition.y, -(1 << 16), (1 << 16));
 
@@ -833,7 +833,7 @@ void AppStage_ControllerSettings::renderUI()
 							ImGui::Text("Position Z: ");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##ControllerOffsetPositionZ", &controllerInfo.OffsetPosition.z, 1.f, 5.f, 2))
+							if (ImGui::InputFloat("##OffsetPositionZ", &controllerInfo.OffsetPosition.z, 1.f, 5.f, 2))
 							{
 								controllerInfo.OffsetPosition.z = clampf(controllerInfo.OffsetPosition.z, -(1 << 16), (1 << 16));
 
@@ -844,9 +844,9 @@ void AppStage_ControllerSettings::renderUI()
 							ImGui::Text("Scale X: ");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##ControllerOffsetScaleX", &controllerInfo.OffsetScale.x, 0.05f, 0.2f, 2))
+							if (ImGui::InputFloat("##OffsetScaleX", &controllerInfo.OffsetScale.x, 0.01f, 0.05f, 2))
 							{
-								controllerInfo.OffsetScale.x = clampf(controllerInfo.OffsetScale.x, 0.01, 2.0f);
+								controllerInfo.OffsetScale.x = clampf(controllerInfo.OffsetScale.x, 0.01f, 100.0f);
 
 								request_offset = true;
 							}
@@ -855,9 +855,9 @@ void AppStage_ControllerSettings::renderUI()
 							ImGui::Text("Scale Y: ");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##ControllerOffsetScaleY", &controllerInfo.OffsetScale.y, 0.05f, 0.2f, 2))
+							if (ImGui::InputFloat("##OffsetScaleY", &controllerInfo.OffsetScale.y, 0.01f, 0.05f, 2))
 							{
-								controllerInfo.OffsetScale.y = clampf(controllerInfo.OffsetScale.y, 0.01, 2.0f);
+								controllerInfo.OffsetScale.y = clampf(controllerInfo.OffsetScale.y, 0.01f, 100.0f);
 
 								request_offset = true;
 							}
@@ -866,9 +866,9 @@ void AppStage_ControllerSettings::renderUI()
 							ImGui::Text("Scale Z: ");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##ControllerOffsetScaleZ", &controllerInfo.OffsetScale.z, 0.05f, 0.2f, 2))
+							if (ImGui::InputFloat("##OffsetScaleZ", &controllerInfo.OffsetScale.z, 0.01f, 0.05f, 2))
 							{
-								controllerInfo.OffsetScale.z = clampf(controllerInfo.OffsetScale.z, 0.01, 2.0f);
+								controllerInfo.OffsetScale.z = clampf(controllerInfo.OffsetScale.z, 0.01f, 100.0f);
 
 								request_offset = true;
 							}

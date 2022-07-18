@@ -208,6 +208,7 @@ message Request {
 		SET_CONTROLLER_PSMOVE_EMULATION = 49;
 		SET_TRACKER_PROJECTIONBLACKLIST = 50;
 		SET_CONTROLLER_OFFSETS = 51;
+		SET_HMD_OFFSETS = 52;
     }
     RequestType type = 2;
 
@@ -599,6 +600,15 @@ message Request {
         Position offset_scale = 4;
     }
     RequestSetControllerOffsets request_set_controller_offsets = 51;
+	
+    // Parameters for SET_HMD_OFFSETS
+    message RequestSetHMDOffsets {
+        int32 hmd_id = 1;
+        Position offset_position = 2;
+        Euler offset_orientation = 3;
+        Position offset_scale = 4;
+    }
+    RequestSetHMDOffsets request_set_hmd_offsets = 52;
 }
 
 // Reliable (TCP) responses to requests
@@ -806,6 +816,12 @@ message Response {
             string orientation_filter = 5;
             string position_filter = 6;            
             float prediction_time = 7;
+			
+			// PSMoveServiceEx
+
+			Euler offset_orientation = 8;
+			Position offset_position = 9;
+			Position offset_scale = 10;
         }
         repeated HMDInfo hmd_entries = 1;
     }

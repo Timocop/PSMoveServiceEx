@@ -398,6 +398,10 @@ public:
 				response = new PSMoveProtocol::Response;
 				handle_request__set_controller_offsets(context, response);
 				break;
+			case PSMoveProtocol::Request_RequestType_SET_HMD_OFFSETS:
+				response = new PSMoveProtocol::Response;
+				handle_request__set_hmd_offsets(context, response);
+				break;
 
             default:
                 assert(0 && "Whoops, bad request!");
@@ -2814,6 +2818,70 @@ protected:
 		}
 	}
 
+	void handle_request__set_hmd_offsets(
+		const RequestContext &context,
+		PSMoveProtocol::Response *response)
+	{
+		const int hmd_id = context.request->request_set_hmd_offsets().hmd_id();
+
+		ServerHMDViewPtr HmdView = m_device_manager.getHMDViewPtr(hmd_id);
+		const PSMoveProtocol::Request_RequestSetHMDOffsets &request =
+			context.request->request_set_hmd_offsets();
+
+		if (HmdView && HmdView->getIsOpen())
+		{
+			switch (HmdView->getHMDDeviceType())
+			{
+			case CommonDeviceState::Morpheus:
+			{
+				MorpheusHMD *hmd = HmdView->castChecked<MorpheusHMD>();
+				MorpheusHMDConfig *config = hmd->getConfigMutable();
+
+				config->offset_orientation.x = request.offset_orientation().x();
+				config->offset_orientation.y = request.offset_orientation().y();
+				config->offset_orientation.z = request.offset_orientation().z();
+				config->offset_position.x = request.offset_position().x();
+				config->offset_position.y = request.offset_position().y();
+				config->offset_position.z = request.offset_position().z();
+				config->offset_scale.x = request.offset_scale().x();
+				config->offset_scale.y = request.offset_scale().y();
+				config->offset_scale.z = request.offset_scale().z();
+
+				config->save();
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+				break;
+			}
+			case CommonDeviceState::VirtualHMD:
+			{
+				VirtualHMD *virt = HmdView->castChecked<VirtualHMD>();
+				VirtualHMDConfig *config = virt->getConfigMutable();
+
+				config->offset_orientation.x = request.offset_orientation().x();
+				config->offset_orientation.y = request.offset_orientation().y();
+				config->offset_orientation.z = request.offset_orientation().z();
+				config->offset_position.x = request.offset_position().x();
+				config->offset_position.y = request.offset_position().y();
+				config->offset_position.z = request.offset_position().z();
+				config->offset_scale.x = request.offset_scale().x();
+				config->offset_scale.y = request.offset_scale().y();
+				config->offset_scale.z = request.offset_scale().z();
+
+				config->save();
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+				break;
+			}
+			default:
+			{
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+			}
+			}
+		}
+		else
+		{
+			response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+		}
+	}
+
     void handle_request__set_tracker_intrinsics(
         const RequestContext &context,
         PSMoveProtocol::Response *response)
@@ -3038,6 +3106,14 @@ protected:
             {
                 PSMoveProtocol::Response_ResultHMDList_HMDInfo *hmd_info = list->add_hmd_entries();
 
+				CommonDevicePosition offset_orientation;
+				CommonDevicePosition offset_position;
+				CommonDevicePosition offset_scale;
+				offset_orientation.clear();
+				offset_position.clear();
+				offset_scale.clear();
+				offset_scale.set(1.f, 1.f, 1.f);
+
                 switch (hmd_view->getHMDDeviceType())
                 {
                 case CommonHMDState::Morpheus:
@@ -3049,6 +3125,11 @@ protected:
                         hmd_info->set_prediction_time(config->prediction_time);
                         hmd_info->set_orientation_filter(config->orientation_filter_type);
                         hmd_info->set_position_filter(config->position_filter_type);
+
+						offset_orientation.set(config->offset_orientation.x, config->offset_orientation.y, config->offset_orientation.z);
+						offset_position.set(config->offset_position.x, config->offset_position.y, config->offset_position.z);
+						offset_scale.set(config->offset_scale.x, config->offset_scale.y, config->offset_scale.z);
+
                     }
                     break;
                 case CommonHMDState::VirtualHMD:
@@ -3059,6 +3140,10 @@ protected:
                         hmd_info->set_hmd_type(PSMoveProtocol::VirtualHMD);
                         hmd_info->set_prediction_time(config->prediction_time);
                         hmd_info->set_position_filter(config->position_filter_type);
+
+						offset_orientation.set(config->offset_orientation.x, config->offset_orientation.y, config->offset_orientation.z);
+						offset_position.set(config->offset_position.x, config->offset_position.y, config->offset_position.z);
+						offset_scale.set(config->offset_scale.x, config->offset_scale.y, config->offset_scale.z);
                     }
                     break;
                 default:
@@ -3068,6 +3153,20 @@ protected:
                 hmd_info->set_hmd_id(hmd_id);
                 hmd_info->set_device_path(hmd_view->getUSBDevicePath());
                 hmd_info->set_tracking_color_type(static_cast<PSMoveProtocol::TrackingColorType>(hmd_view->getTrackingColorID()));
+
+				PSMoveProtocol::Euler *mutable_offset_orientation = hmd_info->mutable_offset_orientation();
+				PSMoveProtocol::Position *mutable_offset_position = hmd_info->mutable_offset_position();
+				PSMoveProtocol::Position *mutable_offset_scale = hmd_info->mutable_offset_scale();
+
+				mutable_offset_orientation->set_x(offset_orientation.x);
+				mutable_offset_orientation->set_y(offset_orientation.y);
+				mutable_offset_orientation->set_z(offset_orientation.z);
+				mutable_offset_position->set_x(offset_position.x);
+				mutable_offset_position->set_y(offset_position.y);
+				mutable_offset_position->set_z(offset_position.z);
+				mutable_offset_scale->set_x(offset_scale.x);
+				mutable_offset_scale->set_y(offset_scale.y);
+				mutable_offset_scale->set_z(offset_scale.z);
             }
         }
 

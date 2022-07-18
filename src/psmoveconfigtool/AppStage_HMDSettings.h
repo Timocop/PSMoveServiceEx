@@ -16,6 +16,21 @@ public:
         VirtualHMD
     };
 
+	struct DevicePosition
+	{
+		float x;
+		float y;
+		float z;
+	};
+
+	struct DeviceOrientation
+	{
+		float x;
+		float y;
+		float z;
+	};
+
+
     struct HMDInfo
     {
         int HmdID;
@@ -27,6 +42,10 @@ public:
 		int OrientationFilterIndex;
 		std::string OrientationFilterName;
 		float PredictionTime;
+
+		DeviceOrientation OffsetOrientation;
+		DevicePosition OffsetPosition;
+		DevicePosition OffsetScale;
     };
 
 
@@ -65,6 +84,17 @@ protected:
 	void request_set_hmd_tracking_color_id(
 		const int hmd_id,
 		PSMTrackingColorType tracking_color_type);
+	void request_set_hmd_offsets(
+		int ControllerID,
+		float offset_orientation_x,
+		float offset_orientation_y,
+		float offset_orientation_z,
+		float offset_position_x,
+		float offset_position_y,
+		float offset_position_z,
+		float offset_scale_x,
+		float offset_scale_y,
+		float offset_scale_z);
 
 
 private:

@@ -7,6 +7,7 @@
 #include "App.h"
 #include "Camera.h"
 #include "Renderer.h"
+#include "MathUtility.h"
 #include "UIConstants.h"
 #include "PSMoveProtocolInterface.h"
 #include "PSMoveProtocol.pb.h"
@@ -163,15 +164,24 @@ void AppStage_HMDSettings::renderUI()
                 }
                 ImGui::SameLine();
             }
-            ImGui::Text("HMD: %d", m_selectedHmdIndex);
+			else
+			{
+				ImGui::Button(" < ##HMDIndex");
+			}
+			ImGui::SameLine();
             if (m_selectedHmdIndex + 1 < static_cast<int>(m_hmdInfos.size()))
             {
-                ImGui::SameLine();
                 if (ImGui::Button(" > ##HMDIndex"))
                 {
                     ++m_selectedHmdIndex;
                 }
             }
+			else
+			{
+				ImGui::Button(" > ##HMDIndex");
+			}
+			ImGui::SameLine();
+			ImGui::Text("HMD: %d", m_selectedHmdIndex);
             
             // Combo box selection for hmd tracking color
             if (hmdInfo.HmdType == AppStage_HMDSettings::VirtualHMD)
@@ -262,121 +272,243 @@ void AppStage_HMDSettings::renderUI()
                 assert(0 && "Unreachable");
             }
 
-            if (m_selectedHmdIndex > 0)
-            {
-                if (ImGui::Button("Previous HMD"))
-                {
-                    --m_selectedHmdIndex;
-                }
-            }
-
-            if (m_selectedHmdIndex + 1 < static_cast<int>(m_hmdInfos.size()))
-            {
-                if (ImGui::Button("Next HMD"))
-                {
-                    ++m_selectedHmdIndex;
-                }
-            }
-
             if (hmdInfo.HmdType == AppStage_HMDSettings::eHMDType::Morpheus)
             {
-                if (ImGui::Button("Calibrate Accelerometer"))
-                {
-                    m_app->getAppStage<AppStage_HMDAccelerometerCalibration>()->setBypassCalibrationFlag(false);
-                    m_app->setAppStage(AppStage_HMDAccelerometerCalibration::APP_STAGE_NAME);
-                }
+				if (ImGui::CollapsingHeader("HMD Calibration", 0, true, false))
+				{
+					if (ImGui::Button("Calibrate Accelerometer"))
+					{
+						m_app->getAppStage<AppStage_HMDAccelerometerCalibration>()->setBypassCalibrationFlag(false);
+						m_app->setAppStage(AppStage_HMDAccelerometerCalibration::APP_STAGE_NAME);
+					}
 
-                if (ImGui::Button("Test Accelerometer"))
-                {
-                    m_app->getAppStage<AppStage_HMDAccelerometerCalibration>()->setBypassCalibrationFlag(true);
-                    m_app->setAppStage(AppStage_HMDAccelerometerCalibration::APP_STAGE_NAME);
-                }
-            }
+					if (ImGui::Button("Calibrate Gyroscope"))
+					{
+						m_app->getAppStage<AppStage_HMDGyroscopeCalibration>()->setBypassCalibrationFlag(false);
+						m_app->setAppStage(AppStage_HMDGyroscopeCalibration::APP_STAGE_NAME);
+					}
 
-            if (hmdInfo.HmdType == AppStage_HMDSettings::eHMDType::Morpheus)
-            {
-                if (ImGui::Button("Calibrate Gyroscope"))
-                {
-                    m_app->getAppStage<AppStage_HMDGyroscopeCalibration>()->setBypassCalibrationFlag(false);
-                    m_app->setAppStage(AppStage_HMDGyroscopeCalibration::APP_STAGE_NAME);
-                }
+					if (m_app->getIsLocalServer())
+					{
+						if (ImGui::Button("Calibrate LED Model"))
+						{
+							AppStage_HMDModelCalibration::enterStageAndCalibrate(m_app, m_selectedHmdIndex);
+						}
+					}
+					else
+					{
+						ImGui::TextDisabled("Calibrate LED Model");
+					}
+				}
 
-                if (ImGui::Button("Test Orientation"))
-                {
-                    m_app->getAppStage<AppStage_HMDGyroscopeCalibration>()->setBypassCalibrationFlag(true);
-                    m_app->setAppStage(AppStage_HMDGyroscopeCalibration::APP_STAGE_NAME);
-                }
-            }
+				if (ImGui::CollapsingHeader("HMD Tests", 0, true, false))
+				{
+					if (ImGui::Button("Test Accelerometer"))
+					{
+						m_app->getAppStage<AppStage_HMDAccelerometerCalibration>()->setBypassCalibrationFlag(true);
+						m_app->setAppStage(AppStage_HMDAccelerometerCalibration::APP_STAGE_NAME);
+					}
 
-            if (hmdInfo.HmdType == AppStage_HMDSettings::eHMDType::Morpheus)
-            {
-                if (m_app->getIsLocalServer())
-                {
-                    if (ImGui::Button("Calibrate LED Model"))
-                    {
-                        AppStage_HMDModelCalibration::enterStageAndCalibrate(m_app, m_selectedHmdIndex);
-                    }
-                }
-                else
-                {
-                    ImGui::TextDisabled("Calibrate LED Model");
-                }
+					if (ImGui::Button("Test Orientation"))
+					{
+						m_app->getAppStage<AppStage_HMDGyroscopeCalibration>()->setBypassCalibrationFlag(true);
+						m_app->setAppStage(AppStage_HMDGyroscopeCalibration::APP_STAGE_NAME);
+					}
+				}
             }
 
             if (hmdInfo.HmdType == AppStage_HMDSettings::eHMDType::Morpheus)
             {		
-                ImGui::PushItemWidth(195);
-                if (ImGui::Combo("Position Filter", &hmdInfo.PositionFilterIndex, k_hmd_position_filter_names, UI_ARRAYSIZE(k_hmd_position_filter_names)))
-                {
-                    hmdInfo.PositionFilterName = k_hmd_position_filter_names[hmdInfo.PositionFilterIndex];
-                    request_set_position_filter(hmdInfo.HmdID, hmdInfo.PositionFilterName);
-                }
-                if (ImGui::Combo("Orientation Filter", &hmdInfo.OrientationFilterIndex, k_morpheus_orientation_filter_names, UI_ARRAYSIZE(k_morpheus_orientation_filter_names)))
-                {
-                    hmdInfo.OrientationFilterName = k_morpheus_orientation_filter_names[hmdInfo.OrientationFilterIndex];
-                    request_set_orientation_filter(hmdInfo.HmdID, hmdInfo.OrientationFilterName);
-                }
-                if (ImGui::SliderFloat("Prediction Time", &hmdInfo.PredictionTime, 0.f, k_max_hmd_prediction_time))
-                {
-                    request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
-                }
-                if (ImGui::Button("Reset Filter Defaults"))
-                {
-                    hmdInfo.PositionFilterIndex = k_default_hmd_position_filter_index;
-                    hmdInfo.OrientationFilterIndex = k_default_morpheus_position_filter_index;
-                    hmdInfo.PositionFilterName = k_hmd_position_filter_names[k_default_hmd_position_filter_index];
-                    hmdInfo.OrientationFilterName = k_morpheus_orientation_filter_names[k_default_morpheus_position_filter_index];
-                    request_set_position_filter(hmdInfo.HmdID, hmdInfo.PositionFilterName);
-                    request_set_orientation_filter(hmdInfo.HmdID, hmdInfo.OrientationFilterName);
-                }
-                ImGui::PopItemWidth();
+				if (ImGui::CollapsingHeader("Filters", 0, true, false))
+				{
+					ImGui::PushItemWidth(195);
+					if (ImGui::Combo("Position Filter", &hmdInfo.PositionFilterIndex, k_hmd_position_filter_names, UI_ARRAYSIZE(k_hmd_position_filter_names)))
+					{
+						hmdInfo.PositionFilterName = k_hmd_position_filter_names[hmdInfo.PositionFilterIndex];
+						request_set_position_filter(hmdInfo.HmdID, hmdInfo.PositionFilterName);
+					}
+					if (ImGui::Combo("Orientation Filter", &hmdInfo.OrientationFilterIndex, k_morpheus_orientation_filter_names, UI_ARRAYSIZE(k_morpheus_orientation_filter_names)))
+					{
+						hmdInfo.OrientationFilterName = k_morpheus_orientation_filter_names[hmdInfo.OrientationFilterIndex];
+						request_set_orientation_filter(hmdInfo.HmdID, hmdInfo.OrientationFilterName);
+					}
+					if (ImGui::SliderFloat("Prediction Time", &hmdInfo.PredictionTime, 0.f, k_max_hmd_prediction_time))
+					{
+						request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
+					}
+					if (ImGui::Button("Reset Filter Defaults"))
+					{
+						hmdInfo.PositionFilterIndex = k_default_hmd_position_filter_index;
+						hmdInfo.OrientationFilterIndex = k_default_morpheus_position_filter_index;
+						hmdInfo.PositionFilterName = k_hmd_position_filter_names[k_default_hmd_position_filter_index];
+						hmdInfo.OrientationFilterName = k_morpheus_orientation_filter_names[k_default_morpheus_position_filter_index];
+						request_set_position_filter(hmdInfo.HmdID, hmdInfo.PositionFilterName);
+						request_set_orientation_filter(hmdInfo.HmdID, hmdInfo.OrientationFilterName);
+					}
+					ImGui::PopItemWidth();
+				}
             }				
             else if (hmdInfo.HmdType == AppStage_HMDSettings::eHMDType::VirtualHMD)
             {
-                ImGui::PushItemWidth(195);
-                if (ImGui::Combo("Position Filter", &hmdInfo.PositionFilterIndex, k_hmd_position_filter_names, UI_ARRAYSIZE(k_hmd_position_filter_names)))
-                {
-                    hmdInfo.PositionFilterName = k_hmd_position_filter_names[hmdInfo.PositionFilterIndex];
-                    request_set_position_filter(hmdInfo.HmdID, hmdInfo.PositionFilterName);
-                }
-                if (ImGui::SliderFloat("Prediction Time", &hmdInfo.PredictionTime, 0.f, k_max_hmd_prediction_time))
-                {
-                    request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
-                }
-                if (ImGui::Button("Reset Filter Defaults"))
-                {
-                    hmdInfo.PositionFilterIndex = k_default_hmd_position_filter_index;
-                    hmdInfo.PositionFilterName = k_hmd_position_filter_names[k_default_hmd_position_filter_index];
-                    request_set_position_filter(hmdInfo.HmdID, hmdInfo.PositionFilterName);
-                    request_set_orientation_filter(hmdInfo.HmdID, hmdInfo.OrientationFilterName);
-                }
-                ImGui::PopItemWidth();
+				if (ImGui::CollapsingHeader("Filters", 0, true, false))
+				{
+					ImGui::PushItemWidth(195);
+					if (ImGui::Combo("Position Filter", &hmdInfo.PositionFilterIndex, k_hmd_position_filter_names, UI_ARRAYSIZE(k_hmd_position_filter_names)))
+					{
+						hmdInfo.PositionFilterName = k_hmd_position_filter_names[hmdInfo.PositionFilterIndex];
+						request_set_position_filter(hmdInfo.HmdID, hmdInfo.PositionFilterName);
+					}
+					if (ImGui::SliderFloat("Prediction Time", &hmdInfo.PredictionTime, 0.f, k_max_hmd_prediction_time))
+					{
+						request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
+					}
+					if (ImGui::Button("Reset Filter Defaults"))
+					{
+						hmdInfo.PositionFilterIndex = k_default_hmd_position_filter_index;
+						hmdInfo.PositionFilterName = k_hmd_position_filter_names[k_default_hmd_position_filter_index];
+						request_set_position_filter(hmdInfo.HmdID, hmdInfo.PositionFilterName);
+						request_set_orientation_filter(hmdInfo.HmdID, hmdInfo.OrientationFilterName);
+					}
+					ImGui::PopItemWidth();
+				}
             }
+
+
+			if (ImGui::CollapsingHeader("Offsets", 0, true, false))
+			{
+				bool request_offset = false;
+
+				ImGui::Text("Orientation X: ");
+				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+				ImGui::PushItemWidth(120.f);
+				if (ImGui::InputFloat("##OffsetOrientationX", &hmdInfo.OffsetOrientation.x, 1.f, 5.f, 2))
+				{
+					while (hmdInfo.OffsetOrientation.x < 0.f)
+						hmdInfo.OffsetOrientation.x += 360.f;
+					while (hmdInfo.OffsetOrientation.x >= 360.f)
+						hmdInfo.OffsetOrientation.x -= 360.f;
+
+					request_offset = true;
+				}
+				ImGui::PopItemWidth();
+
+				ImGui::Text("Orientation Y: ");
+				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+				ImGui::PushItemWidth(120.f);
+				if (ImGui::InputFloat("##OffsetOrientationY", &hmdInfo.OffsetOrientation.y, 1.f, 5.f, 2))
+				{
+					while (hmdInfo.OffsetOrientation.y < 0.f)
+						hmdInfo.OffsetOrientation.y += 360.f;
+					while (hmdInfo.OffsetOrientation.y >= 360.f)
+						hmdInfo.OffsetOrientation.y -= 360.f;
+
+					request_offset = true;
+				}
+				ImGui::PopItemWidth();
+
+				ImGui::Text("Orientation Z: ");
+				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+				ImGui::PushItemWidth(120.f);
+				if (ImGui::InputFloat("##OffsetOrientationZ", &hmdInfo.OffsetOrientation.z, 1.f, 5.f, 2))
+				{
+					while (hmdInfo.OffsetOrientation.z < 0.f)
+						hmdInfo.OffsetOrientation.z += 360.f;
+					while (hmdInfo.OffsetOrientation.z >= 360.f)
+						hmdInfo.OffsetOrientation.z -= 360.f;
+
+					request_offset = true;
+				}
+				ImGui::PopItemWidth();
+
+				ImGui::Text("Position X: ");
+				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+				ImGui::PushItemWidth(120.f);
+				if (ImGui::InputFloat("##OffsetPositionX", &hmdInfo.OffsetPosition.x, 1.f, 5.f, 2))
+				{
+					hmdInfo.OffsetPosition.x = clampf(hmdInfo.OffsetPosition.x, -(1 << 16), (1 << 16));
+
+					request_offset = true;
+				}
+				ImGui::PopItemWidth();
+
+				ImGui::Text("Position Y: ");
+				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+				ImGui::PushItemWidth(120.f);
+				if (ImGui::InputFloat("##OffsetPositionY", &hmdInfo.OffsetPosition.y, 1.f, 5.f, 2))
+				{
+					hmdInfo.OffsetPosition.y = clampf(hmdInfo.OffsetPosition.y, -(1 << 16), (1 << 16));
+
+					request_offset = true;
+				}
+				ImGui::PopItemWidth();
+
+				ImGui::Text("Position Z: ");
+				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+				ImGui::PushItemWidth(120.f);
+				if (ImGui::InputFloat("##OffsetPositionZ", &hmdInfo.OffsetPosition.z, 1.f, 5.f, 2))
+				{
+					hmdInfo.OffsetPosition.z = clampf(hmdInfo.OffsetPosition.z, -(1 << 16), (1 << 16));
+
+					request_offset = true;
+				}
+				ImGui::PopItemWidth();
+
+				ImGui::Text("Scale X: ");
+				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+				ImGui::PushItemWidth(120.f);
+				if (ImGui::InputFloat("##OffsetScaleX", &hmdInfo.OffsetScale.x, 0.01f, 0.05f, 2))
+				{
+					hmdInfo.OffsetScale.x = clampf(hmdInfo.OffsetScale.x, 0.01f, 100.0f);
+
+					request_offset = true;
+				}
+				ImGui::PopItemWidth();
+
+				ImGui::Text("Scale Y: ");
+				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+				ImGui::PushItemWidth(120.f);
+				if (ImGui::InputFloat("##OffsetScaleY", &hmdInfo.OffsetScale.y, 0.01f, 0.05f, 2))
+				{
+					hmdInfo.OffsetScale.y = clampf(hmdInfo.OffsetScale.y, 0.01f, 100.0f);
+
+					request_offset = true;
+				}
+				ImGui::PopItemWidth();
+
+				ImGui::Text("Scale Z: ");
+				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+				ImGui::PushItemWidth(120.f);
+				if (ImGui::InputFloat("##OffsetScaleZ", &hmdInfo.OffsetScale.z, 0.01f, 0.05f, 2))
+				{
+					hmdInfo.OffsetScale.z = clampf(hmdInfo.OffsetScale.z, 0.01f, 100.0f);
+
+					request_offset = true;
+				}
+				ImGui::PopItemWidth();
+
+				if (request_offset)
+				{
+					request_set_hmd_offsets(
+						hmdInfo.HmdID,
+						hmdInfo.OffsetOrientation.x,
+						hmdInfo.OffsetOrientation.y,
+						hmdInfo.OffsetOrientation.z,
+						hmdInfo.OffsetPosition.x,
+						hmdInfo.OffsetPosition.y,
+						hmdInfo.OffsetPosition.z,
+						hmdInfo.OffsetScale.x,
+						hmdInfo.OffsetScale.y,
+						hmdInfo.OffsetScale.z
+					);
+				}
+			}
         }
         else
         {
             ImGui::Text("No HMDs");
         }
+
+		ImGui::Separator();
 
         if (ImGui::Button("Return to Main Menu"))
         {
@@ -510,6 +642,45 @@ void AppStage_HMDSettings::request_set_hmd_tracking_color_id(
 	PSM_SendOpaqueRequest(&request, nullptr);
 }
 
+void AppStage_HMDSettings::request_set_hmd_offsets(
+	int HmdID,
+	float offset_orientation_x,
+	float offset_orientation_y,
+	float offset_orientation_z,
+	float offset_position_x,
+	float offset_position_y,
+	float offset_position_z,
+	float offset_scale_x,
+	float offset_scale_y,
+	float offset_scale_z)
+{
+	if (HmdID != -1)
+	{
+		RequestPtr request(new PSMoveProtocol::Request());
+		request->set_type(PSMoveProtocol::Request_RequestType_SET_HMD_OFFSETS);
+
+		PSMoveProtocol::Request_RequestSetHMDOffsets *mutable_request_set_hmd_offsets = request->mutable_request_set_hmd_offsets();
+		PSMoveProtocol::Euler *mutable_offset_orientation = mutable_request_set_hmd_offsets->mutable_offset_orientation();
+		PSMoveProtocol::Position *mutable_offset_position = mutable_request_set_hmd_offsets->mutable_offset_position();
+		PSMoveProtocol::Position *mutable_offset_scale = mutable_request_set_hmd_offsets->mutable_offset_scale();
+
+		request->mutable_request_set_hmd_offsets()->set_hmd_id(HmdID);
+		mutable_offset_orientation->set_x(offset_orientation_x);
+		mutable_offset_orientation->set_y(offset_orientation_y);
+		mutable_offset_orientation->set_z(offset_orientation_z);
+		mutable_offset_position->set_x(offset_position_x);
+		mutable_offset_position->set_y(offset_position_y);
+		mutable_offset_position->set_z(offset_position_z);
+		mutable_offset_scale->set_x(offset_scale_x);
+		mutable_offset_scale->set_y(offset_scale_y);
+		mutable_offset_scale->set_z(offset_scale_z);
+
+		PSMRequestID request_id;
+		PSM_SendOpaqueRequest(&request, &request_id);
+		PSM_EatResponse(request_id);
+	}
+}
+
 void AppStage_HMDSettings::handle_hmd_list_response(
     const PSMResponseMessage *response,
     void *userdata)
@@ -549,6 +720,16 @@ void AppStage_HMDSettings::handle_hmd_list_response(
                 HmdInfo.PredictionTime = HmdResponse.prediction_time();
                 HmdInfo.OrientationFilterName= HmdResponse.orientation_filter();
                 HmdInfo.PositionFilterName = HmdResponse.position_filter();
+
+				HmdInfo.OffsetOrientation.x = HmdResponse.offset_orientation().x();
+				HmdInfo.OffsetOrientation.y = HmdResponse.offset_orientation().y();
+				HmdInfo.OffsetOrientation.z = HmdResponse.offset_orientation().z();
+				HmdInfo.OffsetPosition.x = HmdResponse.offset_position().x();
+				HmdInfo.OffsetPosition.y = HmdResponse.offset_position().y();
+				HmdInfo.OffsetPosition.z = HmdResponse.offset_position().z();
+				HmdInfo.OffsetScale.x = HmdResponse.offset_scale().x();
+				HmdInfo.OffsetScale.y = HmdResponse.offset_scale().y();
+				HmdInfo.OffsetScale.z = HmdResponse.offset_scale().z();
 
                 if (HmdInfo.HmdType == AppStage_HMDSettings::Morpheus)
                 {
