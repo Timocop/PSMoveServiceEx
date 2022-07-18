@@ -683,6 +683,7 @@ protected:
 				CommonDevicePosition offset_orientation;
 				CommonDevicePosition offset_position;
 				CommonDevicePosition offset_scale;
+				float offset_magnetometer = 0.f;
 				offset_orientation.clear();
 				offset_position.clear();
 				offset_scale.clear();
@@ -709,6 +710,7 @@ protected:
 						offset_orientation.set(config->offset_orientation.x, config->offset_orientation.y, config->offset_orientation.z);
 						offset_position.set(config->offset_position.x, config->offset_position.y, config->offset_position.z);
 						offset_scale.set(config->offset_scale.x, config->offset_scale.y, config->offset_scale.z);
+						offset_magnetometer = config->offset_magnetometer_center;
 
                         controller_info->set_controller_type(PSMoveProtocol::PSMOVE);
                     }
@@ -828,6 +830,8 @@ protected:
 				mutable_offset_scale->set_x(offset_scale.x);
 				mutable_offset_scale->set_y(offset_scale.y);
 				mutable_offset_scale->set_z(offset_scale.z);
+
+				controller_info->set_offset_magnetometer(offset_magnetometer);
 
 				if (controller_hand == "Left")
 					controller_info->set_controller_hand(PSMoveProtocol::HAND_LEFT);
@@ -2763,6 +2767,7 @@ protected:
 				config.offset_scale.x = request.offset_scale().x();
 				config.offset_scale.y = request.offset_scale().y();
 				config.offset_scale.z = request.offset_scale().z();
+				config.offset_magnetometer_center = request.offset_magnetometer();
 
 				controller->setConfig(&config);
 				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);

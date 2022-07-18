@@ -598,6 +598,7 @@ message Request {
         Position offset_position = 2;
         Euler offset_orientation = 3;
         Position offset_scale = 4;
+		float offset_magnetometer = 5;
     }
     RequestSetControllerOffsets request_set_controller_offsets = 51;
 	
@@ -699,6 +700,7 @@ message Response {
 			Euler offset_orientation = 20;
 			Position offset_position = 21;
 			Position offset_scale = 22;
+			float offset_magnetometer = 23;
         }
         repeated ControllerInfo controllers = 1;
         string host_serial = 2;

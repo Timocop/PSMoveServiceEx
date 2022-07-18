@@ -58,6 +58,7 @@ public:
 		DeviceOrientation OffsetOrientation;
 		DevicePosition OffsetPosition;
 		DevicePosition OffsetScale;
+		float OffsetMagnetometer;
 
 		static bool ParentControllerComboItemGetter(void* userdata, int index, const char** out_string)
 		{
@@ -148,7 +149,8 @@ protected:
 		float offset_position_z,
 		float offset_scale_x,
 		float offset_scale_y,
-		float offset_scale_z);
+		float offset_scale_z,
+		float offset_magnetometer);
 
 	void show_position_filter_tooltip(const std::string name);
 	void show_orientation_filter_tooltip(const std::string name);

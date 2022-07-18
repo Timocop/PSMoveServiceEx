@@ -597,6 +597,7 @@ PSMoveControllerConfig::config2ptree()
 	pt.put("Offsets.Scale.X", offset_scale.x);
 	pt.put("Offsets.Scale.Y", offset_scale.y);
 	pt.put("Offsets.Scale.Z", offset_scale.z);
+	pt.put("Offsets.Magnetometer.Center", offset_magnetometer_center);
 
 	pt.put("hand", hand);
 
@@ -697,6 +698,7 @@ PSMoveControllerConfig::ptree2config(const boost::property_tree::ptree &pt)
 		offset_scale.x = pt.get<float>("Offsets.Scale.X", offset_scale.x);
 		offset_scale.y = pt.get<float>("Offsets.Scale.Y", offset_scale.y);
 		offset_scale.z = pt.get<float>("Offsets.Scale.Z", offset_scale.z);
+		offset_magnetometer_center = pt.get<float>("Offsets.Magnetometer.Center", offset_magnetometer_center);
 
 		tracking_color_id= static_cast<eCommonTrackingColorID>(readTrackingColor(pt));
 
@@ -714,7 +716,7 @@ void
 PSMoveControllerConfig::getMagnetometerEllipsoid(struct EigenFitEllipsoid *out_ellipsoid) const
 {
     out_ellipsoid->center =
-        Eigen::Vector3f(magnetometer_center.i, magnetometer_center.j, magnetometer_center.k);
+        Eigen::Vector3f(magnetometer_center.i + offset_magnetometer_center, magnetometer_center.j, magnetometer_center.k);
     out_ellipsoid->extents =
         Eigen::Vector3f(magnetometer_extents.i, magnetometer_extents.j, magnetometer_extents.k);
     out_ellipsoid->basis.col(0) =

@@ -61,6 +61,7 @@ public:
 		, position_variance_exp_fit_a(0.0994158462f)
 		, position_variance_exp_fit_b(-0.000567041978f)
 		, orientation_variance(18.75f)
+		, offset_magnetometer_center(0.f)
 		, tracking_color_id(eCommonTrackingColorID::INVALID_COLOR)
 		, hand("Any")
     {
@@ -130,6 +131,7 @@ public:
 	CommonDevicePosition offset_position;
 	CommonDevicePosition offset_orientation;
 	CommonDevicePosition offset_scale;
+	float offset_magnetometer_center;
 
 	// The squared error of the magnetometer fit ellipsoid
     float magnetometer_fit_error;

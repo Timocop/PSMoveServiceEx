@@ -874,6 +874,17 @@ void AppStage_ControllerSettings::renderUI()
 							}
 							ImGui::PopItemWidth();
 
+							ImGui::Text("Magnetometer Yaw Center: ");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(120.f);
+							if (ImGui::InputFloat("##OffsetMagnetometerYaw", &controllerInfo.OffsetMagnetometer, 1.f, 5.f, 2))
+							{
+								controllerInfo.OffsetMagnetometer = clampf(controllerInfo.OffsetMagnetometer, -(1 << 16), (1 << 16));
+
+								request_offset = true;
+							}
+							ImGui::PopItemWidth();
+
 							if (request_offset)
 							{
 								request_set_controller_offsets(
@@ -886,7 +897,8 @@ void AppStage_ControllerSettings::renderUI()
 									controllerInfo.OffsetPosition.z,
 									controllerInfo.OffsetScale.x,
 									controllerInfo.OffsetScale.y,
-									controllerInfo.OffsetScale.z
+									controllerInfo.OffsetScale.z,
+									controllerInfo.OffsetMagnetometer
 								);
 							}
 						}
@@ -1291,6 +1303,7 @@ void AppStage_ControllerSettings::handle_controller_list_response(
 				ControllerInfo.OffsetScale.x = ControllerResponse.offset_scale().x();
 				ControllerInfo.OffsetScale.y = ControllerResponse.offset_scale().y();
 				ControllerInfo.OffsetScale.z = ControllerResponse.offset_scale().z();
+				ControllerInfo.OffsetMagnetometer = ControllerResponse.offset_magnetometer();
 
                 if (ControllerInfo.ControllerType == PSMController_Move)
                 {
@@ -1562,7 +1575,8 @@ void AppStage_ControllerSettings::request_set_controller_offsets(
 	float offset_position_z,
 	float offset_scale_x,
 	float offset_scale_y,
-	float offset_scale_z)
+	float offset_scale_z,
+	float offset_magnetometer)
 {
 	if (ControllerID != -1)
 	{
@@ -1584,6 +1598,7 @@ void AppStage_ControllerSettings::request_set_controller_offsets(
 		mutable_offset_scale->set_x(offset_scale_x);
 		mutable_offset_scale->set_y(offset_scale_y);
 		mutable_offset_scale->set_z(offset_scale_z);
+		request->mutable_request_set_controller_offsets()->set_offset_magnetometer(offset_magnetometer);
 
 		PSMRequestID request_id;
 		PSM_SendOpaqueRequest(&request, &request_id);
