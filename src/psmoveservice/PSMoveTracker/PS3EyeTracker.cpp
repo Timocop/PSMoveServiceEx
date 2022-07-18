@@ -441,7 +441,7 @@ IDeviceInterface::ePollResult PS3EyeTracker::poll()
 			if (!TrackerManager::isTrackerPollAllowed())
 			{
 				// Keep iterating. Still has old data.
-				result = IControllerInterface::_PollResultSuccessNewData;
+				result = IControllerInterface::_PollResultSuccessIgnore;
 			}
 			else
 			{

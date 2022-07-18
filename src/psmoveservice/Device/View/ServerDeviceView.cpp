@@ -76,37 +76,37 @@ bool ServerDeviceView::poll()
 
 				bSuccessfullyUpdated = false;
 			}
+			break;
 		}
-		break;
 
         case IDeviceInterface::_PollResultSuccessNewData:
-            {
-                m_pollNoDataCount= 0;
-                m_lastNewDataTimestamp= std::chrono::high_resolution_clock::now();
+        {
+            m_pollNoDataCount= 0;
+            m_lastNewDataTimestamp= std::chrono::high_resolution_clock::now();
 
-                // If we got new sensor data, then we have new state to publish
-                markStateAsUnpublished();
+            // If we got new sensor data, then we have new state to publish
+            markStateAsUnpublished();
 
-                bSuccessfullyUpdated= true;
-            }
-            break;
+            bSuccessfullyUpdated= true;
+			break;
+        }
 
 		case IDeviceInterface::_PollResultSuccessIgnore:
 		{
 			m_pollNoDataCount = 0;
 			bSuccessfullyUpdated = true;
+			break;
 		}
-		break;
 
         case IDeviceInterface::_PollResultFailure:
-            {
-                SERVER_LOG_INFO("ServerDeviceView::poll") <<
-                    "Device id " << getDeviceID() << " closing due to failed read";
-                close();
+        {
+            SERVER_LOG_INFO("ServerDeviceView::poll") <<
+                "Device id " << getDeviceID() << " closing due to failed read";
+            close();
                 
-                bSuccessfullyUpdated= false;
-            }
-            break;
+            bSuccessfullyUpdated= false;
+			break;
+        }
         }
     }
     
