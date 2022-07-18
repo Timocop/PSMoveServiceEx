@@ -2758,18 +2758,30 @@ protected:
 				PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
 				PSMoveControllerConfig config = *controller->getConfig();
 
-				config.offset_orientation.x = request.offset_orientation().x();
-				config.offset_orientation.y = request.offset_orientation().y();
-				config.offset_orientation.z = request.offset_orientation().z();
-				config.offset_position.x = request.offset_position().x();
-				config.offset_position.y = request.offset_position().y();
-				config.offset_position.z = request.offset_position().z();
-				config.offset_scale.x = request.offset_scale().x();
-				config.offset_scale.y = request.offset_scale().y();
-				config.offset_scale.z = request.offset_scale().z();
-				config.offset_magnetometer_center = request.offset_magnetometer();
+				if (config.offset_orientation.x != request.offset_orientation().x() ||
+					config.offset_orientation.y != request.offset_orientation().y() ||
+					config.offset_orientation.z != request.offset_orientation().z() ||
+					config.offset_position.x != request.offset_position().x() ||
+					config.offset_position.y != request.offset_position().y() ||
+					config.offset_position.z != request.offset_position().z() ||
+					config.offset_scale.x != request.offset_scale().x() ||
+					config.offset_scale.y != request.offset_scale().y() ||
+					config.offset_scale.z != request.offset_scale().z() ||
+					config.offset_magnetometer_center != request.offset_magnetometer())
+				{
+					config.offset_orientation.x = request.offset_orientation().x();
+					config.offset_orientation.y = request.offset_orientation().y();
+					config.offset_orientation.z = request.offset_orientation().z();
+					config.offset_position.x = request.offset_position().x();
+					config.offset_position.y = request.offset_position().y();
+					config.offset_position.z = request.offset_position().z();
+					config.offset_scale.x = request.offset_scale().x();
+					config.offset_scale.y = request.offset_scale().y();
+					config.offset_scale.z = request.offset_scale().z();
+					config.offset_magnetometer_center = request.offset_magnetometer();
 
-				controller->setConfig(&config);
+					controller->setConfig(&config);
+				}
 				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
 				break;
 			}
@@ -2778,17 +2790,28 @@ protected:
 				PSDualShock4Controller *controller = ControllerView->castChecked<PSDualShock4Controller>();
 				PSDualShock4ControllerConfig config = *controller->getConfig();
 
-				config.offset_orientation.x = request.offset_orientation().x();
-				config.offset_orientation.y = request.offset_orientation().y();
-				config.offset_orientation.z = request.offset_orientation().z();
-				config.offset_position.x = request.offset_position().x();
-				config.offset_position.y = request.offset_position().y();
-				config.offset_position.z = request.offset_position().z();
-				config.offset_scale.x = request.offset_scale().x();
-				config.offset_scale.y = request.offset_scale().y();
-				config.offset_scale.z = request.offset_scale().z();
+				if (config.offset_orientation.x != request.offset_orientation().x() ||
+					config.offset_orientation.y != request.offset_orientation().y() ||
+					config.offset_orientation.z != request.offset_orientation().z() ||
+					config.offset_position.x != request.offset_position().x() ||
+					config.offset_position.y != request.offset_position().y() ||
+					config.offset_position.z != request.offset_position().z() ||
+					config.offset_scale.x != request.offset_scale().x() ||
+					config.offset_scale.y != request.offset_scale().y() ||
+					 config.offset_scale.z != request.offset_scale().z())
+				{
+					config.offset_orientation.x = request.offset_orientation().x();
+					config.offset_orientation.y = request.offset_orientation().y();
+					config.offset_orientation.z = request.offset_orientation().z();
+					config.offset_position.x = request.offset_position().x();
+					config.offset_position.y = request.offset_position().y();
+					config.offset_position.z = request.offset_position().z();
+					config.offset_scale.x = request.offset_scale().x();
+					config.offset_scale.y = request.offset_scale().y();
+					config.offset_scale.z = request.offset_scale().z();
 
-				controller->setConfig(&config);
+					controller->setConfig(&config);
+				}
 				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
 				break;
 			}
@@ -2797,17 +2820,28 @@ protected:
 				VirtualController *controller = ControllerView->castChecked<VirtualController>();
 				VirtualControllerConfig *config = controller->getConfigMutable();
 
-				config->offset_orientation.x = request.offset_orientation().x();
-				config->offset_orientation.y = request.offset_orientation().y();
-				config->offset_orientation.z = request.offset_orientation().z();
-				config->offset_position.x = request.offset_position().x();
-				config->offset_position.y = request.offset_position().y();
-				config->offset_position.z = request.offset_position().z();
-				config->offset_scale.x = request.offset_scale().x();
-				config->offset_scale.y = request.offset_scale().y();
-				config->offset_scale.z = request.offset_scale().z();
+				if (config->offset_orientation.x != request.offset_orientation().x() ||
+					config->offset_orientation.y != request.offset_orientation().y() ||
+					config->offset_orientation.z != request.offset_orientation().z() ||
+					config->offset_position.x != request.offset_position().x() ||
+					config->offset_position.y != request.offset_position().y() ||
+					config->offset_position.z != request.offset_position().z() ||
+					config->offset_scale.x != request.offset_scale().x() ||
+					config->offset_scale.y != request.offset_scale().y() ||
+					config->offset_scale.z != request.offset_scale().z())
+				{
+					config->offset_orientation.x = request.offset_orientation().x();
+					config->offset_orientation.y = request.offset_orientation().y();
+					config->offset_orientation.z = request.offset_orientation().z();
+					config->offset_position.x = request.offset_position().x();
+					config->offset_position.y = request.offset_position().y();
+					config->offset_position.z = request.offset_position().z();
+					config->offset_scale.x = request.offset_scale().x();
+					config->offset_scale.y = request.offset_scale().y();
+					config->offset_scale.z = request.offset_scale().z();
 
-				config->save();
+					config->save();
+				}
 				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
 				break;
 			}
@@ -2842,17 +2876,28 @@ protected:
 				MorpheusHMD *hmd = HmdView->castChecked<MorpheusHMD>();
 				MorpheusHMDConfig *config = hmd->getConfigMutable();
 
-				config->offset_orientation.x = request.offset_orientation().x();
-				config->offset_orientation.y = request.offset_orientation().y();
-				config->offset_orientation.z = request.offset_orientation().z();
-				config->offset_position.x = request.offset_position().x();
-				config->offset_position.y = request.offset_position().y();
-				config->offset_position.z = request.offset_position().z();
-				config->offset_scale.x = request.offset_scale().x();
-				config->offset_scale.y = request.offset_scale().y();
-				config->offset_scale.z = request.offset_scale().z();
+				if (config->offset_orientation.x != request.offset_orientation().x() ||
+					config->offset_orientation.y != request.offset_orientation().y() ||
+					config->offset_orientation.z != request.offset_orientation().z() ||
+					config->offset_position.x != request.offset_position().x() ||
+					config->offset_position.y != request.offset_position().y() ||
+					config->offset_position.z != request.offset_position().z() ||
+					config->offset_scale.x != request.offset_scale().x() ||
+					config->offset_scale.y != request.offset_scale().y() ||
+					config->offset_scale.z != request.offset_scale().z())
+				{
+					config->offset_orientation.x = request.offset_orientation().x();
+					config->offset_orientation.y = request.offset_orientation().y();
+					config->offset_orientation.z = request.offset_orientation().z();
+					config->offset_position.x = request.offset_position().x();
+					config->offset_position.y = request.offset_position().y();
+					config->offset_position.z = request.offset_position().z();
+					config->offset_scale.x = request.offset_scale().x();
+					config->offset_scale.y = request.offset_scale().y();
+					config->offset_scale.z = request.offset_scale().z();
 
-				config->save();
+					config->save();
+				}
 				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
 				break;
 			}
@@ -2861,17 +2906,28 @@ protected:
 				VirtualHMD *virt = HmdView->castChecked<VirtualHMD>();
 				VirtualHMDConfig *config = virt->getConfigMutable();
 
-				config->offset_orientation.x = request.offset_orientation().x();
-				config->offset_orientation.y = request.offset_orientation().y();
-				config->offset_orientation.z = request.offset_orientation().z();
-				config->offset_position.x = request.offset_position().x();
-				config->offset_position.y = request.offset_position().y();
-				config->offset_position.z = request.offset_position().z();
-				config->offset_scale.x = request.offset_scale().x();
-				config->offset_scale.y = request.offset_scale().y();
-				config->offset_scale.z = request.offset_scale().z();
+				if (config->offset_orientation.x != request.offset_orientation().x() ||
+					config->offset_orientation.y != request.offset_orientation().y() ||
+					config->offset_orientation.z != request.offset_orientation().z() ||
+					config->offset_position.x != request.offset_position().x() ||
+					config->offset_position.y != request.offset_position().y() ||
+					config->offset_position.z != request.offset_position().z() ||
+					config->offset_scale.x != request.offset_scale().x() ||
+					config->offset_scale.y != request.offset_scale().y() ||
+					config->offset_scale.z != request.offset_scale().z())
+				{
+					config->offset_orientation.x = request.offset_orientation().x();
+					config->offset_orientation.y = request.offset_orientation().y();
+					config->offset_orientation.z = request.offset_orientation().z();
+					config->offset_position.x = request.offset_position().x();
+					config->offset_position.y = request.offset_position().y();
+					config->offset_position.z = request.offset_position().z();
+					config->offset_scale.x = request.offset_scale().x();
+					config->offset_scale.y = request.offset_scale().y();
+					config->offset_scale.z = request.offset_scale().z();
 
-				config->save();
+					config->save();
+				}
 				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
 				break;
 			}
