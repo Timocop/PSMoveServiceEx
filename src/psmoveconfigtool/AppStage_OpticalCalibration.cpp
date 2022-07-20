@@ -491,7 +491,7 @@ void AppStage_OpticalCalibration::render()
 			if (bCanBeTracked && bIsTracking)
 			{
 				drawController(m_controllerView, controllerWorldTransform);
-				drawTransformedAxes(controllerWorldTransform, 200.f);
+				drawTransformedAxes(controllerWorldTransform, 10.f);
 			}
 
 			drawTransformedAxes(glm::mat4(1.f), 200.f);
@@ -509,7 +509,7 @@ void AppStage_OpticalCalibration::render()
                 m_bLastMulticamPositionValid && m_bLastMulticamOrientationValid)
             {
                 drawController(m_controllerView, controllerWorldTransform);
-				drawTransformedAxes(controllerWorldTransform, 200.f);
+				drawTransformedAxes(controllerWorldTransform, 10.f);
             }
 
 			drawTransformedAxes(glm::mat4(1.f), 200.f);
@@ -572,10 +572,12 @@ void AppStage_OpticalCalibration::renderUI()
     case eCalibrationMenuState::waitForStable:
         {
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 150));
+            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 175));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
 			ImGui::Text("Sample Location #%d / %d", m_poseNoiseSamplesSet->completedSampleLocations + 1, k_sample_location_count);
+			ImGui::ProgressBar(static_cast<float>(m_poseNoiseSamplesSet->completedSampleLocations) / static_cast<float>(k_sample_location_count), ImVec2(250, 20));
+			ImGui::Separator();
 			
 			if (m_bLastProjectionAreaValid)
 			{
@@ -646,6 +648,8 @@ void AppStage_OpticalCalibration::renderUI()
             float sampleFraction = static_cast<float>(sampleCount) / static_cast<float>(k_desired_noise_sample_count);
 
 			ImGui::Text("Sample Location #%d / %d", m_poseNoiseSamplesSet->completedSampleLocations + 1, k_sample_location_count);
+			ImGui::Separator();
+
 			ImGui::Text("Tracker Projection Area %.1f pixels^2", m_lastProjectionArea);
             ImGui::Text("[Sampling...]");
             ImGui::ProgressBar(sampleFraction, ImVec2(250, 20));

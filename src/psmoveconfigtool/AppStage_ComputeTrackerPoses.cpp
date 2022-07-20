@@ -218,7 +218,7 @@ void AppStage_ComputeTrackerPoses::render()
                 const int tracker_id= trackerView->tracker_info.tracker_id;
                 const PSMPosef trackerPose = trackerView->tracker_info.tracker_pose;
                 const glm::mat4 trackerMat4 = psm_posef_to_glm_mat4(trackerPose);
-
+				
                 PSMFrustum frustum;
                 PSM_GetTrackerFrustum(tracker_id, &frustum);
 
@@ -236,7 +236,7 @@ void AppStage_ComputeTrackerPoses::render()
             {
                 const PSMController *controllerView = controller_iter->second.controllerView;
                 const PSMTrackingColorType trackingColorType= controller_iter->second.trackingColorType;
-
+				
                 PSMPosef controllerPose;
                 PSMPhysicsData physicsData;
                 switch (controllerView->ControllerType)

@@ -478,6 +478,7 @@ void AppStage_HMDModelCalibration::render()
 		{
 			// Draw the chaperone origin axes
 			drawTransformedAxes(glm::mat4(1.0f), 100.f);
+			drawTransformeGrid(glm::mat4(1.0f), 250.f);
 
 			// Draw the frustum for each tracking camera.
 			// The frustums are defined in PSMove tracking space.

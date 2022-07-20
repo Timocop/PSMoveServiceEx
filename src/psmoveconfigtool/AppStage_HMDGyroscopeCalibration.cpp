@@ -373,8 +373,9 @@ void AppStage_HMDGyroscopeCalibration::render()
 				glm::mat4 worldTransform = glm::scale(worldSpaceOrientation, glm::vec3(modelScale, modelScale, modelScale));
 
 				drawHMD(m_hmdView, worldTransform);
-				drawTransformedAxes(worldSpaceOrientation, 200.f);
-				drawTransformedAxes(glm::mat4(1.f), 200.f);
+				drawTransformedAxes(worldSpaceOrientation, 20.f);
+
+				drawTransformedAxes(glm::mat4(1.f), 20.f);
 			}
         } break;
     default:

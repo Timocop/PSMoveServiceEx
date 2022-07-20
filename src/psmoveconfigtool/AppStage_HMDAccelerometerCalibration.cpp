@@ -292,7 +292,9 @@ void AppStage_HMDAccelerometerCalibration::render()
             glm::mat4 sensorTransform = glm::scale(glm::mat4(1.f), glm::vec3(sensorScale, sensorScale, sensorScale));
 
             drawHMD(m_hmdView, hmdTransform);
-            drawTransformedAxes(hmdTransform, 500.f);
+            drawTransformedAxes(hmdTransform, 20.f);
+
+			drawTransformedAxes(glm::mat4(1.f), 20.f);
 
             // Draw the current filtered accelerometer direction
             {
