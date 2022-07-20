@@ -222,12 +222,16 @@ Eigen::Quaternionf OrientationFilter::getOrientation(float time, float offset_x,
 		}
 
 		// Apply offsets to reset orientation
-		const Eigen::EulerAnglesf offsetYaw_euler(0.f, offset_y, 0.f);
-		const Eigen::EulerAnglesf offsetPitchRoll_euler(offset_x, 0.f, offset_z);
-		const Eigen::Quaternionf offsetYaw_quat = eigen_euler_angles_to_quaternionf(offsetYaw_euler);
-		const Eigen::Quaternionf offsetPitchRoll_quat = eigen_euler_angles_to_quaternionf(offsetPitchRoll_euler);
+		const Eigen::EulerAnglesf offsetX_euler(offset_x, 0.f, 0.f);
+		const Eigen::EulerAnglesf offsetY_euler(0.f, offset_y, 0.f);
+		Eigen::EulerAnglesf offsetZ_euler(0.f, 0.f, 0.f);
+		offsetZ_euler += Eigen::Vector3f(0.f, 0.f, offset_z);
 
-		result = (m_state->reset_orientation * offsetYaw_quat) * (predicted_orientation * offsetPitchRoll_quat);
+		const Eigen::Quaternionf offsetX_quat = eigen_euler_angles_to_quaternionf(offsetX_euler);
+		const Eigen::Quaternionf offsetY_quat = eigen_euler_angles_to_quaternionf(offsetY_euler);
+		const Eigen::Quaternionf offsetZ_quat = eigen_euler_angles_to_quaternionf(offsetZ_euler);
+
+		result = (m_state->reset_orientation * offsetY_quat) * (predicted_orientation * offsetX_quat * offsetZ_quat);
 	}
 
 	return result;

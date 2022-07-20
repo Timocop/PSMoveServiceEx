@@ -981,12 +981,12 @@ ServerControllerView::getFilteredPose(float time) const
 			const CommonDevicePosition offset_orientation = psmove->getConfig()->offset_orientation;
 			const CommonDevicePosition offset_scale = psmove->getConfig()->offset_scale;
 
-			const Eigen::EulerAnglesf offset_euler(
-				offset_orientation.x * k_degrees_to_radians,
-				offset_orientation.y * k_degrees_to_radians, 
+			const Eigen::Quaternionf orientation = m_pose_filter->getOrientation(
+				time, 
+				offset_orientation.x * k_degrees_to_radians, 
+				offset_orientation.y * k_degrees_to_radians,
 				offset_orientation.z * k_degrees_to_radians
 			);
-			const Eigen::Quaternionf orientation = m_pose_filter->getOrientation(time, offset_euler.x(), offset_euler.y(), offset_euler.z());
 			const Eigen::Vector3f position_cm = m_pose_filter->getPositionCm(time);
 
 			pose.Orientation.w = orientation.w();
@@ -1007,12 +1007,12 @@ ServerControllerView::getFilteredPose(float time) const
 			const CommonDevicePosition offset_orientation = ds4->getConfig()->offset_orientation;
 			const CommonDevicePosition offset_scale = ds4->getConfig()->offset_scale;
 
-			const Eigen::EulerAnglesf offset_euler(
-				offset_orientation.x * k_degrees_to_radians,
+			const Eigen::Quaternionf orientation = m_pose_filter->getOrientation(
+				time, 
+				offset_orientation.x * k_degrees_to_radians, 
 				offset_orientation.y * k_degrees_to_radians, 
 				offset_orientation.z * k_degrees_to_radians
 			);
-			const Eigen::Quaternionf orientation = m_pose_filter->getOrientation(time, offset_euler.x(), offset_euler.y(), offset_euler.z());
 			const Eigen::Vector3f position_cm = m_pose_filter->getPositionCm(time);
 
 			pose.Orientation.w = orientation.w();
@@ -1034,12 +1034,12 @@ ServerControllerView::getFilteredPose(float time) const
 			const CommonDevicePosition offset_orientation = virt->getConfig()->offset_orientation;
 			const CommonDevicePosition offset_scale = virt->getConfig()->offset_scale;
 
-			const Eigen::EulerAnglesf offset_euler(
+			const Eigen::Quaternionf orientation = m_pose_filter->getOrientation(
+				time, 
 				offset_orientation.x * k_degrees_to_radians, 
 				offset_orientation.y * k_degrees_to_radians, 
 				offset_orientation.z * k_degrees_to_radians
 			);
-			const Eigen::Quaternionf orientation = m_pose_filter->getOrientation(time, offset_euler.x(), offset_euler.y(), offset_euler.z());
 			const Eigen::Vector3f position_cm = m_pose_filter->getPositionCm(time);
 
 			pose.Orientation.w = orientation.w();
