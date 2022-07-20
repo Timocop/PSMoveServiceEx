@@ -662,7 +662,8 @@ void AppStage_GyroscopeCalibration::onEnterState(eCalibrationMenuState newState)
 			}
 
 			m_app->setCameraType(_cameraOrbit);
-			m_app->getOrbitCamera()->reset();
+			m_app->getOrbitCamera()->resetOrientation();
+			m_app->getOrbitCamera()->setCameraOrbitRadius(1000.f); // zoom out to see the accelerometer data at scale
 			m_app->getOrbitCamera()->setCameraOrbitYaw(m_global_forward_degrees - k_camera_default_forward_degrees);
 		}
 		break;
