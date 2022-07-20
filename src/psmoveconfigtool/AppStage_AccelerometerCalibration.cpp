@@ -333,11 +333,11 @@ void AppStage_AccelerometerCalibration::render()
 			}
 
 			// Draw the fixed world space axes
-			drawTransformedAxes(glm::scale(glm::mat4(1.f), glm::vec3(k_modelScale, k_modelScale, k_modelScale)), 200.f);
+			drawTransformedAxes(glm::scale(glm::mat4(1.f), glm::vec3(k_modelScale, k_modelScale, k_modelScale)), 20.f);
 
 			// Draw the controller
             drawController(m_controllerView, controllerTransform);
-            drawTransformedAxes(controllerTransform, 200.f);
+            drawTransformedAxes(controllerTransform, 20.f);
 
 			// Draw the accelerometer
 			{

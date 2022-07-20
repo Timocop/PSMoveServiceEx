@@ -493,10 +493,10 @@ void AppStage_MagnetometerCalibration::update()
 
 void AppStage_MagnetometerCalibration::render()
 {
-    const float modelScale = 18.f;
+    const float k_modelScale = 18.f;
     glm::mat4 scaleAndRotateModelX90= 
         glm::rotate(
-            glm::scale(glm::mat4(1.f), glm::vec3(modelScale, modelScale, modelScale)),
+            glm::scale(glm::mat4(1.f), glm::vec3(k_modelScale, k_modelScale, k_modelScale)),
             90.f, glm::vec3(1.f, 0.f, 0.f));  
     
 	const EigenFitEllipsoid &sampleFitEllipsoid= m_boundsStatistics->sampleFitEllipsoid;	
@@ -627,10 +627,12 @@ void AppStage_MagnetometerCalibration::render()
 			{
 				glm::quat q= psm_quatf_to_glm_quat(orientation);
 				glm::mat4 worldSpaceOrientation= glm::mat4_cast(q);
-				glm::mat4 worldTransform = glm::scale(worldSpaceOrientation, glm::vec3(modelScale, modelScale, modelScale));
+				glm::mat4 worldTransform = glm::scale(worldSpaceOrientation, glm::vec3(k_modelScale, k_modelScale, k_modelScale));
+
+				drawTransformedAxes(glm::scale(glm::mat4(1.f), glm::vec3(k_modelScale, k_modelScale, k_modelScale)), 20.f);
 
 				drawPSMoveModel(worldTransform, glm::vec3(1.f, 1.f, 1.f));
-				drawTransformedAxes(glm::mat4(1.f), 200.f);
+				drawTransformedAxes(worldTransform, 20.f);
 			}
         } break;
     case eCalibrationMenuState::pendingExit:
