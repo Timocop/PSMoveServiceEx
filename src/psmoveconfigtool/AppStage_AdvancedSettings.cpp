@@ -1033,7 +1033,7 @@ void AppStage_AdvancedSettings::renderUI()
 
 			ImGui::Spacing();
 
-            if (ImGui::Button("Back"))
+            if (ImGui::Button("Return to Main Menu"))
             {
 				m_app->setAppStage(AppStage_MainMenu::APP_STAGE_NAME);
             }

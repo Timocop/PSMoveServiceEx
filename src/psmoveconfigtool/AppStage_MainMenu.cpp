@@ -86,7 +86,7 @@ void AppStage_MainMenu::renderUI()
                 m_app->setAppStage(AppStage_HMDSettings::APP_STAGE_NAME);
             }    
 
-			if (ImGui::Button("Tracker Settings"))
+			if (ImGui::Button("Return to Tracker Settings"))
 			{
 				m_app->setAppStage(AppStage_TrackerSettings::APP_STAGE_NAME);
 			}

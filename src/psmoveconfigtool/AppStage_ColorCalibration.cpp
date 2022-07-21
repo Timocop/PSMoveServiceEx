@@ -779,12 +779,12 @@ void AppStage_ColorCalibration::renderUI()
             ImGui::SetNextWindowSize(ImVec2(k_panel_width, ImGui::GetIO().DisplaySize.y - 32));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
-            if (ImGui::Button("Main Menu"))
+            if (ImGui::Button("Return to Main Menu"))
             {
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
             }
             
-            if (ImGui::Button("Tracker Settings"))
+            if (ImGui::Button("Return to Tracker Settings"))
             {
                 request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
             }

@@ -325,7 +325,7 @@ void AppStage_TestButtons::renderUI()
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }
             ImGui::SameLine();
-            if (ImGui::Button("Main Menu"))
+            if (ImGui::Button("Return to Main Menu"))
             {
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
             }
