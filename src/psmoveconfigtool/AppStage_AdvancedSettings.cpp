@@ -489,7 +489,7 @@ void AppStage_AdvancedSettings::renderUI()
         {
 			ImGui::SetNextWindowPosCenter();
 			ImGui::SetNextWindowSize(ImVec2(600, 500));
-			ImGui::Begin("Advanced Settings", nullptr, window_flags | ImGuiWindowFlags_MenuBar);
+			ImGui::Begin("Advanced Settings", nullptr, window_flags);
 
 			// Tracker Manager Config
 			if (ImGui::CollapsingHeader("Tracker Manager Config", 0, true, false))

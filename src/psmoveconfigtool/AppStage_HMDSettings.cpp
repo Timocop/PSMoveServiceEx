@@ -376,23 +376,33 @@ void AppStage_HMDSettings::renderUI()
 
 			if (ImGui::CollapsingHeader("Offsets", 0, true, false))
 			{
-				bool request_offset = false;
-
-				ImGui::Text("Orientation X: ");
-				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-				ImGui::PushItemWidth(120.f);
-				if (ImGui::InputFloat("##OffsetOrientationX", &hmdInfo.OffsetOrientation.x, 1.f, 5.f, 2))
-				{
-					while (hmdInfo.OffsetOrientation.x < 0.f)
-						hmdInfo.OffsetOrientation.x += 360.f;
-					while (hmdInfo.OffsetOrientation.x >= 360.f)
-						hmdInfo.OffsetOrientation.x -= 360.f;
-
-					request_offset = true;
-				}
+				static int iOffsetView = 0;
+				ImGui::PushItemWidth(250);
+				ImGui::Combo("View", &iOffsetView, "Simple\0Advanced\0\0");
 				ImGui::PopItemWidth();
 
-				ImGui::Text("Orientation Y: ");
+				ImGui::Separator();
+
+				bool request_offset = false;
+
+				if (iOffsetView == 1)
+				{
+					ImGui::Text("Orientation X (Roll): ");
+					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+					ImGui::PushItemWidth(120.f);
+					if (ImGui::InputFloat("##OffsetOrientationX", &hmdInfo.OffsetOrientation.x, 1.f, 5.f, 2))
+					{
+						while (hmdInfo.OffsetOrientation.x < 0.f)
+							hmdInfo.OffsetOrientation.x += 360.f;
+						while (hmdInfo.OffsetOrientation.x >= 360.f)
+							hmdInfo.OffsetOrientation.x -= 360.f;
+
+						request_offset = true;
+					}
+					ImGui::PopItemWidth();
+				}
+
+				ImGui::Text("Orientation Y (Yaw): ");
 				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 				ImGui::PushItemWidth(120.f);
 				if (ImGui::InputFloat("##OffsetOrientationY", &hmdInfo.OffsetOrientation.y, 1.f, 5.f, 2))
@@ -406,85 +416,92 @@ void AppStage_HMDSettings::renderUI()
 				}
 				ImGui::PopItemWidth();
 
-				ImGui::Text("Orientation Z: ");
-				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-				ImGui::PushItemWidth(120.f);
-				if (ImGui::InputFloat("##OffsetOrientationZ", &hmdInfo.OffsetOrientation.z, 1.f, 5.f, 2))
+				if (iOffsetView == 1)
 				{
-					while (hmdInfo.OffsetOrientation.z < 0.f)
-						hmdInfo.OffsetOrientation.z += 360.f;
-					while (hmdInfo.OffsetOrientation.z >= 360.f)
-						hmdInfo.OffsetOrientation.z -= 360.f;
+					ImGui::Text("Orientation Z (Pitch): ");
+					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+					ImGui::PushItemWidth(120.f);
+					if (ImGui::InputFloat("##OffsetOrientationZ", &hmdInfo.OffsetOrientation.z, 1.f, 5.f, 2))
+					{
+						while (hmdInfo.OffsetOrientation.z < 0.f)
+							hmdInfo.OffsetOrientation.z += 360.f;
+						while (hmdInfo.OffsetOrientation.z >= 360.f)
+							hmdInfo.OffsetOrientation.z -= 360.f;
 
-					request_offset = true;
+						request_offset = true;
+					}
+					ImGui::PopItemWidth();
+
+					ImGui::Separator();
+
+					ImGui::Text("Position X (Right): ");
+					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+					ImGui::PushItemWidth(120.f);
+					if (ImGui::InputFloat("##OffsetPositionX", &hmdInfo.OffsetPosition.x, 1.f, 5.f, 2))
+					{
+						hmdInfo.OffsetPosition.x = clampf(hmdInfo.OffsetPosition.x, -(1 << 16), (1 << 16));
+
+						request_offset = true;
+					}
+					ImGui::PopItemWidth();
+
+					ImGui::Text("Position Y (Up): ");
+					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+					ImGui::PushItemWidth(120.f);
+					if (ImGui::InputFloat("##OffsetPositionY", &hmdInfo.OffsetPosition.y, 1.f, 5.f, 2))
+					{
+						hmdInfo.OffsetPosition.y = clampf(hmdInfo.OffsetPosition.y, -(1 << 16), (1 << 16));
+
+						request_offset = true;
+					}
+					ImGui::PopItemWidth();
+
+					ImGui::Text("Position Z (Backward): ");
+					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+					ImGui::PushItemWidth(120.f);
+					if (ImGui::InputFloat("##OffsetPositionZ", &hmdInfo.OffsetPosition.z, 1.f, 5.f, 2))
+					{
+						hmdInfo.OffsetPosition.z = clampf(hmdInfo.OffsetPosition.z, -(1 << 16), (1 << 16));
+
+						request_offset = true;
+					}
+					ImGui::PopItemWidth();
+
+					ImGui::Separator();
+
+					ImGui::Text("Scale X (Left/Right): ");
+					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+					ImGui::PushItemWidth(120.f);
+					if (ImGui::InputFloat("##OffsetScaleX", &hmdInfo.OffsetScale.x, 0.01f, 0.05f, 2))
+					{
+						hmdInfo.OffsetScale.x = clampf(hmdInfo.OffsetScale.x, 0.01f, 100.0f);
+
+						request_offset = true;
+					}
+					ImGui::PopItemWidth();
+
+					ImGui::Text("Scale Y (Up/Down): ");
+					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+					ImGui::PushItemWidth(120.f);
+					if (ImGui::InputFloat("##OffsetScaleY", &hmdInfo.OffsetScale.y, 0.01f, 0.05f, 2))
+					{
+						hmdInfo.OffsetScale.y = clampf(hmdInfo.OffsetScale.y, 0.01f, 100.0f);
+
+						request_offset = true;
+					}
+					ImGui::PopItemWidth();
+
+					ImGui::Text("Scale Z (Forward/Backward): ");
+					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+					ImGui::PushItemWidth(120.f);
+					if (ImGui::InputFloat("##OffsetScaleZ", &hmdInfo.OffsetScale.z, 0.01f, 0.05f, 2))
+					{
+						hmdInfo.OffsetScale.z = clampf(hmdInfo.OffsetScale.z, 0.01f, 100.0f);
+
+						request_offset = true;
+					}
+					ImGui::PopItemWidth();
 				}
-				ImGui::PopItemWidth();
-
-				ImGui::Text("Position X: ");
-				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-				ImGui::PushItemWidth(120.f);
-				if (ImGui::InputFloat("##OffsetPositionX", &hmdInfo.OffsetPosition.x, 1.f, 5.f, 2))
-				{
-					hmdInfo.OffsetPosition.x = clampf(hmdInfo.OffsetPosition.x, -(1 << 16), (1 << 16));
-
-					request_offset = true;
-				}
-				ImGui::PopItemWidth();
-
-				ImGui::Text("Position Y: ");
-				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-				ImGui::PushItemWidth(120.f);
-				if (ImGui::InputFloat("##OffsetPositionY", &hmdInfo.OffsetPosition.y, 1.f, 5.f, 2))
-				{
-					hmdInfo.OffsetPosition.y = clampf(hmdInfo.OffsetPosition.y, -(1 << 16), (1 << 16));
-
-					request_offset = true;
-				}
-				ImGui::PopItemWidth();
-
-				ImGui::Text("Position Z: ");
-				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-				ImGui::PushItemWidth(120.f);
-				if (ImGui::InputFloat("##OffsetPositionZ", &hmdInfo.OffsetPosition.z, 1.f, 5.f, 2))
-				{
-					hmdInfo.OffsetPosition.z = clampf(hmdInfo.OffsetPosition.z, -(1 << 16), (1 << 16));
-
-					request_offset = true;
-				}
-				ImGui::PopItemWidth();
-
-				ImGui::Text("Scale X: ");
-				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-				ImGui::PushItemWidth(120.f);
-				if (ImGui::InputFloat("##OffsetScaleX", &hmdInfo.OffsetScale.x, 0.01f, 0.05f, 2))
-				{
-					hmdInfo.OffsetScale.x = clampf(hmdInfo.OffsetScale.x, 0.01f, 100.0f);
-
-					request_offset = true;
-				}
-				ImGui::PopItemWidth();
-
-				ImGui::Text("Scale Y: ");
-				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-				ImGui::PushItemWidth(120.f);
-				if (ImGui::InputFloat("##OffsetScaleY", &hmdInfo.OffsetScale.y, 0.01f, 0.05f, 2))
-				{
-					hmdInfo.OffsetScale.y = clampf(hmdInfo.OffsetScale.y, 0.01f, 100.0f);
-
-					request_offset = true;
-				}
-				ImGui::PopItemWidth();
-
-				ImGui::Text("Scale Z: ");
-				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-				ImGui::PushItemWidth(120.f);
-				if (ImGui::InputFloat("##OffsetScaleZ", &hmdInfo.OffsetScale.z, 0.01f, 0.05f, 2))
-				{
-					hmdInfo.OffsetScale.z = clampf(hmdInfo.OffsetScale.z, 0.01f, 100.0f);
-
-					request_offset = true;
-				}
-				ImGui::PopItemWidth();
 
 				if (request_offset)
 				{

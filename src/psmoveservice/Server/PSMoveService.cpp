@@ -70,10 +70,20 @@ public:
         {
             if (startup())
             {
+				SERVER_LOG_INFO("PSMoveService") << "------------------------------------------";
+				SERVER_LOG_INFO("PSMoveService") << "Startup successful! Entering main loop...";
+				SERVER_LOG_INFO("PSMoveService") << "------------------------------------------";
+
                 m_status = context.find<boost::application::status>();
 
 				const TrackerManagerConfig &cfg = DeviceManager::getInstance()->m_tracker_manager->getConfig();
-				//std::chrono::time_point<std::chrono::high_resolution_clock> m_lastSync;
+				std::chrono::time_point<std::chrono::high_resolution_clock> m_lastSync = std::chrono::high_resolution_clock::now();
+
+				bool framesReport = true;
+				int frames = 0;
+				bool firstUpdate = true;
+
+				const float k_maxSamplingTime = 10000.f;
 
                 while (m_status->state() != boost::application::status::stoped)
                 {
@@ -84,16 +94,44 @@ public:
 					timeBeginPeriod(1);
 #endif
 
-					//const std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
-					//const std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastSync;
-					//m_lastSync = now;
 
                     if (m_status->state() != boost::application::status::paused)
                     {
                         update();
 
-						//printf("Thread FPS: %f\nSleep MS: %d\n", 1000.f / timeSinceLast.count(), cfg.thread_sleep_ms);
+						if (firstUpdate)
+						{
+							firstUpdate = false;
 
+							SERVER_LOG_INFO("PSMoveService") << "------------------------------------------";
+							SERVER_LOG_INFO("PSMoveService") << "Successfully Initialized!";
+							SERVER_LOG_INFO("PSMoveService") << "------------------------------------------";
+							SERVER_LOG_INFO("PSMoveService") << "Calculating average main thread FPS...";
+						}
+
+						//Write avg FPS to log
+						if (framesReport)
+						{
+							const std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+							const std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastSync;
+
+							frames++;
+
+							if (timeSinceLast.count() > k_maxSamplingTime)
+							{
+								framesReport = false;
+
+								int avgFps = (int)ceilf(frames / (k_maxSamplingTime / 1000.f));
+
+								SERVER_LOG_INFO("PSMoveService") << "Main thread running at " << avgFps << " FPS.";
+
+								if (avgFps < 100)
+								{
+									SERVER_LOG_WARNING("PSMoveService") << "Main thread running at too low FPS! Tracking might jitter and input lag is increased!";
+									SERVER_LOG_WARNING("PSMoveService") << "Reduce the 'Processing thread sleep' in 'Advanced Settings' to speed up the main thread.";
+								}
+							}
+						}
                     }
 
 					std::this_thread::sleep_for(std::chrono::milliseconds(cfg.thread_sleep_ms));

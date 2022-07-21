@@ -775,7 +775,7 @@ void AppStage_ControllerSettings::renderUI()
 
 							if (iOffsetView == 1)
 							{
-								ImGui::Text("Orientation X: ");
+								ImGui::Text("Orientation X (Roll): ");
 								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 								ImGui::PushItemWidth(120.f);
 								if (ImGui::InputFloat("##OffsetOrientationX", &controllerInfo.OffsetOrientation.x, 1.f, 5.f, 2))
@@ -790,7 +790,7 @@ void AppStage_ControllerSettings::renderUI()
 								ImGui::PopItemWidth();
 							}
 
-							ImGui::Text("Orientation Y: ");
+							ImGui::Text("Orientation Y (Yaw): ");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(120.f);
 							if (ImGui::InputFloat("##OffsetOrientationY", &controllerInfo.OffsetOrientation.y, 1.f, 5.f, 2))
@@ -806,7 +806,7 @@ void AppStage_ControllerSettings::renderUI()
 
 							if (iOffsetView == 1)
 							{
-								ImGui::Text("Orientation Z: ");
+								ImGui::Text("Orientation Z (Pitch): ");
 								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 								ImGui::PushItemWidth(120.f);
 								if (ImGui::InputFloat("##OffsetOrientationZ", &controllerInfo.OffsetOrientation.z, 1.f, 5.f, 2))
@@ -822,7 +822,7 @@ void AppStage_ControllerSettings::renderUI()
 
 								ImGui::Separator();
 
-								ImGui::Text("Position X: ");
+								ImGui::Text("Position X (Right): ");
 								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 								ImGui::PushItemWidth(120.f);
 								if (ImGui::InputFloat("##OffsetPositionX", &controllerInfo.OffsetPosition.x, 1.f, 5.f, 2))
@@ -833,7 +833,7 @@ void AppStage_ControllerSettings::renderUI()
 								}
 								ImGui::PopItemWidth();
 
-								ImGui::Text("Position Y: ");
+								ImGui::Text("Position Y (Up): ");
 								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 								ImGui::PushItemWidth(120.f);
 								if (ImGui::InputFloat("##OffsetPositionY", &controllerInfo.OffsetPosition.y, 1.f, 5.f, 2))
@@ -844,7 +844,7 @@ void AppStage_ControllerSettings::renderUI()
 								}
 								ImGui::PopItemWidth();
 
-								ImGui::Text("Position Z: ");
+								ImGui::Text("Position Z (Backward): ");
 								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 								ImGui::PushItemWidth(120.f);
 								if (ImGui::InputFloat("##OffsetPositionZ", &controllerInfo.OffsetPosition.z, 1.f, 5.f, 2))
@@ -857,7 +857,7 @@ void AppStage_ControllerSettings::renderUI()
 
 								ImGui::Separator();
 
-								ImGui::Text("Scale X: ");
+								ImGui::Text("Scale X (Left/Right): ");
 								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 								ImGui::PushItemWidth(120.f);
 								if (ImGui::InputFloat("##OffsetScaleX", &controllerInfo.OffsetScale.x, 0.01f, 0.05f, 2))
@@ -868,7 +868,7 @@ void AppStage_ControllerSettings::renderUI()
 								}
 								ImGui::PopItemWidth();
 
-								ImGui::Text("Scale Y: ");
+								ImGui::Text("Scale Y (Up/Down): ");
 								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 								ImGui::PushItemWidth(120.f);
 								if (ImGui::InputFloat("##OffsetScaleY", &controllerInfo.OffsetScale.y, 0.01f, 0.05f, 2))
@@ -879,7 +879,7 @@ void AppStage_ControllerSettings::renderUI()
 								}
 								ImGui::PopItemWidth();
 
-								ImGui::Text("Scale Z: ");
+								ImGui::Text("Scale Z (Forward/Backward): ");
 								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 								ImGui::PushItemWidth(120.f);
 								if (ImGui::InputFloat("##OffsetScaleZ", &controllerInfo.OffsetScale.z, 0.01f, 0.05f, 2))
@@ -893,7 +893,7 @@ void AppStage_ControllerSettings::renderUI()
 
 							ImGui::Separator();
 
-							ImGui::Text("Magnetometer Yaw Center: ");
+							ImGui::Text("Magnetometer Center (Yaw): ");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(120.f);
 							if (ImGui::InputFloat("##OffsetMagnetometerYaw", &controllerInfo.OffsetMagnetometer, 1.f, 5.f, 2))

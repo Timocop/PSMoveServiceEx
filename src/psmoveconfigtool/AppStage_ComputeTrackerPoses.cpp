@@ -606,7 +606,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
     case eMenuState::showTrackerVideo:
         {
             ImGui::SetNextWindowPos(ImVec2(20.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(200, 130));
+            ImGui::SetNextWindowSize(ImVec2(250, 125));
             ImGui::Begin("Test Tracking Video", nullptr, window_flags);
 
             //ImGui::Text("Tracker ID: #%d", m_renderTrackerIter->second.trackerView->tracker_info.tracker_id);
@@ -631,7 +631,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
                 ImGui::Text("Tracker ID: 0");
             }
             
-            if (ImGui::Button("Color Calibration"))
+            if (ImGui::Button("Calibrate Tracking Colors"))
             {
                 if (m_overrideHmdId != -1)
                 {
@@ -649,7 +649,9 @@ void AppStage_ComputeTrackerPoses::renderUI()
                 setState(eMenuState::testTracking);
             }
 
-            if (ImGui::Button("Tracker Settings"))
+			ImGui::Separator();
+
+            if (ImGui::Button("Return to Tracker Settings"))
             {
                 request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
             }
