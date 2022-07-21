@@ -127,7 +127,7 @@ public:
 
 								if (avgFps < 100)
 								{
-									SERVER_LOG_WARNING("PSMoveService") << "Main thread running at too low FPS! Tracking might jitter and input lag is increased!";
+									SERVER_LOG_WARNING("PSMoveService") << "Main thread running at too low FPS! Tracking jitter and input lag might occur!";
 									SERVER_LOG_WARNING("PSMoveService") << "Reduce the 'Processing thread sleep' in 'Advanced Settings' to speed up the main thread.";
 								}
 							}
