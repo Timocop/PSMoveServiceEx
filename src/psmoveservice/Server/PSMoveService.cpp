@@ -107,6 +107,8 @@ public:
 							SERVER_LOG_INFO("PSMoveService") << "Successfully Initialized!";
 							SERVER_LOG_INFO("PSMoveService") << "------------------------------------------";
 							SERVER_LOG_INFO("PSMoveService") << "Calculating average main thread FPS...";
+
+							m_lastSync = std::chrono::high_resolution_clock::now();
 						}
 
 						//Write avg FPS to log
