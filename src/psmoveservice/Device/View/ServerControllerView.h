@@ -15,6 +15,16 @@
 
 #include "readerwriterqueue.h" // lockfree queue
 
+#ifdef WIN32
+#define VRIT_BUFF_SIZE (2048*4)
+
+#include <windows.h> 
+#include <stdio.h> 
+#include <tchar.h>
+#include <strsafe.h>
+#include <fstream>
+#endif
+
 // -- pre-declarations -----
 class TrackerManager;
 
@@ -215,6 +225,15 @@ public:
         const struct ControllerStreamInfo *stream_info,
         PSMoveProtocol::DeviceOutputDataFrame *data_frame);
 
+	void generate_controller_data_frame_for_pipe(
+		const ServerControllerView *controller_view);
+
+	void generate_psmove_data_frame_for_pipe(
+		const ServerControllerView *controller_view, std::vector<std::string> &dataArray);
+
+	void publish_controller_data_frame_for_pipe(
+		const int deviceId, std::vector<std::string> dataArray);
+
 	// Incoming device data callbacks
 	void notifySensorDataReceived(const CommonDeviceState *sensor_state) override;
 
@@ -257,6 +276,11 @@ private:
     int m_lastPollSeqNumProcessed;
     std::chrono::time_point<std::chrono::high_resolution_clock> m_last_filter_update_timestamp;
     bool m_last_filter_update_timestamp_valid;
+
+#ifdef WIN32
+	HANDLE controllerDataPipe;
+	bool showMessage;
+#endif
 };
 
 #endif // SERVER_CONTROLLER_VIEW_H

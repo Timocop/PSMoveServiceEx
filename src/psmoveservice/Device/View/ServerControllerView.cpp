@@ -138,13 +138,55 @@ ServerControllerView::ServerControllerView(const int device_id)
     , m_lastPollSeqNumProcessed(-1)
     , m_last_filter_update_timestamp()
     , m_last_filter_update_timestamp_valid(false)
+	, showMessage(true)
 {
     m_tracking_color = std::make_tuple(0x00, 0x00, 0x00);
     m_LED_override_color = std::make_tuple(0x00, 0x00, 0x00);
+
+#ifdef WIN32
+	SERVER_LOG_INFO("ServerControllerView::ServerControllerView()") <<
+		"Creating controller data pipe: " << device_id << ".";
+
+	std::string pipeName = "\\\\.\\pipe\\PSMoveSerivceEx\\ControllerDataStream_";
+
+	char indexStr[20];
+	pipeName.append(itoa(device_id, indexStr, 10));
+
+	controllerDataPipe = CreateNamedPipe(
+		pipeName.c_str(),
+		PIPE_ACCESS_OUTBOUND,
+		PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_NOWAIT,
+		1,
+		VRIT_BUFF_SIZE,
+		VRIT_BUFF_SIZE,
+		NMPWAIT_USE_DEFAULT_WAIT,
+		NULL
+	);
+
+	if (controllerDataPipe != INVALID_HANDLE_VALUE)
+	{
+		SERVER_LOG_INFO("ServerControllerView::ServerControllerView()") <<
+			pipeName.c_str() << " pipe created.";
+	}
+	else
+	{
+		SERVER_LOG_INFO("ServerControllerView::ServerControllerView()") <<
+			pipeName.c_str() << " pipe failed!, GLE=" << GetLastError();
+	}
+#endif
 }
 
 ServerControllerView::~ServerControllerView()
 {
+#ifdef WIN32
+	if (controllerDataPipe != INVALID_HANDLE_VALUE)
+	{
+		DisconnectNamedPipe(controllerDataPipe);
+		CloseHandle(controllerDataPipe);
+
+		controllerDataPipe = INVALID_HANDLE_VALUE;
+	}
+#endif
 }
 
 bool ServerControllerView::allocate_device_interface(
@@ -1505,45 +1547,208 @@ void ServerControllerView::publish_device_data_frame()
 {
     // Tell the server request handler we want to send out controller updates.
     // This will call generate_controller_data_frame_for_stream for each listening connection.
-    ServerRequestHandler::get_instance()->publish_controller_data_frame(
-        this, &ServerControllerView::generate_controller_data_frame_for_stream);
+	ServerRequestHandler::get_instance()->publish_controller_data_frame(
+		this, &ServerControllerView::generate_controller_data_frame_for_stream);
+
+	generate_controller_data_frame_for_pipe(this);
+}
+
+void ServerControllerView::generate_controller_data_frame_for_pipe(
+	const ServerControllerView *controller_view)
+{
+	std::vector<std::string> dataArray;
+
+	const int pipe_version = 1;
+	const int deviceID = controller_view->getDeviceID();
+
+	dataArray.push_back(std::to_string(pipe_version));
+	dataArray.push_back(std::to_string(deviceID));
+	dataArray.push_back(std::to_string(controller_view->m_sequence_number));
+	dataArray.push_back(std::to_string(controller_view->getDevice()->getIsOpen()));
+	dataArray.push_back(std::to_string(controller_view->getControllerDeviceType()));
+
+	switch (controller_view->getControllerDeviceType())
+	{
+	case CommonControllerState::PSMove:
+	{
+		generate_psmove_data_frame_for_pipe(controller_view, dataArray);
+	} break;
+	case CommonControllerState::PSNavi:
+	{
+		// Todo
+	} break;
+	case CommonControllerState::PSDualShock4:
+	{
+		// Todo
+	} break;
+	case CommonControllerState::VirtualController:
+	{
+		// Todo
+	} break;
+	default:
+		assert(0 && "Unhandled controller type");
+	}
+
+	publish_controller_data_frame_for_pipe(deviceID, dataArray);
+}
+
+void ServerControllerView::generate_psmove_data_frame_for_pipe(
+	const ServerControllerView *controller_view, std::vector<std::string> &dataArray)
+{
+	const PSMoveController *psmove_controller = controller_view->castCheckedConst<PSMoveController>();
+	const IPoseFilter *pose_filter = controller_view->getPoseFilter();
+	const PSMoveControllerConfig *psmove_config = psmove_controller->getConfig();
+	const CommonControllerState *controller_state = controller_view->getState();
+	const CommonDevicePose controller_pose = controller_view->getFilteredPose(psmove_config->prediction_time);
+
+	if (controller_state != nullptr)
+	{
+		assert(controller_state->DeviceType == CommonDeviceState::PSMove);
+		const PSMoveControllerInputState * psmove_state = static_cast<const PSMoveControllerInputState *>(controller_state);
+
+		dataArray.push_back(std::to_string(psmove_config->is_valid));
+		dataArray.push_back(std::to_string(controller_view->getIsCurrentlyTracking()));
+		dataArray.push_back(std::to_string(controller_view->getIsTrackingEnabled()));
+		dataArray.push_back(std::to_string(pose_filter->getIsOrientationStateValid()));
+		dataArray.push_back(std::to_string(pose_filter->getIsPositionStateValid()));
+
+		dataArray.push_back(std::to_string(controller_pose.Orientation.w));
+		dataArray.push_back(std::to_string(controller_pose.Orientation.x));
+		dataArray.push_back(std::to_string(controller_pose.Orientation.y));
+		dataArray.push_back(std::to_string(controller_pose.Orientation.z));
+
+
+		if (controller_view->getIsCurrentlyTracking())
+		{
+			dataArray.push_back(std::to_string(controller_pose.PositionCm.x));
+			dataArray.push_back(std::to_string(controller_pose.PositionCm.y));
+			dataArray.push_back(std::to_string(controller_pose.PositionCm.z));
+		}
+		else
+		{
+			dataArray.push_back(std::to_string(0));
+			dataArray.push_back(std::to_string(0));
+			dataArray.push_back(std::to_string(0));
+		}
+
+		dataArray.push_back(std::to_string(psmove_state->TriggerValue));
+		dataArray.push_back(std::to_string(psmove_state->BatteryValue));
+
+		unsigned int button_bitmask = 0;
+		SET_BUTTON_BIT(button_bitmask, PSMoveProtocol::DeviceOutputDataFrame_ControllerDataPacket::TRIANGLE, psmove_state->Triangle);
+		SET_BUTTON_BIT(button_bitmask, PSMoveProtocol::DeviceOutputDataFrame_ControllerDataPacket::CIRCLE, psmove_state->Circle);
+		SET_BUTTON_BIT(button_bitmask, PSMoveProtocol::DeviceOutputDataFrame_ControllerDataPacket::CROSS, psmove_state->Cross);
+		SET_BUTTON_BIT(button_bitmask, PSMoveProtocol::DeviceOutputDataFrame_ControllerDataPacket::SQUARE, psmove_state->Square);
+		SET_BUTTON_BIT(button_bitmask, PSMoveProtocol::DeviceOutputDataFrame_ControllerDataPacket::SELECT, psmove_state->Select);
+		SET_BUTTON_BIT(button_bitmask, PSMoveProtocol::DeviceOutputDataFrame_ControllerDataPacket::START, psmove_state->Start);
+		SET_BUTTON_BIT(button_bitmask, PSMoveProtocol::DeviceOutputDataFrame_ControllerDataPacket::PS, psmove_state->PS);
+		SET_BUTTON_BIT(button_bitmask, PSMoveProtocol::DeviceOutputDataFrame_ControllerDataPacket::MOVE, psmove_state->Move);
+		SET_BUTTON_BIT(button_bitmask, PSMoveProtocol::DeviceOutputDataFrame_ControllerDataPacket::TRIGGER, psmove_state->Trigger);
+		dataArray.push_back(std::to_string(button_bitmask));
+	}
+}
+
+void ServerControllerView::publish_controller_data_frame_for_pipe(
+	const int deviceId, std::vector<std::string> dataArray)
+{
+#ifdef WIN32
+	if (deviceId < 0)
+	{
+		return;
+	}
+
+	if (dataArray.empty())
+	{
+		return;
+	}
+
+	std::string pipeName = "\\\\.\\pipe\\PSMoveSerivceEx\\ControllerDataStream_";
+
+	char indexStr[20];
+	pipeName.append(itoa(deviceId, indexStr, 10));
+
+	BOOL connected = ConnectNamedPipe(controllerDataPipe, NULL);
+	if (connected)
+	{
+		SERVER_LOG_INFO("ServerControllerView::publish_controller_data_frame_for_pipe()") <<
+			pipeName.c_str() << " pipe connection success!";
+	}
+
+	if (!connected)
+	{
+		connected = (GetLastError() == ERROR_PIPE_CONNECTED);
+	}
+
+	if (!connected)
+	{
+		if (GetLastError() != ERROR_PIPE_LISTENING) 
+		{
+			if (showMessage)
+			{
+				SERVER_LOG_INFO("ServerControllerView::publish_controller_data_frame_for_pipe()") <<
+					pipeName.c_str() << " pipe connection failed!, GLE=" << GetLastError();
+			}
+
+			showMessage = false;
+			DisconnectNamedPipe(controllerDataPipe);
+		}
+	}
+
+	showMessage = true;
+
+	std::string str;
+	for (std::string i : dataArray)
+	{
+		str.append(i);
+		str.append("\n");
+	}
+
+	DWORD numBytesWritten = 0;
+	BOOL result = WriteFile(
+		controllerDataPipe,
+		str.c_str(),
+		str.length(),
+		&numBytesWritten, 
+		NULL
+	);
+#endif
 }
 
 void ServerControllerView::generate_controller_data_frame_for_stream(
-    const ServerControllerView *controller_view,
-    const ControllerStreamInfo *stream_info,
-    PSMoveProtocol::DeviceOutputDataFrame *data_frame)
+	const ServerControllerView *controller_view,
+	const ControllerStreamInfo *stream_info,
+	PSMoveProtocol::DeviceOutputDataFrame *data_frame)
 {
-    PSMoveProtocol::DeviceOutputDataFrame_ControllerDataPacket *controller_data_frame= 
-        data_frame->mutable_controller_data_packet();
+	PSMoveProtocol::DeviceOutputDataFrame_ControllerDataPacket *controller_data_frame =
+		data_frame->mutable_controller_data_packet();
 
-    controller_data_frame->set_controller_id(controller_view->getDeviceID());
-    controller_data_frame->set_sequence_num(controller_view->m_sequence_number);
-    controller_data_frame->set_isconnected(controller_view->getDevice()->getIsOpen());
-	
-    switch (controller_view->getControllerDeviceType())
-    {
-    case CommonControllerState::PSMove:
-        {            
-            generate_psmove_data_frame_for_stream(controller_view, stream_info, data_frame);
-        } break;
-    case CommonControllerState::PSNavi:
-        {
-            generate_psnavi_data_frame_for_stream(controller_view, stream_info, data_frame);
-        } break;
-    case CommonControllerState::PSDualShock4:
-        {
-            generate_psdualshock4_data_frame_for_stream(controller_view, stream_info, data_frame);
-        } break;
-    case CommonControllerState::VirtualController:
-        {
-            generate_virtual_controller_data_frame_for_stream(controller_view, stream_info, data_frame);
-        } break;
-    default:
-        assert(0 && "Unhandled controller type");
-    }
+	controller_data_frame->set_controller_id(controller_view->getDeviceID());
+	controller_data_frame->set_sequence_num(controller_view->m_sequence_number);
+	controller_data_frame->set_isconnected(controller_view->getDevice()->getIsOpen());
 
-    data_frame->set_device_category(PSMoveProtocol::DeviceOutputDataFrame::CONTROLLER);
+	switch (controller_view->getControllerDeviceType())
+	{
+	case CommonControllerState::PSMove:
+	{
+		generate_psmove_data_frame_for_stream(controller_view, stream_info, data_frame);
+	} break;
+	case CommonControllerState::PSNavi:
+	{
+		generate_psnavi_data_frame_for_stream(controller_view, stream_info, data_frame);
+	} break;
+	case CommonControllerState::PSDualShock4:
+	{
+		generate_psdualshock4_data_frame_for_stream(controller_view, stream_info, data_frame);
+	} break;
+	case CommonControllerState::VirtualController:
+	{
+		generate_virtual_controller_data_frame_for_stream(controller_view, stream_info, data_frame);
+	} break;
+	default:
+		assert(0 && "Unhandled controller type");
+	}
+
+	data_frame->set_device_category(PSMoveProtocol::DeviceOutputDataFrame::CONTROLLER);
 }
 
 static void generate_psmove_data_frame_for_stream(
