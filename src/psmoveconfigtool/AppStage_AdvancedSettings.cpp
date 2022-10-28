@@ -234,6 +234,8 @@ TrackerConfig::config2ptree()
 	pt.put("occluded_area_on_loss_size", occluded_area_on_loss_size);
 	pt.put("occluded_area_ignore_trackers", occluded_area_ignore_trackers);
 	pt.put("occluded_area_regain_projection_size", occluded_area_regain_projection_size);
+	pt.put("projection_collision_avoid", projection_collision_avoid);
+	pt.put("projection_collision_offset", projection_collision_offset);
 	pt.put("min_points_in_contour", min_points_in_contour);
 	pt.put("max_tracker_position_deviation", max_tracker_position_deviation);
 
@@ -266,6 +268,8 @@ TrackerConfig::ptree2config(const boost::property_tree::ptree &pt)
 	occluded_area_on_loss_size = pt.get<float>("occluded_area_on_loss_size", occluded_area_on_loss_size);
 	occluded_area_ignore_trackers = pt.get<int>("occluded_area_ignore_trackers", occluded_area_ignore_trackers);
 	occluded_area_regain_projection_size = pt.get<float>("occluded_area_regain_projection_size", occluded_area_regain_projection_size);
+	projection_collision_avoid = pt.get<bool>("projection_collision_avoid", projection_collision_avoid);
+	projection_collision_offset = pt.get<float>("projection_collision_offset", projection_collision_offset);
 	min_points_in_contour = pt.get<int>("min_points_in_contour", min_points_in_contour);
 	max_tracker_position_deviation = pt.get<float>("max_tracker_position_deviation", max_tracker_position_deviation);
 
@@ -718,6 +722,40 @@ void AppStage_AdvancedSettings::renderUI()
 							"(The default value is 32)"
 						);
 				}
+
+				{
+					ImGui::Text("Avoid projection collisions:");
+					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+					ImGui::PushItemWidth(100.f);
+					ImGui::Checkbox("##PorjectionCollisionDetection", &cfg_tracker.projection_collision_avoid);
+					ImGui::PopItemWidth();
+
+					if (ImGui::IsItemHovered())
+						ImGui::SetTooltip(
+							"Avoids projection collisions between controllers if they are already near another projection.\n"
+							"Enabling this fixes some color collisions between controllers such as color bleeding on the bulb edges.\n"
+							"(The default value is TRUE)"
+						);
+				}
+
+				ImGui::Indent();
+				{
+					ImGui::Text("Projection collision offset:");
+					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+					ImGui::PushItemWidth(100.f);
+					if (ImGui::InputFloat("##ProjectionCollisionOffset", &cfg_tracker.projection_collision_offset, 1.f, 4.f, 2))
+					{
+						cfg_tracker.projection_collision_offset = static_cast<float>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.projection_collision_offset)));
+					}
+					ImGui::PopItemWidth();
+
+					if (ImGui::IsItemHovered())
+						ImGui::SetTooltip(
+							"Adds an offset to the projection collision detection dead-zone.\n"
+							"(The default value is 5)"
+						);
+				}
+				ImGui::Unindent();
 
 				{
 					ImGui::Text("Minimum points in contour:");

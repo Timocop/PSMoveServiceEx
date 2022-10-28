@@ -63,6 +63,8 @@ public:
 	float occluded_area_on_loss_size;
 	int occluded_area_ignore_trackers;
 	float occluded_area_regain_projection_size;
+	bool projection_collision_avoid;
+	float projection_collision_offset;
 	int min_points_in_contour;
 	float max_tracker_position_deviation;
 	bool disable_roi;

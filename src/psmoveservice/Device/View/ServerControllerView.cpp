@@ -701,45 +701,46 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 
 
 						// Avoid other device projections
-						for (int i = 0; i < ControllerManager::k_max_devices; ++i)
+						if (trackerMgrConfig.projection_collision_avoid)
 						{
-							if (i == controller_id)
-								continue;
-
-							if (!project_avoid_valid[tracker_id][i])
-								continue;
-
-							float other_x = porject_avoid_region[tracker_id][i][0];
-							float other_y = porject_avoid_region[tracker_id][i][1];
-							float other_area = porject_avoid_region[tracker_id][i][2];
-
-							const float projection_offset = 5.0f;
-
-							float x = trackerPoseEstimateRef.projection.shape.ellipse.center.x - trackerPoseEstimateRef.projection.shape.ellipse.half_x_extent - projection_offset;
-							float y = trackerPoseEstimateRef.projection.shape.ellipse.center.y - trackerPoseEstimateRef.projection.shape.ellipse.half_y_extent - projection_offset;
-							float w = (trackerPoseEstimateRef.projection.shape.ellipse.half_x_extent * 2) + (projection_offset * 2);
-							float h = (trackerPoseEstimateRef.projection.shape.ellipse.half_y_extent * 2) + (projection_offset * 2);
-							float area = trackerPoseEstimateRef.projection.screen_area;
-
-							if (area > other_area)
-								continue;
-
-							bool bInArea = (other_x > x)
-								&& (other_y > y)
-								&& (other_x < x + w)
-								&& (other_y < y + h);
-
-							// Blacklist if the projection are is already used by another.
-							// Avoiding color collisions between controllers.
-							if (bInArea)
+							for (int i = 0; i < ControllerManager::k_max_devices; ++i)
 							{
-								trackerPoseEstimateRef.blacklistedAreaRec.x = x;
-								trackerPoseEstimateRef.blacklistedAreaRec.y = y;
-								trackerPoseEstimateRef.blacklistedAreaRec.w = w;
-								trackerPoseEstimateRef.blacklistedAreaRec.h = h;
+								if (i == controller_id)
+									continue;
 
-								bIsBlacklisted = true;
-								break;
+								if (!project_avoid_valid[tracker_id][i])
+									continue;
+
+								float other_x = porject_avoid_region[tracker_id][i][0];
+								float other_y = porject_avoid_region[tracker_id][i][1];
+								float other_area = porject_avoid_region[tracker_id][i][2];
+
+								float x = trackerPoseEstimateRef.projection.shape.ellipse.center.x - trackerPoseEstimateRef.projection.shape.ellipse.half_x_extent - trackerMgrConfig.projection_collision_offset;
+								float y = trackerPoseEstimateRef.projection.shape.ellipse.center.y - trackerPoseEstimateRef.projection.shape.ellipse.half_y_extent - trackerMgrConfig.projection_collision_offset;
+								float w = (trackerPoseEstimateRef.projection.shape.ellipse.half_x_extent * 2) + (trackerMgrConfig.projection_collision_offset * 2);
+								float h = (trackerPoseEstimateRef.projection.shape.ellipse.half_y_extent * 2) + (trackerMgrConfig.projection_collision_offset * 2);
+								float area = trackerPoseEstimateRef.projection.screen_area;
+
+								if (area > other_area)
+									continue;
+
+								bool bInArea = (other_x > x)
+									&& (other_y > y)
+									&& (other_x < x + w)
+									&& (other_y < y + h);
+
+								// Blacklist if the projection are is already used by another.
+								// Avoiding color collisions between controllers.
+								if (bInArea)
+								{
+									trackerPoseEstimateRef.blacklistedAreaRec.x = x;
+									trackerPoseEstimateRef.blacklistedAreaRec.y = y;
+									trackerPoseEstimateRef.blacklistedAreaRec.w = w;
+									trackerPoseEstimateRef.blacklistedAreaRec.h = h;
+
+									bIsBlacklisted = true;
+									break;
+								}
 							}
 						}
 					}

@@ -50,6 +50,8 @@ public:
 		occluded_area_on_loss_size = 4.f;
 		occluded_area_ignore_trackers = 0;
 		occluded_area_regain_projection_size = 32.f;
+		projection_collision_avoid = true;
+		projection_collision_offset = 5.f;
 		min_points_in_contour = 4;
 		max_tracker_position_deviation = 12.0f;
 		disable_roi = false;
@@ -76,6 +78,8 @@ public:
 	float occluded_area_on_loss_size;
 	int occluded_area_ignore_trackers;
 	float occluded_area_regain_projection_size;
+	bool projection_collision_avoid;
+	float projection_collision_offset;
 	int min_points_in_contour;
 	float max_tracker_position_deviation;
 	bool disable_roi;
