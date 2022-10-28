@@ -510,7 +510,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 		static float occluded_projection_tracker_ids[TrackerManager::k_max_devices][ControllerManager::k_max_devices][2];
 
 		static bool project_avoid_valid[TrackerManager::k_max_devices][ControllerManager::k_max_devices];
-		static float porject_avoid_region[TrackerManager::k_max_devices][ControllerManager::k_max_devices][2];
+		static float porject_avoid_region[TrackerManager::k_max_devices][ControllerManager::k_max_devices][3];
 
         CommonDeviceTrackingShape trackingShape;
         m_device->getTrackingShape(trackingShape);
@@ -610,6 +610,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 						project_avoid_valid[tracker_id][controller_id] = true;
 						porject_avoid_region[tracker_id][controller_id][0] = trackerPoseEstimateRef.projection.shape.ellipse.center.x;
 						porject_avoid_region[tracker_id][controller_id][1] = trackerPoseEstimateRef.projection.shape.ellipse.center.y;
+						porject_avoid_region[tracker_id][controller_id][2] = trackerPoseEstimateRef.projection.screen_area;
 					}
 					else
 					{
@@ -698,6 +699,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 							}
 						}
 
+
 						// Avoid other device projections
 						for (int i = 0; i < ControllerManager::k_max_devices; ++i)
 						{
@@ -709,14 +711,18 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 
 							float other_x = porject_avoid_region[tracker_id][i][0];
 							float other_y = porject_avoid_region[tracker_id][i][1];
+							float other_area = porject_avoid_region[tracker_id][i][2];
 
-							const float projection_offset = 0.0f;
+							const float projection_offset = 5.0f;
 
 							float x = trackerPoseEstimateRef.projection.shape.ellipse.center.x - trackerPoseEstimateRef.projection.shape.ellipse.half_x_extent - projection_offset;
 							float y = trackerPoseEstimateRef.projection.shape.ellipse.center.y - trackerPoseEstimateRef.projection.shape.ellipse.half_y_extent - projection_offset;
 							float w = (trackerPoseEstimateRef.projection.shape.ellipse.half_x_extent * 2) + (projection_offset * 2);
 							float h = (trackerPoseEstimateRef.projection.shape.ellipse.half_y_extent * 2) + (projection_offset * 2);
+							float area = trackerPoseEstimateRef.projection.screen_area;
 
+							if (area > other_area)
+								continue;
 
 							bool bInArea = (other_x > x)
 								&& (other_y > y)
@@ -727,8 +733,12 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 							// Avoiding color collisions between controllers.
 							if (bInArea)
 							{
+								trackerPoseEstimateRef.blacklistedAreaRec.x = x;
+								trackerPoseEstimateRef.blacklistedAreaRec.y = y;
+								trackerPoseEstimateRef.blacklistedAreaRec.w = w;
+								trackerPoseEstimateRef.blacklistedAreaRec.h = h;
+
 								bIsBlacklisted = true;
-								printf("PROJECTION COLLISION (T:%d / C:%d) (XYWH: %f, %f, %f, %f)\n", tracker_id, i, x, y, w, h);
 								break;
 							}
 						}
