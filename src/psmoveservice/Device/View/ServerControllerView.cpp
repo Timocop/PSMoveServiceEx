@@ -710,7 +710,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 							float other_x = porject_avoid_region[tracker_id][i][0];
 							float other_y = porject_avoid_region[tracker_id][i][1];
 
-							const float projection_offset = 2.5f;
+							const float projection_offset = 0.0f;
 
 							float x = trackerPoseEstimateRef.projection.shape.ellipse.center.x - trackerPoseEstimateRef.projection.shape.ellipse.half_x_extent - projection_offset;
 							float y = trackerPoseEstimateRef.projection.shape.ellipse.center.y - trackerPoseEstimateRef.projection.shape.ellipse.half_y_extent - projection_offset;
@@ -3236,43 +3236,69 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 	// Compute triangulations amongst all pairs of projections
 	int pair_count = 0;
 
-    CommonDevicePosition average_world_position = { 0.f, 0.f, 0.f };
-    for (int list_index = 0; list_index < projections_found; ++list_index)
-    {
-		int bad_deviations = 0;
 
+	struct projectionInfo
+	{
+		int index;
+		int tracker_id;
+		CommonDeviceScreenLocation position2d_list;
+		float screen_area;
+	};
+	std::vector<projectionInfo> sorted_projections;
+
+	// Project the tracker relative 3d tracking position back on to the tracker camera plane
+	// and sum up the total controller projection area across all trackers
+	for (int list_index = 0; list_index < projections_found; ++list_index)
+	{
 		const int tracker_id = valid_projection_tracker_ids[list_index];
 		const ServerTrackerViewPtr tracker = tracker_manager->getTrackerViewPtr(tracker_id);
 		const ControllerOpticalPoseEstimation &poseEstimate = tracker_pose_estimations[tracker_id];
-		const CommonDeviceScreenLocation &screen_location = tracker->projectTrackerRelativePosition(&poseEstimate.position_cm);
+
+		projectionInfo info;
+		info.index = list_index;
+		info.tracker_id = tracker_id;
+		info.position2d_list = tracker->projectTrackerRelativePosition(&poseEstimate.position_cm);
+		info.screen_area = tracker_pose_estimations[tracker_id].projection.screen_area;
+		sorted_projections.push_back(info);
+
+		screen_area_sum += poseEstimate.projection.screen_area;
+	}
+
+	CommonDevicePosition average_world_position = { 0.f, 0.f, 0.f };
+	for (int list_index = 0; list_index < projections_found; ++list_index)
+	{
+		int bad_deviations = 0;
+
+		const int tracker_id = sorted_projections[list_index].tracker_id;
+		const CommonDeviceScreenLocation &screen_location = sorted_projections[list_index].position2d_list;
+		const ServerTrackerViewPtr tracker = tracker_manager->getTrackerViewPtr(tracker_id);
 
 		for (int other_list_index = 0; other_list_index < projections_found; ++other_list_index)
-        {
+		{
 			if (list_index == other_list_index)
 				continue;
 
-			const int other_tracker_id = valid_projection_tracker_ids[other_list_index];
+			const int other_tracker_id = sorted_projections[other_list_index].tracker_id;
+			const CommonDeviceScreenLocation &other_screen_location = sorted_projections[other_list_index].position2d_list;
 			const ServerTrackerViewPtr other_tracker = tracker_manager->getTrackerViewPtr(other_tracker_id);
-			const ControllerOpticalPoseEstimation &other_poseEstimate = tracker_pose_estimations[other_tracker_id];
-			const CommonDeviceScreenLocation &other_screen_location = other_tracker->projectTrackerRelativePosition(&other_poseEstimate.position_cm);
 
-            // if trackers are on poposite sides
-            if (cfg.exclude_opposed_cameras)
-            {
+			// if trackers are on poposite sides
+			if (cfg.exclude_opposed_cameras)
+			{
 				//TODO: Use tracker FOV instead.
-                if ((tracker->getTrackerPose().PositionCm.x > 0) == (other_tracker->getTrackerPose().PositionCm.x < 0) &&
-                    (tracker->getTrackerPose().PositionCm.z > 0) == (other_tracker->getTrackerPose().PositionCm.z < 0))
-                {
-                    continue;
-                }
-            }
+				if ((tracker->getTrackerPose().PositionCm.x > 0) == (other_tracker->getTrackerPose().PositionCm.x < 0) &&
+					(tracker->getTrackerPose().PositionCm.z > 0) == (other_tracker->getTrackerPose().PositionCm.z < 0))
+				{
+					continue;
+				}
+			}
 
-            // Using the screen locations on two different trackers we can triangulate a world position
-            CommonDevicePosition world_position =
-                ServerTrackerView::triangulateWorldPosition(
-                    tracker.get(), &screen_location,
-                    other_tracker.get(), &other_screen_location);
-			
+			// Using the screen locations on two different trackers we can triangulate a world position
+			CommonDevicePosition world_position =
+				ServerTrackerView::triangulateWorldPosition(
+					tracker.get(), &screen_location,
+					other_tracker.get(), &other_screen_location);
+
 			// Check how much the trangulation deviates from other trackers.
 			// Ignore its position if it deviates too much and renew its ROI.
 			if (pair_count > 0 && cfg.max_tracker_position_deviation > 0.01f)
@@ -3282,7 +3308,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 				if (abs((average_world_position.x / N) - world_position.x) < cfg.max_tracker_position_deviation
 					&& abs((average_world_position.y / N) - world_position.y) < cfg.max_tracker_position_deviation
 					&& abs((average_world_position.z / N) - world_position.z) < cfg.max_tracker_position_deviation)
-				{ 
+				{
 					average_world_position.x += world_position.x;
 					average_world_position.y += world_position.y;
 					average_world_position.z += world_position.z;
@@ -3302,7 +3328,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 
 				++pair_count;
 			}
-        }
+		}
 
 		// What happend to that trackers projection? Its probably stuck somewhere on some color noise.
 		// Enforce new ROI on this tracker to make it unstuck.
@@ -3310,7 +3336,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 		{
 			tracker_pose_estimations[tracker_id].bEnforceNewROI = true;
 		}
-    }
+	}
 
     if (pair_count == 0 
 		&& projections_found > 0
