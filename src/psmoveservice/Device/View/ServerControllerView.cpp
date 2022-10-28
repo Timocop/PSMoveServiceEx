@@ -3184,43 +3184,6 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 	const TrackerManagerConfig &cfg = tracker_manager->getConfig();
     float screen_area_sum = 0;
 	
-	struct projectionInfo
-	{
-		int index;
-		int tracker_id;
-		CommonDeviceScreenLocation position2d_list;
-		float screen_area;
-	};
-	std::vector<projectionInfo> sorted_projections;
-
-    // Project the tracker relative 3d tracking position back on to the tracker camera plane
-    // and sum up the total controller projection area across all trackers
-    for (int list_index = 0; list_index < projections_found; ++list_index)
-    {
-        const int tracker_id = valid_projection_tracker_ids[list_index];
-        const ServerTrackerViewPtr tracker = tracker_manager->getTrackerViewPtr(tracker_id);
-        const ControllerOpticalPoseEstimation &poseEstimate = tracker_pose_estimations[tracker_id];
-
-		projectionInfo info;
-		info.index = list_index;
-		info.tracker_id = tracker_id;
-		info.position2d_list = tracker->projectTrackerRelativePosition(&poseEstimate.position_cm);
-		info.screen_area = tracker_pose_estimations[tracker_id].projection.screen_area;
-		sorted_projections.push_back(info);
-
-		screen_area_sum += poseEstimate.projection.screen_area;
-    }
-
-	// Sort by biggest projector.
-	// Go through all trackers and sort them by biggest projector to make tracking quality better.
-	// The bigger projections should be closer to trackers and smaller far away.
-	std::sort(
-		sorted_projections.begin(), sorted_projections.end(),
-		[](const projectionInfo & a, const projectionInfo & b) -> bool
-	{
-		return a.screen_area > b.screen_area;
-	});
-
 	// Compute triangulations amongst all pairs of projections
 	int pair_count = 0;
 
@@ -3229,18 +3192,20 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
     {
 		int bad_deviations = 0;
 
-		const int tracker_id = sorted_projections[list_index].tracker_id;
-		const CommonDeviceScreenLocation &screen_location = sorted_projections[list_index].position2d_list;
+		const int tracker_id = valid_projection_tracker_ids[list_index];
 		const ServerTrackerViewPtr tracker = tracker_manager->getTrackerViewPtr(tracker_id);
-		
+		const ControllerOpticalPoseEstimation &poseEstimate = tracker_pose_estimations[tracker_id];
+		const CommonDeviceScreenLocation &screen_location = tracker->projectTrackerRelativePosition(&poseEstimate.position_cm);
+
 		for (int other_list_index = 0; other_list_index < projections_found; ++other_list_index)
         {
 			if (list_index == other_list_index)
 				continue;
 
-            const int other_tracker_id = sorted_projections[other_list_index].tracker_id;
-            const CommonDeviceScreenLocation &other_screen_location = sorted_projections[other_list_index].position2d_list;
-            const ServerTrackerViewPtr other_tracker = tracker_manager->getTrackerViewPtr(other_tracker_id);
+			const int other_tracker_id = valid_projection_tracker_ids[other_list_index];
+			const ServerTrackerViewPtr other_tracker = tracker_manager->getTrackerViewPtr(other_tracker_id);
+			const ControllerOpticalPoseEstimation &other_poseEstimate = tracker_pose_estimations[other_tracker_id];
+			const CommonDeviceScreenLocation &other_screen_location = tracker->projectTrackerRelativePosition(&other_poseEstimate.position_cm);
 
             // if trackers are on poposite sides
             if (cfg.exclude_opposed_cameras)
@@ -3299,15 +3264,14 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
     }
 
     if (pair_count == 0 
-		&& sorted_projections.size() > 0 
-		&& sorted_projections[0].tracker_id > -1 
+		&& projections_found > 0
 		&& (available_trackers == 1 || !cfg.ignore_pose_from_one_tracker))
     {
         // Position not triangulated from opposed camera, estimate from one tracker only.
         computeSpherePoseForControllerFromSingleTracker(
             controllerView,
-            tracker_manager->getTrackerViewPtr(sorted_projections[0].tracker_id),
-            &tracker_pose_estimations[sorted_projections[0].tracker_id],
+            tracker_manager->getTrackerViewPtr(0),
+            &tracker_pose_estimations[0],
             multicam_pose_estimation);		
     }
     else if(pair_count > 0)
