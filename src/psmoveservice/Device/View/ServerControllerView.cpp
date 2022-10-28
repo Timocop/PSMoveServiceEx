@@ -509,6 +509,9 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 		static bool occluded_tracker_ids[TrackerManager::k_max_devices][ControllerManager::k_max_devices];
 		static float occluded_projection_tracker_ids[TrackerManager::k_max_devices][ControllerManager::k_max_devices][2];
 
+		static bool project_avoid_valid[TrackerManager::k_max_devices][ControllerManager::k_max_devices];
+		static float porject_avoid_region[TrackerManager::k_max_devices][ControllerManager::k_max_devices][2];
+
         CommonDeviceTrackingShape trackingShape;
         m_device->getTrackingShape(trackingShape);
         assert(trackingShape.shape_type != eCommonTrackingShapeType::INVALID_SHAPE);
@@ -550,6 +553,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
         for (int list_index = 0; list_index < sorted_projections.size(); ++list_index)
         {
 			int tracker_id = sorted_projections[list_index].tracker_id;
+			int controller_id = this->getDeviceID();
 
             ServerTrackerViewPtr tracker = tracker_manager->getTrackerViewPtr(tracker_id);
             ControllerOpticalPoseEstimation &trackerPoseEstimateRef = m_tracker_pose_estimations[tracker_id];
@@ -601,6 +605,17 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 						}
 					}
 
+					if (bWasTracking || bIsVisibleThisUpdate)
+					{
+						project_avoid_valid[tracker_id][controller_id] = true;
+						porject_avoid_region[tracker_id][controller_id][0] = trackerPoseEstimateRef.projection.shape.ellipse.center.x;
+						porject_avoid_region[tracker_id][controller_id][1] = trackerPoseEstimateRef.projection.shape.ellipse.center.y;
+					}
+					else
+					{
+						project_avoid_valid[tracker_id][controller_id] = false;
+					}
+
 					bool bIsOccluded = false;
 					bool bIsBlacklisted = false;
 
@@ -611,8 +626,6 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 					{
 						if (trackerMgrConfig.occluded_area_on_loss_size >= 0.01)
 						{
-							int controller_id = this->getDeviceID();
-
 							if (!occluded_tracker_ids[tracker_id][controller_id])
 							{
 								if (bWasTracking || bIsVisibleThisUpdate)
@@ -658,6 +671,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 
 					if (bWasTracking || bIsVisibleThisUpdate)
 					{
+						// Blacklisted projections
 						for (int i = 0; i < eCommonBlacklistProjection::MAX_BLACKLIST_PROJECTIONS; ++i)
 						{
 							float x, y, w, h;
@@ -681,6 +695,41 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 									bIsBlacklisted = true;
 									break;
 								}
+							}
+						}
+
+						// Avoid other device projections
+						for (int i = 0; i < ControllerManager::k_max_devices; ++i)
+						{
+							if (i == controller_id)
+								continue;
+
+							if (!project_avoid_valid[tracker_id][i])
+								continue;
+
+							float other_x = porject_avoid_region[tracker_id][i][0];
+							float other_y = porject_avoid_region[tracker_id][i][1];
+
+							const float projection_offset = 2.5f;
+
+							float x = trackerPoseEstimateRef.projection.shape.ellipse.center.x - trackerPoseEstimateRef.projection.shape.ellipse.half_x_extent - projection_offset;
+							float y = trackerPoseEstimateRef.projection.shape.ellipse.center.y - trackerPoseEstimateRef.projection.shape.ellipse.half_y_extent - projection_offset;
+							float w = (trackerPoseEstimateRef.projection.shape.ellipse.half_x_extent * 2) + (projection_offset * 2);
+							float h = (trackerPoseEstimateRef.projection.shape.ellipse.half_y_extent * 2) + (projection_offset * 2);
+
+
+							bool bInArea = (other_x > x)
+								&& (other_y > y)
+								&& (other_x < x + w)
+								&& (other_y < y + h);
+
+							// Blacklist if the projection are is already used by another.
+							// Avoiding color collisions between controllers.
+							if (bInArea)
+							{
+								bIsBlacklisted = true;
+								printf("PROJECTION COLLISION (T:%d / C:%d) (XYWH: %f, %f, %f, %f)\n", tracker_id, i, x, y, w, h);
+								break;
 							}
 						}
 					}
@@ -3205,7 +3254,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 			const int other_tracker_id = valid_projection_tracker_ids[other_list_index];
 			const ServerTrackerViewPtr other_tracker = tracker_manager->getTrackerViewPtr(other_tracker_id);
 			const ControllerOpticalPoseEstimation &other_poseEstimate = tracker_pose_estimations[other_tracker_id];
-			const CommonDeviceScreenLocation &other_screen_location = tracker->projectTrackerRelativePosition(&other_poseEstimate.position_cm);
+			const CommonDeviceScreenLocation &other_screen_location = other_tracker->projectTrackerRelativePosition(&other_poseEstimate.position_cm);
 
             // if trackers are on poposite sides
             if (cfg.exclude_opposed_cameras)
