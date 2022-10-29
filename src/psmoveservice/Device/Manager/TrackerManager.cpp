@@ -50,6 +50,12 @@ TrackerManagerConfig::TrackerManagerConfig(const std::string &fnamebase)
 	default_tracker_profile.gain = 32;
 	default_tracker_profile.color_preset_table.table_name= "default_tracker_profile";
 	global_forward_degrees = 270.f; // Down -Z by default
+
+	playspace_orientation_yaw = 0.f;
+	playspace_position_x = 0.f;
+	playspace_position_y = 0.f;
+	playspace_position_z = 0.f;
+
 	for (int preset_index = 0; preset_index < eCommonTrackingColorID::MAX_TRACKING_COLOR_TYPES; ++preset_index)
 	{
 		default_tracker_profile.color_preset_table.color_presets[preset_index] = k_default_color_presets[preset_index];
@@ -98,6 +104,11 @@ TrackerManagerConfig::config2ptree()
 
 	pt.put("global_forward_degrees", global_forward_degrees);
 
+	pt.put("playspace_orientation_yaw", playspace_orientation_yaw);
+	pt.put("playspace_position_x", playspace_position_x);
+	pt.put("playspace_position_y", playspace_position_y);
+	pt.put("playspace_position_z", playspace_position_z);
+
 	writeColorPropertyPresetTable(&default_tracker_profile.color_preset_table, pt);
 
     return pt;
@@ -143,7 +154,12 @@ TrackerManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
         default_tracker_profile.exposure = pt.get<float>("default_tracker_profile.exposure", 32);
         default_tracker_profile.gain = pt.get<float>("default_tracker_profile.gain", 32);
 
-		global_forward_degrees= pt.get<float>("global_forward_degrees", global_forward_degrees);
+		global_forward_degrees = pt.get<float>("global_forward_degrees", global_forward_degrees);
+
+		playspace_orientation_yaw = pt.get<float>("playspace_orientation_yaw", playspace_orientation_yaw);
+		playspace_position_x = pt.get<float>("playspace_position_x", playspace_position_x);
+		playspace_position_y = pt.get<float>("playspace_position_y", playspace_position_y);
+		playspace_position_z = pt.get<float>("playspace_position_z", playspace_position_z);
 
 		readColorPropertyPresetTable(pt, &default_tracker_profile.color_preset_table);
     }
@@ -478,4 +494,21 @@ TrackerManager::freeTrackingColorID(eCommonTrackingColorID color_id)
 {
     assert(std::find(m_available_color_ids.begin(), m_available_color_ids.end(), color_id) == m_available_color_ids.end());
     m_available_color_ids.push_back(color_id);
+}
+
+void
+TrackerManager::applyPlayspaceOffsets(Eigen::Vector3f &poseVec, Eigen::Quaternionf &postQuat)
+{
+	const TrackerManagerConfig &cfg = DeviceManager::getInstance()->m_tracker_manager->getConfig();
+
+	// Move by Axis
+	poseVec += Eigen::Vector3f(cfg.playspace_position_x, cfg.playspace_position_y, cfg.playspace_position_z);
+
+	// Rotate by Axis
+	const Eigen::Quaternionf offset_yaw = eigen_quaternion_angle_axis(cfg.playspace_orientation_yaw * (k_real_pi / 180.f), Eigen::Vector3f::UnitY());
+
+	poseVec = eigen_vector3f_clockwise_rotate(offset_yaw, poseVec);
+
+	// Rotate Orientation
+	postQuat = offset_yaw.inverse() * postQuat;
 }

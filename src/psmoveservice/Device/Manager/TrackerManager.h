@@ -8,6 +8,9 @@
 #include "DeviceEnumerator.h"
 #include "DeviceInterface.h"
 #include "PSMoveConfig.h"
+#include "MathUtility.h"
+#include "MathEigen.h"
+#include <vector>
 
 //-- typedefs -----
 
@@ -76,6 +79,11 @@ public:
     TrackerProfile default_tracker_profile;
 	float global_forward_degrees;
 
+	float playspace_orientation_yaw;
+	float playspace_position_x;
+	float playspace_position_y;
+	float playspace_position_z;
+
 	CommonDeviceVector get_global_forward_axis() const;
 	CommonDeviceVector get_global_backward_axis() const;
 	CommonDeviceVector get_global_right_axis() const;
@@ -137,6 +145,7 @@ public:
     bool claimTrackingColorID(const class ServerControllerView *controller_view, eCommonTrackingColorID color_id);
     bool claimTrackingColorID(const class ServerHMDView *hmd_view, eCommonTrackingColorID color_id);
     void freeTrackingColorID(eCommonTrackingColorID color_id);
+	void applyPlayspaceOffsets(Eigen::Vector3f &poseVec, Eigen::Quaternionf &postQuat);
 
 protected:
     bool can_update_connected_devices() override;

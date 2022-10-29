@@ -1083,23 +1083,33 @@ ServerControllerView::getFilteredPose(float time) const
 			const CommonDevicePosition offset_orientation = psmove->getConfig()->offset_orientation;
 			const CommonDevicePosition offset_scale = psmove->getConfig()->offset_scale;
 
-			const Eigen::Quaternionf orientation = m_pose_filter->getOrientation(
+			Eigen::Quaternionf orientation = m_pose_filter->getOrientation(
 				time, 
 				offset_orientation.x * k_degrees_to_radians, 
 				offset_orientation.y * k_degrees_to_radians,
 				offset_orientation.z * k_degrees_to_radians
 			);
-			const Eigen::Vector3f position_cm = m_pose_filter->getPositionCm(time);
+			Eigen::Vector3f position_cm = m_pose_filter->getPositionCm(time);
 
-			pose.Orientation.w = orientation.w();
-			pose.Orientation.x = orientation.x();
-			pose.Orientation.y = orientation.y();
-			pose.Orientation.z = orientation.z();
+			// Playspace
+			{
+				const TrackerManagerConfig &cfg = DeviceManager::getInstance()->m_tracker_manager->getConfig();
 
-			pose.PositionCm.x = (position_cm.x() + offset_position.x) * offset_scale.x;
-			pose.PositionCm.y = (position_cm.y() + offset_position.y) * offset_scale.y;
-			pose.PositionCm.z = (position_cm.z() + offset_position.z) * offset_scale.z;
+				Eigen::Vector3f poseVec = Eigen::Vector3f(position_cm.x(), position_cm.y(), position_cm.z());
+				Eigen::Quaternionf postQuat = Eigen::Quaternionf(orientation.w(), orientation.x(), orientation.y(), orientation.z());
 
+				DeviceManager::getInstance()->m_tracker_manager->applyPlayspaceOffsets(poseVec, postQuat);
+
+				pose.PositionCm.x = (poseVec.x() + offset_position.x) * offset_scale.x;
+				pose.PositionCm.y = (poseVec.y() + offset_position.y) * offset_scale.y;
+				pose.PositionCm.z = (poseVec.z() + offset_position.z) * offset_scale.z;
+
+				// Rotate Orientation
+				pose.Orientation.w = postQuat.w();
+				pose.Orientation.x = postQuat.x();
+				pose.Orientation.y = postQuat.y();
+				pose.Orientation.z = postQuat.z();
+			}
 			break;
 		}
 		case CommonDeviceState::PSDualShock4:
@@ -1117,16 +1127,25 @@ ServerControllerView::getFilteredPose(float time) const
 			);
 			const Eigen::Vector3f position_cm = m_pose_filter->getPositionCm(time);
 
-			pose.Orientation.w = orientation.w();
-			pose.Orientation.x = orientation.x();
-			pose.Orientation.y = orientation.y();
-			pose.Orientation.z = orientation.z();
+			// Playspace
+			{
+				const TrackerManagerConfig &cfg = DeviceManager::getInstance()->m_tracker_manager->getConfig();
 
-			pose.PositionCm.x = (position_cm.x() + offset_position.x) * offset_scale.x;
-			pose.PositionCm.y = (position_cm.y() + offset_position.y) * offset_scale.y;
-			pose.PositionCm.z = (position_cm.z() + offset_position.z) * offset_scale.z;
+				Eigen::Vector3f poseVec = Eigen::Vector3f(position_cm.x(), position_cm.y(), position_cm.z());
+				Eigen::Quaternionf postQuat = Eigen::Quaternionf(orientation.w(), orientation.x(), orientation.y(), orientation.z());
 
+				DeviceManager::getInstance()->m_tracker_manager->applyPlayspaceOffsets(poseVec, postQuat);
 
+				pose.PositionCm.x = (poseVec.x() + offset_position.x) * offset_scale.x;
+				pose.PositionCm.y = (poseVec.y() + offset_position.y) * offset_scale.y;
+				pose.PositionCm.z = (poseVec.z() + offset_position.z) * offset_scale.z;
+
+				// Rotate Orientation
+				pose.Orientation.w = postQuat.w();
+				pose.Orientation.x = postQuat.x();
+				pose.Orientation.y = postQuat.y();
+				pose.Orientation.z = postQuat.z();
+			}
 			break;
 		}
 		case CommonDeviceState::VirtualController:
@@ -1144,15 +1163,25 @@ ServerControllerView::getFilteredPose(float time) const
 			);
 			const Eigen::Vector3f position_cm = m_pose_filter->getPositionCm(time);
 
-			pose.Orientation.w = orientation.w();
-			pose.Orientation.x = orientation.x();
-			pose.Orientation.y = orientation.y();
-			pose.Orientation.z = orientation.z();
+			// Playspace
+			{
+				const TrackerManagerConfig &cfg = DeviceManager::getInstance()->m_tracker_manager->getConfig();
 
-			pose.PositionCm.x = (position_cm.x() + offset_position.x) * offset_scale.x;
-			pose.PositionCm.y = (position_cm.y() + offset_position.y) * offset_scale.y;
-			pose.PositionCm.z = (position_cm.z() + offset_position.z) * offset_scale.z;
+				Eigen::Vector3f poseVec = Eigen::Vector3f(position_cm.x(), position_cm.y(), position_cm.z());
+				Eigen::Quaternionf postQuat = Eigen::Quaternionf(orientation.w(), orientation.x(), orientation.y(), orientation.z());
 
+				DeviceManager::getInstance()->m_tracker_manager->applyPlayspaceOffsets(poseVec, postQuat);
+
+				pose.PositionCm.x = (poseVec.x() + offset_position.x) * offset_scale.x;
+				pose.PositionCm.y = (poseVec.y() + offset_position.y) * offset_scale.y;
+				pose.PositionCm.z = (poseVec.z() + offset_position.z) * offset_scale.z;
+
+				// Rotate Orientation
+				pose.Orientation.w = postQuat.w();
+				pose.Orientation.x = postQuat.x();
+				pose.Orientation.y = postQuat.y();
+				pose.Orientation.z = postQuat.z();
+			}
 			break;
 		}
 		default:
@@ -1180,10 +1209,15 @@ ServerControllerView::getFilteredPhysics() const
 
     if (m_pose_filter != nullptr)
     {
-        const Eigen::Vector3f first_derivative= m_pose_filter->getAngularVelocityRadPerSec();
-        const Eigen::Vector3f second_derivative= m_pose_filter->getAngularAccelerationRadPerSecSqr();
-        const Eigen::Vector3f velocity(m_pose_filter->getVelocityCmPerSec());
-        const Eigen::Vector3f acceleration(m_pose_filter->getAccelerationCmPerSecSqr());
+        Eigen::Vector3f first_derivative= m_pose_filter->getAngularVelocityRadPerSec();
+        Eigen::Vector3f second_derivative= m_pose_filter->getAngularAccelerationRadPerSecSqr();
+        Eigen::Vector3f velocity(m_pose_filter->getVelocityCmPerSec());
+        Eigen::Vector3f acceleration(m_pose_filter->getAccelerationCmPerSecSqr());
+
+		DeviceManager::getInstance()->m_tracker_manager->applyPlayspaceOffsets(first_derivative, Eigen::Quaternionf::Identity());
+		DeviceManager::getInstance()->m_tracker_manager->applyPlayspaceOffsets(second_derivative, Eigen::Quaternionf::Identity());
+		DeviceManager::getInstance()->m_tracker_manager->applyPlayspaceOffsets(velocity, Eigen::Quaternionf::Identity());
+		DeviceManager::getInstance()->m_tracker_manager->applyPlayspaceOffsets(acceleration, Eigen::Quaternionf::Identity());
 
         physics.AngularVelocityRadPerSec.i = first_derivative.x();
         physics.AngularVelocityRadPerSec.j = first_derivative.y();

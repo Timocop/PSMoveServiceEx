@@ -1210,7 +1210,24 @@ void ServerTrackerView::setCameraIntrinsics(
 
 CommonDevicePose ServerTrackerView::getTrackerPose() const
 {
-    return m_device->getTrackerPose();
+	const TrackerManagerConfig &cfg = DeviceManager::getInstance()->m_tracker_manager->getConfig();
+
+	CommonDevicePose pose = m_device->getTrackerPose();
+
+	Eigen::Vector3f poseVec = Eigen::Vector3f(pose.PositionCm.x, pose.PositionCm.y, pose.PositionCm.z);
+	Eigen::Quaternionf postQuat = Eigen::Quaternionf(pose.Orientation.w, pose.Orientation.x, pose.Orientation.y, pose.Orientation.z);
+
+	DeviceManager::getInstance()->m_tracker_manager->applyPlayspaceOffsets(poseVec, postQuat);
+
+	pose.PositionCm.x = poseVec.x();
+	pose.PositionCm.y = poseVec.y();
+	pose.PositionCm.z = poseVec.z();
+	pose.Orientation.w = postQuat.w();
+	pose.Orientation.x = postQuat.x();
+	pose.Orientation.y = postQuat.y();
+	pose.Orientation.z = postQuat.z();
+
+    return pose;
 }
 
 void ServerTrackerView::setTrackerPose(
