@@ -128,7 +128,7 @@ protected:
     bool m_gotoTrackingHmdVideo;
 	bool m_gotoTrackingVideoALL;
 
-	float playsapce_orientation_yaw;
+	float playspace_orientation_yaw;
 	float playspace_position_x;
 	float playspace_position_y;
 	float playspace_position_z;

@@ -612,12 +612,12 @@ void AppStage_TrackerSettings::renderUI()
 				ImGui::Text("Orientation Y (Yaw): ");
 				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 				ImGui::PushItemWidth(120.f);
-				if (ImGui::InputFloat("##OffsetOrientationY", &playsapce_orientation_yaw, 1.f, 5.f, 2))
+				if (ImGui::InputFloat("##OffsetOrientationY", &playspace_orientation_yaw, 1.f, 5.f, 2))
 				{
-					while (playsapce_orientation_yaw < 0.f)
-						playsapce_orientation_yaw += 360.f;
-					while (playsapce_orientation_yaw >= 360.f)
-						playsapce_orientation_yaw -= 360.f;
+					while (playspace_orientation_yaw < 0.f)
+						playspace_orientation_yaw += 360.f;
+					while (playspace_orientation_yaw >= 360.f)
+						playspace_orientation_yaw -= 360.f;
 
 					request_offset = true;
 				}
@@ -658,10 +658,22 @@ void AppStage_TrackerSettings::renderUI()
 				}
 				ImGui::PopItemWidth();
 
+				ImGui::Separator();
+
+				if (ImGui::Button("Reset All"))
+				{
+					playspace_orientation_yaw = 0.f;
+					playspace_position_x = 0.f;
+					playspace_position_y = 0.f;
+					playspace_position_z = 0.f;
+
+					request_offset = true;
+				}
+
 				if (request_offset)
 				{
 					request_set_playspace_offsets(
-						playsapce_orientation_yaw,
+						playspace_orientation_yaw,
 						playspace_position_x,
 						playspace_position_y,
 						playspace_position_z);
@@ -1010,7 +1022,7 @@ void AppStage_TrackerSettings::handle_playspace_info_response(
 	{
 		const PSMoveProtocol::Response *response = GET_PSMOVEPROTOCOL_RESPONSE(response_handle);
 
-		thisPtr->playsapce_orientation_yaw = response->result_get_playspace_offsets().playspace_orientation_yaw();
+		thisPtr->playspace_orientation_yaw = response->result_get_playspace_offsets().playspace_orientation_yaw();
 		thisPtr->playspace_position_x = response->result_get_playspace_offsets().playspace_position().x();
 		thisPtr->playspace_position_y = response->result_get_playspace_offsets().playspace_position().y();
 		thisPtr->playspace_position_z = response->result_get_playspace_offsets().playspace_position().z();
