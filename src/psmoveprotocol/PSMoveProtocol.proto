@@ -209,6 +209,8 @@ message Request {
 		SET_TRACKER_PROJECTIONBLACKLIST = 50;
 		SET_CONTROLLER_OFFSETS = 51;
 		SET_HMD_OFFSETS = 52;
+		GET_PLAYSPACE_OFFSETS = 53;
+		SET_PLAYSPACE_OFFSETS = 54;
     }
     RequestType type = 2;
 
@@ -610,6 +612,21 @@ message Request {
         Position offset_scale = 4;
     }
     RequestSetHMDOffsets request_set_hmd_offsets = 52;
+	
+    // Parameters for GET_PLAYSPACE_OFFSETS
+    message RequestGetPlayspaceOffsets {
+		float playspace_orientation_yaw = 1;
+		Position playspace_position= 2;
+    }
+    RequestGetPlayspaceOffsets request_get_playspace_offsets = 53;
+	
+    // Parameters for SET_PLAYSPACE_OFFSETS
+    message RequestSetPlayspaceOffsets {
+		float playspace_orientation_yaw = 1;
+		Position playspace_position= 2;
+    }
+    RequestSetPlayspaceOffsets request_set_playspace_offsets = 54;
+	
 }
 
 // Reliable (TCP) responses to requests
@@ -639,6 +656,7 @@ message Response {
         TRACKER_FRAME_WIDTH_UPDATED= 20;
         TRACKER_FRAME_HEIGHT_UPDATED= 21;
         SYSTEM_BUTTON_PRESSED= 22;
+		GET_PLAYSPACE_OFFSETS= 23;
     }
 
     enum ResultCode {
@@ -852,6 +870,13 @@ message Response {
         float new_frame_height= 1;
     }
     ResultSetTrackerFrameHeight result_set_tracker_frame_height = 35;
+
+    // This is returned in response to a GET_PLAYSPACE_OFFSETS or SET_PLAYSPACE_OFFSETS request
+    message ResultGetPlayspaceOffsets {
+        float playspace_orientation_yaw= 1;
+		Position playspace_position= 2;
+    }
+    ResultGetPlayspaceOffsets result_get_playspace_offsets = 36;
 }
 
 // Unreliable (UDP) device data packet sent from service to clients

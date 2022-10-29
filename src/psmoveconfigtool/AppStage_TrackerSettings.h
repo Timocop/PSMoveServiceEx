@@ -79,10 +79,20 @@ protected:
 		const PSMResponseMessage *response_message,
 		void *userdata);
 
-    void request_search_for_new_trackers();
-    static void handle_search_for_new_trackers_response(
-        const PSMResponseMessage *response,
-        void *userdata);
+	void request_search_for_new_trackers();
+	static void handle_search_for_new_trackers_response(
+		const PSMResponseMessage *response,
+		void *userdata);
+
+	void request_playspace_info();
+	static void handle_playspace_info_response(
+		const PSMResponseMessage *response,
+		void *userdata);
+	void request_set_playspace_offsets(
+		float offset_orientation_yaw,
+		float offset_position_x,
+		float offset_position_y,
+		float offset_position_z);
 
 protected:
     enum eTrackerMenuState
@@ -96,6 +106,8 @@ protected:
 		failedControllerListRequest,
 		pendingHmdListRequest,
 		failedHmdListRequest,
+		pendingPlaysapceRequest,
+		failedPlayspaceRequest,
         pendingSearchForNewTrackersRequest,
     };
     eTrackerMenuState m_menuState;
@@ -115,6 +127,11 @@ protected:
 	bool m_gotoTestHmdTracking;
     bool m_gotoTrackingHmdVideo;
 	bool m_gotoTrackingVideoALL;
+
+	float playsapce_orientation_yaw;
+	float playspace_position_x;
+	float playspace_position_y;
+	float playspace_position_z;
 };
 
 #endif // APP_STAGE_TRACKER_SETTINGS_H

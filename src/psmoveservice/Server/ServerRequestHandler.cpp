@@ -402,6 +402,14 @@ public:
 				response = new PSMoveProtocol::Response;
 				handle_request__set_hmd_offsets(context, response);
 				break;
+			case PSMoveProtocol::Request_RequestType_GET_PLAYSPACE_OFFSETS:
+				response = new PSMoveProtocol::Response;
+				handle_request__get_playspace_offsets(context, response);
+				break;
+			case PSMoveProtocol::Request_RequestType_SET_PLAYSPACE_OFFSETS:
+				response = new PSMoveProtocol::Response;
+				handle_request__set_playspace_offsets(context, response);
+				break;
 
             default:
                 assert(0 && "Whoops, bad request!");
@@ -2168,7 +2176,7 @@ protected:
                     {
                         ServerControllerView *controller_view = get_controller_view_or_null(device_id);
 
-                tracker_view->gatherTrackingColorPresets(controller_view, settings);
+						tracker_view->gatherTrackingColorPresets(controller_view, settings);
                     } break;
                 case PSMoveProtocol::Request_RequestGetTrackerSettings_DeviceCategory_HMD:
                     {
@@ -2941,6 +2949,49 @@ protected:
 		{
 			response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
 		}
+	}
+
+	void handle_request__get_playspace_offsets(
+		const RequestContext &context,
+		PSMoveProtocol::Response *response)
+	{
+		const TrackerManagerConfig &config = DeviceManager::getInstance()->m_tracker_manager->getConfig();
+
+		PSMoveProtocol::Response_ResultGetPlayspaceOffsets* playspace_offsets = response->mutable_result_get_playspace_offsets();
+		response->set_type(PSMoveProtocol::Response_ResponseType_GET_PLAYSPACE_OFFSETS);
+
+		playspace_offsets->set_playspace_orientation_yaw(config.playspace_orientation_yaw);
+
+		PSMoveProtocol::Position *mutable_playspace_position = playspace_offsets->mutable_playspace_position();
+		mutable_playspace_position->set_x(config.playspace_position_x);
+		mutable_playspace_position->set_y(config.playspace_position_y);
+		mutable_playspace_position->set_z(config.playspace_position_z);
+
+		response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+	}
+
+	void handle_request__set_playspace_offsets(
+		const RequestContext &context,
+		PSMoveProtocol::Response *response)
+	{
+		TrackerManagerConfig *config = DeviceManager::getInstance()->m_tracker_manager->getConfigMutable();
+
+		const PSMoveProtocol::Request_RequestSetPlayspaceOffsets &request =
+			context.request->request_set_playspace_offsets();
+
+		if (config->playspace_orientation_yaw != request.playspace_orientation_yaw() ||
+			config->playspace_position_x != request.playspace_position().x() || 
+			config->playspace_position_y != request.playspace_position().y() ||
+			config->playspace_position_z != request.playspace_position().z())
+		{
+			config->playspace_orientation_yaw = request.playspace_orientation_yaw();
+			config->playspace_position_x = request.playspace_position().x();
+			config->playspace_position_y = request.playspace_position().y();
+			config->playspace_position_z = request.playspace_position().z();
+			config->save();
+		}
+
+		response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
 	}
 
     void handle_request__set_tracker_intrinsics(

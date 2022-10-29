@@ -6,6 +6,7 @@
 #include "AppStage_ComputeTrackerPoses.h"
 #include "AppStage_DistortionCalibration.h"
 #include "AppStage_MainMenu.h"
+#include "MathUtility.h"
 #include "App.h"
 #include "Camera.h"
 #include "PSMoveClient_CAPI.h"
@@ -36,6 +37,10 @@ AppStage_TrackerSettings::AppStage_TrackerSettings(App *app)
     , m_gotoTestHmdTracking(false)
     , m_gotoTrackingHmdVideo(false)
     , m_gotoTrackingVideoALL(false)
+	, playsapce_orientation_yaw(0.f)
+	, playspace_position_x(0.f)
+	, playspace_position_y(0.f)
+	, playspace_position_z(0.f)
 { }
 
 void AppStage_TrackerSettings::enter()
@@ -81,8 +86,10 @@ void AppStage_TrackerSettings::render()
     case eTrackerMenuState::failedTrackerListRequest:
     case eTrackerMenuState::pendingControllerListRequest:
     case eTrackerMenuState::failedControllerListRequest:
-    case eTrackerMenuState::pendingHmdListRequest:
-    case eTrackerMenuState::failedHmdListRequest:
+	case eTrackerMenuState::pendingHmdListRequest:
+	case eTrackerMenuState::failedHmdListRequest:
+	case eTrackerMenuState::pendingPlaysapceRequest:
+	case eTrackerMenuState::failedPlayspaceRequest:
     {
     } break;
 
@@ -597,6 +604,69 @@ void AppStage_TrackerSettings::renderUI()
 					ImGui::Unindent();
 				}
 			}
+
+			if (ImGui::CollapsingHeader("Playspace Offsets", 0, true, false))
+			{
+				bool request_offset = false;
+
+				ImGui::Text("Orientation Y (Yaw): ");
+				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+				ImGui::PushItemWidth(120.f);
+				if (ImGui::InputFloat("##OffsetOrientationY", &playsapce_orientation_yaw, 1.f, 5.f, 2))
+				{
+					while (playsapce_orientation_yaw < 0.f)
+						playsapce_orientation_yaw += 360.f;
+					while (playsapce_orientation_yaw >= 360.f)
+						playsapce_orientation_yaw -= 360.f;
+
+					request_offset = true;
+				}
+				ImGui::PopItemWidth();
+
+				ImGui::Separator();
+
+				ImGui::Text("Position X (Right): ");
+				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+				ImGui::PushItemWidth(120.f);
+				if (ImGui::InputFloat("##OffsetPositionX", &playspace_position_x, 1.f, 5.f, 2))
+				{
+					playspace_position_x = clampf(playspace_position_x, -(1 << 16), (1 << 16));
+
+					request_offset = true;
+				}
+				ImGui::PopItemWidth();
+
+				ImGui::Text("Position Y (Up): ");
+				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+				ImGui::PushItemWidth(120.f);
+				if (ImGui::InputFloat("##OffsetPositionY", &playspace_position_y, 1.f, 5.f, 2))
+				{
+					playspace_position_y = clampf(playspace_position_y, -(1 << 16), (1 << 16));
+
+					request_offset = true;
+				}
+				ImGui::PopItemWidth();
+
+				ImGui::Text("Position Z (Backward): ");
+				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+				ImGui::PushItemWidth(120.f);
+				if (ImGui::InputFloat("##OffsetPositionZ", &playspace_position_z, 1.f, 5.f, 2))
+				{
+					playspace_position_z = clampf(playspace_position_z, -(1 << 16), (1 << 16));
+
+					request_offset = true;
+				}
+				ImGui::PopItemWidth();
+
+				if (request_offset)
+				{
+					request_set_playspace_offsets(
+						playsapce_orientation_yaw,
+						playspace_position_x,
+						playspace_position_y,
+						playspace_position_z);
+				}
+			}
         }
 
         ImGui::Separator();
@@ -611,7 +681,8 @@ void AppStage_TrackerSettings::renderUI()
     case eTrackerMenuState::pendingSearchForNewTrackersRequest:
     case eTrackerMenuState::pendingTrackerListRequest:
     case eTrackerMenuState::pendingControllerListRequest:
-    case eTrackerMenuState::pendingHmdListRequest:
+	case eTrackerMenuState::pendingHmdListRequest:
+	case eTrackerMenuState::pendingPlaysapceRequest:
     {
         ImGui::SetNextWindowPosCenter();
         ImGui::SetNextWindowSize(ImVec2(300, 150));
@@ -623,7 +694,8 @@ void AppStage_TrackerSettings::renderUI()
     } break;
     case eTrackerMenuState::failedTrackerListRequest:
     case eTrackerMenuState::failedControllerListRequest:
-    case eTrackerMenuState::failedHmdListRequest:
+	case eTrackerMenuState::failedHmdListRequest:
+	case eTrackerMenuState::failedPlayspaceRequest:
     {
         ImGui::SetNextWindowPosCenter();
         ImGui::SetNextWindowSize(ImVec2(300, 150));
@@ -826,87 +898,155 @@ void AppStage_TrackerSettings::handle_controller_list_response(
 
 void AppStage_TrackerSettings::request_hmd_list()
 {
-    if (m_menuState != AppStage_TrackerSettings::pendingHmdListRequest)
-    {
-        m_menuState = AppStage_TrackerSettings::pendingHmdListRequest;
+	if (m_menuState != AppStage_TrackerSettings::pendingHmdListRequest)
+	{
+		m_menuState = AppStage_TrackerSettings::pendingHmdListRequest;
 
-        // Tell the psmove service that we we want a list of HMDs connected to this machine
-        RequestPtr request(new PSMoveProtocol::Request());
-        request->set_type(PSMoveProtocol::Request_RequestType_GET_HMD_LIST);
+		// Tell the psmove service that we we want a list of HMDs connected to this machine
+		RequestPtr request(new PSMoveProtocol::Request());
+		request->set_type(PSMoveProtocol::Request_RequestType_GET_HMD_LIST);
 
-        PSMRequestID request_id;
-        PSM_SendOpaqueRequest(&request, &request_id);
-        PSM_RegisterCallback(request_id, AppStage_TrackerSettings::handle_hmd_list_response, this);
-    }
+		PSMRequestID request_id;
+		PSM_SendOpaqueRequest(&request, &request_id);
+		PSM_RegisterCallback(request_id, AppStage_TrackerSettings::handle_hmd_list_response, this);
+	}
 }
 
 void AppStage_TrackerSettings::handle_hmd_list_response(
-    const PSMResponseMessage *response_message,
-    void *userdata)
+	const PSMResponseMessage *response_message,
+	void *userdata)
 {
-    AppStage_TrackerSettings *thisPtr = static_cast<AppStage_TrackerSettings *>(userdata);
+	AppStage_TrackerSettings *thisPtr = static_cast<AppStage_TrackerSettings *>(userdata);
 
-    const PSMResult ResultCode = response_message->result_code;
-    const PSMResponseHandle response_handle = response_message->opaque_response_handle;
+	const PSMResult ResultCode = response_message->result_code;
+	const PSMResponseHandle response_handle = response_message->opaque_response_handle;
 
-    switch (ResultCode)
-    {
-    case PSMResult_Success:
-    {
-        const PSMoveProtocol::Response *response = GET_PSMOVEPROTOCOL_RESPONSE(response_handle);
-        int oldSelectedHmdIndex = thisPtr->m_selectedHmdIndex;
+	switch (ResultCode)
+	{
+	case PSMResult_Success:
+	{
+		const PSMoveProtocol::Response *response = GET_PSMOVEPROTOCOL_RESPONSE(response_handle);
+		int oldSelectedHmdIndex = thisPtr->m_selectedHmdIndex;
 
-        thisPtr->m_hmdInfos.clear();
+		thisPtr->m_hmdInfos.clear();
 
-        for (int hmd_index = 0; hmd_index < response->result_hmd_list().hmd_entries_size(); ++hmd_index)
-        {
-            const auto &HmdResponse = response->result_hmd_list().hmd_entries(hmd_index);
+		for (int hmd_index = 0; hmd_index < response->result_hmd_list().hmd_entries_size(); ++hmd_index)
+		{
+			const auto &HmdResponse = response->result_hmd_list().hmd_entries(hmd_index);
 
-            AppStage_TrackerSettings::HMDInfo HmdInfo;
+			AppStage_TrackerSettings::HMDInfo HmdInfo;
 
-            HmdInfo.HmdID = HmdResponse.hmd_id();
-            HmdInfo.TrackingColorType = (PSMTrackingColorType)HmdResponse.tracking_color_type();
+			HmdInfo.HmdID = HmdResponse.hmd_id();
+			HmdInfo.TrackingColorType = (PSMTrackingColorType)HmdResponse.tracking_color_type();
 
-            switch (HmdResponse.hmd_type())
-            {
-            case PSMoveProtocol::Morpheus:
-                HmdInfo.HmdType = PSMHmd_Morpheus;
-                thisPtr->m_hmdInfos.push_back(HmdInfo);
-                break;
-            case PSMoveProtocol::VirtualHMD:
-                HmdInfo.HmdType = PSMHmd_Virtual;
-                thisPtr->m_hmdInfos.push_back(HmdInfo);
-                break;
-            default:
-                assert(0 && "unreachable");
-            }
-        }
+			switch (HmdResponse.hmd_type())
+			{
+			case PSMoveProtocol::Morpheus:
+				HmdInfo.HmdType = PSMHmd_Morpheus;
+				thisPtr->m_hmdInfos.push_back(HmdInfo);
+				break;
+			case PSMoveProtocol::VirtualHMD:
+				HmdInfo.HmdType = PSMHmd_Virtual;
+				thisPtr->m_hmdInfos.push_back(HmdInfo);
+				break;
+			default:
+				assert(0 && "unreachable");
+			}
+		}
 
-        if (oldSelectedHmdIndex != -1)
-        {
-            // Maintain the same position in the list if possible
-            thisPtr->m_selectedHmdIndex =
-                (oldSelectedHmdIndex < thisPtr->m_hmdInfos.size())
-                ? oldSelectedHmdIndex
-                : -1;
-        }
-        else
-        {
-            thisPtr->m_selectedHmdIndex = (thisPtr->m_hmdInfos.size() > 0) ? 0 : -1;
-        }
+		if (oldSelectedHmdIndex != -1)
+		{
+			// Maintain the same position in the list if possible
+			thisPtr->m_selectedHmdIndex =
+				(oldSelectedHmdIndex < thisPtr->m_hmdInfos.size())
+				? oldSelectedHmdIndex
+				: -1;
+		}
+		else
+		{
+			thisPtr->m_selectedHmdIndex = (thisPtr->m_hmdInfos.size() > 0) ? 0 : -1;
+		}
 
-        thisPtr->m_menuState = AppStage_TrackerSettings::idle;
-    } break;
+		thisPtr->request_playspace_info();
+	} break;
 
-    case PSMResult_Error:
-    case PSMResult_Canceled:
-    case PSMResult_Timeout:
-    {
-        thisPtr->m_menuState = AppStage_TrackerSettings::failedControllerListRequest;
-    } break;
-    }
+	case PSMResult_Error:
+	case PSMResult_Canceled:
+	case PSMResult_Timeout:
+	{
+		thisPtr->m_menuState = AppStage_TrackerSettings::failedControllerListRequest;
+	} break;
+	}
 }
 
+void AppStage_TrackerSettings::request_playspace_info()
+{
+	if (m_menuState != AppStage_TrackerSettings::pendingPlaysapceRequest)
+	{
+		m_menuState = AppStage_TrackerSettings::pendingPlaysapceRequest;
+
+		// Tell the psmove service that we we want a list of HMDs connected to this machine
+		RequestPtr request(new PSMoveProtocol::Request());
+		request->set_type(PSMoveProtocol::Request_RequestType_GET_PLAYSPACE_OFFSETS);
+
+		PSMRequestID request_id;
+		PSM_SendOpaqueRequest(&request, &request_id);
+		PSM_RegisterCallback(request_id, AppStage_TrackerSettings::handle_playspace_info_response, this);
+	}
+}
+
+void AppStage_TrackerSettings::handle_playspace_info_response(
+	const PSMResponseMessage *response_message,
+	void *userdata)
+{
+	AppStage_TrackerSettings *thisPtr = static_cast<AppStage_TrackerSettings *>(userdata);
+
+	const PSMResult ResultCode = response_message->result_code;
+	const PSMResponseHandle response_handle = response_message->opaque_response_handle;
+
+	switch (ResultCode)
+	{
+	case PSMResult_Success:
+	{
+		const PSMoveProtocol::Response *response = GET_PSMOVEPROTOCOL_RESPONSE(response_handle);
+
+		thisPtr->playsapce_orientation_yaw = response->result_get_playspace_offsets().playspace_orientation_yaw();
+		thisPtr->playspace_position_x = response->result_get_playspace_offsets().playspace_position().x();
+		thisPtr->playspace_position_y = response->result_get_playspace_offsets().playspace_position().y();
+		thisPtr->playspace_position_z = response->result_get_playspace_offsets().playspace_position().z();
+
+		thisPtr->m_menuState = AppStage_TrackerSettings::idle;
+	} break;
+
+	case PSMResult_Error:
+	case PSMResult_Canceled:
+	case PSMResult_Timeout:
+	{
+		thisPtr->m_menuState = AppStage_TrackerSettings::failedControllerListRequest;
+	} break;
+	}
+}
+void AppStage_TrackerSettings::request_set_playspace_offsets(
+	float offset_orientation_yaw,
+	float offset_position_x,
+	float offset_position_y,
+	float offset_position_z)
+{
+	RequestPtr request(new PSMoveProtocol::Request());
+	request->set_type(PSMoveProtocol::Request_RequestType_SET_PLAYSPACE_OFFSETS);
+
+	PSMoveProtocol::Request_RequestSetPlayspaceOffsets *mutable_request_set_playspace_offsets = request->mutable_request_set_playspace_offsets();
+	PSMoveProtocol::Position *mutable_offset_position = mutable_request_set_playspace_offsets->mutable_playspace_position();
+
+	request->mutable_request_set_playspace_offsets()->set_playspace_orientation_yaw(offset_orientation_yaw);
+	mutable_offset_position->set_x(offset_position_x);
+	mutable_offset_position->set_y(offset_position_y);
+	mutable_offset_position->set_z(offset_position_z);
+
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_EatResponse(request_id);
+}
 void AppStage_TrackerSettings::request_search_for_new_trackers()
 {
     // Tell the psmove service that we want see if new trackers are connected.

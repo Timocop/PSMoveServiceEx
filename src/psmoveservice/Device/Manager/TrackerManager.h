@@ -125,6 +125,10 @@ public:
     {
         return cfg;
     }
+	inline TrackerManagerConfig *getConfigMutable()
+	{
+		return &cfg;
+	}
 
 	inline static bool trackersSynced()
 	{
