@@ -33,11 +33,13 @@ TrackerManagerConfig::TrackerManagerConfig(const std::string &fnamebase)
 	min_valid_projection_area = 6;
 	occluded_area_on_loss_size = 4.f;
 	occluded_area_ignore_trackers = 0;
-	occluded_area_regain_projection_size = 32.f;
 	projection_collision_avoid = true;
 	projection_collision_offset = 5.0f;
+	average_position_cache_enabled = false;
+	average_position_cache_cell_size = 15.f;
+	average_position_cache_avg_size = 30.f;
 	min_points_in_contour = 4;
-	max_tracker_position_deviation = 12.0f;
+	max_tracker_position_deviation = 15.0f;
 	disable_roi = false;
 	optimized_roi = true;
 	roi_edge_offset = 4;
@@ -78,6 +80,9 @@ TrackerManagerConfig::config2ptree()
 	pt.put("occluded_area_regain_projection_size", occluded_area_regain_projection_size);
 	pt.put("projection_collision_avoid", projection_collision_avoid);
 	pt.put("projection_collision_offset", projection_collision_offset);
+	pt.put("average_position_cache_enabled", average_position_cache_enabled);
+	pt.put("average_position_cache_cell_size", average_position_cache_cell_size);
+	pt.put("average_position_cache_avg_size", average_position_cache_avg_size);
 	pt.put("min_points_in_contour", min_points_in_contour);
 	pt.put("max_tracker_position_deviation", max_tracker_position_deviation);
 
@@ -122,6 +127,9 @@ TrackerManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
 		occluded_area_regain_projection_size = pt.get<float>("occluded_area_regain_projection_size", occluded_area_regain_projection_size);
 		projection_collision_avoid = pt.get<bool>("projection_collision_avoid", projection_collision_avoid);
 		projection_collision_offset = pt.get<float>("projection_collision_offset", projection_collision_offset);
+		average_position_cache_enabled = pt.get<bool>("average_position_cache_enabled", average_position_cache_enabled);
+		average_position_cache_cell_size = pt.get<float>("average_position_cache_cell_size", average_position_cache_cell_size);
+		average_position_cache_avg_size = pt.get<float>("average_position_cache_avg_size", average_position_cache_avg_size);
 		min_points_in_contour = pt.get<int>("min_points_in_contour", min_points_in_contour);
 		max_tracker_position_deviation = pt.get<float>("max_tracker_position_deviation", max_tracker_position_deviation);
 

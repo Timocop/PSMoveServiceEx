@@ -236,6 +236,9 @@ TrackerConfig::config2ptree()
 	pt.put("occluded_area_regain_projection_size", occluded_area_regain_projection_size);
 	pt.put("projection_collision_avoid", projection_collision_avoid);
 	pt.put("projection_collision_offset", projection_collision_offset);
+	pt.put("average_position_cache_enabled", average_position_cache_enabled);
+	pt.put("average_position_cache_cell_size", average_position_cache_cell_size);
+	pt.put("average_position_cache_avg_size", average_position_cache_avg_size);
 	pt.put("min_points_in_contour", min_points_in_contour);
 	pt.put("max_tracker_position_deviation", max_tracker_position_deviation);
 
@@ -270,6 +273,9 @@ TrackerConfig::ptree2config(const boost::property_tree::ptree &pt)
 	occluded_area_regain_projection_size = pt.get<float>("occluded_area_regain_projection_size", occluded_area_regain_projection_size);
 	projection_collision_avoid = pt.get<bool>("projection_collision_avoid", projection_collision_avoid);
 	projection_collision_offset = pt.get<float>("projection_collision_offset", projection_collision_offset);
+	average_position_cache_enabled = pt.get<bool>("average_position_cache_enabled", average_position_cache_enabled);
+	average_position_cache_cell_size = pt.get<float>("average_position_cache_cell_size", average_position_cache_cell_size);
+	average_position_cache_avg_size = pt.get<float>("average_position_cache_avg_size", average_position_cache_avg_size);
 	min_points_in_contour = pt.get<int>("min_points_in_contour", min_points_in_contour);
 	max_tracker_position_deviation = pt.get<float>("max_tracker_position_deviation", max_tracker_position_deviation);
 
@@ -758,6 +764,60 @@ void AppStage_AdvancedSettings::renderUI()
 				ImGui::Unindent();
 
 				{
+					ImGui::Text("Average position cache:");
+					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+					ImGui::PushItemWidth(100.f);
+					ImGui::Checkbox("##AveragePositionCache", &cfg_tracker.average_position_cache_enabled);
+					ImGui::PopItemWidth();
+
+					if (ImGui::IsItemHovered())
+						ImGui::SetTooltip(
+							"Gives each tracker a calculated offset from previous cached average controller positions.\n"
+							"Makes camera transitions smoother and reduces jitter.\n"
+							"However, detection of unwanted color noise could save wrong samples in the cache and break tracking!\n"
+							"(The default value is FALSE)"
+						);
+				}
+
+				ImGui::Indent();
+				{
+					ImGui::Text("Sample distance:");
+					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+					ImGui::PushItemWidth(100.f);
+					if (ImGui::InputFloat("##AveragePositionCacheCellSize", &cfg_tracker.average_position_cache_cell_size, 1.f, 4.f, 2))
+					{
+						cfg_tracker.average_position_cache_cell_size = static_cast<float>(std::fmax(10.f, std::fmin(99999.f, cfg_tracker.average_position_cache_cell_size)));
+					}
+					ImGui::PopItemWidth();
+
+					if (ImGui::IsItemHovered())
+						ImGui::SetTooltip(
+							"Runtime avergage sampling distance.\n"
+							"(The default value is 15 (cm))"
+						);
+				}
+				ImGui::Unindent();
+
+				ImGui::Indent();
+				{
+					ImGui::Text("Sample smoothing distance:");
+					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+					ImGui::PushItemWidth(100.f);
+					if (ImGui::InputFloat("##AveragePositionCacheAvgSize", &cfg_tracker.average_position_cache_avg_size, 1.f, 4.f, 2))
+					{
+						cfg_tracker.average_position_cache_avg_size = static_cast<float>(std::fmax(cfg_tracker.average_position_cache_cell_size, std::fmin(99999.f, cfg_tracker.average_position_cache_avg_size)));
+					}
+					ImGui::PopItemWidth();
+
+					if (ImGui::IsItemHovered())
+						ImGui::SetTooltip(
+							"Runtime avergage sampling smoothing distance.\n"
+							"(The default value is 30 (cm))"
+						);
+				}
+				ImGui::Unindent();
+
+				{
 					ImGui::Text("Minimum points in contour:");
 					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 					ImGui::PushItemWidth(100.f);
@@ -791,7 +851,7 @@ void AppStage_AdvancedSettings::renderUI()
 						ImGui::SetTooltip(
 							"Trackers that deviate their triangulation position too much from other trackers will be disregarded.\n"
 							"This will avoid trackers getting stuck on random color noise or other controllers.\n"
-							"(The default value is 12)"
+							"(The default value is 15 (cm))"
 						);
 				}
 

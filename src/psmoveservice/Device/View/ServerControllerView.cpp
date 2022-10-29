@@ -3354,105 +3354,122 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 
 			if (add_pair)
 			{
-				++pair_count;
-
-				unfiltered_average_world_position.x += world_position.x;
-				unfiltered_average_world_position.y += world_position.y;
-				unfiltered_average_world_position.z += world_position.z;
-
-				// Do some runtime position caching to make transitions between cameras smoother
-				int cacheIndex = -1;
-				const float k_cell_size = 15.f;
-				const float k_avg_size = 30.f;
-
-				for (int j = globalPositionOffsetCaching[tracker_id][other_tracker_id].size() - 1; j > 0; --j)
+				// Do some runtime position caching to make transitions between cameras smoother.
+				// Give each camera an offset from the total average.
+				if (cfg.average_position_cache_enabled)
 				{
-					if (!globalPositionOffsetCaching[tracker_id][other_tracker_id][j].isValid)
-						continue;
+					++pair_count;
 
-					if (abs(globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.x - world_position.x) < k_cell_size
-						&& abs(globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.y - world_position.y) < k_cell_size
-						&& abs(globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.z - world_position.z) < k_cell_size)
-					{
-						cacheIndex = j;
-						break;
-					}
-				}
+					unfiltered_average_world_position.x += world_position.x;
+					unfiltered_average_world_position.y += world_position.y;
+					unfiltered_average_world_position.z += world_position.z;
 
-				if (cacheIndex == -1)
-				{
-					positionOffsetCaching cache;
-					cache.isValid = false;
-					cache.local_position.x = world_position.x;
-					cache.local_position.y = world_position.y;
-					cache.local_position.z = world_position.z;
-					cache.world_avg_position.x = 0.f;
-					cache.world_avg_position.y = 0.f;
-					cache.world_avg_position.z = 0.f;
-					cache.new_local_position.x = world_position.x;
-					cache.new_local_position.y = world_position.y;
-					cache.new_local_position.z = world_position.z;
-					cache.total_sampled_trackers = -1;
+					float cell_size = fmax(10.f, cfg.average_position_cache_cell_size);
+					float avg_size = fmax(cell_size, cfg.average_position_cache_avg_size);
 
-					globalPositionOffsetCaching[tracker_id][other_tracker_id].push_back(cache);
-
-					orgPositionOffsetCaching orgCache;
-					orgCache.tracker_1_id = tracker_id;
-					orgCache.tracker_2_id = other_tracker_id;
-					orgCache.index = globalPositionOffsetCaching[tracker_id][other_tracker_id].size() - 1;
-					newPositionOffsetCaching.push_back(orgCache);
-
-					// Add to average world position
-					average_world_position.x += world_position.x;
-					average_world_position.y += world_position.y;
-					average_world_position.z += world_position.z;
-				}
-				else
-				{
-					orgPositionOffsetCaching orgCache;
-					orgCache.tracker_1_id = tracker_id;
-					orgCache.tracker_2_id = other_tracker_id;
-					orgCache.index = cacheIndex;
-					newPositionOffsetCaching.push_back(orgCache);
-
-					positionOffsetCaching *cache = &globalPositionOffsetCaching[orgCache.tracker_1_id][orgCache.tracker_2_id][cacheIndex];
-
-					cache->new_local_position.x = world_position.x;
-					cache->new_local_position.y = world_position.y;
-					cache->new_local_position.z = world_position.z;
-
-					CommonDevicePosition average_new_position = { 0.f, 0.f, 0.f };
-					int average_new_position_pair = 0;
+					int cacheIndex = -1;
 					for (int j = globalPositionOffsetCaching[tracker_id][other_tracker_id].size() - 1; j > 0; --j)
 					{
 						if (!globalPositionOffsetCaching[tracker_id][other_tracker_id][j].isValid)
 							continue;
 
-						if (abs(globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.x - world_position.x) < k_avg_size
-							&& abs(globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.y - world_position.y) < k_avg_size
-							&& abs(globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.z - world_position.z) < k_avg_size)
+						if (abs(globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.x - world_position.x) < cell_size
+							&& abs(globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.y - world_position.y) < cell_size
+							&& abs(globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.z - world_position.z) < cell_size)
 						{
-							average_new_position.x += (globalPositionOffsetCaching[tracker_id][other_tracker_id][j].world_avg_position.x - globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.x);
-							average_new_position.y += (globalPositionOffsetCaching[tracker_id][other_tracker_id][j].world_avg_position.y - globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.y);
-							average_new_position.z += (globalPositionOffsetCaching[tracker_id][other_tracker_id][j].world_avg_position.z - globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.z);
-							++average_new_position_pair;
+							cacheIndex = j;
+							break;
 						}
 					}
 
-					// Add to average world position
-					if (average_new_position_pair == 0)
+					if (cacheIndex == -1)
 					{
+						positionOffsetCaching cache;
+						cache.isValid = false;
+						cache.local_position.x = world_position.x;
+						cache.local_position.y = world_position.y;
+						cache.local_position.z = world_position.z;
+						cache.world_avg_position.x = 0.f;
+						cache.world_avg_position.y = 0.f;
+						cache.world_avg_position.z = 0.f;
+						cache.new_local_position.x = world_position.x;
+						cache.new_local_position.y = world_position.y;
+						cache.new_local_position.z = world_position.z;
+						cache.total_sampled_trackers = -1;
+
+						globalPositionOffsetCaching[tracker_id][other_tracker_id].push_back(cache);
+
+						orgPositionOffsetCaching orgCache;
+						orgCache.tracker_1_id = tracker_id;
+						orgCache.tracker_2_id = other_tracker_id;
+						orgCache.index = globalPositionOffsetCaching[tracker_id][other_tracker_id].size() - 1;
+						newPositionOffsetCaching.push_back(orgCache);
+
+						// Add to average world position
 						average_world_position.x += world_position.x;
 						average_world_position.y += world_position.y;
 						average_world_position.z += world_position.z;
 					}
 					else
 					{
-						const float N = static_cast<float>(average_new_position_pair);
-						average_world_position.x += world_position.x + (average_new_position.x / N);
-						average_world_position.y += world_position.y + (average_new_position.y / N);
-						average_world_position.z += world_position.z + (average_new_position.z / N);
+						orgPositionOffsetCaching orgCache;
+						orgCache.tracker_1_id = tracker_id;
+						orgCache.tracker_2_id = other_tracker_id;
+						orgCache.index = cacheIndex;
+						newPositionOffsetCaching.push_back(orgCache);
+
+						positionOffsetCaching *cache = &globalPositionOffsetCaching[orgCache.tracker_1_id][orgCache.tracker_2_id][cacheIndex];
+
+						cache->new_local_position.x = world_position.x;
+						cache->new_local_position.y = world_position.y;
+						cache->new_local_position.z = world_position.z;
+
+						// Get average from offsets to make transitions between samples smoother.
+						CommonDevicePosition average_new_position = { 0.f, 0.f, 0.f };
+						int average_new_position_pair = 0;
+						for (int j = globalPositionOffsetCaching[tracker_id][other_tracker_id].size() - 1; j > 0; --j)
+						{
+							if (!globalPositionOffsetCaching[tracker_id][other_tracker_id][j].isValid)
+								continue;
+
+							if (abs(globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.x - world_position.x) < avg_size
+								&& abs(globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.y - world_position.y) < avg_size
+								&& abs(globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.z - world_position.z) < avg_size)
+							{
+								average_new_position.x += (globalPositionOffsetCaching[tracker_id][other_tracker_id][j].world_avg_position.x - globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.x);
+								average_new_position.y += (globalPositionOffsetCaching[tracker_id][other_tracker_id][j].world_avg_position.y - globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.y);
+								average_new_position.z += (globalPositionOffsetCaching[tracker_id][other_tracker_id][j].world_avg_position.z - globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.z);
+								++average_new_position_pair;
+							}
+						}
+
+						// Add to average world position
+						if (average_new_position_pair == 0)
+						{
+							average_world_position.x += world_position.x;
+							average_world_position.y += world_position.y;
+							average_world_position.z += world_position.z;
+						}
+						else
+						{
+							const float N = static_cast<float>(average_new_position_pair);
+							average_world_position.x += world_position.x + (average_new_position.x / N);
+							average_world_position.y += world_position.y + (average_new_position.y / N);
+							average_world_position.z += world_position.z + (average_new_position.z / N);
+						}
 					}
+				}
+				else
+				{
+					++pair_count;
+
+					average_world_position.x += world_position.x;
+					average_world_position.y += world_position.y;
+					average_world_position.z += world_position.z;
+
+					unfiltered_average_world_position.x += world_position.x;
+					unfiltered_average_world_position.y += world_position.y;
+					unfiltered_average_world_position.z += world_position.z;
 				}
 			}
 		}
@@ -3489,23 +3506,27 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 		unfiltered_average_world_position.y /= N;
 		unfiltered_average_world_position.z /= N;
 
-		// Renew cached average world position when we have more samples
-		for (int j = newPositionOffsetCaching.size() - 1; j > 0; --j)
+		if (cfg.average_position_cache_enabled)
 		{
-			const orgPositionOffsetCaching orgCache = newPositionOffsetCaching[j];
-			positionOffsetCaching *cache = &globalPositionOffsetCaching[orgCache.tracker_1_id][orgCache.tracker_2_id][orgCache.index];
+			// Renew cached average world position when we have more samples
+			for (int j = newPositionOffsetCaching.size() - 1; j > 0; --j)
+			{
+				const orgPositionOffsetCaching orgCache = newPositionOffsetCaching[j];
+				positionOffsetCaching *cache = &globalPositionOffsetCaching[orgCache.tracker_1_id][orgCache.tracker_2_id][orgCache.index];
 
-			if (cache->total_sampled_trackers > N)
-				continue;
+				// Only update when theres new pairs.
+				if (cache->total_sampled_trackers > N)
+					continue;
 
-			cache->world_avg_position.x = unfiltered_average_world_position.x;
-			cache->world_avg_position.y = unfiltered_average_world_position.y;
-			cache->world_avg_position.z = unfiltered_average_world_position.z;
-			cache->local_position.x = cache->new_local_position.x;
-			cache->local_position.y = cache->new_local_position.y;
-			cache->local_position.z = cache->new_local_position.z;
-			cache->total_sampled_trackers = N;
-			cache->isValid = true;
+				cache->world_avg_position.x = unfiltered_average_world_position.x;
+				cache->world_avg_position.y = unfiltered_average_world_position.y;
+				cache->world_avg_position.z = unfiltered_average_world_position.z;
+				cache->local_position.x = cache->new_local_position.x;
+				cache->local_position.y = cache->new_local_position.y;
+				cache->local_position.z = cache->new_local_position.z;
+				cache->total_sampled_trackers = N;
+				cache->isValid = true;
+			}
 		}
 
 		// Do basic optical prediction
