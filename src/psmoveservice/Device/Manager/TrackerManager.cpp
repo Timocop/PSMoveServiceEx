@@ -499,16 +499,25 @@ TrackerManager::freeTrackingColorID(eCommonTrackingColorID color_id)
 void
 TrackerManager::applyPlayspaceOffsets(Eigen::Vector3f &poseVec, Eigen::Quaternionf &postQuat)
 {
+	applyPlayspaceOffsets(poseVec, postQuat, true, true, true);
+}
+
+void
+TrackerManager::applyPlayspaceOffsets(Eigen::Vector3f &poseVec, Eigen::Quaternionf &postQuat, bool move_pos, bool rotate_pos, bool rotate_ang)
+{
 	const TrackerManagerConfig &cfg = DeviceManager::getInstance()->m_tracker_manager->getConfig();
 
 	// Move by Axis
-	poseVec += Eigen::Vector3f(cfg.playspace_position_x, cfg.playspace_position_y, cfg.playspace_position_z);
+	if(move_pos)
+		poseVec += Eigen::Vector3f(cfg.playspace_position_x, cfg.playspace_position_y, cfg.playspace_position_z);
 
 	// Rotate by Axis
 	const Eigen::Quaternionf offset_yaw = eigen_quaternion_angle_axis(cfg.playspace_orientation_yaw * (k_real_pi / 180.f), Eigen::Vector3f::UnitY());
 
-	poseVec = eigen_vector3f_clockwise_rotate(offset_yaw, poseVec);
+	if(rotate_pos)
+		poseVec = eigen_vector3f_clockwise_rotate(offset_yaw, poseVec);
 
 	// Rotate Orientation
-	postQuat = offset_yaw.inverse() * postQuat;
+	if(rotate_ang)
+		postQuat = offset_yaw.inverse() * postQuat;
 }

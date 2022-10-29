@@ -150,6 +150,7 @@ public:
     bool claimTrackingColorID(const class ServerHMDView *hmd_view, eCommonTrackingColorID color_id);
     void freeTrackingColorID(eCommonTrackingColorID color_id);
 	void applyPlayspaceOffsets(Eigen::Vector3f &poseVec, Eigen::Quaternionf &postQuat);
+	void applyPlayspaceOffsets(Eigen::Vector3f &poseVec, Eigen::Quaternionf &postQuat, bool move_pos, bool rotate_pos, bool rotate_ang);
 
 protected:
     bool can_update_connected_devices() override;

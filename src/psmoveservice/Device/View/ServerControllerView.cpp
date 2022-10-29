@@ -1214,10 +1214,11 @@ ServerControllerView::getFilteredPhysics() const
         Eigen::Vector3f velocity(m_pose_filter->getVelocityCmPerSec());
         Eigen::Vector3f acceleration(m_pose_filter->getAccelerationCmPerSecSqr());
 
-		DeviceManager::getInstance()->m_tracker_manager->applyPlayspaceOffsets(first_derivative, Eigen::Quaternionf::Identity());
-		DeviceManager::getInstance()->m_tracker_manager->applyPlayspaceOffsets(second_derivative, Eigen::Quaternionf::Identity());
-		DeviceManager::getInstance()->m_tracker_manager->applyPlayspaceOffsets(velocity, Eigen::Quaternionf::Identity());
-		DeviceManager::getInstance()->m_tracker_manager->applyPlayspaceOffsets(acceleration, Eigen::Quaternionf::Identity());
+		Eigen::Quaternionf nullQuat = Eigen::Quaternionf::Identity();
+		DeviceManager::getInstance()->m_tracker_manager->applyPlayspaceOffsets(first_derivative, nullQuat, false, true, true);
+		DeviceManager::getInstance()->m_tracker_manager->applyPlayspaceOffsets(second_derivative, nullQuat, false, true, true);
+		DeviceManager::getInstance()->m_tracker_manager->applyPlayspaceOffsets(velocity, nullQuat, false, true, true);
+		DeviceManager::getInstance()->m_tracker_manager->applyPlayspaceOffsets(acceleration, nullQuat, false, true, true);
 
         physics.AngularVelocityRadPerSec.i = first_derivative.x();
         physics.AngularVelocityRadPerSec.j = first_derivative.y();
