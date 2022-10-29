@@ -1610,7 +1610,7 @@ void ServerControllerView::publish_device_data_frame()
 	ServerRequestHandler::get_instance()->publish_controller_data_frame(
 		this, &ServerControllerView::generate_controller_data_frame_for_stream);
 
-	generate_controller_data_frame_for_pipe(this);
+	//generate_controller_data_frame_for_pipe(this);
 }
 
 void ServerControllerView::generate_controller_data_frame_for_pipe(
