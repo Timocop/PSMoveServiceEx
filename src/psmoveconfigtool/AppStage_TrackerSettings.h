@@ -59,6 +59,12 @@ public:
     void gotoTrackingHMDVideo(bool value = false) { m_gotoTrackingHmdVideo = value; }
 	void gotoTrackingVideoALL(bool value = false) { m_gotoTrackingVideoALL = value; }
 
+	void setPlayspaceOffsets(
+		float playspace_orientation_yaw,
+		float playspace_position_x,
+		float playspace_position_y,
+		float playspace_position_z);
+
 protected:
     virtual bool onClientAPIEvent(
         PSMEventMessage::eEventType event, 

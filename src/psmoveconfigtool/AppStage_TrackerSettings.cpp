@@ -2,6 +2,7 @@
 #include "AppStage_TrackerSettings.h"
 #include "AppStage_TestTracker.h"
 #include "AppStage_OpticalCalibration.h"
+#include "AppStage_OpticalRecenter.h"
 #include "AppStage_ColorCalibration.h"
 #include "AppStage_ComputeTrackerPoses.h"
 #include "AppStage_DistortionCalibration.h"
@@ -427,12 +428,31 @@ void AppStage_TrackerSettings::renderUI()
 										" - ComplimentaryOpticalIMU\n"
 										" - PositionKalman"
 									);
+
+
+								ImGui::Separator();
+
+								if (ImGui::Button("Optical Playspace Recenter##Controller"))
+								{
+									const ControllerInfo *controller = get_selected_controller();
+									if (controller != NULL)
+									{
+										m_app->getAppStage<AppStage_OpticalRecenter>()->setTargetControllerId(controller->ControllerID);
+										m_app->getAppStage<AppStage_OpticalRecenter>()->setTargetTrackerSettings(this);
+										m_app->setAppStage(AppStage_OpticalRecenter::APP_STAGE_NAME);
+									}
+								}
+
 							}
 							else
 							{
 								ImGui::TextDisabled("Calibrate Tracking Colors");
 								ImGui::TextDisabled("Calibrate Tracker Poses");
 								ImGui::TextDisabled("Calibrate Optical Noise");
+
+								ImGui::Separator();
+
+								ImGui::TextDisabled("Optical Playspace Recenter");
 							}
 
 						}
@@ -1081,4 +1101,22 @@ void AppStage_TrackerSettings::handle_search_for_new_trackers_response(
     AppStage_TrackerSettings *thisPtr = static_cast<AppStage_TrackerSettings *>(userdata);
 
     thisPtr->request_tracker_list();
+}
+
+void AppStage_TrackerSettings::setPlayspaceOffsets(
+	float orientation_yaw,
+	float position_x,
+	float position_y,
+	float position_z)
+{
+	playspace_orientation_yaw = orientation_yaw;
+	playspace_position_x = position_x;
+	playspace_position_y = position_y;
+	playspace_position_z = position_z;
+
+	request_set_playspace_offsets(
+		playspace_orientation_yaw,
+		playspace_position_x,
+		playspace_position_y,
+		playspace_position_z);
 }
