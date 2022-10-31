@@ -425,6 +425,7 @@ void AppStage_OpticalRecenter::renderUI()
         {
 			static const float k_height_to_psmove_bulb_center = 17.7f; // cm - measured base to bulb center distance
 		
+			// Calc angle
 			Eigen::Vector3f forwardSample = Eigen::Vector3f(m_CenterSample.x, 0.f, m_CenterSample.z) - Eigen::Vector3f(m_ForwardSample.x, 0.f, m_ForwardSample.z);
 			Eigen::Vector3f forwardSample_norm = forwardSample;
 			forwardSample_norm.normalize();
@@ -435,11 +436,19 @@ void AppStage_OpticalRecenter::renderUI()
 
 			Eigen::EulerAnglesf forwardAng = eigen_quaternionf_to_euler_angles(forwardQuat);
 			
+			// Calc Position
+			//const Eigen::Quaternionf offset_yaw = eigen_quaternion_angle_axis(-forwardAng.get_y_degrees() * k_degrees_to_radians, Eigen::Vector3f::UnitY());
+
+			//Eigen::Vector3f offsetSample = Eigen::Vector3f(m_CenterSample.x, 0.f, m_CenterSample.z);
+			//offsetSample = eigen_vector3f_clockwise_rotate(offset_yaw, offsetSample);
+
+
+
 			m_tracker_settings->setPlayspaceOffsets(
-				0.f,
-				m_CenterSample.x,
-				m_CenterSample.y - k_height_to_psmove_bulb_center,
-				m_CenterSample.z
+				-forwardAng.get_y_degrees(),
+				-m_CenterSample.x,
+				-k_height_to_psmove_bulb_center,
+				-m_CenterSample.z
 			);
 
 			AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, m_iControllerId, -1);
