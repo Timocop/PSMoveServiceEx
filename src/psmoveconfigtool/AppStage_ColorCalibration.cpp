@@ -560,11 +560,6 @@ void AppStage_ColorCalibration::renderUI()
 	// Tracker Alignment Marker
 	if (m_bAlignDetectColor && m_video_buffer_state != nullptr) 
 	{
-		float prevAlpha = ImGui::GetStyle().WindowFillAlphaDefault;
-		float prevRound = ImGui::GetStyle().WindowRounding;
-		ImGui::GetStyle().WindowFillAlphaDefault = 0.f;
-		ImGui::GetStyle().WindowRounding = 20.f;
-
 		float align_window_size = 64.f;
 		ImVec2 align_pos;
 		ImVec2 align_pos_window;
@@ -583,73 +578,84 @@ void AppStage_ColorCalibration::renderUI()
 			align_pos_window.x = align_pos.x - (align_window_size / 2);
 			align_pos_window.y = align_pos.y - (align_window_size / 2);
 		}
-
-		ImVec2 dispSize = ImGui::GetIO().DisplaySize;
-		int img_x = (static_cast<int>(align_pos.x) * m_video_buffer_state->hsvBuffer->cols) / static_cast<int>(dispSize.x);
-		int img_y = (static_cast<int>(align_pos.y) * m_video_buffer_state->hsvBuffer->rows) / static_cast<int>(dispSize.y);
-		cv::Vec< unsigned char, 3 > hsv_pixel = m_video_buffer_state->hsvBuffer->at<cv::Vec< unsigned char, 3 >>(cv::Point(img_x, img_y));
-		cv::Vec< unsigned char, 3 > bgrBuffer = m_video_buffer_state->bgrBuffer->at<cv::Vec< unsigned char, 3 >>(cv::Point(img_x, img_y));
-
-		ImGui::SetNextWindowPos(align_pos_window);
-		ImGui::SetNextWindowSize(ImVec2(align_window_size, align_window_size));
 		
-		ImGui::Begin("Alignment Window", nullptr,
-			ImGuiWindowFlags_NoBringToFrontOnFocus |
-			ImGuiWindowFlags_NoFocusOnAppearing |
-			ImGuiWindowFlags_NoTitleBar |
-			ImGuiWindowFlags_ShowBorders |
-			ImGuiWindowFlags_NoResize |
-			ImGuiWindowFlags_NoMove |
-			ImGuiWindowFlags_NoScrollbar |
-			ImGuiWindowFlags_NoCollapse);
+		// Is in window?
+		if (align_pos.x > -1 && align_pos.y > -1)
+		{
+			float prevAlpha = ImGui::GetStyle().WindowFillAlphaDefault;
+			float prevRound = ImGui::GetStyle().WindowRounding;
+			ImGui::GetStyle().WindowFillAlphaDefault = 0.f;
+			ImGui::GetStyle().WindowRounding = 20.f;
 
-		ImU32 line_colour = ImColor(0xFF, 0xFF, 0xFF, 175);
-		float line_thickness = 1.f;
+			ImVec2 dispSize = ImGui::GetIO().DisplaySize;
+			int img_x = (static_cast<int>(align_pos.x) * m_video_buffer_state->hsvBuffer->cols) / static_cast<int>(dispSize.x);
+			int img_y = (static_cast<int>(align_pos.y) * m_video_buffer_state->hsvBuffer->rows) / static_cast<int>(dispSize.y);
+			cv::Vec< unsigned char, 3 > hsv_pixel = m_video_buffer_state->hsvBuffer->at<cv::Vec< unsigned char, 3 >>(cv::Point(img_x, img_y));
+			cv::Vec< unsigned char, 3 > bgrBuffer = m_video_buffer_state->bgrBuffer->at<cv::Vec< unsigned char, 3 >>(cv::Point(img_x, img_y));
 
-		ImGui::GetWindowDrawList()->AddLine(
-			align_pos_window
-			, ImVec2(align_pos_window.x + align_window_size, align_pos_window.y + align_window_size)
-			, line_colour
-			, line_thickness
-		);
-		ImGui::GetWindowDrawList()->AddLine(
-			ImVec2(align_pos_window.x + align_window_size, align_pos_window.y)
-			, ImVec2(align_pos_window.x, align_pos_window.y + align_window_size)
-			, line_colour
-			, line_thickness
-		);
+			ImGui::SetNextWindowPos(align_pos_window);
+			ImGui::SetNextWindowSize(ImVec2(align_window_size, align_window_size));
 
-		ImGui::End();
+			ImGui::Begin("Alignment Window", nullptr,
+				ImGuiWindowFlags_NoBringToFrontOnFocus |
+				ImGuiWindowFlags_NoFocusOnAppearing |
+				ImGuiWindowFlags_NoTitleBar |
+				ImGuiWindowFlags_ShowBorders |
+				ImGuiWindowFlags_NoResize |
+				ImGuiWindowFlags_NoMove |
+				ImGuiWindowFlags_NoScrollbar |
+				ImGuiWindowFlags_NoCollapse);
+			{
+				ImU32 line_colour = ImColor(0xFF, 0xFF, 0xFF, 175);
+				float line_thickness = 1.f;
 
-		align_pos_window.x -= 96.0f;
-		align_pos_window.y += align_window_size;
+				ImGui::GetWindowDrawList()->AddLine(
+					ImVec2(align_pos_window.x + 15, align_pos_window.y + 15),
+					ImVec2(align_pos_window.x + align_window_size - 15, align_pos_window.y + align_window_size - 15),
+					line_colour,
+					line_thickness
+				);
+				ImGui::GetWindowDrawList()->AddLine(
+					ImVec2(align_pos_window.x + align_window_size - 15, align_pos_window.y + 15),
+					ImVec2(align_pos_window.x + 15, align_pos_window.y + align_window_size - 15),
+					line_colour,
+					line_thickness
+				);
 
-		ImGui::SetNextWindowPos(align_pos_window);
-		ImGui::SetNextWindowSize(ImVec2(350, 64));
+			}
+			ImGui::End();
 
-		ImGui::Begin("Alignment Window Tip", nullptr,
-			ImGuiWindowFlags_NoBringToFrontOnFocus |
-			ImGuiWindowFlags_NoFocusOnAppearing |
-			ImGuiWindowFlags_NoTitleBar |
-			ImGuiWindowFlags_NoResize |
-			ImGuiWindowFlags_NoMove |
-			ImGuiWindowFlags_NoScrollbar |
-			ImGuiWindowFlags_NoCollapse |
-			ImGuiWindowFlags_NoSavedSettings);
+			align_pos_window.x -= 96.0f;
+			align_pos_window.y += align_window_size;
 
-		ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetWindowPos(), ImVec2(ImGui::GetWindowPos().x + ImGui::GetWindowSize().x, ImGui::GetWindowPos().y + ImGui::GetWindowSize().y), ImColor(0.f, 0.f, 0.f, 0.5f));
-		 
-		ImColor textColor = ImColor(0xFF, 0xFF, 0xFF, 255);
-		
-		ImGui::ColorButton(ImColor(bgrBuffer[2], bgrBuffer[1], bgrBuffer[0]), true);
-		ImGui::SameLine(); 
-		ImGui::TextColored(textColor, "Color | H: %d, S: %d, V: %d", hsv_pixel[0], hsv_pixel[1], hsv_pixel[2]);
-		ImGui::TextColored(textColor, "Left-click the mouse button to detect color.");
-		ImGui::TextColored(textColor, "Right-click the mouse button to cancel.");
+			ImGui::SetNextWindowPos(align_pos_window);
+			ImGui::SetNextWindowSize(ImVec2(350, 64));
 
-		ImGui::End();
-		ImGui::GetStyle().WindowFillAlphaDefault = prevAlpha;
-		ImGui::GetStyle().WindowRounding = prevRound;
+			ImGui::Begin("Alignment Window Tip", nullptr,
+				ImGuiWindowFlags_NoBringToFrontOnFocus |
+				ImGuiWindowFlags_NoFocusOnAppearing |
+				ImGuiWindowFlags_NoTitleBar |
+				ImGuiWindowFlags_NoResize |
+				ImGuiWindowFlags_NoMove |
+				ImGuiWindowFlags_NoScrollbar |
+				ImGuiWindowFlags_NoCollapse |
+				ImGuiWindowFlags_NoSavedSettings);
+			{
+				ImGui::GetWindowDrawList()->AddRectFilled(ImGui::GetWindowPos(), ImVec2(ImGui::GetWindowPos().x + ImGui::GetWindowSize().x, ImGui::GetWindowPos().y + ImGui::GetWindowSize().y), ImColor(0.f, 0.f, 0.f, 0.5f));
+
+				ImColor textColor = ImColor(0xFF, 0xFF, 0xFF, 255);
+
+				ImGui::ColorButton(ImColor(bgrBuffer[2], bgrBuffer[1], bgrBuffer[0]), true);
+				ImGui::SameLine();
+				ImGui::TextColored(textColor, "Color | H: %d, S: %d, V: %d", hsv_pixel[0], hsv_pixel[1], hsv_pixel[2]);
+				ImGui::TextColored(textColor, "Left-click the mouse button to detect color.");
+				ImGui::TextColored(textColor, "Right-click the mouse button to cancel.");
+			}
+			ImGui::End();
+
+			ImGui::GetStyle().WindowFillAlphaDefault = prevAlpha;
+			ImGui::GetStyle().WindowRounding = prevRound;
+		}
 	}
 
     const float k_panel_width = 300.f;
