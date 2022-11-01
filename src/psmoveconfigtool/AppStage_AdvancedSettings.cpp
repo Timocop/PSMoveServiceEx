@@ -730,7 +730,7 @@ void AppStage_AdvancedSettings::renderUI()
 				}
 
 				{
-					ImGui::Text("Avoid projection collisions:");
+					ImGui::Text("Projection collision detection:");
 					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 					ImGui::PushItemWidth(100.f);
 					ImGui::Checkbox("##PorjectionCollisionDetection", &cfg_tracker.projection_collision_avoid);
@@ -738,15 +738,15 @@ void AppStage_AdvancedSettings::renderUI()
 
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip(
-							"Avoids projection collisions between controllers if they are already near another projection.\n"
-							"Enabling this fixes some color collisions between controllers such as color bleeding on the bulb edges.\n"
+							"Avoids projection collisions between controllers if they are already near other projections.\n"
+							"Enabling this can fix some color collisions between controllers such as color bleeding on the bulb edges.\n"
 							"(The default value is TRUE)"
 						);
 				}
 
 				ImGui::Indent();
 				{
-					ImGui::Text("Projection collision offset:");
+					ImGui::Text("Projection area offset:");
 					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 					ImGui::PushItemWidth(100.f);
 					if (ImGui::InputFloat("##ProjectionCollisionOffset", &cfg_tracker.projection_collision_offset, 1.f, 4.f, 2))
@@ -764,7 +764,7 @@ void AppStage_AdvancedSettings::renderUI()
 				ImGui::Unindent();
 
 				{
-					ImGui::Text("Average position cache:");
+					ImGui::Text("Cache average position offsets (runtime generated):");
 					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 					ImGui::PushItemWidth(100.f);
 					ImGui::Checkbox("##AveragePositionCache", &cfg_tracker.average_position_cache_enabled);
@@ -773,15 +773,15 @@ void AppStage_AdvancedSettings::renderUI()
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip(
 							"Gives each tracker a calculated offset from previous cached average controller positions.\n"
-							"Makes camera transitions smoother and reduces jitter.\n"
-							"However, detection of unwanted color noise could save wrong samples in the cache and break tracking!\n"
+							"Makes transitions between trackers smoother and reduces jitter.\n"
+							"However, the detection of unwanted color noise could result in persistent bad tracking behavior!\n"
 							"(The default value is FALSE)"
 						);
 				}
 
 				ImGui::Indent();
 				{
-					ImGui::Text("Sample distance:");
+					ImGui::Text("Sample cell size:");
 					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 					ImGui::PushItemWidth(100.f);
 					if (ImGui::InputFloat("##AveragePositionCacheCellSize", &cfg_tracker.average_position_cache_cell_size, 1.f, 4.f, 2))
@@ -792,7 +792,8 @@ void AppStage_AdvancedSettings::renderUI()
 
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip(
-							"Runtime avergage sampling distance.\n"
+							"If there are no nearby samples by this distance, new ones will be created.\n"
+							"The lower the value the more smoother and less jittery transitions between trackers will become.\n"
 							"(The default value is 15 (cm))"
 						);
 				}
@@ -800,7 +801,7 @@ void AppStage_AdvancedSettings::renderUI()
 
 				ImGui::Indent();
 				{
-					ImGui::Text("Sample smoothing distance:");
+					ImGui::Text("Sampling distance:");
 					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 					ImGui::PushItemWidth(100.f);
 					if (ImGui::InputFloat("##AveragePositionCacheAvgSize", &cfg_tracker.average_position_cache_avg_size, 1.f, 4.f, 2))
@@ -811,7 +812,8 @@ void AppStage_AdvancedSettings::renderUI()
 
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip(
-							"Runtime avergage sampling smoothing distance.\n"
+							"Overall distance to gather nearby samples to apply cached position offsets to the trackers.\n"
+							"Multiple samples by this range will be averaged making transitions between trackers smoother.\n"
 							"(The default value is 30 (cm))"
 						);
 				}
