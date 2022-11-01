@@ -450,9 +450,9 @@ void AppStage_TrackerSettings::renderUI()
 								ImGui::TextDisabled("Calibrate Tracker Poses");
 								ImGui::TextDisabled("Calibrate Optical Noise");
 
-								ImGui::Separator();
+								/*ImGui::Separator();
 
-								ImGui::TextDisabled("Optical Playspace Recenter");
+								ImGui::TextDisabled("Optical Playspace Recenter");*/
 							}
 
 						}
