@@ -430,7 +430,7 @@ void AppStage_TrackerSettings::renderUI()
 									);
 
 
-								ImGui::Separator();
+								/*ImGui::Separator();
 
 								if (ImGui::Button("Optical Playspace Recenter##Controller"))
 								{
@@ -441,7 +441,7 @@ void AppStage_TrackerSettings::renderUI()
 										m_app->getAppStage<AppStage_OpticalRecenter>()->setTargetTrackerSettings(this);
 										m_app->setAppStage(AppStage_OpticalRecenter::APP_STAGE_NAME);
 									}
-								}
+								}*/
 
 							}
 							else
