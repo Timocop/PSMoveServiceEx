@@ -4,6 +4,7 @@
 #include "AssetManager.h"
 #include "Logger.h"
 #include "UIConstants.h"
+#include "ProtocolVersion.h"
 
 #include "SDL.h"
 #include "SDL_events.h"
@@ -103,7 +104,7 @@ bool Renderer::init()
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
 
-		snprintf(szWindowTitle, sizeof(szWindowTitle), "PSMove Config Tool");
+		snprintf(szWindowTitle, sizeof(szWindowTitle), "PSMove Config Tool v" PSM_RELEASE_VERSION_STRING);
         m_window = SDL_CreateWindow(szWindowTitle,
             SDL_WINDOWPOS_CENTERED,
             SDL_WINDOWPOS_CENTERED,
