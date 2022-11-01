@@ -1200,11 +1200,13 @@ void AppStage_ColorCalibration::renderUI()
                 if (ImGui::Button(" < ##Controller"))
                 {
                     request_change_controller(-1);
+					request_change_tracker(0);
                 }
                 ImGui::SameLine();
                 if (ImGui::Button(" > ##Controller"))
                 {
                     request_change_controller(1);
+					request_change_tracker(0);
                 }
                 ImGui::SameLine();
                 ImGui::Text("PSMove Controller ID: %d", m_overrideControllerId);
