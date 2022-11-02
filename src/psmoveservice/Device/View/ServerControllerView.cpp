@@ -494,7 +494,8 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 {
     const std::chrono::time_point<std::chrono::high_resolution_clock> now= std::chrono::high_resolution_clock::now();
 	const TrackerManagerConfig &trackerMgrConfig = DeviceManager::getInstance()->m_tracker_manager->getConfig();
-
+	ControllerManager *m_controllerManager = DeviceManager::getInstance()->m_controller_manager;
+	
     // TODO: Probably need to first update IMU state to get velocity.
     // If velocity is too high, don't bother getting a new position.
     // Though it may be enough to just use the camera ROI as the limit.
@@ -710,6 +711,13 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 
 								if (!project_avoid_valid[tracker_id][i])
 									continue;
+								
+								ServerControllerViewPtr controllerView = m_controllerManager->getControllerViewPtr(i);
+								if (!controllerView ||
+									!controllerView->getIsOpen())
+								{
+									continue;
+								}
 
 								float other_x = porject_avoid_region[tracker_id][i][0];
 								float other_y = porject_avoid_region[tracker_id][i][1];
