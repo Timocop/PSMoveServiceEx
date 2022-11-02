@@ -3616,17 +3616,17 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 			average_history.y /= history_max;
 			average_history.z /= history_max;
 
-			const float dead_zone_distance = 10.0f;
+			//const float dead_zone_distance = 10.0f;
 
-			float last_distance = dead_zone_distance;
-			last_distance = fmax(last_distance, abs(multicam_pose_estimation->position_cm.x - average_world_position.x));
-			last_distance = fmax(last_distance, abs(multicam_pose_estimation->position_cm.y - average_world_position.y));
-			last_distance = fmax(last_distance, abs(multicam_pose_estimation->position_cm.z - average_world_position.z));
+			//float last_distance = dead_zone_distance;
+			//last_distance = fmax(last_distance, abs(multicam_pose_estimation->position_cm.x - average_world_position.x));
+			//last_distance = fmax(last_distance, abs(multicam_pose_estimation->position_cm.y - average_world_position.y));
+			//last_distance = fmax(last_distance, abs(multicam_pose_estimation->position_cm.z - average_world_position.z));
 
 			CommonDevicePosition average_scale;
-			average_scale.x = (average_world_position.x - average_history.x) * lerp_clampf(0, pp, last_distance / dead_zone_distance);
-			average_scale.y = (average_world_position.y - average_history.y) * lerp_clampf(0, pp, last_distance / dead_zone_distance);
-			average_scale.z = (average_world_position.z - average_history.z) * lerp_clampf(0, pp, last_distance / dead_zone_distance);
+			average_scale.x = (average_world_position.x - average_history.x) * pp; // lerp_clampf(0, pp, last_distance / dead_zone_distance);
+			average_scale.y = (average_world_position.y - average_history.y) * pp; // lerp_clampf(0, pp, last_distance / dead_zone_distance);
+			average_scale.z = (average_world_position.z - average_history.z) * pp; // lerp_clampf(0, pp, last_distance / dead_zone_distance);
 
 			average_world_position.x += average_scale.x;
 			average_world_position.y += average_scale.y;
