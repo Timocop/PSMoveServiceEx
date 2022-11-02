@@ -1210,7 +1210,7 @@ static void generate_morpheus_hmd_data_frame_for_stream(
     const MorpheusHMDConfig *morpheus_config = morpheus_hmd->getConfig();
 	const IPoseFilter *pose_filter = hmd_view->getPoseFilter();
     const CommonHMDState *hmd_state = hmd_view->getState();
-    const CommonDevicePose hmd_pose = hmd_view->getFilteredPose();
+    const CommonDevicePose hmd_pose = hmd_view->getFilteredPose(morpheus_config->prediction_time);
 
     PSMoveProtocol::DeviceOutputDataFrame_HMDDataPacket *hmd_data_frame = data_frame->mutable_hmd_data_packet();
 
@@ -1382,7 +1382,7 @@ static void generate_virtual_hmd_data_frame_for_stream(
     const VirtualHMDConfig *virtual_hmd_config = virtual_hmd->getConfig();
 	const IPoseFilter *pose_filter = hmd_view->getPoseFilter();
     const CommonHMDState *hmd_state = hmd_view->getState();
-    const CommonDevicePose hmd_pose = hmd_view->getFilteredPose();
+    const CommonDevicePose hmd_pose = hmd_view->getFilteredPose(virtual_hmd_config->prediction_time);
 
     PSMoveProtocol::DeviceOutputDataFrame_HMDDataPacket *hmd_data_frame = data_frame->mutable_hmd_data_packet();
 
