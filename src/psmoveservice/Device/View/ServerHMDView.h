@@ -4,6 +4,7 @@
 //-- includes -----
 #include "ServerDeviceView.h"
 #include "PSMoveProtocolInterface.h"
+#include "TrackerManager.h"
 #include <cstring>
 
 // -- pre-declarations -----

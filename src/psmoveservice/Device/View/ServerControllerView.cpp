@@ -1188,14 +1188,25 @@ ServerControllerView::getFilteredPose(float time) const
 			const Eigen::Quaternionf orientation = m_pose_filter->getOrientation(time);
 			const Eigen::Vector3f position_cm = m_pose_filter->getPositionCm(time);
 
-			pose.Orientation.w = orientation.w();
-			pose.Orientation.x = orientation.x();
-			pose.Orientation.y = orientation.y();
-			pose.Orientation.z = orientation.z();
+			// Playspace
+			{
+				const TrackerManagerConfig &cfg = DeviceManager::getInstance()->m_tracker_manager->getConfig();
 
-			pose.PositionCm.x = position_cm.x();
-			pose.PositionCm.y = position_cm.y();
-			pose.PositionCm.z = position_cm.z();
+				Eigen::Vector3f poseVec = Eigen::Vector3f(position_cm.x(), position_cm.y(), position_cm.z());
+				Eigen::Quaternionf postQuat = Eigen::Quaternionf(orientation.w(), orientation.x(), orientation.y(), orientation.z());
+
+				DeviceManager::getInstance()->m_tracker_manager->applyPlayspaceOffsets(poseVec, postQuat);
+
+				pose.PositionCm.x = poseVec.x();
+				pose.PositionCm.y = poseVec.y();
+				pose.PositionCm.z = poseVec.z();
+
+				// Rotate Orientation
+				pose.Orientation.w = postQuat.w();
+				pose.Orientation.x = postQuat.x();
+				pose.Orientation.y = postQuat.y();
+				pose.Orientation.z = postQuat.z();
+			}
 		}
     }
 
