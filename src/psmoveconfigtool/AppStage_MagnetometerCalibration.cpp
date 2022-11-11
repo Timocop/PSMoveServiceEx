@@ -25,12 +25,11 @@
 const char *AppStage_MagnetometerCalibration::APP_STAGE_NAME= "MagnetometerCalibration";
 
 //-- constants -----
-static const int k_max_bounds_magnetometer_samples = 500;
-static const int k_sample_count_target = 200;
-static const int k_sample_range_target= 280;
+static const int k_max_bounds_magnetometer_samples = 1200;
+static const int k_sample_count_target = 600;
 static const double k_stabilize_wait_time_ms= 3000.f;
 static const int k_max_identity_magnetometer_samples= 100;
-static const int k_min_sample_distance= 20;
+static const int k_min_sample_distance= 50;
 static const int k_min_sample_distance_sq= k_min_sample_distance*k_min_sample_distance;
 
 enum eEllipseFitMethod
@@ -90,16 +89,15 @@ struct MagnetometerBoundsStatistics
 			// Grow the measurement extents bounding box
 			expandMagnetometerBounds(sample);
 
-			// Make sure this sample isn't too close to another sample
-			for (int sampleIndex= sampleCount-1; sampleIndex >= 0; --sampleIndex)
+			if (sampleCount > 0) 
 			{
-				const PSMVector3i diff= PSM_Vector3iSubtract(&sample, &magnetometerIntSamples[sampleIndex]);
-				const int distanceSquared= PSM_Vector3iLengthSquared(&diff);
+				// Make sure this sample isn't too close to another sample
+				const PSMVector3i diff = PSM_Vector3iSubtract(&sample, &magnetometerIntSamples[sampleCount - 1]);
+				const int distanceSquared = PSM_Vector3iLengthSquared(&diff);
 
 				if (distanceSquared < k_min_sample_distance_sq)
 				{
-					bSuccess= false;
-					break;
+					bSuccess = false;
 				}
 			}
 		}
@@ -129,9 +127,7 @@ struct MagnetometerBoundsStatistics
             if (minRange > 0)
             {
                 samplePercentage = 
-                    std::min(
-                        std::min((100 * sampleCount) / k_sample_count_target, 100),
-                        std::min((100 * minRange) / k_sample_range_target, 100));
+					std::min((100 * sampleCount) / k_sample_count_target, 100);
             }
 		}
 
