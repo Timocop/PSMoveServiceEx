@@ -806,7 +806,7 @@ void AppStage_AdvancedSettings::renderUI()
 					ImGui::PushItemWidth(100.f);
 					if (ImGui::InputFloat("##AveragePositionCacheAvgSize", &cfg_tracker.average_position_cache_avg_size, 1.f, 4.f, 2))
 					{
-						cfg_tracker.average_position_cache_avg_size = static_cast<float>(std::fmax(cfg_tracker.average_position_cache_cell_size, std::fmin(99999.f, cfg_tracker.average_position_cache_avg_size)));
+						cfg_tracker.average_position_cache_avg_size = static_cast<float>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.average_position_cache_avg_size)));
 					}
 					ImGui::PopItemWidth();
 
@@ -814,6 +814,7 @@ void AppStage_AdvancedSettings::renderUI()
 						ImGui::SetTooltip(
 							"Overall distance to gather nearby samples to apply cached position offsets to the trackers.\n"
 							"Multiple samples by this range will be averaged making transitions between trackers smoother.\n"
+							"If the value is smaller than 'Sample cell size' then only the nearest sample will be used.\n"
 							"(The default value is 30 (cm))"
 						);
 				}

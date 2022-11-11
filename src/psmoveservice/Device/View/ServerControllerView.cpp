@@ -3301,7 +3301,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 		CommonDevicePosition local_position;
 		CommonDevicePosition world_avg_position;
 		CommonDevicePosition new_local_position;
-		int total_sampled_trackers;
+		int total_pairs;
 	};
 	struct orgPositionOffsetCaching
 	{
@@ -3390,9 +3390,13 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 			{
 				const float N = static_cast<float>(pair_count);
 
-				if (abs((average_world_position.x / N) - world_position.x) < cfg.max_tracker_position_deviation
-					&& abs((average_world_position.y / N) - world_position.y) < cfg.max_tracker_position_deviation
-					&& abs((average_world_position.z / N) - world_position.z) < cfg.max_tracker_position_deviation)
+				const float distance = sqrtf(
+					pow(abs((average_world_position.x / N) - world_position.x), 2) +
+					pow(abs((average_world_position.y / N) - world_position.y), 2) +
+					pow(abs((average_world_position.z / N) - world_position.z), 2)
+				);
+
+				if (distance < cfg.max_tracker_position_deviation)
 				{
 					add_pair = true;
 				}
@@ -3419,20 +3423,25 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 					unfiltered_average_world_position.z += world_position.z;
 
 					float cell_size = fmax(10.f, cfg.average_position_cache_cell_size);
-					float avg_size = fmax(cell_size, cfg.average_position_cache_avg_size);
+					float avg_size = fmax(0.f, cfg.average_position_cache_avg_size);
 
 					int cacheIndex = -1;
+					float lastCacheDistance = cell_size;
 					for (int j = globalPositionOffsetCaching[tracker_id][other_tracker_id].size() - 1; j > 0; --j)
 					{
 						if (!globalPositionOffsetCaching[tracker_id][other_tracker_id][j].isValid)
 							continue;
 
-						if (abs(globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.x - world_position.x) < cell_size
-							&& abs(globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.y - world_position.y) < cell_size
-							&& abs(globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.z - world_position.z) < cell_size)
+						const float distance = sqrtf(
+							pow(abs(globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.x - world_position.x), 2) +
+							pow(abs(globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.y - world_position.y), 2) +
+							pow(abs(globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.z - world_position.z), 2)
+						);
+
+						if (lastCacheDistance == -1.f || distance < lastCacheDistance)
 						{
 							cacheIndex = j;
-							break;
+							lastCacheDistance = distance;
 						}
 					}
 
@@ -3449,7 +3458,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 						cache.new_local_position.x = world_position.x;
 						cache.new_local_position.y = world_position.y;
 						cache.new_local_position.z = world_position.z;
-						cache.total_sampled_trackers = -1;
+						cache.total_pairs = -1;
 
 						globalPositionOffsetCaching[tracker_id][other_tracker_id].push_back(cache);
 
@@ -3458,11 +3467,6 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 						orgCache.tracker_2_id = other_tracker_id;
 						orgCache.index = globalPositionOffsetCaching[tracker_id][other_tracker_id].size() - 1;
 						newPositionOffsetCaching.push_back(orgCache);
-
-						// Add to average world position
-						average_world_position.x += world_position.x;
-						average_world_position.y += world_position.y;
-						average_world_position.z += world_position.z;
 					}
 					else
 					{
@@ -3477,27 +3481,43 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 						cache->new_local_position.x = world_position.x;
 						cache->new_local_position.y = world_position.y;
 						cache->new_local_position.z = world_position.z;
+					}
 
-						// Get average from offsets to make transitions between samples smoother.
+					if (avg_size >= cell_size)
+					{
+						// Get average from offsets to make transitions between samples smoother
 						CommonDevicePosition average_new_position = { 0.f, 0.f, 0.f };
 						int average_new_position_pair = 0;
+
 						for (int j = globalPositionOffsetCaching[tracker_id][other_tracker_id].size() - 1; j > 0; --j)
 						{
 							if (!globalPositionOffsetCaching[tracker_id][other_tracker_id][j].isValid)
 								continue;
 
-							if (abs(globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.x - world_position.x) < avg_size
-								&& abs(globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.y - world_position.y) < avg_size
-								&& abs(globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.z - world_position.z) < avg_size)
+							const float distance = sqrtf(
+								pow(abs(globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.x - world_position.x), 2) +
+								pow(abs(globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.y - world_position.y), 2) +
+								pow(abs(globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.z - world_position.z), 2)
+							);
+
+							if (distance < avg_size)
 							{
-								average_new_position.x += (globalPositionOffsetCaching[tracker_id][other_tracker_id][j].world_avg_position.x - globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.x);
-								average_new_position.y += (globalPositionOffsetCaching[tracker_id][other_tracker_id][j].world_avg_position.y - globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.y);
-								average_new_position.z += (globalPositionOffsetCaching[tracker_id][other_tracker_id][j].world_avg_position.z - globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.z);
+								average_new_position.x += (
+									globalPositionOffsetCaching[tracker_id][other_tracker_id][j].world_avg_position.x - 
+									globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.x
+								);
+								average_new_position.y += (
+									globalPositionOffsetCaching[tracker_id][other_tracker_id][j].world_avg_position.y - 
+									globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.y
+								);
+								average_new_position.z += (
+									globalPositionOffsetCaching[tracker_id][other_tracker_id][j].world_avg_position.z - 
+									globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.z
+								);
 								++average_new_position_pair;
 							}
 						}
 
-						// Add to average world position
 						if (average_new_position_pair == 0)
 						{
 							average_world_position.x += world_position.x;
@@ -3510,6 +3530,51 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 							average_world_position.x += world_position.x + (average_new_position.x / N);
 							average_world_position.y += world_position.y + (average_new_position.y / N);
 							average_world_position.z += world_position.z + (average_new_position.z / N);
+						}
+					}
+					else
+					{
+						// Find nearest average position regardless of distance
+						int nearCacheIndex = -1;
+						float lastCacheDistance = -1.f;
+						for (int j = globalPositionOffsetCaching[tracker_id][other_tracker_id].size() - 1; j > 0; --j)
+						{
+							if (!globalPositionOffsetCaching[tracker_id][other_tracker_id][j].isValid)
+								continue;
+
+							float distance = sqrtf(
+								pow(abs(globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.x - world_position.x), 2) +
+								pow(abs(globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.y - world_position.y), 2) +
+								pow(abs(globalPositionOffsetCaching[tracker_id][other_tracker_id][j].local_position.z - world_position.z), 2)
+							);
+
+							if (lastCacheDistance == -1.f || distance < lastCacheDistance)
+							{
+								nearCacheIndex = j;
+								lastCacheDistance = distance;
+							}
+						}
+
+						if (nearCacheIndex != -1)
+						{
+							average_world_position.x += world_position.x + (
+								globalPositionOffsetCaching[tracker_id][other_tracker_id][nearCacheIndex].world_avg_position.x - 
+								globalPositionOffsetCaching[tracker_id][other_tracker_id][nearCacheIndex].local_position.x
+							);
+							average_world_position.y += world_position.y + (
+								globalPositionOffsetCaching[tracker_id][other_tracker_id][nearCacheIndex].world_avg_position.y - 
+								globalPositionOffsetCaching[tracker_id][other_tracker_id][nearCacheIndex].local_position.y
+							);
+							average_world_position.z += world_position.z + (
+								globalPositionOffsetCaching[tracker_id][other_tracker_id][nearCacheIndex].world_avg_position.z - 
+								globalPositionOffsetCaching[tracker_id][other_tracker_id][nearCacheIndex].local_position.z
+							);
+						}
+						else
+						{
+							average_world_position.x += world_position.x;
+							average_world_position.y += world_position.y;
+							average_world_position.z += world_position.z;
 						}
 					}
 				}
@@ -3536,7 +3601,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 		}
 	}
 
-    if (pair_count == 0 
+    if (pair_count == 0
 		&& projections_found > 0
 		&& (available_trackers == 1 || !cfg.ignore_pose_from_one_tracker))
     {
@@ -3569,7 +3634,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 				positionOffsetCaching *cache = &globalPositionOffsetCaching[orgCache.tracker_1_id][orgCache.tracker_2_id][orgCache.index];
 
 				// Only update when theres new pairs.
-				if (cache->total_sampled_trackers > N)
+				if (cache->total_pairs >= N)
 					continue;
 
 				cache->world_avg_position.x = unfiltered_average_world_position.x;
@@ -3578,7 +3643,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 				cache->local_position.x = cache->new_local_position.x;
 				cache->local_position.y = cache->new_local_position.y;
 				cache->local_position.z = cache->new_local_position.z;
-				cache->total_sampled_trackers = N;
+				cache->total_pairs = N;
 				cache->isValid = true;
 			}
 		}
