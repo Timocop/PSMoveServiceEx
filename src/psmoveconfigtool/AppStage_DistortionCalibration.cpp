@@ -697,22 +697,14 @@ void AppStage_DistortionCalibration::renderUI()
                 ImGui::SetNextWindowSize(ImVec2(275, 150));
                 ImGui::Begin("Video Controls", nullptr, window_flags);
 
-                if (ImGui::Button(" < ##Filter"))
-                {
-                    m_videoDisplayMode =
-                        static_cast<eVideoDisplayMode>(
-                        (m_videoDisplayMode + eVideoDisplayMode::MAX_VIDEO_DISPLAY_MODES - 1)
-                        % eVideoDisplayMode::MAX_VIDEO_DISPLAY_MODES);
-                }
-                ImGui::SameLine();
-                if (ImGui::Button(" > ##Filter"))
-                {
-                    m_videoDisplayMode =
-                        static_cast<eVideoDisplayMode>(
-                        (m_videoDisplayMode + 1) % eVideoDisplayMode::MAX_VIDEO_DISPLAY_MODES);
-                }
-                ImGui::SameLine();
-                ImGui::Text("Video Filter Mode: %s", k_video_display_mode_names[m_videoDisplayMode]);
+				int displayMode = m_videoDisplayMode;
+				ImGui::Text("Video Preview:");
+				ImGui::PushItemWidth(200.f);
+				if (ImGui::Combo("##VideoFilterMode", &displayMode, "Color (BGR)\0Grayscale\0Undistorted\0\0"))
+				{
+					m_videoDisplayMode = static_cast<eVideoDisplayMode>(displayMode);
+				}
+				ImGui::PopItemWidth();
 
                 if (ImGui::Button(" - ##Exposure"))
                 {
