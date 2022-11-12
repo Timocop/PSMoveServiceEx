@@ -1635,7 +1635,7 @@ void AppStage_ControllerSettings::handle_controller_list_response(
 				PSM_AllocateControllerListener(it->ControllerID);
 
 				PSMRequestID request_id;
-				PSM_StartControllerDataStreamAsync(it->ControllerID, PSMStreamFlags_defaultStreamOptions, &request_id);
+				PSM_StartControllerDataStreamAsync(it->ControllerID, data_stream_flags, &request_id);
 				PSM_EatResponse(request_id);
 
 				thisPtr->m_controllersStreams.push_back(it->ControllerID);
