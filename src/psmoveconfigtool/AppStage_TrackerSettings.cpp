@@ -89,7 +89,7 @@ void AppStage_TrackerSettings::render()
     case eTrackerMenuState::failedControllerListRequest:
 	case eTrackerMenuState::pendingHmdListRequest:
 	case eTrackerMenuState::failedHmdListRequest:
-	case eTrackerMenuState::pendingPlaysapceRequest:
+	case eTrackerMenuState::pendingPlayspaceRequest:
 	case eTrackerMenuState::failedPlayspaceRequest:
     {
     } break;
@@ -784,7 +784,7 @@ void AppStage_TrackerSettings::renderUI()
     case eTrackerMenuState::pendingTrackerListRequest:
     case eTrackerMenuState::pendingControllerListRequest:
 	case eTrackerMenuState::pendingHmdListRequest:
-	case eTrackerMenuState::pendingPlaysapceRequest:
+	case eTrackerMenuState::pendingPlayspaceRequest:
     {
         ImGui::SetNextWindowPosCenter();
         ImGui::SetNextWindowSize(ImVec2(300, 150));
@@ -1083,9 +1083,9 @@ void AppStage_TrackerSettings::handle_hmd_list_response(
 
 void AppStage_TrackerSettings::request_playspace_info()
 {
-	if (m_menuState != AppStage_TrackerSettings::pendingPlaysapceRequest)
+	if (m_menuState != AppStage_TrackerSettings::pendingPlayspaceRequest)
 	{
-		m_menuState = AppStage_TrackerSettings::pendingPlaysapceRequest;
+		m_menuState = AppStage_TrackerSettings::pendingPlayspaceRequest;
 
 		// Tell the psmove service that we we want a list of HMDs connected to this machine
 		RequestPtr request(new PSMoveProtocol::Request());

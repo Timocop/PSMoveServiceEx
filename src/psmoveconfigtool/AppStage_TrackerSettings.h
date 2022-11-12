@@ -112,7 +112,7 @@ protected:
 		failedControllerListRequest,
 		pendingHmdListRequest,
 		failedHmdListRequest,
-		pendingPlaysapceRequest,
+		pendingPlayspaceRequest,
 		failedPlayspaceRequest,
         pendingSearchForNewTrackersRequest,
     };

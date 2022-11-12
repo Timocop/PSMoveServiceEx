@@ -99,6 +99,7 @@ AppStage_HMDAccelerometerCalibration::AppStage_HMDAccelerometerCalibration(App *
     , m_hmdView(nullptr)
     , m_isHMDStreamActive(false)
     , m_lastHMDSeqNum(-1)
+	, m_playspaceYawOffset(0.f)
     , m_noiseSamples(new HMDAccelerometerPoseSamples)
 {
 }
@@ -117,8 +118,6 @@ void AppStage_HMDAccelerometerCalibration::enter()
     m_app->setCameraType(_cameraOrbit);
     m_app->getOrbitCamera()->resetOrientation();
     m_app->getOrbitCamera()->setCameraOrbitRadius(1000.f); // zoom out to see the magnetometer data at scale
-
-    m_menuState = eCalibrationMenuState::waitingForStreamStartResponse;
 
     m_noiseSamples->clear();
 
@@ -140,6 +139,8 @@ void AppStage_HMDAccelerometerCalibration::enter()
 		PSMStreamFlags_includeCalibratedSensorData | PSMStreamFlags_includeRawSensorData, 
 		&requestId); // turns on tracking lights
 	PSM_RegisterCallback(requestId, &AppStage_HMDAccelerometerCalibration::handle_acquire_hmd, this);
+
+	request_playspace_info();
 }
 
 void AppStage_HMDAccelerometerCalibration::exit()
@@ -186,6 +187,9 @@ void AppStage_HMDAccelerometerCalibration::update()
 
     switch (m_menuState)
     {
+	case eCalibrationMenuState::pendingPlayspaceRequest:
+		{
+		} break;
     case eCalibrationMenuState::waitingForStreamStartResponse:
         {
             if (bControllerDataUpdatedThisFrame)
@@ -254,7 +258,8 @@ void AppStage_HMDAccelerometerCalibration::render()
 
     switch (m_menuState)
     {
-    case eCalibrationMenuState::waitingForStreamStartResponse:
+	case eCalibrationMenuState::pendingPlayspaceRequest:
+	case eCalibrationMenuState::waitingForStreamStartResponse:
     case eCalibrationMenuState::failedStreamStart:
         {
         } break;
@@ -324,7 +329,17 @@ void AppStage_HMDAccelerometerCalibration::renderUI()
 
     switch (m_menuState)
     {
-    case eCalibrationMenuState::waitingForStreamStartResponse:
+	case eCalibrationMenuState::pendingPlayspaceRequest:
+		{
+			ImGui::SetNextWindowPosCenter();
+			ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
+			ImGui::Begin(k_window_title, nullptr, window_flags);
+
+			ImGui::Text("Waiting for server response...");
+
+			ImGui::End();
+		} break;
+	case eCalibrationMenuState::waitingForStreamStartResponse:
         {
             ImGui::SetNextWindowPosCenter();
             ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
@@ -474,6 +489,51 @@ static void request_set_hmd_accelerometer_calibration(
     calibration->set_raw_variance(variance);
 
     PSM_SendOpaqueRequest(&request, nullptr);
+}
+
+void AppStage_HMDAccelerometerCalibration::request_playspace_info()
+{
+	if (m_menuState != AppStage_HMDAccelerometerCalibration::pendingPlayspaceRequest)
+	{
+		m_menuState = AppStage_HMDAccelerometerCalibration::pendingPlayspaceRequest;
+
+		// Tell the psmove service that we we want a list of HMDs connected to this machine
+		RequestPtr request(new PSMoveProtocol::Request());
+		request->set_type(PSMoveProtocol::Request_RequestType_GET_PLAYSPACE_OFFSETS);
+
+		PSMRequestID request_id;
+		PSM_SendOpaqueRequest(&request, &request_id);
+		PSM_RegisterCallback(request_id, AppStage_HMDAccelerometerCalibration::handle_playspace_info_response, this);
+	}
+}
+
+void AppStage_HMDAccelerometerCalibration::handle_playspace_info_response(
+	const PSMResponseMessage *response_message,
+	void *userdata)
+{
+	AppStage_HMDAccelerometerCalibration *thisPtr = static_cast<AppStage_HMDAccelerometerCalibration *>(userdata);
+
+	const PSMResult ResultCode = response_message->result_code;
+	const PSMResponseHandle response_handle = response_message->opaque_response_handle;
+
+	switch (ResultCode)
+	{
+	case PSMResult_Success:
+	{
+		const PSMoveProtocol::Response *response = GET_PSMOVEPROTOCOL_RESPONSE(response_handle);
+
+		thisPtr->m_playspaceYawOffset = response->result_get_playspace_offsets().playspace_orientation_yaw();
+
+		thisPtr->m_menuState = AppStage_HMDAccelerometerCalibration::waitingForStreamStartResponse;
+	} break;
+
+	case PSMResult_Error:
+	case PSMResult_Canceled:
+	case PSMResult_Timeout:
+	{
+		thisPtr->m_menuState = AppStage_HMDAccelerometerCalibration::failedStreamStart;
+	} break;
+	}
 }
 
 void AppStage_HMDAccelerometerCalibration::handle_acquire_hmd(

@@ -114,6 +114,7 @@ AppStage_GyroscopeCalibration::AppStage_GyroscopeCalibration(App *app)
     , m_controllerView(nullptr)
     , m_isControllerStreamActive(false)
     , m_lastControllerSeqNum(-1)
+	, m_playspaceYawOffset(0.f)
     , m_lastRawGyroscope()
     , m_gyroNoiseSamples(new GyroscopeNoiseSamples)
 {
@@ -152,8 +153,7 @@ void AppStage_GyroscopeCalibration::enter()
 	PSM_AllocateControllerListener(controllerInfo->ControllerID);
 	m_controllerView= PSM_GetController(controllerInfo->ControllerID);
 
-	// Get the tracking space settings first (for global forward reference)
-	request_tracking_space_settings();
+	request_playspace_info();
 }
 
 void AppStage_GyroscopeCalibration::exit()
@@ -216,6 +216,7 @@ void AppStage_GyroscopeCalibration::update()
 
     switch (m_menuState)
     {
+	case eCalibrationMenuState::pendingPlayspaceRequest:
 	case eCalibrationMenuState::pendingTrackingSpaceSettings:
 		{
 		} break;
@@ -234,7 +235,6 @@ void AppStage_GyroscopeCalibration::update()
             }
         } break;
     case eCalibrationMenuState::failedStreamStart:
-	case eCalibrationMenuState::failedTrackingSpaceSettings:
         {
         } break;
     case eCalibrationMenuState::waitForStable:
@@ -334,10 +334,10 @@ void AppStage_GyroscopeCalibration::render()
 
     switch (m_menuState)
     {
+	case eCalibrationMenuState::pendingPlayspaceRequest:
 	case eCalibrationMenuState::pendingTrackingSpaceSettings:
     case eCalibrationMenuState::waitingForStreamStartResponse:
     case eCalibrationMenuState::failedStreamStart:
-	case eCalibrationMenuState::failedTrackingSpaceSettings:
         {
         } break;
     case eCalibrationMenuState::waitForStable:
@@ -373,6 +373,11 @@ void AppStage_GyroscopeCalibration::render()
 			PSMQuatf orientation;
 			if (PSM_GetControllerOrientation(m_controllerView->ControllerID, &orientation) == PSMResult_Success)
 			{
+				// Compensate for playspace offsets
+				const Eigen::Quaternionf offset_yaw = eigen_quaternion_angle_axis(-m_playspaceYawOffset * k_degrees_to_radians, Eigen::Vector3f::UnitY());
+				const Eigen::Quaternionf eigen_quat = offset_yaw.inverse() * psm_quatf_to_eigen_quaternionf(orientation);
+				orientation = PSM_QuatfCreate(eigen_quat.w(), eigen_quat.x(), eigen_quat.y(), eigen_quat.z());
+
 				glm::quat q = psm_quatf_to_glm_quat(orientation);
 				glm::mat4 worldSpaceOrientation = glm::mat4_cast(q);
 				glm::mat4 worldTransform = glm::scale(worldSpaceOrientation, glm::vec3(k_modelScale, k_modelScale, k_modelScale));
@@ -401,6 +406,7 @@ void AppStage_GyroscopeCalibration::renderUI()
 
     switch (m_menuState)
     {
+	case eCalibrationMenuState::pendingPlayspaceRequest:
 	case eCalibrationMenuState::pendingTrackingSpaceSettings:
     case eCalibrationMenuState::waitingForStreamStartResponse:
         {
@@ -413,7 +419,6 @@ void AppStage_GyroscopeCalibration::renderUI()
             ImGui::End();
         } break;
     case eCalibrationMenuState::failedStreamStart:
-	case eCalibrationMenuState::failedTrackingSpaceSettings:
         {
             ImGui::SetNextWindowPosCenter();
             ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
@@ -542,11 +547,14 @@ void AppStage_GyroscopeCalibration::renderUI()
                 ImGui::Text("Calibration of Controller ID #%d complete!", m_controllerView->ControllerID);
             }
 
-			PSMQuatf controllerQuat;
-			if (PSM_GetControllerOrientation(m_controllerView->ControllerID, &controllerQuat) == PSMResult_Success)
+			PSMQuatf orientation;
+			if (PSM_GetControllerOrientation(m_controllerView->ControllerID, &orientation) == PSMResult_Success)
 			{
-				const Eigen::Quaternionf eigen_quat = psm_quatf_to_eigen_quaternionf(controllerQuat);
+				// Compensate for playspace offsets
+				const Eigen::Quaternionf offset_yaw = eigen_quaternion_angle_axis(-m_playspaceYawOffset * k_degrees_to_radians, Eigen::Vector3f::UnitY());
+				const Eigen::Quaternionf eigen_quat = offset_yaw.inverse() * psm_quatf_to_eigen_quaternionf(orientation);
 				const Eigen::EulerAnglesf euler_angles = eigen_quaternionf_to_euler_angles(eigen_quat);
+				orientation = PSM_QuatfCreate(eigen_quat.w(), eigen_quat.x(), eigen_quat.y(), eigen_quat.z());
 
 				ImGui::Text("Pitch(x): %.2f, Yaw(y): %.2f, Roll(z): %.2f",
 					m_lastCalibratedGyroscope.x * k_radians_to_degreees, 
@@ -605,8 +613,8 @@ void AppStage_GyroscopeCalibration::onExitState(eCalibrationMenuState newState)
 	switch (m_menuState)
 	{
 	case eCalibrationMenuState::inactive:
+	case eCalibrationMenuState::pendingPlayspaceRequest:
 	case eCalibrationMenuState::pendingTrackingSpaceSettings:
-	case eCalibrationMenuState::failedTrackingSpaceSettings:
 	case eCalibrationMenuState::waitingForStreamStartResponse:
 	case eCalibrationMenuState::failedStreamStart:
 	case eCalibrationMenuState::waitForStable:
@@ -627,13 +635,13 @@ void AppStage_GyroscopeCalibration::onEnterState(eCalibrationMenuState newState)
 		// Reset the orbit camera back to default orientation and scale
 		m_app->getOrbitCamera()->reset();
 		break;
+	case eCalibrationMenuState::pendingPlayspaceRequest:
 	case eCalibrationMenuState::pendingTrackingSpaceSettings:
 		// Reset the menu state
 		m_app->setCameraType(_cameraOrbit);
 		m_app->getOrbitCamera()->resetOrientation();
 		m_app->getOrbitCamera()->setCameraOrbitRadius(1000.f); // zoom out to see the accelerometer data at scale
 		break;
-	case eCalibrationMenuState::failedTrackingSpaceSettings:
 	case eCalibrationMenuState::waitingForStreamStartResponse:
 	case eCalibrationMenuState::failedStreamStart:
 		break;
@@ -669,6 +677,51 @@ void AppStage_GyroscopeCalibration::onEnterState(eCalibrationMenuState newState)
 		break;
 	default:
 		assert(0 && "unreachable");
+	}
+}
+
+void AppStage_GyroscopeCalibration::request_playspace_info()
+{
+	if (m_menuState != AppStage_GyroscopeCalibration::pendingPlayspaceRequest)
+	{
+		m_menuState = AppStage_GyroscopeCalibration::pendingPlayspaceRequest;
+
+		// Tell the psmove service that we we want a list of HMDs connected to this machine
+		RequestPtr request(new PSMoveProtocol::Request());
+		request->set_type(PSMoveProtocol::Request_RequestType_GET_PLAYSPACE_OFFSETS);
+
+		PSMRequestID request_id;
+		PSM_SendOpaqueRequest(&request, &request_id);
+		PSM_RegisterCallback(request_id, AppStage_GyroscopeCalibration::handle_playspace_info_response, this);
+	}
+}
+
+void AppStage_GyroscopeCalibration::handle_playspace_info_response(
+	const PSMResponseMessage *response_message,
+	void *userdata)
+{
+	AppStage_GyroscopeCalibration *thisPtr = static_cast<AppStage_GyroscopeCalibration *>(userdata);
+
+	const PSMResult ResultCode = response_message->result_code;
+	const PSMResponseHandle response_handle = response_message->opaque_response_handle;
+
+	switch (ResultCode)
+	{
+	case PSMResult_Success:
+	{
+		const PSMoveProtocol::Response *response = GET_PSMOVEPROTOCOL_RESPONSE(response_handle);
+
+		thisPtr->m_playspaceYawOffset = response->result_get_playspace_offsets().playspace_orientation_yaw();
+
+		thisPtr->request_tracking_space_settings();
+	} break;
+
+	case PSMResult_Error:
+	case PSMResult_Canceled:
+	case PSMResult_Timeout:
+	{
+		thisPtr->m_menuState = AppStage_GyroscopeCalibration::failedStreamStart;
+	} break;
 	}
 }
 
@@ -727,7 +780,7 @@ void AppStage_GyroscopeCalibration::handle_tracking_space_settings_response(
 	case PSMResult_Canceled:
 	case PSMResult_Timeout:
 		{
-			thisPtr->setState(eCalibrationMenuState::failedTrackingSpaceSettings);
+			thisPtr->setState(eCalibrationMenuState::failedStreamStart);
 		} break;
 	}
 }

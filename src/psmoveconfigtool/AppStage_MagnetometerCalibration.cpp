@@ -231,6 +231,7 @@ AppStage_MagnetometerCalibration::AppStage_MagnetometerCalibration(App *app)
     , m_bBypassCalibration(false)
     , m_menuState(AppStage_MagnetometerCalibration::inactive)
     , m_pendingAppStage(nullptr)
+	, m_playspaceYawOffset(0.f)
     , m_controllerView(nullptr)
     , m_isControllerStreamActive(false)
     , m_lastControllerSeqNum(-1)
@@ -288,13 +289,14 @@ void AppStage_MagnetometerCalibration::enter()
     m_bIsStable= false;
 	m_bForceControllerStable= false;
 
-    m_menuState= eCalibrationMenuState::waitingForStreamStartResponse;
     assert(!m_isControllerStreamActive);
     m_lastControllerSeqNum= -1;
 
 	PSMRequestID request_id;
 	PSM_StartControllerDataStreamAsync(m_controllerView->ControllerID, PSMStreamFlags_includeRawSensorData | PSMStreamFlags_includeCalibratedSensorData, &request_id);
 	PSM_RegisterCallback(request_id, &AppStage_MagnetometerCalibration::handle_acquire_controller, this);
+
+	request_playspace_info();
 }
 
 void AppStage_MagnetometerCalibration::exit()
@@ -325,6 +327,9 @@ void AppStage_MagnetometerCalibration::update()
 
     switch (m_menuState)
     {
+	case eCalibrationMenuState::pendingPlayspaceRequest:
+		{
+		} break;
     case eCalibrationMenuState::waitingForStreamStartResponse:
         {
             if (bControllerDataUpdatedThisFrame)
@@ -493,7 +498,7 @@ void AppStage_MagnetometerCalibration::render()
     glm::mat4 scaleAndRotateModelX90= 
         glm::rotate(
             glm::scale(glm::mat4(1.f), glm::vec3(k_modelScale, k_modelScale, k_modelScale)),
-            90.f, glm::vec3(1.f, 0.f, 0.f));  
+            90.f, glm::vec3(1.f, 0.f, 0.f));
     
 	const EigenFitEllipsoid &sampleFitEllipsoid= m_boundsStatistics->sampleFitEllipsoid;	
     const PSMVector3i &minSampleExtent= m_boundsStatistics->minSampleExtent;
@@ -512,6 +517,7 @@ void AppStage_MagnetometerCalibration::render()
 
     switch (m_menuState)
     {
+	case eCalibrationMenuState::pendingPlayspaceRequest:
     case eCalibrationMenuState::waitingForStreamStartResponse:
         {
         } break;
@@ -621,6 +627,11 @@ void AppStage_MagnetometerCalibration::render()
 			
 			if (PSM_GetControllerOrientation(m_controllerView->ControllerID, &orientation) == PSMResult_Success)
 			{
+				// Compensate for playspace offsets
+				const Eigen::Quaternionf offset_yaw = eigen_quaternion_angle_axis(-m_playspaceYawOffset * k_degrees_to_radians, Eigen::Vector3f::UnitY());
+				const Eigen::Quaternionf eigen_quat = offset_yaw.inverse() * psm_quatf_to_eigen_quaternionf(orientation);
+				orientation = PSM_QuatfCreate(eigen_quat.w(), eigen_quat.x(), eigen_quat.y(), eigen_quat.z());
+
 				glm::quat q= psm_quatf_to_glm_quat(orientation);
 				glm::mat4 worldSpaceOrientation= glm::mat4_cast(q);
 				glm::mat4 worldTransform = glm::scale(worldSpaceOrientation, glm::vec3(k_modelScale, k_modelScale, k_modelScale));
@@ -652,16 +663,26 @@ void AppStage_MagnetometerCalibration::renderUI()
 
     switch (m_menuState)
     {
-    case eCalibrationMenuState::waitingForStreamStartResponse:
-        {
-            ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
-            ImGui::Begin(k_window_title, nullptr, window_flags);
+	case eCalibrationMenuState::pendingPlayspaceRequest:
+	{
+		ImGui::SetNextWindowPosCenter();
+		ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
+		ImGui::Begin(k_window_title, nullptr, window_flags);
 
-            ImGui::Text("Waiting for controller stream to start...");
+		ImGui::Text("Waiting for server response...");
 
-            ImGui::End();
-        } break;
+		ImGui::End();
+	} break;
+	case eCalibrationMenuState::waitingForStreamStartResponse:
+	{
+		ImGui::SetNextWindowPosCenter();
+		ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
+		ImGui::Begin(k_window_title, nullptr, window_flags);
+
+		ImGui::Text("Waiting for controller stream to start...");
+
+		ImGui::End();
+	} break;
     case eCalibrationMenuState::failedStreamStart:
         {
             ImGui::SetNextWindowPosCenter();
@@ -901,8 +922,11 @@ void AppStage_MagnetometerCalibration::renderUI()
 			PSMQuatf orientation;			
 			if (PSM_GetControllerOrientation(m_controllerView->ControllerID, &orientation) == PSMResult_Success)
 			{
-				const Eigen::Quaternionf eigen_quat = psm_quatf_to_eigen_quaternionf(orientation);
+				// Compensate for playspace offsets
+				const Eigen::Quaternionf offset_yaw = eigen_quaternion_angle_axis(-m_playspaceYawOffset * k_degrees_to_radians, Eigen::Vector3f::UnitY());
+				const Eigen::Quaternionf eigen_quat = offset_yaw.inverse() * psm_quatf_to_eigen_quaternionf(orientation);
 				const Eigen::EulerAnglesf euler_angles = eigen_quaternionf_to_euler_angles(eigen_quat);
+				orientation = PSM_QuatfCreate(eigen_quat.w(), eigen_quat.x(), eigen_quat.y(), eigen_quat.z());
 
 				ImGui::Text("Attitude: %.2f, Heading: %.2f, Bank: %.2f",
 					euler_angles.get_attitude_degrees(), euler_angles.get_heading_degrees(), euler_angles.get_bank_degrees());
@@ -942,6 +966,51 @@ void AppStage_MagnetometerCalibration::renderUI()
 }
 
 //-- private methods -----
+void AppStage_MagnetometerCalibration::request_playspace_info()
+{
+	if (m_menuState != AppStage_MagnetometerCalibration::pendingPlayspaceRequest)
+	{
+		m_menuState = AppStage_MagnetometerCalibration::pendingPlayspaceRequest;
+
+		// Tell the psmove service that we we want a list of HMDs connected to this machine
+		RequestPtr request(new PSMoveProtocol::Request());
+		request->set_type(PSMoveProtocol::Request_RequestType_GET_PLAYSPACE_OFFSETS);
+
+		PSMRequestID request_id;
+		PSM_SendOpaqueRequest(&request, &request_id);
+		PSM_RegisterCallback(request_id, AppStage_MagnetometerCalibration::handle_playspace_info_response, this);
+	}
+}
+
+void AppStage_MagnetometerCalibration::handle_playspace_info_response(
+	const PSMResponseMessage *response_message,
+	void *userdata)
+{
+	AppStage_MagnetometerCalibration *thisPtr = static_cast<AppStage_MagnetometerCalibration *>(userdata);
+
+	const PSMResult ResultCode = response_message->result_code;
+	const PSMResponseHandle response_handle = response_message->opaque_response_handle;
+
+	switch (ResultCode)
+	{
+	case PSMResult_Success:
+	{
+		const PSMoveProtocol::Response *response = GET_PSMOVEPROTOCOL_RESPONSE(response_handle);
+
+		thisPtr->m_playspaceYawOffset = response->result_get_playspace_offsets().playspace_orientation_yaw();
+
+		thisPtr->m_menuState = AppStage_MagnetometerCalibration::waitingForStreamStartResponse;
+	} break;
+
+	case PSMResult_Error:
+	case PSMResult_Canceled:
+	case PSMResult_Timeout:
+	{
+		thisPtr->m_menuState = AppStage_MagnetometerCalibration::failedStreamStart;
+	} break;
+	}
+}
+
 void AppStage_MagnetometerCalibration::handle_acquire_controller(
     const PSMResponseMessage *response,
     void *userdata)

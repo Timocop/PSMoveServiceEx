@@ -31,6 +31,11 @@ public:
     }
 
 protected:
+	void request_playspace_info();
+	static void handle_playspace_info_response(
+		const PSMResponseMessage *response_message,
+		void *userdata);
+
     void request_set_gyroscope_calibration(
 		const PSMVector3f &raw_bias,
 		const float raw_drift, 
@@ -45,6 +50,7 @@ private:
     {
         inactive,
 
+		pendingPlayspaceRequest,
         waitingForStreamStartResponse,
         failedStreamStart,
         waitForStable,
@@ -58,6 +64,7 @@ private:
     PSMHeadMountedDisplay *m_hmdView;
     bool m_isHMDStreamActive;
     int m_lastHMDSeqNum;
+	float m_playspaceYawOffset;
 
     std::chrono::time_point<std::chrono::high_resolution_clock> m_lastSampleTime;
     bool m_bLastSampleTimeValid;

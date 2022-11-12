@@ -101,6 +101,7 @@ AppStage_AccelerometerCalibration::AppStage_AccelerometerCalibration(App *app)
     , m_controllerView(nullptr)
     , m_isControllerStreamActive(false)
     , m_lastControllerSeqNum(-1)
+	, m_playspaceYawOffset(0.f)
     , m_noiseSamples(new AccelerometerStatistics)
 {
 }
@@ -122,8 +123,6 @@ void AppStage_AccelerometerCalibration::enter()
     m_app->getOrbitCamera()->resetOrientation();
     m_app->getOrbitCamera()->setCameraOrbitRadius(1000.f); // zoom out to see the magnetometer data at scale
 
-    m_menuState = eCalibrationMenuState::waitingForStreamStartResponse;
-
     m_noiseSamples->clear();
 
     // Initialize the controller state
@@ -140,6 +139,8 @@ void AppStage_AccelerometerCalibration::enter()
 	PSMRequestID request_id;
 	PSM_StartControllerDataStreamAsync(m_controllerView->ControllerID, PSMStreamFlags_includeCalibratedSensorData, &request_id);
 	PSM_RegisterCallback(request_id, &AppStage_AccelerometerCalibration::handle_acquire_controller, this);
+
+	request_playspace_info();
 }
 
 void AppStage_AccelerometerCalibration::exit()
@@ -185,6 +186,9 @@ void AppStage_AccelerometerCalibration::update()
 
     switch (m_menuState)
     {
+	case eCalibrationMenuState::pendingPlayspaceRequest:
+	{
+	} break;
     case eCalibrationMenuState::waitingForStreamStartResponse:
         {
             if (bControllerDataUpdatedThisFrame)
@@ -260,7 +264,8 @@ void AppStage_AccelerometerCalibration::render()
 
     switch (m_menuState)
     {
-    case eCalibrationMenuState::waitingForStreamStartResponse:
+	case eCalibrationMenuState::pendingPlayspaceRequest:
+	case eCalibrationMenuState::waitingForStreamStartResponse:
     case eCalibrationMenuState::failedStreamStart:
         {
         } break;
@@ -314,11 +319,22 @@ void AppStage_AccelerometerCalibration::render()
 					switch(m_controllerView->ControllerType)
 					{
 					case PSMController_Move:
-						q= psm_quatf_to_glm_quat(m_controllerView->ControllerState.PSMoveState.Pose.Orientation);
+					{
+						// Compensate for playspace offsets
+						const Eigen::Quaternionf offset_yaw = eigen_quaternion_angle_axis(-m_playspaceYawOffset * k_degrees_to_radians, Eigen::Vector3f::UnitY());
+						const Eigen::Quaternionf eigen_quat = offset_yaw.inverse() * psm_quatf_to_eigen_quaternionf(m_controllerView->ControllerState.PSMoveState.Pose.Orientation);
+						q = glm::quat(eigen_quat.w(), eigen_quat.x(), eigen_quat.y(), eigen_quat.z());
 						break;
+					}
 					case PSMController_DualShock4:
-						q= psm_quatf_to_glm_quat(m_controllerView->ControllerState.PSDS4State.Pose.Orientation);
+					{
+						// Compensate for playspace offsets
+						const Eigen::Quaternionf offset_yaw = eigen_quaternion_angle_axis(-m_playspaceYawOffset * k_degrees_to_radians, Eigen::Vector3f::UnitY());
+						const Eigen::Quaternionf eigen_quat = offset_yaw.inverse() * psm_quatf_to_eigen_quaternionf(m_controllerView->ControllerState.PSDS4State.Pose.Orientation);
+						q = glm::quat(eigen_quat.w(), eigen_quat.x(), eigen_quat.y(), eigen_quat.z());
+
 						break;
+					}
 					}
 
 					glm::mat4 worldSpaceOrientation = glm::mat4_cast(q);
@@ -368,7 +384,17 @@ void AppStage_AccelerometerCalibration::renderUI()
 
     switch (m_menuState)
     {
-    case eCalibrationMenuState::waitingForStreamStartResponse:
+	case eCalibrationMenuState::pendingPlayspaceRequest:
+		{
+			ImGui::SetNextWindowPosCenter();
+			ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
+			ImGui::Begin(k_window_title, nullptr, window_flags);
+
+			ImGui::Text("Waiting for server response...");
+
+			ImGui::End();
+		} break;
+	case eCalibrationMenuState::waitingForStreamStartResponse:
         {
             ImGui::SetNextWindowPosCenter();
             ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
@@ -534,6 +560,51 @@ static void request_set_accelerometer_calibration(
 	calibration->set_variance(noise_variance);
 
     PSM_SendOpaqueRequest(&request, nullptr);
+}
+
+void AppStage_AccelerometerCalibration::request_playspace_info()
+{
+	if (m_menuState != AppStage_AccelerometerCalibration::pendingPlayspaceRequest)
+	{
+		m_menuState = AppStage_AccelerometerCalibration::pendingPlayspaceRequest;
+
+		// Tell the psmove service that we we want a list of HMDs connected to this machine
+		RequestPtr request(new PSMoveProtocol::Request());
+		request->set_type(PSMoveProtocol::Request_RequestType_GET_PLAYSPACE_OFFSETS);
+
+		PSMRequestID request_id;
+		PSM_SendOpaqueRequest(&request, &request_id);
+		PSM_RegisterCallback(request_id, AppStage_AccelerometerCalibration::handle_playspace_info_response, this);
+	}
+}
+
+void AppStage_AccelerometerCalibration::handle_playspace_info_response(
+	const PSMResponseMessage *response_message,
+	void *userdata)
+{
+	AppStage_AccelerometerCalibration *thisPtr = static_cast<AppStage_AccelerometerCalibration *>(userdata);
+
+	const PSMResult ResultCode = response_message->result_code;
+	const PSMResponseHandle response_handle = response_message->opaque_response_handle;
+
+	switch (ResultCode)
+	{
+	case PSMResult_Success:
+	{
+		const PSMoveProtocol::Response *response = GET_PSMOVEPROTOCOL_RESPONSE(response_handle);
+
+		thisPtr->m_playspaceYawOffset = response->result_get_playspace_offsets().playspace_orientation_yaw();
+
+		thisPtr->m_menuState = AppStage_AccelerometerCalibration::waitingForStreamStartResponse;
+	} break;
+
+	case PSMResult_Error:
+	case PSMResult_Canceled:
+	case PSMResult_Timeout:
+	{
+		thisPtr->m_menuState = AppStage_AccelerometerCalibration::failedStreamStart;
+	} break;
+	}
 }
 
 void AppStage_AccelerometerCalibration::handle_acquire_controller(

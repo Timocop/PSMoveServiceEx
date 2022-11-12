@@ -37,8 +37,8 @@ protected:
 	{
 		inactive,
 
+		pendingPlayspaceRequest,
 		pendingTrackingSpaceSettings,
-		failedTrackingSpaceSettings,
 		waitingForStreamStartResponse,
 		failedStreamStart,
 		waitForStable,
@@ -51,6 +51,10 @@ protected:
 	void onExitState(eCalibrationMenuState newState);
 	void onEnterState(eCalibrationMenuState newState);
 
+	void request_playspace_info();
+	static void handle_playspace_info_response(
+		const PSMResponseMessage *response_message,
+		void *userdata);
 	void request_tracking_space_settings();
 	static void handle_tracking_space_settings_response(
 		const PSMResponseMessage *response_message,
@@ -70,6 +74,7 @@ private:
     PSMController *m_controllerView;
     bool m_isControllerStreamActive;
     int m_lastControllerSeqNum;
+	float m_playspaceYawOffset;
 
     std::chrono::time_point<std::chrono::high_resolution_clock> m_lastSampleTime;
     bool m_bLastSampleTimeValid;

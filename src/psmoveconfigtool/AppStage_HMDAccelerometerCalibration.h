@@ -31,6 +31,11 @@ public:
     }
 
 protected:
+	void request_playspace_info();
+	static void handle_playspace_info_response(
+		const PSMResponseMessage *response_message,
+		void *userdata);
+
     static void handle_acquire_hmd(
         const PSMResponseMessage *response,
         void *userdata);
@@ -41,6 +46,7 @@ private:
     {
         inactive,
 
+		pendingPlayspaceRequest,
         waitingForStreamStartResponse,
         failedStreamStart,
         placeHMD,
@@ -55,6 +61,7 @@ private:
     PSMHeadMountedDisplay *m_hmdView;
     bool m_isHMDStreamActive;
     int m_lastHMDSeqNum;
+	float m_playspaceYawOffset;
 
     PSMVector3i m_lastRawAccelerometer;
     PSMVector3f m_lastCalibratedAccelerometer;

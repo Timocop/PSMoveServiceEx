@@ -35,6 +35,11 @@ public:
     }
 
 protected:
+	void request_playspace_info();
+	static void handle_playspace_info_response(
+		const PSMResponseMessage *response_message,
+		void *userdata);
+
     static void handle_acquire_controller(
         const PSMResponseMessage *response,
         void *userdata);
@@ -45,6 +50,7 @@ private:
     {
         inactive,
 
+		pendingPlayspaceRequest,
         waitingForStreamStartResponse,
         failedStreamStart,
         placeController,
@@ -66,6 +72,7 @@ private:
     PSMController *m_controllerView;
     bool m_isControllerStreamActive;
     int m_lastControllerSeqNum;
+	float m_playspaceYawOffset;
 
     PSMVector3f m_lastCalibratedAccelerometer;
 

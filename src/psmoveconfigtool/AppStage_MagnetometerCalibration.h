@@ -28,6 +28,11 @@ public:
     { m_bBypassCalibration= bFlag; }
 
 protected:
+	void request_playspace_info();
+	static void handle_playspace_info_response(
+		const PSMResponseMessage *response_message,
+		void *userdata);
+
     static void handle_acquire_controller(
         const PSMResponseMessage *response,
         void *userdata);
@@ -44,6 +49,7 @@ private:
     {
         inactive,
         
+		pendingPlayspaceRequest,
         waitingForStreamStartResponse,
         failedStreamStart,
         failedBadCalibration,
@@ -58,6 +64,7 @@ private:
     bool m_bBypassCalibration;
     eCalibrationMenuState m_menuState;
     const char *m_pendingAppStage;
+	float m_playspaceYawOffset;
 
     PSMController *m_controllerView;
     bool m_isControllerStreamActive;

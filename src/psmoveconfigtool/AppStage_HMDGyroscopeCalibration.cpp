@@ -105,6 +105,7 @@ AppStage_HMDGyroscopeCalibration::AppStage_HMDGyroscopeCalibration(App *app)
     , m_hmdView(nullptr)
     , m_isHMDStreamActive(false)
     , m_lastHMDSeqNum(-1)
+	, m_playspaceYawOffset(0.f)
     , m_lastRawGyroscope()
     , m_errorSamples(new HMDGyroscopeErrorSamples)
 {
@@ -124,8 +125,6 @@ void AppStage_HMDGyroscopeCalibration::enter()
     m_app->setCameraType(_cameraOrbit);
     m_app->getOrbitCamera()->resetOrientation();
     m_app->getOrbitCamera()->setCameraOrbitRadius(1000.f); // zoom out to see the magnetometer data at scale
-
-    m_menuState = eCalibrationMenuState::waitingForStreamStartResponse;
 
     // Reset all of the sampling state
     m_errorSamples->clear();
@@ -155,6 +154,8 @@ void AppStage_HMDGyroscopeCalibration::enter()
 		PSMStreamFlags_includeRawSensorData, 
 		&requestId);
 	PSM_RegisterCallback(requestId, &AppStage_HMDGyroscopeCalibration::handle_acquire_hmd, this);
+
+	request_playspace_info();
 }
 
 void AppStage_HMDGyroscopeCalibration::exit()
@@ -215,6 +216,9 @@ void AppStage_HMDGyroscopeCalibration::update()
 
     switch (m_menuState)
     {
+	case eCalibrationMenuState::pendingPlayspaceRequest:
+		{
+		} break;
     case eCalibrationMenuState::waitingForStreamStartResponse:
         {
             if (bControllerDataUpdatedThisFrame)
@@ -334,6 +338,7 @@ void AppStage_HMDGyroscopeCalibration::render()
 
     switch (m_menuState)
     {
+	case eCalibrationMenuState::pendingPlayspaceRequest:
     case eCalibrationMenuState::waitingForStreamStartResponse:
     case eCalibrationMenuState::failedStreamStart:
         {
@@ -368,6 +373,11 @@ void AppStage_HMDGyroscopeCalibration::render()
 			PSMQuatf orientation;
 			if (PSM_GetHmdOrientation(m_hmdView->HmdID, &orientation) == PSMResult_Success)
 			{
+				// Compensate for playspace offsets
+				const Eigen::Quaternionf offset_yaw = eigen_quaternion_angle_axis(-m_playspaceYawOffset * k_degrees_to_radians, Eigen::Vector3f::UnitY());
+				const Eigen::Quaternionf eigen_quat = offset_yaw.inverse() * psm_quatf_to_eigen_quaternionf(orientation);
+				orientation = PSM_QuatfCreate(eigen_quat.w(), eigen_quat.x(), eigen_quat.y(), eigen_quat.z());
+
 				glm::quat q= psm_quatf_to_glm_quat(orientation);
 				glm::mat4 worldSpaceOrientation= glm::mat4_cast(q);
 				glm::mat4 worldTransform = glm::scale(worldSpaceOrientation, glm::vec3(modelScale, modelScale, modelScale));
@@ -396,7 +406,17 @@ void AppStage_HMDGyroscopeCalibration::renderUI()
 
     switch (m_menuState)
     {
-    case eCalibrationMenuState::waitingForStreamStartResponse:
+	case eCalibrationMenuState::pendingPlayspaceRequest:
+		{
+			ImGui::SetNextWindowPosCenter();
+			ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
+			ImGui::Begin(k_window_title, nullptr, window_flags);
+
+			ImGui::Text("Waiting for server response...");
+
+			ImGui::End();
+		} break;
+	case eCalibrationMenuState::waitingForStreamStartResponse:
         {
             ImGui::SetNextWindowPosCenter();
             ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
@@ -569,6 +589,51 @@ void AppStage_HMDGyroscopeCalibration::request_set_gyroscope_calibration(
     calibration->set_raw_variance(raw_variance);
 
 	PSM_SendOpaqueRequest(&request, nullptr);
+}
+
+void AppStage_HMDGyroscopeCalibration::request_playspace_info()
+{
+	if (m_menuState != AppStage_HMDGyroscopeCalibration::pendingPlayspaceRequest)
+	{
+		m_menuState = AppStage_HMDGyroscopeCalibration::pendingPlayspaceRequest;
+
+		// Tell the psmove service that we we want a list of HMDs connected to this machine
+		RequestPtr request(new PSMoveProtocol::Request());
+		request->set_type(PSMoveProtocol::Request_RequestType_GET_PLAYSPACE_OFFSETS);
+
+		PSMRequestID request_id;
+		PSM_SendOpaqueRequest(&request, &request_id);
+		PSM_RegisterCallback(request_id, AppStage_HMDGyroscopeCalibration::handle_playspace_info_response, this);
+	}
+}
+
+void AppStage_HMDGyroscopeCalibration::handle_playspace_info_response(
+	const PSMResponseMessage *response_message,
+	void *userdata)
+{
+	AppStage_HMDGyroscopeCalibration *thisPtr = static_cast<AppStage_HMDGyroscopeCalibration *>(userdata);
+
+	const PSMResult ResultCode = response_message->result_code;
+	const PSMResponseHandle response_handle = response_message->opaque_response_handle;
+
+	switch (ResultCode)
+	{
+	case PSMResult_Success:
+	{
+		const PSMoveProtocol::Response *response = GET_PSMOVEPROTOCOL_RESPONSE(response_handle);
+
+		thisPtr->m_playspaceYawOffset = response->result_get_playspace_offsets().playspace_orientation_yaw();
+
+		thisPtr->m_menuState = AppStage_HMDGyroscopeCalibration::waitingForStreamStartResponse;
+	} break;
+
+	case PSMResult_Error:
+	case PSMResult_Canceled:
+	case PSMResult_Timeout:
+	{
+		thisPtr->m_menuState = AppStage_HMDGyroscopeCalibration::failedStreamStart;
+	} break;
+	}
 }
 
 void AppStage_HMDGyroscopeCalibration::handle_acquire_hmd(
