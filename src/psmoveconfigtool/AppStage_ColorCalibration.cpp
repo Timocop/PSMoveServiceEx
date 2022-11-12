@@ -29,7 +29,8 @@
 #define snprintf _snprintf
 #endif
 
-#define MAX_COLOR_AUTODETECT_PROBING 64
+const int k_color_autodetect_probe_max = 64; 
+const int k_color_autodetect_probe_step = 8;
 
 //-- statics ----
 const char *AppStage_ColorCalibration::APP_STAGE_NAME = "ColorCalibration";
@@ -674,7 +675,7 @@ void AppStage_ColorCalibration::renderUI()
 
 		ImGui::Text(
 			"Color sampling is in progress! Please wait...\n"
-			"Do not move the controllers or obscure the tracking light!\n"
+			"Do not move the controllers or obscure the controller bulb!\n"
 			"[sampling colors...]"
 		);
 		
@@ -728,8 +729,14 @@ void AppStage_ColorCalibration::renderUI()
 				preset.saturation_center = hsv_pixel[1];
 				preset.value_center = hsv_pixel[2];
 
-				auto_adjust_color_sensitivity(preset);
-
+				if (m_masterControllerView != nullptr)
+				{
+					auto_adjust_color_sensitivity(preset, m_masterControllerView->ControllerType != PSMController_Virtual && !is_tracker_virtual());
+				}
+				else
+				{
+					auto_adjust_color_sensitivity(preset, !is_tracker_virtual());
+				}
 				request_tracker_set_color_preset(m_masterTrackingColorType, preset);
 
 				if (m_masterControllerView != nullptr)
@@ -1817,8 +1824,7 @@ void AppStage_ColorCalibration::renderUI()
 		preset.saturation_center = hsv_pixel[1];
 		preset.value_center = hsv_pixel[2];
 
-		auto_adjust_color_sensitivity(preset);
-
+		auto_adjust_color_sensitivity(preset, m_masterControllerView->ControllerType != PSMController_Virtual && !is_tracker_virtual());
 		request_tracker_set_color_preset(m_masterTrackingColorType, preset);
 		request_set_controller_tracking_color(m_masterControllerView, new_color);
 
@@ -1916,7 +1922,7 @@ void AppStage_ColorCalibration::renderUI()
 
 		ImGui::TextWrapped(
 			"Place all controllers in the middle of your play space so all trackers can see them. "
-			"Do not obscure the tracking light while the sampling process is running otherwise the "
+			"Do not obscure the controller bulb while the sampling process is running otherwise the "
 			"sampled colors might be inaccurate!"
 		);
 
@@ -1941,7 +1947,7 @@ void AppStage_ColorCalibration::renderUI()
 					m_iDetectingControllersLeft = 1;
 				}
 
-				m_iDetectingExposure = 8;
+				m_iDetectingExposure = k_color_autodetect_probe_step;
 				setState(eMenuState::detection_exposure_adjust);
 			}
 		}
@@ -1962,7 +1968,7 @@ void AppStage_ColorCalibration::renderUI()
 					m_iDetectingControllersLeft = 1;
 				}
 
-				m_iDetectingExposure = 8;
+				m_iDetectingExposure = k_color_autodetect_probe_step;
 				setState(eMenuState::detection_exposure_adjust);
 			}
 		}
@@ -2205,9 +2211,9 @@ void AppStage_ColorCalibration::renderUI()
 					}
 					else
 					{
-						m_iDetectingExposure += 8;
+						m_iDetectingExposure += k_color_autodetect_probe_step;
 
-						if (m_iDetectingExposure >= MAX_COLOR_AUTODETECT_PROBING)
+						if (m_iDetectingExposure >= k_color_autodetect_probe_max)
 						{
 							m_iDetectingFailReason = eDetectionFailReason::failreason_no_detection;
 							setState(eMenuState::detection_fail_pre);
@@ -2240,10 +2246,8 @@ void AppStage_ColorCalibration::renderUI()
 			preset.value_center = hsv_pixel[2];
 			preset.value_range = 32.f;
 
-			auto_adjust_color_sensitivity(preset);
-
+			auto_adjust_color_sensitivity(preset, m_masterControllerView->ControllerType != PSMController_Virtual && !is_tracker_virtual());
 			request_tracker_set_color_preset(m_masterTrackingColorType, preset);
-
 			request_set_controller_tracking_color(m_masterControllerView, new_color);
 
 			if (new_color == PSMTrackingColorType_Magenta)
@@ -2307,12 +2311,12 @@ void AppStage_ColorCalibration::renderUI()
 
 			ImGui::TextWrapped("Color sampling failed!");
 			ImGui::TextWrapped("Unable to find controller #%d on tracker #%d!", m_masterControllerView->ControllerID, m_trackerView->tracker_info.tracker_id);
-		 	ImGui::TextWrapped("Make sure the controller tracking light is not being obscured during the sampling process.");
-			ImGui::TextWrapped("Otherwise use the manual color detection method.");
+		 	ImGui::TextWrapped("Make sure the controller bulb is not being obscured during the sampling process.");
+			ImGui::TextWrapped("Otherwise use the manual color detection method instead.");
 
 			if (ImGui::Button("Try Again"))
 			{
-				m_iDetectingExposure = 8;
+				m_iDetectingExposure = k_color_autodetect_probe_step;
 				setState(eMenuState::detection_exposure_adjust);
 			}
 
@@ -2370,11 +2374,11 @@ void AppStage_ColorCalibration::renderUI()
 			ImGui::TextWrapped("Unable to find controller #%d on tracker #%d!", m_masterControllerView->ControllerID, m_trackerView->tracker_info.tracker_id);
 			ImGui::TextWrapped("Could not automatically adjust exposure/gain on virtual trackers!");
 			ImGui::TextWrapped("Please adjust exposure/gain on this tracker manually and try again.");
-			ImGui::TextWrapped("Otherwise use the manual color detection method.");
+			ImGui::TextWrapped("Otherwise use the manual color detection method instead.");
 		
 			if (ImGui::Button("Try Again"))
 			{
-				m_iDetectingExposure = 8;
+				m_iDetectingExposure = k_color_autodetect_probe_step;
 				setState(eMenuState::detection_exposure_adjust);
 			}
 
@@ -2398,7 +2402,7 @@ void AppStage_ColorCalibration::renderUI()
 
 			if (ImGui::Button("Try Again"))
 			{
-				m_iDetectingExposure = 8;
+				m_iDetectingExposure = k_color_autodetect_probe_step;
 				setState(eMenuState::detection_exposure_adjust);
 			}
 
@@ -3355,7 +3359,7 @@ void AppStage_ColorCalibration::request_change_tracker(int step)
     }
 }
 
-void AppStage_ColorCalibration::auto_adjust_color_sensitivity(TrackerColorPreset &preset)
+void AppStage_ColorCalibration::auto_adjust_color_sensitivity(TrackerColorPreset &preset, bool isPSmoveDevice)
 {
 	// Additional color details
 	// MAGENTA requires some HEU_RANGE adjustments to track propperly otherwise it becomes too blocky. None of the other colors seems to be near it at all anyways?
@@ -3368,49 +3372,112 @@ void AppStage_ColorCalibration::auto_adjust_color_sensitivity(TrackerColorPreset
 	float hueRangeMulti = 1.0;
 	float saturationRangeMulti = 1.0f;
 
-	switch (m_masterTrackingColorType)
+	// Only fine tune known psmoves and pseyes because it could cause issues with non-psmove hardware
+	if (isPSmoveDevice)
 	{
-	case PSMTrackingColorType_Magenta:
-	{
-		if (m_bColorCollisionPrevent)
+		switch (m_masterTrackingColorType)
 		{
-			hueRangeMulti = 1.5f; // Improve color detection. No other color near it?!
-		}
-		else
+		case PSMTrackingColorType_Magenta:
 		{
-			hueRangeMulti = 2.0f; // Improve color detection. No other color near it?!
+			if (m_bColorCollisionPrevent)
+			{
+				hueRangeMulti = 1.0f;
+			}
+			else
+			{
+				hueRangeMulti = 1.5f; // Improve color detection. No other color near it?!
+			}
+			break;
 		}
-		break;
+		case PSMTrackingColorType_Cyan:
+		{
+			if (m_bColorCollisionPrevent)
+				hueRangeMulti = 0.5f; // Blue/Green collsion prevention
+			break;
+		}
+		case PSMTrackingColorType_Yellow:
+		{
+			if (m_bColorCollisionPrevent)
+				hueRangeMulti = 0.5f; // Red collision prevention
+
+			saturationRangeMulti = 2.0f;
+			break;
+		}
+		case PSMTrackingColorType_Red:
+		{
+			if (m_bColorCollisionPrevent)
+				hueRangeMulti = 0.5f; // Yellow collision prevention
+			break;
+		}
+		case PSMTrackingColorType_Green:
+		{
+			if (m_bColorCollisionPrevent)
+				hueRangeMulti = 0.5f; // Cyan collision prevention
+			break;
+		}
+		case PSMTrackingColorType_Blue:
+		{
+			if (m_bColorCollisionPrevent)
+				hueRangeMulti = 0.5f; // Cyan collision prevention
+			break;
+		}
+		default:
+		{
+			// Custom color
+			if (m_bColorCollisionPrevent)
+				hueRangeMulti = 0.5f;
+			break;
+		}
+		}
 	}
-	case PSMTrackingColorType_Cyan:
+	else
 	{
-		if (m_bColorCollisionPrevent)
-			hueRangeMulti = 0.5f; // Blue/Green collsion prevention
-		break;
-	}
-	case PSMTrackingColorType_Yellow:
-	{
-		saturationRangeMulti = 2.0f;
-		break;
-	}
-	case PSMTrackingColorType_Red:
-	{
-		if(m_bColorCollisionPrevent)
-			hueRangeMulti = 0.5f; // Yellow collision prevention
-		break;
-	}
-	case PSMTrackingColorType_Green:
-	{
-		if (m_bColorCollisionPrevent)
-			hueRangeMulti = 0.5f; // Cyan collision prevention
-		break;
-	}
-	case PSMTrackingColorType_Blue:
-	{
-		if (m_bColorCollisionPrevent)
-			hueRangeMulti = 0.5f; // Cyan collision prevention
-		break;
-	}
+		switch (m_masterTrackingColorType)
+		{
+		case PSMTrackingColorType_Magenta:
+		{
+			if (m_bColorCollisionPrevent)
+				hueRangeMulti = 0.5f;
+			break;
+		}
+		case PSMTrackingColorType_Cyan:
+		{
+			if (m_bColorCollisionPrevent)
+				hueRangeMulti = 0.5f; // Blue/Green collsion prevention
+			break;
+		}
+		case PSMTrackingColorType_Yellow:
+		{
+			if (m_bColorCollisionPrevent)
+				hueRangeMulti = 0.5f; // Red collision prevention
+			break;
+		}
+		case PSMTrackingColorType_Red:
+		{
+			if (m_bColorCollisionPrevent)
+				hueRangeMulti = 0.5f; // Yellow collision prevention
+			break;
+		}
+		case PSMTrackingColorType_Green:
+		{
+			if (m_bColorCollisionPrevent)
+				hueRangeMulti = 0.5f; // Cyan collision prevention
+			break;
+		}
+		case PSMTrackingColorType_Blue:
+		{
+			if (m_bColorCollisionPrevent)
+				hueRangeMulti = 0.5f; // Cyan collision prevention
+			break;
+		}
+		default:
+		{
+			// Custom color
+			if (m_bColorCollisionPrevent)
+				hueRangeMulti = 0.5f;
+			break;
+		}
+		}
 	}
 
 	switch (m_iColorSensitivity)
