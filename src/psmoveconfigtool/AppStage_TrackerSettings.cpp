@@ -234,62 +234,75 @@ void AppStage_TrackerSettings::renderUI()
             ImGui::SameLine();
             ImGui::Text("Tracker: %d", m_selectedTrackerIndex);
 
-            ImGui::BulletText("Tracker ID: %d", trackerInfo.tracker_id);
-
-			// Virtual trackers have a common device path "VirtualTracker_#"
-			// ###Externet $TODO: Add better virtual tracker check. Probably should do that after changing protocols.
-			bool is_virtual = (trackerInfo.device_path[0] == 'V');
-
-            switch (trackerInfo.tracker_type)
-            {
-			case PSMTracker_PS3Eye:
 			{
-				if (is_virtual)
+				static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
+				ImGui::BeginChild("##TrackerInfoChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
+				ImGui::BeginGroup();
 				{
-					ImGui::BulletText("Controller Type: PS3 Eye (Virtual)");
-				}
-				else
-				{
-					ImGui::BulletText("Controller Type: PS3 Eye");
-				}
-			} break;
-            default:
-                assert(0 && "Unreachable");
-            }
+					ImGui::Text("Tracker Information:");
+					ImGui::Separator();
+					ImGui::BulletText("Tracker ID: %d", trackerInfo.tracker_id);
 
-			if (is_virtual)
-			{
-				ImGui::BulletText("Controller Driver: Virtual");
+					// Virtual trackers have a common device path "VirtualTracker_#"
+					// ###Externet $TODO: Add better virtual tracker check. Probably should do that after changing protocols.
+					bool is_virtual = (trackerInfo.device_path[0] == 'V');
+
+					switch (trackerInfo.tracker_type)
+					{
+					case PSMTracker_PS3Eye:
+					{
+						if (is_virtual)
+						{
+							ImGui::BulletText("Controller Type: PS3 Eye (Virtual)");
+						}
+						else
+						{
+							ImGui::BulletText("Controller Type: PS3 Eye");
+						}
+					} break;
+					default:
+						assert(0 && "Unreachable");
+					}
+
+					if (is_virtual)
+					{
+						ImGui::BulletText("Controller Driver: Virtual");
+					}
+					else
+					{
+						switch (trackerInfo.tracker_driver)
+						{
+						case PSMDriver_LIBUSB:
+						{
+							ImGui::BulletText("Controller Driver: LIBUSB");
+						} break;
+						case PSMDriver_CL_EYE:
+						{
+							ImGui::BulletText("Controller Driver: CLEye");
+						} break;
+						case PSMDriver_CL_EYE_MULTICAM:
+						{
+							ImGui::BulletText("Controller Driver: CLEye(Multicam SDK)");
+						} break;
+						case PSMDriver_GENERIC_WEBCAM:
+						{
+							ImGui::BulletText("Controller Driver: Generic Webcam");
+						} break;
+						default:
+							assert(0 && "Unreachable");
+						}
+					}
+
+					ImGui::BulletText("Shared Mem Name: %s", trackerInfo.shared_memory_name);
+					ImGui::BulletText("Device Path: ");
+					ImGui::SameLine();
+					ImGui::TextWrapped("%s", trackerInfo.device_path);
+				}
+				ImGui::EndGroup();
+				if(ImGui::IsItemVisible())
+					lastChildVec = ImGui::GetItemRectSize();
+				ImGui::EndChild();
 			}
-			else
-			{
-				switch (trackerInfo.tracker_driver)
-				{
-				case PSMDriver_LIBUSB:
-				{
-					ImGui::BulletText("Controller Driver: LIBUSB");
-				} break;
-				case PSMDriver_CL_EYE:
-				{
-					ImGui::BulletText("Controller Driver: CLEye");
-				} break;
-				case PSMDriver_CL_EYE_MULTICAM:
-				{
-					ImGui::BulletText("Controller Driver: CLEye(Multicam SDK)");
-				} break;
-				case PSMDriver_GENERIC_WEBCAM:
-				{
-					ImGui::BulletText("Controller Driver: Generic Webcam");
-				} break;
-				default:
-					assert(0 && "Unreachable");
-				}
-			}
-
-            ImGui::BulletText("Shared Mem Name: %s", trackerInfo.shared_memory_name);
-            ImGui::BulletText("Device Path: ");
-            ImGui::SameLine();
-            ImGui::TextWrapped("%s", trackerInfo.device_path);
 
             if (m_app->getIsLocalServer())
             {
@@ -322,176 +335,199 @@ void AppStage_TrackerSettings::renderUI()
 			{
 				if (ImGui::CollapsingHeader("Controllers", 0, true, true))
 				{
-					if (m_selectedControllerIndex >= 0)
+					static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
+					ImGui::BeginChild("##ControllersChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
+					ImGui::BeginGroup();
 					{
-						if (ImGui::Button(" < ##Controller"))
+						if (m_selectedControllerIndex >= 0)
 						{
-							--m_selectedControllerIndex;
-						}
-					}
-					else
-					{
-						ImGui::Button(" < ##Controller");
-					}
-					ImGui::SameLine();
-
-					if (m_selectedControllerIndex + 1 < static_cast<int>(m_controllerInfos.size()))
-					{
-						if (ImGui::Button(" > ##Controller"))
-						{
-							++m_selectedControllerIndex;
-						}
-					}
-					else
-					{
-						ImGui::Button(" > ##Controller");
-					}
-					ImGui::SameLine();
-
-					if (m_selectedControllerIndex != -1)
-					{
-						const AppStage_TrackerSettings::ControllerInfo &controllerInfo =
-							m_controllerInfos[m_selectedControllerIndex];
-
-						if (controllerInfo.ControllerType == PSMController_Move ||
-							controllerInfo.ControllerType == PSMController_Virtual)
-						{
-							const char * szControllerLabel = (controllerInfo.ControllerType == PSMController_Move) ? "PSMove" : "Virtual";
-
-							if (0 <= controllerInfo.TrackingColorType && controllerInfo.TrackingColorType < PSMTrackingColorType_MaxColorTypes)
+							if (ImGui::Button(" < ##Controller"))
 							{
-								const char *colors[] = {
-									"Magenta","Cyan","Yellow","Red","Green","Blue",
-									"Custom0" ,"Custom1" ,"Custom2" ,"Custom3" ,"Custom4" ,"Custom5" ,"Custom6" ,"Custom7" ,"Custom8" ,"Custom9"
-								};
-
-								ImGui::Text("Controller: %d (%s) - %s",
-									m_selectedControllerIndex,
-									szControllerLabel,
-									colors[controllerInfo.TrackingColorType]);
-							}
-							else
-							{
-								ImGui::Text("Controller: %d (%s)", m_selectedControllerIndex, szControllerLabel);
+								--m_selectedControllerIndex;
 							}
 						}
 						else
 						{
-							ImGui::Text("Controller: %d (DualShock4)", m_selectedControllerIndex);
+							ImGui::Button(" < ##Controller");
 						}
-					}
-					else
-					{
-						ImGui::Text("Controller: <ALL>");
-					}
+						ImGui::SameLine();
 
-					{
-						int controllerID = (m_selectedControllerIndex != -1) ? m_controllerInfos[m_selectedControllerIndex].ControllerID : -1;
-
-						ImGui::Indent();
-						if (ImGui::CollapsingHeader("Calibration##ControllerCalibration", 0, true, true))
+						if (m_selectedControllerIndex + 1 < static_cast<int>(m_controllerInfos.size()))
 						{
-							if (m_app->getIsLocalServer())
+							if (ImGui::Button(" > ##Controller"))
 							{
-								if (ImGui::Button("Calibrate Tracking Colors##Controller") || m_gotoControllerColorCalib)
+								++m_selectedControllerIndex;
+							}
+						}
+						else
+						{
+							ImGui::Button(" > ##Controller");
+						}
+						ImGui::SameLine();
+
+						if (m_selectedControllerIndex != -1)
+						{
+							const AppStage_TrackerSettings::ControllerInfo &controllerInfo =
+								m_controllerInfos[m_selectedControllerIndex];
+
+							if (controllerInfo.ControllerType == PSMController_Move ||
+								controllerInfo.ControllerType == PSMController_Virtual)
+							{
+								const char * szControllerLabel = (controllerInfo.ControllerType == PSMController_Move) ? "PSMove" : "Virtual";
+
+								if (0 <= controllerInfo.TrackingColorType && controllerInfo.TrackingColorType < PSMTrackingColorType_MaxColorTypes)
 								{
-									const ControllerInfo *controller = get_selected_controller();
-									if (controller != NULL) {
-										m_app->getAppStage<AppStage_ColorCalibration>()->set_override_controller_id(controller->ControllerID);
-										m_app->getAppStage<AppStage_ColorCalibration>()->set_override_hmd_id(-1);
-										m_app->getAppStage<AppStage_ColorCalibration>()->set_override_tracking_color(controller->TrackingColorType);
-									}
-									m_app->setAppStage(AppStage_ColorCalibration::APP_STAGE_NAME);
+									const char *colors[] = {
+										"Magenta","Cyan","Yellow","Red","Green","Blue",
+										"Custom0" ,"Custom1" ,"Custom2" ,"Custom3" ,"Custom4" ,"Custom5" ,"Custom6" ,"Custom7" ,"Custom8" ,"Custom9"
+									};
+
+									ImGui::Text("Controller: %d (%s) - %s",
+										m_selectedControllerIndex,
+										szControllerLabel,
+										colors[controllerInfo.TrackingColorType]);
 								}
-
-								if (ImGui::Button("Calibrate Tracker Poses##Controller"))
+								else
 								{
-									AppStage_ComputeTrackerPoses::enterStageAndCalibrateTrackersWithController(m_app, controllerID);
+									ImGui::Text("Controller: %d (%s)", m_selectedControllerIndex, szControllerLabel);
 								}
-
-								if (ImGui::Button("Calibrate Optical Noise##Controller"))
-								{
-									const PSMClientTrackerInfo &trackerInfo = m_trackerInfos[m_selectedTrackerIndex];
-									const ControllerInfo *controller = get_selected_controller();
-									if (controller != NULL)
-									{
-										m_app->getAppStage<AppStage_OpticalCalibration>()->setBypassCalibrationFlag(false);
-										m_app->getAppStage<AppStage_OpticalCalibration>()->setTargetTrackerId(trackerInfo.tracker_id);
-										m_app->getAppStage<AppStage_OpticalCalibration>()->setTargetControllerId(controller->ControllerID);
-										m_app->setAppStage(AppStage_OpticalCalibration::APP_STAGE_NAME);
-									}
-								}
-
-								if (ImGui::IsItemHovered())
-									ImGui::SetTooltip(
-										"NOTE: This only appiles for following positional filters:\n"
-										" - ComplimentaryOpticalIMU\n"
-										" - PositionKalman"
-									);
-
-
-								/*ImGui::Separator();
-
-								if (ImGui::Button("Optical Playspace Recenter##Controller"))
-								{
-									const ControllerInfo *controller = get_selected_controller();
-									if (controller != NULL)
-									{
-										m_app->getAppStage<AppStage_OpticalRecenter>()->setTargetControllerId(controller->ControllerID);
-										m_app->getAppStage<AppStage_OpticalRecenter>()->setTargetTrackerSettings(this);
-										m_app->setAppStage(AppStage_OpticalRecenter::APP_STAGE_NAME);
-									}
-								}*/
-
 							}
 							else
 							{
-								ImGui::TextDisabled("Calibrate Tracking Colors");
-								ImGui::TextDisabled("Calibrate Tracker Poses");
-								ImGui::TextDisabled("Calibrate Optical Noise");
-
-								/*ImGui::Separator();
-
-								ImGui::TextDisabled("Optical Playspace Recenter");*/
+								ImGui::Text("Controller: %d (DualShock4)", m_selectedControllerIndex);
 							}
-
+						}
+						else
+						{
+							ImGui::Text("Controller: <ALL>");
 						}
 
-						if (ImGui::CollapsingHeader("Testing##ControllerTesting", 0, true, true))
 						{
-							if (ImGui::Button("Test Tracking Colors##Controller") || m_gotoTrackingControllerVideo)
+							int controllerID = (m_selectedControllerIndex != -1) ? m_controllerInfos[m_selectedControllerIndex].ControllerID : -1;
+
+							if (ImGui::CollapsingHeader("Calibration##ControllerCalibration", 0, true, true))
 							{
-								if (m_gotoTrackingControllerVideo) m_gotoTrackingControllerVideo = false;
-								m_app->getAppStage<AppStage_ComputeTrackerPoses>()->set_tracker_id(m_selectedTrackerIndex);
-								AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, controllerID, -1);
-							}
-							if (ImGui::Button("Test Tracking Pose##Controller") || m_gotoTestControllerTracking)
-							{
-								if (m_gotoTestControllerTracking) m_gotoTestControllerTracking = false;
-								AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, controllerID, -1);
-							}
-							if (ImGui::Button("Test Optical Noise##Controller"))
-							{
-								const PSMClientTrackerInfo &trackerInfo = m_trackerInfos[m_selectedTrackerIndex];
-								const ControllerInfo *controller = get_selected_controller();
-								if (controller != NULL)
+								static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
+								ImGui::BeginChild("##ControllerCalibrationChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
+								ImGui::BeginGroup();
 								{
-									m_app->getAppStage<AppStage_OpticalCalibration>()->setBypassCalibrationFlag(true);
-									m_app->getAppStage<AppStage_OpticalCalibration>()->setTargetTrackerId(trackerInfo.tracker_id);
-									m_app->getAppStage<AppStage_OpticalCalibration>()->setTargetControllerId(controller->ControllerID);
-									m_app->setAppStage(AppStage_OpticalCalibration::APP_STAGE_NAME);
-								}
-							}
-						}
-						ImGui::Unindent();
+									if (m_app->getIsLocalServer())
+									{
+										if (ImGui::Button("Calibrate Tracking Colors##Controller") || m_gotoControllerColorCalib)
+										{
+											const ControllerInfo *controller = get_selected_controller();
+											if (controller != NULL) {
+												m_app->getAppStage<AppStage_ColorCalibration>()->set_override_controller_id(controller->ControllerID);
+												m_app->getAppStage<AppStage_ColorCalibration>()->set_override_hmd_id(-1);
+												m_app->getAppStage<AppStage_ColorCalibration>()->set_override_tracking_color(controller->TrackingColorType);
+											}
+											m_app->setAppStage(AppStage_ColorCalibration::APP_STAGE_NAME);
+										}
 
-						if (m_gotoTrackingVideoALL)
-						{
-							m_gotoTrackingVideoALL = false;
-							m_app->getAppStage<AppStage_ComputeTrackerPoses>()->set_tracker_id(m_selectedTrackerIndex);
-							AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, -1, -1);
+										if (ImGui::Button("Calibrate Tracker Poses##Controller"))
+										{
+											AppStage_ComputeTrackerPoses::enterStageAndCalibrateTrackersWithController(m_app, controllerID);
+										}
+
+										if (ImGui::Button("Calibrate Optical Noise##Controller"))
+										{
+											const PSMClientTrackerInfo &trackerInfo = m_trackerInfos[m_selectedTrackerIndex];
+											const ControllerInfo *controller = get_selected_controller();
+											if (controller != NULL)
+											{
+												m_app->getAppStage<AppStage_OpticalCalibration>()->setBypassCalibrationFlag(false);
+												m_app->getAppStage<AppStage_OpticalCalibration>()->setTargetTrackerId(trackerInfo.tracker_id);
+												m_app->getAppStage<AppStage_OpticalCalibration>()->setTargetControllerId(controller->ControllerID);
+												m_app->setAppStage(AppStage_OpticalCalibration::APP_STAGE_NAME);
+											}
+										}
+
+										if (ImGui::IsItemHovered())
+											ImGui::SetTooltip(
+												"NOTE: This only appiles for following positional filters:\n"
+												" - ComplimentaryOpticalIMU\n"
+												" - PositionKalman"
+											);
+
+
+										//ImGui::Separator();
+
+										//if (ImGui::Button("Optical Playspace Recenter##Controller"))
+										//{
+										//	const ControllerInfo *controller = get_selected_controller();
+										//	if (controller != NULL)
+										//	{
+										//		m_app->getAppStage<AppStage_OpticalRecenter>()->setTargetControllerId(controller->ControllerID);
+										//		m_app->getAppStage<AppStage_OpticalRecenter>()->setTargetTrackerSettings(this);
+										//		m_app->setAppStage(AppStage_OpticalRecenter::APP_STAGE_NAME);
+										//	}
+										//}
+									}
+									else
+									{
+										ImGui::TextDisabled("Calibrate Tracking Colors");
+										ImGui::TextDisabled("Calibrate Tracker Poses");
+										ImGui::TextDisabled("Calibrate Optical Noise");
+
+										//ImGui::Separator();
+
+										//ImGui::TextDisabled("Optical Playspace Recenter");
+									}
+								}
+								ImGui::EndGroup();
+								if (ImGui::IsItemVisible())
+									lastChildVec2 = ImGui::GetItemRectSize();
+								ImGui::EndChild();
+							}
+
+							if (ImGui::CollapsingHeader("Testing##ControllerTesting", 0, true, true))
+							{
+								static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
+								ImGui::BeginChild("##ControllerTestingChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
+								ImGui::BeginGroup();
+								{
+									if (ImGui::Button("Test Tracking Colors##Controller") || m_gotoTrackingControllerVideo)
+									{
+										if (m_gotoTrackingControllerVideo) m_gotoTrackingControllerVideo = false;
+										m_app->getAppStage<AppStage_ComputeTrackerPoses>()->set_tracker_id(m_selectedTrackerIndex);
+										AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, controllerID, -1);
+									}
+									if (ImGui::Button("Test Tracking Pose##Controller") || m_gotoTestControllerTracking)
+									{
+										if (m_gotoTestControllerTracking) m_gotoTestControllerTracking = false;
+										AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, controllerID, -1);
+									}
+									if (ImGui::Button("Test Optical Noise##Controller"))
+									{
+										const PSMClientTrackerInfo &trackerInfo = m_trackerInfos[m_selectedTrackerIndex];
+										const ControllerInfo *controller = get_selected_controller();
+										if (controller != NULL)
+										{
+											m_app->getAppStage<AppStage_OpticalCalibration>()->setBypassCalibrationFlag(true);
+											m_app->getAppStage<AppStage_OpticalCalibration>()->setTargetTrackerId(trackerInfo.tracker_id);
+											m_app->getAppStage<AppStage_OpticalCalibration>()->setTargetControllerId(controller->ControllerID);
+											m_app->setAppStage(AppStage_OpticalCalibration::APP_STAGE_NAME);
+										}
+									}
+								}
+								ImGui::EndGroup();
+								if (ImGui::IsItemVisible())
+									lastChildVec2 = ImGui::GetItemRectSize();
+								ImGui::EndChild();
+							}
+
+							if (m_gotoTrackingVideoALL)
+							{
+								m_gotoTrackingVideoALL = false;
+								m_app->getAppStage<AppStage_ComputeTrackerPoses>()->set_tracker_id(m_selectedTrackerIndex);
+								AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, -1, -1);
+							}
 						}
 					}
+					ImGui::EndGroup();
+					if (ImGui::IsItemVisible())
+						lastChildVec = ImGui::GetItemRectSize();
+					ImGui::EndChild();
 				}
 			}
 
@@ -499,205 +535,239 @@ void AppStage_TrackerSettings::renderUI()
 			{
 				if (ImGui::CollapsingHeader("Head Mount Devices", 0, true, true))
 				{
-					int hmdID = (m_selectedHmdIndex != -1) ? m_hmdInfos[m_selectedHmdIndex].HmdID : -1;
-
-					if (m_selectedHmdIndex > 0)
+					static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
+					ImGui::BeginChild("##HeadMountDevicesChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
+					ImGui::BeginGroup();
 					{
-						if (ImGui::Button(" < ##HMD"))
+						int hmdID = (m_selectedHmdIndex != -1) ? m_hmdInfos[m_selectedHmdIndex].HmdID : -1;
+
+						if (m_selectedHmdIndex > 0)
 						{
-							--m_selectedHmdIndex;
-						}
-					}
-					else
-					{
-						ImGui::Button(" < ##HMD");
-					}
-					ImGui::SameLine();
-
-					if (m_selectedHmdIndex + 1 < static_cast<int>(m_hmdInfos.size()))
-					{
-						if (ImGui::Button(" > ##HMD"))
-						{
-							++m_selectedHmdIndex;
-						}
-					}
-					else
-					{
-						ImGui::Button(" > ##HMD");
-					}
-					ImGui::SameLine();
-
-					if (m_selectedHmdIndex != -1)
-					{
-						const AppStage_TrackerSettings::HMDInfo &hmdInfo = m_hmdInfos[m_selectedHmdIndex];
-						const char *colors[] = {
-							"Magenta","Cyan","Yellow","Red","Green","Blue",
-							"Custom0" ,"Custom1" ,"Custom2" ,"Custom3" ,"Custom4" ,"Custom5" ,"Custom6" ,"Custom7" ,"Custom8" ,"Custom9"
-						};
-
-						if (hmdInfo.HmdType == PSMHmd_Morpheus)
-						{
-							if (0 <= hmdInfo.TrackingColorType && hmdInfo.TrackingColorType < PSMTrackingColorType_MaxColorTypes)
+							if (ImGui::Button(" < ##HMD"))
 							{
-								ImGui::Text("HMD: %d (Morpheus) - %s",
-									m_selectedHmdIndex,
-									colors[hmdInfo.TrackingColorType]);
-							}
-							else
-							{
-								ImGui::Text("HMD: %d (Morpheus)", m_selectedHmdIndex);
-							}
-						}
-						else if (hmdInfo.HmdType == PSMHmd_Virtual)
-						{
-							if (0 <= hmdInfo.TrackingColorType && hmdInfo.TrackingColorType < PSMTrackingColorType_MaxColorTypes)
-							{
-								ImGui::Text("HMD: %d (Virtual) - %s",
-									m_selectedHmdIndex,
-									colors[hmdInfo.TrackingColorType]);
-							}
-							else
-							{
-								ImGui::Text("HMD: %d (Virtual)", m_selectedHmdIndex);
-							}
-						}
-					}
-
-					ImGui::Indent();
-					if (ImGui::CollapsingHeader("Calibration##HMDCalibration", 0, true, true))
-					{
-						if (m_app->getIsLocalServer())
-						{
-							if (ImGui::Button("Calibrate Tracking Colors##HMD") || m_gotoHMDColorCalib)
-							{
-								const HMDInfo *hmd = get_selected_hmd();
-								if (hmd != NULL)
-								{
-									m_app->getAppStage<AppStage_ColorCalibration>()->set_override_controller_id(-1);
-									m_app->getAppStage<AppStage_ColorCalibration>()->set_override_hmd_id(hmd->HmdID);
-									m_app->getAppStage<AppStage_ColorCalibration>()->set_override_tracking_color(hmd->TrackingColorType);
-								}
-
-								m_app->setAppStage(AppStage_ColorCalibration::APP_STAGE_NAME);
-							}
-
-							if (m_selectedHmdIndex != -1)
-							{
-								const AppStage_TrackerSettings::HMDInfo &hmdInfo = m_hmdInfos[m_selectedHmdIndex];
-
-								if (hmdInfo.HmdType == PSMHmd_Virtual)
-								{
-									if (ImGui::Button("Calibrate Tracker Poses##HMD"))
-									{
-										AppStage_ComputeTrackerPoses::enterStageAndCalibrateTrackersWithHMD(m_app, hmdID);
-									}
-								}
+								--m_selectedHmdIndex;
 							}
 						}
 						else
 						{
-							ImGui::TextDisabled("Calibrate Tracking Colors");
-							ImGui::TextDisabled("Calibrate Tracker Poses");
+							ImGui::Button(" < ##HMD");
 						}
-					}
+						ImGui::SameLine();
 
-					if (ImGui::CollapsingHeader("Testing##HMDTesting", 0, true, true))
-					{
-						if (ImGui::Button("Test Tracking Colors##HMD") || m_gotoTrackingHmdVideo)
+						if (m_selectedHmdIndex + 1 < static_cast<int>(m_hmdInfos.size()))
 						{
-							m_gotoTrackingHmdVideo = false;
-							m_app->getAppStage<AppStage_ComputeTrackerPoses>()->set_tracker_id(m_selectedTrackerIndex);
-							AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, -1, hmdID);
+							if (ImGui::Button(" > ##HMD"))
+							{
+								++m_selectedHmdIndex;
+							}
 						}
-						if (ImGui::Button("Test Tracking Pose##HMD") || m_gotoTestHmdTracking)
+						else
 						{
-							m_gotoTestHmdTracking = false;
-							AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, -1, hmdID);
+							ImGui::Button(" > ##HMD");
 						}
-						if (m_gotoTrackingVideoALL)
+						ImGui::SameLine();
+
+						if (m_selectedHmdIndex != -1)
 						{
-							m_gotoTrackingVideoALL = false;
-							m_app->getAppStage<AppStage_ComputeTrackerPoses>()->set_tracker_id(m_selectedTrackerIndex);
-							AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, -1, -1);
+							const AppStage_TrackerSettings::HMDInfo &hmdInfo = m_hmdInfos[m_selectedHmdIndex];
+							const char *colors[] = {
+								"Magenta","Cyan","Yellow","Red","Green","Blue",
+								"Custom0" ,"Custom1" ,"Custom2" ,"Custom3" ,"Custom4" ,"Custom5" ,"Custom6" ,"Custom7" ,"Custom8" ,"Custom9"
+							};
+
+							if (hmdInfo.HmdType == PSMHmd_Morpheus)
+							{
+								if (0 <= hmdInfo.TrackingColorType && hmdInfo.TrackingColorType < PSMTrackingColorType_MaxColorTypes)
+								{
+									ImGui::Text("HMD: %d (Morpheus) - %s",
+										m_selectedHmdIndex,
+										colors[hmdInfo.TrackingColorType]);
+								}
+								else
+								{
+									ImGui::Text("HMD: %d (Morpheus)", m_selectedHmdIndex);
+								}
+							}
+							else if (hmdInfo.HmdType == PSMHmd_Virtual)
+							{
+								if (0 <= hmdInfo.TrackingColorType && hmdInfo.TrackingColorType < PSMTrackingColorType_MaxColorTypes)
+								{
+									ImGui::Text("HMD: %d (Virtual) - %s",
+										m_selectedHmdIndex,
+										colors[hmdInfo.TrackingColorType]);
+								}
+								else
+								{
+									ImGui::Text("HMD: %d (Virtual)", m_selectedHmdIndex);
+								}
+							}
+						}
+
+						if (ImGui::CollapsingHeader("Calibration##HMDCalibration", 0, true, true))
+						{
+							static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
+							ImGui::BeginChild("##HMDCalibrationChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
+							ImGui::BeginGroup();
+							{
+								if (m_app->getIsLocalServer())
+								{
+									if (ImGui::Button("Calibrate Tracking Colors##HMD") || m_gotoHMDColorCalib)
+									{
+										const HMDInfo *hmd = get_selected_hmd();
+										if (hmd != NULL)
+										{
+											m_app->getAppStage<AppStage_ColorCalibration>()->set_override_controller_id(-1);
+											m_app->getAppStage<AppStage_ColorCalibration>()->set_override_hmd_id(hmd->HmdID);
+											m_app->getAppStage<AppStage_ColorCalibration>()->set_override_tracking_color(hmd->TrackingColorType);
+										}
+
+										m_app->setAppStage(AppStage_ColorCalibration::APP_STAGE_NAME);
+									}
+
+									if (m_selectedHmdIndex != -1)
+									{
+										const AppStage_TrackerSettings::HMDInfo &hmdInfo = m_hmdInfos[m_selectedHmdIndex];
+
+										if (hmdInfo.HmdType == PSMHmd_Virtual)
+										{
+											if (ImGui::Button("Calibrate Tracker Poses##HMD"))
+											{
+												AppStage_ComputeTrackerPoses::enterStageAndCalibrateTrackersWithHMD(m_app, hmdID);
+											}
+										}
+									}
+								}
+								else
+								{
+									ImGui::TextDisabled("Calibrate Tracking Colors");
+									ImGui::TextDisabled("Calibrate Tracker Poses");
+								}
+							}
+							ImGui::EndGroup();
+							if (ImGui::IsItemVisible())
+								lastChildVec2 = ImGui::GetItemRectSize();
+							ImGui::EndChild();
+						}
+
+						if (ImGui::CollapsingHeader("Testing##HMDTesting", 0, true, true))
+						{
+							static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
+							ImGui::BeginChild("##HMDTestingChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
+							ImGui::BeginGroup(); 
+							{
+								if (ImGui::Button("Test Tracking Colors##HMD") || m_gotoTrackingHmdVideo)
+								{
+									m_gotoTrackingHmdVideo = false;
+									m_app->getAppStage<AppStage_ComputeTrackerPoses>()->set_tracker_id(m_selectedTrackerIndex);
+									AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, -1, hmdID);
+								}
+								if (ImGui::Button("Test Tracking Pose##HMD") || m_gotoTestHmdTracking)
+								{
+									m_gotoTestHmdTracking = false;
+									AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, -1, hmdID);
+								}
+								if (m_gotoTrackingVideoALL)
+								{
+									m_gotoTrackingVideoALL = false;
+									m_app->getAppStage<AppStage_ComputeTrackerPoses>()->set_tracker_id(m_selectedTrackerIndex);
+									AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, -1, -1);
+								}
+							}
+							ImGui::EndGroup();
+							if (ImGui::IsItemVisible())
+								lastChildVec2 = ImGui::GetItemRectSize();
+							ImGui::EndChild();
 						}
 					}
-					ImGui::Unindent();
+					ImGui::EndGroup();
+					if (ImGui::IsItemVisible())
+						lastChildVec = ImGui::GetItemRectSize();
+					ImGui::EndChild();
 				}
 			}
 
 			if (ImGui::CollapsingHeader("Playspace Offsets", 0, true, false))
 			{
-				bool request_offset = false;
-
-				ImGui::Text("Orientation Y (Yaw): ");
-				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-				ImGui::PushItemWidth(120.f);
-				if (ImGui::InputFloat("##OffsetOrientationY", &playspace_orientation_yaw, 1.f, 5.f, 2))
+				static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
+				ImGui::BeginChild("##PlayspaceOffsetsChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
+				ImGui::BeginGroup();
 				{
-					while (playspace_orientation_yaw < 0.f)
-						playspace_orientation_yaw += 360.f;
-					while (playspace_orientation_yaw >= 360.f)
-						playspace_orientation_yaw -= 360.f;
+					bool request_offset = false;
 
-					request_offset = true;
+					ImGui::Text("Orientation Y (Yaw): ");
+					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+					ImGui::PushItemWidth(120.f);
+					if (ImGui::InputFloat("##OffsetOrientationY", &playspace_orientation_yaw, 1.f, 5.f, 2))
+					{
+						while (playspace_orientation_yaw < 0.f)
+							playspace_orientation_yaw += 360.f;
+						while (playspace_orientation_yaw >= 360.f)
+							playspace_orientation_yaw -= 360.f;
+
+						request_offset = true;
+					}
+					ImGui::PopItemWidth();
+
+					ImGui::Separator();
+
+					ImGui::Text("Position X (Right): ");
+					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+					ImGui::PushItemWidth(120.f);
+					if (ImGui::InputFloat("##OffsetPositionX", &playspace_position_x, 1.f, 5.f, 2))
+					{
+						playspace_position_x = clampf(playspace_position_x, -(1 << 16), (1 << 16));
+
+						request_offset = true;
+					}
+					ImGui::PopItemWidth();
+
+					ImGui::Text("Position Y (Up): ");
+					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+					ImGui::PushItemWidth(120.f);
+					if (ImGui::InputFloat("##OffsetPositionY", &playspace_position_y, 1.f, 5.f, 2))
+					{
+						playspace_position_y = clampf(playspace_position_y, -(1 << 16), (1 << 16));
+
+						request_offset = true;
+					}
+					ImGui::PopItemWidth();
+
+					ImGui::Text("Position Z (Backward): ");
+					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+					ImGui::PushItemWidth(120.f);
+					if (ImGui::InputFloat("##OffsetPositionZ", &playspace_position_z, 1.f, 5.f, 2))
+					{
+						playspace_position_z = clampf(playspace_position_z, -(1 << 16), (1 << 16));
+
+						request_offset = true;
+					}
+					ImGui::PopItemWidth();
+
+					ImGui::Separator();
+
+					if (ImGui::Button("Reset All"))
+					{
+						playspace_orientation_yaw = 0.f;
+						playspace_position_x = 0.f;
+						playspace_position_y = 0.f;
+						playspace_position_z = 0.f;
+
+						request_offset = true;
+					}
+
+					if (request_offset)
+					{
+						request_set_playspace_offsets(
+							playspace_orientation_yaw,
+							playspace_position_x,
+							playspace_position_y,
+							playspace_position_z);
+					}
 				}
-				ImGui::PopItemWidth();
-
-				ImGui::Separator();
-
-				ImGui::Text("Position X (Right): ");
-				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-				ImGui::PushItemWidth(120.f);
-				if (ImGui::InputFloat("##OffsetPositionX", &playspace_position_x, 1.f, 5.f, 2))
-				{
-					playspace_position_x = clampf(playspace_position_x, -(1 << 16), (1 << 16));
-
-					request_offset = true;
-				}
-				ImGui::PopItemWidth();
-
-				ImGui::Text("Position Y (Up): ");
-				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-				ImGui::PushItemWidth(120.f);
-				if (ImGui::InputFloat("##OffsetPositionY", &playspace_position_y, 1.f, 5.f, 2))
-				{
-					playspace_position_y = clampf(playspace_position_y, -(1 << 16), (1 << 16));
-
-					request_offset = true;
-				}
-				ImGui::PopItemWidth();
-
-				ImGui::Text("Position Z (Backward): ");
-				ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-				ImGui::PushItemWidth(120.f);
-				if (ImGui::InputFloat("##OffsetPositionZ", &playspace_position_z, 1.f, 5.f, 2))
-				{
-					playspace_position_z = clampf(playspace_position_z, -(1 << 16), (1 << 16));
-
-					request_offset = true;
-				}
-				ImGui::PopItemWidth();
-
-				ImGui::Separator();
-
-				if (ImGui::Button("Reset All"))
-				{
-					playspace_orientation_yaw = 0.f;
-					playspace_position_x = 0.f;
-					playspace_position_y = 0.f;
-					playspace_position_z = 0.f;
-
-					request_offset = true;
-				}
-
-				if (request_offset)
-				{
-					request_set_playspace_offsets(
-						playspace_orientation_yaw,
-						playspace_position_x,
-						playspace_position_y,
-						playspace_position_z);
-				}
+				ImGui::EndGroup();
+				if (ImGui::IsItemVisible())
+					lastChildVec = ImGui::GetItemRectSize();
+				ImGui::EndChild();
 			}
         }
 
