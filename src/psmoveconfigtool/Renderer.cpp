@@ -35,8 +35,8 @@
 #endif
 
 //-- constants -----
-static const int k_window_pixel_width= 800;
-static const int k_window_pixel_height= 600;
+static const int k_window_pixel_width= 1400;
+static const int k_window_pixel_height= 1050;
 
 static const float k_camera_vfov= 35.f;
 static const float k_camera_z_near= 0.1f;
