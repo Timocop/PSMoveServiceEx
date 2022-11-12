@@ -236,7 +236,7 @@ void AppStage_ControllerSettings::exit()
 {
     m_menuState= AppStage_ControllerSettings::inactive;
 
-	for (PSMControllerID controller_id : m_controllers)
+	for (PSMControllerID controller_id : m_controllersStreams)
 	{
 		PSMRequestID request_id;
 		PSM_StopControllerDataStreamAsync(controller_id, &request_id);
@@ -245,7 +245,7 @@ void AppStage_ControllerSettings::exit()
 		PSM_FreeControllerListener(controller_id);
 	}
 
-	m_controllers.clear();
+	m_controllersStreams.clear();
 }
 
 void AppStage_ControllerSettings::update()
@@ -1616,7 +1616,7 @@ void AppStage_ControllerSettings::handle_controller_list_response(
 				}
 			}
 
-			for (PSMControllerID controller_id : thisPtr->m_controllers)
+			for (PSMControllerID controller_id : thisPtr->m_controllersStreams)
 			{
 				PSMRequestID request_id;
 				PSM_StopControllerDataStreamAsync(controller_id, &request_id);
@@ -1625,7 +1625,7 @@ void AppStage_ControllerSettings::handle_controller_list_response(
 				PSM_FreeControllerListener(controller_id);
 			}
 
-			thisPtr->m_controllers.clear();
+			thisPtr->m_controllersStreams.clear();
 
 			for (auto it = thisPtr->m_controllerInfos.begin(); it != thisPtr->m_controllerInfos.end(); ++it)
 			{
@@ -1638,7 +1638,7 @@ void AppStage_ControllerSettings::handle_controller_list_response(
 				PSM_StartControllerDataStreamAsync(it->ControllerID, PSMStreamFlags_defaultStreamOptions, &request_id);
 				PSM_EatResponse(request_id);
 
-				thisPtr->m_controllers.push_back(it->ControllerID);
+				thisPtr->m_controllersStreams.push_back(it->ControllerID);
 			}
 
             thisPtr->m_menuState= AppStage_ControllerSettings::idle;

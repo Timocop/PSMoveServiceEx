@@ -229,7 +229,6 @@ AppStage_MagnetometerCalibration::AppStage_MagnetometerCalibration(App *app)
     : AppStage(app)
     , m_bBypassCalibration(false)
     , m_menuState(AppStage_MagnetometerCalibration::inactive)
-    , m_pendingAppStage(nullptr)
 	, m_playspaceYawOffset(0.f)
     , m_controllerView(nullptr)
     , m_isControllerStreamActive(false)
@@ -1032,40 +1031,19 @@ void AppStage_MagnetometerCalibration::request_exit_to_app_stage(const char *app
 {
     if (m_isControllerStreamActive)
     {
-        m_pendingAppStage = app_stage_name;
 		PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
 
 		PSMRequestID requestId;
 		PSM_StopControllerDataStreamAsync(m_controllerView->ControllerID, &requestId);
-		PSM_RegisterCallback(requestId, &AppStage_MagnetometerCalibration::handle_release_controller, this);
+		PSM_EatResponse(requestId);
+
+		m_isControllerStreamActive = false;
+		m_app->setAppStage(app_stage_name);
     }
     else
     {
         m_app->setAppStage(app_stage_name);
     }
-}
-
-void AppStage_MagnetometerCalibration::handle_release_controller(
-    const PSMResponseMessage *response,
-    void *userdata)
-{
-    AppStage_MagnetometerCalibration *thisPtr= reinterpret_cast<AppStage_MagnetometerCalibration *>(userdata);
-
-    if (response->result_code != PSMResult_Success)
-    {
-        Log_ERROR("AppStage_MagnetometerCalibration", "Failed to release controller on server!");
-    }
-
-    thisPtr->m_isControllerStreamActive= false;
-
-	if (thisPtr->m_pendingAppStage == nullptr)
-	{
-		thisPtr->m_app->setAppStage(AppStage_ControllerSettings::APP_STAGE_NAME);
-	}
-	else
-	{
-		thisPtr->m_app->setAppStage(thisPtr->m_pendingAppStage);
-	}
 }
 
 void AppStage_MagnetometerCalibration::handle_set_magnetometer_calibration(

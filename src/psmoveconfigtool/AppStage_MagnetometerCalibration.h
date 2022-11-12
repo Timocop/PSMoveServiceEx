@@ -63,7 +63,6 @@ private:
     };
     bool m_bBypassCalibration;
     eCalibrationMenuState m_menuState;
-    const char *m_pendingAppStage;
 	float m_playspaceYawOffset;
 
     PSMController *m_controllerView;

@@ -627,12 +627,19 @@ void AppStage_AccelerometerCalibration::handle_acquire_controller(
 
 void AppStage_AccelerometerCalibration::request_exit_to_app_stage(const char *app_stage_name)
 {
-    PSMRequestID request_id;
-	PSM_StopControllerDataStreamAsync(m_controllerView->ControllerID, &request_id);
-    PSM_EatResponse(request_id);
+	if (m_isControllerStreamActive)
+	{
+		PSMRequestID request_id;
+		PSM_StopControllerDataStreamAsync(m_controllerView->ControllerID, &request_id);
+		PSM_EatResponse(request_id);
 
-    m_isControllerStreamActive= false;
-    m_app->setAppStage(app_stage_name);
+		m_isControllerStreamActive = false;
+		m_app->setAppStage(app_stage_name);
+	}
+	else
+	{
+		m_app->setAppStage(app_stage_name);
+	}
 }
 
 //-- private methods -----
