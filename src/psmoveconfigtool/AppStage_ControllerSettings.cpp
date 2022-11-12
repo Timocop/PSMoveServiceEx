@@ -557,9 +557,14 @@ void AppStage_ControllerSettings::renderUI()
 						ImGui::BulletText("Device Serial: %s", controllerInfo.DeviceSerial.c_str());
 						ImGui::BulletText("Assigned Host Serial: %s", controllerInfo.AssignedHostSerial.c_str());
 
+						int separatorCount = 0;
+
 						if (controllerInfo.ControllerType == PSMController_Virtual)
 						{
 							int comboIndex = (controllerInfo.GamepadIndex < m_gamepadCount) ? controllerInfo.GamepadIndex + 1 : 0;
+
+							if(separatorCount++ == 0)
+								ImGui::Separator();
 
 							ImGui::PushItemWidth(195);
 							if (ImGui::Combo(
@@ -577,6 +582,9 @@ void AppStage_ControllerSettings::renderUI()
 						if (controllerInfo.ControllerType == PSMController_Navi &&
 							controllerInfo.PotentialParentControllerSerials.size() > 0)
 						{
+							if (separatorCount++ == 0)
+								ImGui::Separator();
+
 							ImGui::PushItemWidth(195);
 							if (ImGui::Combo(
 								"Parent Controller",
