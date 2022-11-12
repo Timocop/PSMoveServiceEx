@@ -36,12 +36,6 @@ const int k_color_autodetect_probe_step = 8;
 const char *AppStage_ColorCalibration::APP_STAGE_NAME = "ColorCalibration";
 
 //-- constants -----
-static const char *k_video_display_mode_names[] = {
-    "BGR",
-    "HSV",
-    "Masked"
-};
-
 static const char *k_tracking_color_names[] = {
     "Magenta",
     "Cyan",
@@ -805,23 +799,15 @@ void AppStage_ColorCalibration::renderUI()
 			// $TODO: Not needed?
 			/*if (m_video_buffer_state != nullptr)*/
 			{
-				if (ImGui::Button(" < ##Filter"))
+				int displayMode = m_videoDisplayMode;
+				ImGui::Text("Video Preview:");
+				ImGui::PushItemWidth(260.f);
+				if (ImGui::Combo("##VideoFilterMode", &displayMode, "Color (BGR)\0Hue, Saturation, Value (HSV)\0Masked\0\0"))
 				{
-					m_videoDisplayMode =
-						static_cast<eVideoDisplayMode>(
-						(m_videoDisplayMode + eVideoDisplayMode::MAX_VIDEO_DISPLAY_MODES - 1)
-						% eVideoDisplayMode::MAX_VIDEO_DISPLAY_MODES);
+					m_videoDisplayMode = static_cast<eVideoDisplayMode>(displayMode);
 				}
-				ImGui::SameLine();
-				if (ImGui::Button(" > ##Filter"))
-				{
-					m_videoDisplayMode =
-						static_cast<eVideoDisplayMode>(
-						(m_videoDisplayMode + 1) % eVideoDisplayMode::MAX_VIDEO_DISPLAY_MODES);
-				}
-				ImGui::SameLine();
-				ImGui::Text("Video Filter Mode: %s", k_video_display_mode_names[m_videoDisplayMode]);
-
+				ImGui::PopItemWidth();
+				
 				if (ImGui::CollapsingHeader("Advanced Settings", 0, true, false))
 				{
 					if (is_tracker_virtual())
