@@ -408,6 +408,8 @@ bool PS3EyeTracker::open(const DeviceEnumerator *enumerator)
 		VideoCapture->set(cv::CAP_PROP_EXPOSURE, cfg.exposure);
 		VideoCapture->set(cv::CAP_PROP_GAIN, cfg.gain);
 		VideoCapture->set(cv::CAP_PROP_FPS, cfg.frame_rate);
+
+		VideoCapture->set(CV_CAP_PROP_MAXFAILPOLL, cfg.max_poll_failure_count);
     }
 
     return bSuccess;

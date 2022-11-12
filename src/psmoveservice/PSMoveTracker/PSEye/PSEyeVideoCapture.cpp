@@ -272,8 +272,9 @@ class PSEYECaptureCAM_PS3EYE : public cv::IVideoCapture
 {
 public:
     PSEYECaptureCAM_PS3EYE(int _index)
-    : m_index(-1), m_width(-1), m_height(-1), m_widthStep(-1), m_frameAvailable(false), m_waitFrame(false),
-    m_size(-1), m_MatBayer(0, 0, CV_8UC1)
+    : m_index(-1), m_width(-1), m_height(-1), m_widthStep(-1),
+		m_frameAvailable(false), m_waitFrame(false), m_maxFailPoll(0), m_currentPollFailCount(0),
+		m_size(-1), m_MatBayer(0, 0, CV_8UC1)
     {
         //CoInitialize(NULL);
         open(_index);
@@ -313,6 +314,8 @@ public:
 			return (bool)m_frameAvailable;
 		case CV_CAP_PROP_WAITFRAME:
 			return (bool)m_waitFrame;
+		case CV_CAP_PROP_MAXFAILPOLL:
+			return (int)m_maxFailPoll;
         }
         return 0;
     }
@@ -381,6 +384,10 @@ public:
 			m_waitFrame = (bool)value;
 			refresh = false;
 			break;
+		case CV_CAP_PROP_MAXFAILPOLL:
+			m_maxFailPoll = (int)value;
+			refresh = false;
+			break;
         }
         
 		if (refresh)
@@ -394,17 +401,62 @@ public:
     bool grabFrame()
     {
 		if (!eye->isStreaming())
-			return false;
+		{
+			++m_currentPollFailCount;
+
+			if (m_maxFailPoll > 0 && m_currentPollFailCount > m_maxFailPoll)
+			{
+				capFrame.setTo(cv::Scalar(0, 0, 0));
+				cv::putText(
+					capFrame,
+					"Tracker timed out.",
+					cv::Point(128, capFrame.rows / 2),
+					cv::FONT_HERSHEY_DUPLEX,
+					1.0,
+					CvScalar(255, 255, 255),
+					2
+				);
+				m_frameAvailable = true;
+				return true;
+			}
+			else 
+			{
+				return false;
+			}
+		}
 
 		if (!m_waitFrame && m_frameAvailable)
 			return true;
 
 		bool success = eye->getFrame(m_MatBayer.data, m_waitFrame);
 		if (!success)
-			return false;
+		{
+			++m_currentPollFailCount;
+
+			if (m_maxFailPoll > 0 && m_currentPollFailCount > m_maxFailPoll)
+			{
+				capFrame.setTo(cv::Scalar(0, 0, 0));
+				cv::putText(
+					capFrame,
+					"Tracker timed out.",
+					cv::Point(128, capFrame.rows / 2),
+					cv::FONT_HERSHEY_DUPLEX,
+					1.0,
+					CvScalar(255, 255, 255),
+					2
+				);
+				m_frameAvailable = true;
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
 
 		cv::cvtColor(m_MatBayer, capFrame, CV_BayerGB2BGR);
 		m_frameAvailable = true;
+		m_currentPollFailCount = 0;
 		return true;
     }
 
@@ -493,6 +545,7 @@ protected:
 
     int m_index, m_width, m_height, m_widthStep;
 	bool m_frameAvailable, m_waitFrame;
+	int m_maxFailPoll, m_currentPollFailCount;
 
     size_t m_size;
     cv::Mat m_MatBayer;
@@ -567,7 +620,6 @@ public:
 
 	bool grabFrame()
 	{
-
 		if (capturePipe == INVALID_HANDLE_VALUE)
 		{
 			capFrame.setTo(cv::Scalar(0, 0, 0));
