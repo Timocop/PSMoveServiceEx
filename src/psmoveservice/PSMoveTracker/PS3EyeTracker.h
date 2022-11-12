@@ -36,7 +36,7 @@ public:
 	inline CommonHSVColorRangeTable *getOrAddColorRangeTable(const std::string &table_name);
     
     bool is_valid;
-    long max_poll_failure_count;
+    long max_poll_failure_count_ex;
 	double frame_width;
 	double frame_height;
 	double frame_rate;

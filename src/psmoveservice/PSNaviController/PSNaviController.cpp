@@ -264,7 +264,7 @@ PSNaviControllerConfig::config2ptree()
 {
     boost::property_tree::ptree pt;
 
-    pt.put("max_poll_failute_count", max_poll_failure_count);
+    pt.put("max_poll_failure_count_ex", max_poll_failure_count_ex);
 	pt.put("attached_to_controller", attached_to_controller);
 
     return pt;
@@ -273,7 +273,7 @@ PSNaviControllerConfig::config2ptree()
 void
 PSNaviControllerConfig::ptree2config(const boost::property_tree::ptree &pt)
 {
-    max_poll_failure_count = pt.get<long>("max_poll_failute_count", 1000);
+	max_poll_failure_count_ex = pt.get<long>("max_poll_failure_count_ex", 1000);
 	attached_to_controller= pt.get<std::string>("attached_to_controller", "");
 }
 
@@ -1020,7 +1020,7 @@ PSNaviController::getState(
 long 
 PSNaviController::getMaxPollFailureCount() const
 {
-    return cfg.max_poll_failure_count;
+    return cfg.max_poll_failure_count_ex;
 }
 
 const std::tuple<unsigned char, unsigned char, unsigned char> 
