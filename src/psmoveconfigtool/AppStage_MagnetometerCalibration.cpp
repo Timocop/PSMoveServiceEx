@@ -25,8 +25,7 @@
 const char *AppStage_MagnetometerCalibration::APP_STAGE_NAME= "MagnetometerCalibration";
 
 //-- constants -----
-static const int k_max_bounds_magnetometer_samples = 1200;
-static const int k_sample_count_target = 600;
+static const int k_max_bounds_magnetometer_samples = 600;
 static const double k_stabilize_wait_time_ms= 3000.f;
 static const int k_max_identity_magnetometer_samples= 100;
 static const int k_min_sample_distance= 50;
@@ -127,7 +126,7 @@ struct MagnetometerBoundsStatistics
             if (minRange > 0)
             {
                 samplePercentage = 
-					std::min((100 * sampleCount) / k_sample_count_target, 100);
+					std::min((100 * sampleCount) / k_max_bounds_magnetometer_samples, 100);
             }
 		}
 
@@ -1031,21 +1030,18 @@ void AppStage_MagnetometerCalibration::handle_acquire_controller(
 
 void AppStage_MagnetometerCalibration::request_exit_to_app_stage(const char *app_stage_name)
 {
-    if (m_pendingAppStage == nullptr)
+    if (m_isControllerStreamActive)
     {
-        if (m_isControllerStreamActive)
-        {
-            m_pendingAppStage= app_stage_name;
-			PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
+        m_pendingAppStage = app_stage_name;
+		PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
 
-			PSMRequestID requestId;
-			PSM_StopControllerDataStreamAsync(m_controllerView->ControllerID, &requestId);
-			PSM_RegisterCallback(requestId, &AppStage_MagnetometerCalibration::handle_release_controller, this);
-        }
-        else
-        {
-            m_app->setAppStage(app_stage_name);
-        }
+		PSMRequestID requestId;
+		PSM_StopControllerDataStreamAsync(m_controllerView->ControllerID, &requestId);
+		PSM_RegisterCallback(requestId, &AppStage_MagnetometerCalibration::handle_release_controller, this);
+    }
+    else
+    {
+        m_app->setAppStage(app_stage_name);
     }
 }
 
@@ -1061,8 +1057,15 @@ void AppStage_MagnetometerCalibration::handle_release_controller(
     }
 
     thisPtr->m_isControllerStreamActive= false;
-    thisPtr->m_pendingAppStage = nullptr;
-    thisPtr->m_app->setAppStage(AppStage_ControllerSettings::APP_STAGE_NAME);
+
+	if (thisPtr->m_pendingAppStage == nullptr)
+	{
+		thisPtr->m_app->setAppStage(AppStage_ControllerSettings::APP_STAGE_NAME);
+	}
+	else
+	{
+		thisPtr->m_app->setAppStage(thisPtr->m_pendingAppStage);
+	}
 }
 
 void AppStage_MagnetometerCalibration::handle_set_magnetometer_calibration(
