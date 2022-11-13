@@ -176,10 +176,6 @@ protected:
     int m_ShowTrackerVideoId;
 	PSMControllerID m_overrideControllerId;
     PSMHmdID m_overrideHmdId;
-
-	// Alignment Marker visability
-	bool m_bShowAlignment;
-	float m_AlignmentOffset;
 };
 
 #endif // APP_STAGE_COMPUTE_TRACKER_POSES_H
