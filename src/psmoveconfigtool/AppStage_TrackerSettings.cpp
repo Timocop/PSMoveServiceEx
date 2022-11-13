@@ -333,7 +333,8 @@ void AppStage_TrackerSettings::renderUI()
 		{
 			if (m_controllerInfos.size() > 0)
 			{
-				if (ImGui::CollapsingHeader("Controllers", 0, true, true))
+				if (ImGui::CollapsingHeader("Controllers", 0, true, true) ||
+					m_gotoControllerColorCalib || m_gotoTestControllerTracking || m_gotoTrackingControllerVideo || m_gotoTrackingVideoALL)
 				{
 					static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
 					ImGui::BeginChild("##ControllersChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
@@ -405,7 +406,8 @@ void AppStage_TrackerSettings::renderUI()
 						{
 							int controllerID = (m_selectedControllerIndex != -1) ? m_controllerInfos[m_selectedControllerIndex].ControllerID : -1;
 
-							if (ImGui::CollapsingHeader("Calibration##ControllerCalibration", 0, true, true))
+							if (ImGui::CollapsingHeader("Calibration##ControllerCalibration", 0, true, true) || 
+								m_gotoControllerColorCalib)
 							{
 								static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
 								ImGui::BeginChild("##ControllerCalibrationChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
@@ -413,8 +415,11 @@ void AppStage_TrackerSettings::renderUI()
 								{
 									if (m_app->getIsLocalServer())
 									{
-										if (ImGui::Button("Calibrate Tracking Colors##Controller") || m_gotoControllerColorCalib)
+										if (ImGui::Button("Calibrate Tracking Colors##Controller") || 
+											m_gotoControllerColorCalib)
 										{
+											m_gotoControllerColorCalib = false;
+											
 											const ControllerInfo *controller = get_selected_controller();
 											if (controller != NULL) {
 												m_app->getAppStage<AppStage_ColorCalibration>()->set_override_controller_id(controller->ControllerID);
@@ -480,7 +485,8 @@ void AppStage_TrackerSettings::renderUI()
 								ImGui::EndChild();
 							}
 
-							if (ImGui::CollapsingHeader("Testing##ControllerTesting", 0, true, true))
+							if (ImGui::CollapsingHeader("Testing##ControllerTesting", 0, true, true) || 
+								m_gotoTestControllerTracking)
 							{
 								static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
 								ImGui::BeginChild("##ControllerTestingChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
@@ -488,13 +494,15 @@ void AppStage_TrackerSettings::renderUI()
 								{
 									if (ImGui::Button("Test Tracking Colors##Controller") || m_gotoTrackingControllerVideo)
 									{
-										if (m_gotoTrackingControllerVideo) m_gotoTrackingControllerVideo = false;
+										m_gotoTrackingControllerVideo = false;
 										m_app->getAppStage<AppStage_ComputeTrackerPoses>()->set_tracker_id(m_selectedTrackerIndex);
 										AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, controllerID, -1);
 									}
-									if (ImGui::Button("Test Tracking Pose##Controller") || m_gotoTestControllerTracking)
+									if (ImGui::Button("Test Tracking Pose##Controller") || 
+										m_gotoTestControllerTracking)
 									{
-										if (m_gotoTestControllerTracking) m_gotoTestControllerTracking = false;
+										m_gotoTestControllerTracking = false;
+
 										AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, controllerID, -1);
 									}
 									if (ImGui::Button("Test Optical Noise##Controller"))
@@ -519,6 +527,7 @@ void AppStage_TrackerSettings::renderUI()
 							if (m_gotoTrackingVideoALL)
 							{
 								m_gotoTrackingVideoALL = false;
+
 								m_app->getAppStage<AppStage_ComputeTrackerPoses>()->set_tracker_id(m_selectedTrackerIndex);
 								AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, -1, -1);
 							}
@@ -533,7 +542,8 @@ void AppStage_TrackerSettings::renderUI()
 
 			if (m_hmdInfos.size() > 0)
 			{
-				if (ImGui::CollapsingHeader("Head Mount Devices", 0, true, true))
+				if (ImGui::CollapsingHeader("Head Mount Devices", 0, true, true) || 
+					m_gotoHMDColorCalib || m_gotoTestHmdTracking || m_gotoTrackingHmdVideo || m_gotoTrackingVideoALL)
 				{
 					static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
 					ImGui::BeginChild("##HeadMountDevicesChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
@@ -603,7 +613,8 @@ void AppStage_TrackerSettings::renderUI()
 							}
 						}
 
-						if (ImGui::CollapsingHeader("Calibration##HMDCalibration", 0, true, true))
+						if (ImGui::CollapsingHeader("Calibration##HMDCalibration", 0, true, true) || 
+							m_gotoHMDColorCalib)
 						{
 							static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
 							ImGui::BeginChild("##HMDCalibrationChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
@@ -611,8 +622,11 @@ void AppStage_TrackerSettings::renderUI()
 							{
 								if (m_app->getIsLocalServer())
 								{
-									if (ImGui::Button("Calibrate Tracking Colors##HMD") || m_gotoHMDColorCalib)
+									if (ImGui::Button("Calibrate Tracking Colors##HMD") || 
+										m_gotoHMDColorCalib)
 									{
+										m_gotoHMDColorCalib = false;
+										
 										const HMDInfo *hmd = get_selected_hmd();
 										if (hmd != NULL)
 										{
@@ -649,34 +663,41 @@ void AppStage_TrackerSettings::renderUI()
 							ImGui::EndChild();
 						}
 
-						if (ImGui::CollapsingHeader("Testing##HMDTesting", 0, true, true))
+						if (ImGui::CollapsingHeader("Testing##HMDTesting", 0, true, true) || 
+							m_gotoTestHmdTracking || m_gotoTrackingHmdVideo)
 						{
 							static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
 							ImGui::BeginChild("##HMDTestingChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
 							ImGui::BeginGroup(); 
 							{
-								if (ImGui::Button("Test Tracking Colors##HMD") || m_gotoTrackingHmdVideo)
+								if (ImGui::Button("Test Tracking Colors##HMD") || 
+									m_gotoTrackingHmdVideo)
 								{
 									m_gotoTrackingHmdVideo = false;
+
 									m_app->getAppStage<AppStage_ComputeTrackerPoses>()->set_tracker_id(m_selectedTrackerIndex);
 									AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, -1, hmdID);
 								}
-								if (ImGui::Button("Test Tracking Pose##HMD") || m_gotoTestHmdTracking)
+								if (ImGui::Button("Test Tracking Pose##HMD") || 
+									m_gotoTestHmdTracking)
 								{
 									m_gotoTestHmdTracking = false;
+
 									AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, -1, hmdID);
-								}
-								if (m_gotoTrackingVideoALL)
-								{
-									m_gotoTrackingVideoALL = false;
-									m_app->getAppStage<AppStage_ComputeTrackerPoses>()->set_tracker_id(m_selectedTrackerIndex);
-									AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, -1, -1);
 								}
 							}
 							ImGui::EndGroup();
 							if (ImGui::IsItemVisible())
 								lastChildVec2 = ImGui::GetItemRectSize();
 							ImGui::EndChild();
+						}
+
+						if (m_gotoTrackingVideoALL)
+						{
+							m_gotoTrackingVideoALL = false;
+
+							m_app->getAppStage<AppStage_ComputeTrackerPoses>()->set_tracker_id(m_selectedTrackerIndex);
+							AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, -1, -1);
 						}
 					}
 					ImGui::EndGroup();

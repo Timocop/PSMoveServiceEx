@@ -205,8 +205,6 @@ AppStage_ColorCalibration::AppStage_ColorCalibration(App *app)
 
 void AppStage_ColorCalibration::enter()
 {
-    m_app->getAppStage<AppStage_TrackerSettings>()->gotoControllerColorCalib(false);
-    m_app->getAppStage<AppStage_TrackerSettings>()->gotoHMDColorCalib(false);
     const AppStage_TrackerSettings *trackerSettings =
         m_app->getAppStage<AppStage_TrackerSettings>();
     const PSMClientTrackerInfo *trackerInfo = trackerSettings->getSelectedTrackerInfo();
