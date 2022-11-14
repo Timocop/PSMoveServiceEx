@@ -161,7 +161,7 @@ AppStage_ColorCalibration::AppStage_ColorCalibration(App *app)
     , m_masterControllerView(nullptr)
     , m_pendingControllerStartCount(0)
     , m_areAllControllerStreamsActive(false)
-    , m_lastMasterControllerSeqNum(-1)
+	, m_lastMasterControllerSeqNum(-1)
     , m_overrideHmdId(-1)
     , m_hmdView(nullptr)
     , m_isHmdStreamActive(false)
@@ -195,6 +195,7 @@ AppStage_ColorCalibration::AppStage_ColorCalibration(App *app)
 	, m_bProjectionBlacklistedShow(true)
 	, m_streamFps(0)
 	, m_displayFps(0)
+	, m_bUpdateTrackingBulbs(false)
 {
 	memset(m_colorPresets, 0, sizeof(m_colorPresets));
 	memset(m_blacklisted_projection, 0, sizeof(m_blacklisted_projection));
@@ -253,20 +254,10 @@ void AppStage_ColorCalibration::enter()
         }
         
         m_areAllControllerStreamsActive = false;
-        m_lastMasterControllerSeqNum = -1;
-        m_bTurnOnAllControllers= false;
+		m_lastMasterControllerSeqNum = -1;
+		m_bUpdateTrackingBulbs = true;
         m_pendingControllerStartCount= false;
-
-        m_bAutoChangeController = (m_bAutoChangeController) ? m_bAutoChangeController : false;
     }
-
-    m_bAutoChangeColor = (m_bAutoChangeColor) ? m_bAutoChangeColor : false;
-    m_bAutoChangeTracker = (m_bAutoChangeTracker) ? m_bAutoChangeTracker : false;
-
-	m_bDetectingColors = (m_bDetectingColors) ? m_bDetectingColors : false;
-	m_iDetectingControllersLeft = m_iDetectingControllersLeft;
-	m_iDetectingExposure = m_iDetectingExposure;
-	m_iDetectingAdjustMethod = m_iDetectingAdjustMethod;
 
     // Request to start the tracker
     // Wait for the tracker response before requesting the controller
@@ -290,7 +281,9 @@ void AppStage_ColorCalibration::update()
     {
         if (m_areAllControllerStreamsActive && m_masterControllerView->OutputSequenceNum != m_lastMasterControllerSeqNum)
         {
-            request_set_controller_tracking_color(m_masterControllerView, m_masterTrackingColorType);
+			m_lastMasterControllerSeqNum = m_masterControllerView->OutputSequenceNum;
+
+			request_set_controller_tracking_color(m_masterControllerView, m_masterTrackingColorType);
             
 			if (m_bDetectingColors)
 			{
@@ -300,9 +293,12 @@ void AppStage_ColorCalibration::update()
 			{
 				setState(eMenuState::manualConfig);
 			}
+
         }
         else if (m_isHmdStreamActive && m_hmdView->OutputSequenceNum != m_lastHmdSeqNum)
         {
+			m_lastHmdSeqNum = m_hmdView->OutputSequenceNum;
+
 			if (m_bDetectingColors)
 			{
 				setState(eMenuState::detection_exposure_adjust);
@@ -313,6 +309,24 @@ void AppStage_ColorCalibration::update()
 			}
         }
     }
+	else if (m_menuState == eMenuState::manualConfig)
+	{
+		if (m_areAllControllerStreamsActive && m_masterControllerView->OutputSequenceNum != m_lastMasterControllerSeqNum)
+		{
+			m_lastMasterControllerSeqNum = m_masterControllerView->OutputSequenceNum;
+
+			if (m_bUpdateTrackingBulbs)
+			{
+				m_bUpdateTrackingBulbs = false;
+
+				if (m_bTurnOnAllControllers || m_bColorCollsionShow)
+				{
+					request_turn_on_all_tracking_bulbs(true);
+				}
+			}
+
+		}
+	}
 
     // Try and read the next video frame from shared memory
     if (m_video_buffer_state != nullptr)

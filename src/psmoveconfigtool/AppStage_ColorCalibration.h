@@ -257,7 +257,7 @@ private:
 	std::vector<PSMTrackingColorType> m_controllerTrackingColorTypes;
 	int m_pendingControllerStartCount;
     bool m_areAllControllerStreamsActive;
-    int m_lastMasterControllerSeqNum;
+	int m_lastMasterControllerSeqNum;
 	int m_overrideHmdId;
 	PSMHeadMountedDisplay *m_hmdView;
 	bool m_isHmdStreamActive;
@@ -288,6 +288,7 @@ private:
     // Color Settings
 	bool m_bTurnOnAllControllers;
     PSMTrackingColorType m_masterTrackingColorType;
+	bool m_bUpdateTrackingBulbs;
 
 	// Setting Windows visability
 	bool m_bAdvancedMode;
