@@ -40,6 +40,8 @@ AppStage_ComputeTrackerPoses::AppStage_ComputeTrackerPoses(App *app)
     , m_menuState(AppStage_ComputeTrackerPoses::inactive)
     , m_pendingTrackerStartCount(0)
     , m_pendingControllerStartCount(0)
+	, m_areAllControllerStreamsActive(false)
+	, m_lastControllerSeqNum(-1)
     , m_renderTrackerIndex(0)
     , m_pCalibrateWithMat(new AppSubStage_CalibrateWithMat(this))
     , m_bSkipCalibration(false)
@@ -94,7 +96,12 @@ void AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(App *app, PSMContro
 
 void AppStage_ComputeTrackerPoses::enter()
 {
-    // Only get the controller list if
+	m_pendingTrackerStartCount = 0;
+	m_pendingControllerStartCount = 0;
+	m_areAllControllerStreamsActive = false;
+	m_lastControllerSeqNum = -1;
+	
+	// Only get the controller list if
     // A) No specific controller or HMD was requests
     // B) A specific controller was requested
     if ((m_overrideControllerId == -1 && m_overrideHmdId == -1) || 
@@ -199,55 +206,60 @@ void AppStage_ComputeTrackerPoses::update()
 				{
 					if (!m_triangPendingTrackerDataIndexChange)
 					{
-						int currentTrackerId = -1;
-						bool isTracked = false;
-						PSMPosef pose;
-						PSMVector2f screen_vector;
+						if(m_areAllControllerStreamsActive && controllerView->OutputSequenceNum != m_lastControllerSeqNum)
+						{
+							controllerView->OutputSequenceNum = m_lastControllerSeqNum;
+							
+							int currentTrackerId = -1;
+							bool isTracked = false;
+							PSMPosef pose;
+							PSMVector2f screen_vector;
 
-						switch (controllerView->ControllerType)
-						{
-						case PSMController_Move:
-							pose = controllerView->ControllerState.PSMoveState.Pose;
-							screen_vector = controllerView->ControllerState.PSMoveState.RawTrackerData.ScreenLocation;
-							currentTrackerId = controllerView->ControllerState.PSMoveState.RawTrackerData.TrackerID;
-							isTracked = (controllerView->ControllerState.PSMoveState.RawTrackerData.ValidTrackerBitmask &
-								(1 << trackerView->tracker_info.tracker_id)) > 0;
-							break;
-						case PSMController_DualShock4:
-							pose = controllerView->ControllerState.PSDS4State.Pose;
-							screen_vector = controllerView->ControllerState.PSDS4State.RawTrackerData.ScreenLocation;
-							currentTrackerId = controllerView->ControllerState.PSDS4State.RawTrackerData.TrackerID;
-							isTracked = (controllerView->ControllerState.PSDS4State.RawTrackerData.ValidTrackerBitmask &
-								(1 << trackerView->tracker_info.tracker_id)) > 0;
-							break;
-						case PSMController_Virtual:
-							pose = controllerView->ControllerState.VirtualController.Pose;
-							screen_vector = controllerView->ControllerState.VirtualController.RawTrackerData.ScreenLocation;
-							currentTrackerId = controllerView->ControllerState.VirtualController.RawTrackerData.TrackerID;
-							isTracked = (controllerView->ControllerState.VirtualController.RawTrackerData.ValidTrackerBitmask &
-								(1 << trackerView->tracker_info.tracker_id)) > 0;
-							break;
-						}
-
-						if (isTracked && currentTrackerId != m_triangTargetTrackerId)
-						{
-							request_controller_set_tracker_offset(m_overrideControllerId, m_triangTargetTrackerId);
-						}
-						else
-						{
-							if (isTracked)
+							switch (controllerView->ControllerType)
 							{
-								m_triangLastControllerPose = pose;
-								m_triangTrackerScreenLocations.insert(t_controller_screenloc_pair(currentTrackerId, screen_vector));
+							case PSMController_Move:
+								pose = controllerView->ControllerState.PSMoveState.Pose;
+								screen_vector = controllerView->ControllerState.PSMoveState.RawTrackerData.ScreenLocation;
+								currentTrackerId = controllerView->ControllerState.PSMoveState.RawTrackerData.TrackerID;
+								isTracked = (controllerView->ControllerState.PSMoveState.RawTrackerData.ValidTrackerBitmask &
+									(1 << trackerView->tracker_info.tracker_id)) > 0;
+								break;
+							case PSMController_DualShock4:
+								pose = controllerView->ControllerState.PSDS4State.Pose;
+								screen_vector = controllerView->ControllerState.PSDS4State.RawTrackerData.ScreenLocation;
+								currentTrackerId = controllerView->ControllerState.PSDS4State.RawTrackerData.TrackerID;
+								isTracked = (controllerView->ControllerState.PSDS4State.RawTrackerData.ValidTrackerBitmask &
+									(1 << trackerView->tracker_info.tracker_id)) > 0;
+								break;
+							case PSMController_Virtual:
+								pose = controllerView->ControllerState.VirtualController.Pose;
+								screen_vector = controllerView->ControllerState.VirtualController.RawTrackerData.ScreenLocation;
+								currentTrackerId = controllerView->ControllerState.VirtualController.RawTrackerData.TrackerID;
+								isTracked = (controllerView->ControllerState.VirtualController.RawTrackerData.ValidTrackerBitmask &
+									(1 << trackerView->tracker_info.tracker_id)) > 0;
+								break;
 							}
 
-							if (m_trackerViews.find(m_triangTargetTrackerId + 1) != m_trackerViews.end())
+							if (isTracked && currentTrackerId != m_triangTargetTrackerId)
 							{
-								++m_triangTargetTrackerId;
+								request_controller_set_tracker_offset(m_overrideControllerId, m_triangTargetTrackerId);
 							}
 							else
 							{
-								setState(AppStage_ComputeTrackerPoses::showControllerOffsets);
+								if (isTracked)
+								{
+									m_triangLastControllerPose = pose;
+									m_triangTrackerScreenLocations.insert(t_controller_screenloc_pair(currentTrackerId, screen_vector));
+								}
+
+								if (m_trackerViews.find(m_triangTargetTrackerId + 1) != m_trackerViews.end())
+								{
+									++m_triangTargetTrackerId;
+								}
+								else
+								{
+									setState(AppStage_ComputeTrackerPoses::showControllerOffsets);
+								}
 							}
 						}
 					}
@@ -1108,6 +1120,7 @@ void AppStage_ComputeTrackerPoses::onEnterState(eMenuState newState)
     case eMenuState::pendingControllerStartRequest:
         m_controllerViews.clear();
         m_pendingControllerStartCount = 0;
+		m_areAllControllerStreamsActive = false;
         break;
     case eMenuState::pendingHmdListRequest:
         break;
@@ -1293,6 +1306,7 @@ void AppStage_ComputeTrackerPoses::release_devices()
     }
     m_controllerViews.clear();
     m_pendingControllerStartCount = 0;
+	m_areAllControllerStreamsActive = false;
 
     for (t_hmd_state_map_iterator iter = m_hmdViews.begin(); iter != m_hmdViews.end(); ++iter)
     {
@@ -1547,7 +1561,9 @@ void AppStage_ComputeTrackerPoses::handle_start_controller_response(
             --thisPtr->m_pendingControllerStartCount;
             if (thisPtr->m_pendingControllerStartCount <= 0)
             {
-                if (thisPtr->m_overrideControllerId != -1)
+				thisPtr->m_areAllControllerStreamsActive = true;
+				
+				if (thisPtr->m_overrideControllerId != -1)
                 {
                     // If we requested a specific controller to test, 
                     // that means we don't care about testing any HMDs

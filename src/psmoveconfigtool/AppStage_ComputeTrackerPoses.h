@@ -172,6 +172,8 @@ protected:
 
 	t_controller_state_map m_controllerViews;
 	int m_pendingControllerStartCount;
+	bool m_areAllControllerStreamsActive;
+	int m_lastControllerSeqNum;
 
 	t_hmd_state_map m_hmdViews;
 	int m_pendingHmdStartCount;
