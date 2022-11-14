@@ -201,6 +201,7 @@ protected:
 	bool m_triangShowControllers;
 	bool m_triangShowFrustum;
 	bool m_triangShowTrackerIds;
+	bool m_triangShowBounds;
 };
 
 #endif // APP_STAGE_COMPUTE_TRACKER_POSES_H

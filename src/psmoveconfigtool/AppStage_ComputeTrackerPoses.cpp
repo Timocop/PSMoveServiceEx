@@ -55,6 +55,7 @@ AppStage_ComputeTrackerPoses::AppStage_ComputeTrackerPoses(App *app)
 	, m_triangShowControllers(false)
 	, m_triangShowFrustum(true)
 	, m_triangShowTrackerIds(false)
+	, m_triangShowBounds(true)
 { 
     m_renderTrackerIter = m_trackerViews.end();
 }
@@ -460,6 +461,7 @@ void AppStage_ComputeTrackerPoses::render()
 		}
 
 		unsigned int processedTrackers[PSMOVESERVICE_MAX_TRACKER_COUNT];
+		std::vector<PSMVector3f> points;
 
 		// Draw each controller model
 		t_controller_state_map_iterator controllerState = m_controllerViews.find(m_overrideControllerId);
@@ -632,12 +634,14 @@ void AppStage_ComputeTrackerPoses::render()
 							result.y = point3D.at<float>(1, 0) / w;
 							result.z = point3D.at<float>(2, 0) / w;
 
+							points.push_back(result);
+
 							PSMPosef offset_pose;
 							offset_pose.Position.x = result.x;
 							offset_pose.Position.y = result.y;
 							offset_pose.Position.z = result.z;
 							offset_pose.Orientation = m_triangLastControllerPose.Orientation;
-									
+
 							glm::mat4 controllerMat4 = psm_posef_to_glm_mat4(offset_pose);
 
 							if (m_triangShowControllers)
@@ -654,7 +658,7 @@ void AppStage_ComputeTrackerPoses::render()
 							{
 								drawTextAtWorldPosition(glm::mat4(1.f), psm_vector3f_to_glm_vec3(offset_pose.Position), "#%d+#%d", tracker_id, trackerOther_id);
 							}
-							
+
 							if (m_triangShowArrows)
 							{
 								drawArrow(glm::mat4(1.f), psm_vector3f_to_glm_vec3(trackerPose.Position), psm_vector3f_to_glm_vec3(offset_pose.Position), 0.1f, glm::vec3(1.f, 1.f, 1.f));
@@ -663,6 +667,41 @@ void AppStage_ComputeTrackerPoses::render()
 						}
 					}
 				}
+			}
+		}
+
+		if (m_triangShowBounds && points.size() > 0)
+		{
+			int count = 0;
+			PSMVector3f box_min;
+			PSMVector3f box_max;
+			for (std::vector<PSMVector3f>::iterator points_iter = points.begin(); points_iter != points.end(); ++points_iter)
+			{
+				if (count == 0)
+				{
+					box_min = *points_iter;
+					box_max = *points_iter;
+				}
+				else
+				{
+					PSMVector3f point = *points_iter;
+					box_min.x = fmax(box_min.x, point.x);
+					box_min.y = fmax(box_min.y, point.y);
+					box_min.z = fmax(box_min.z, point.z);
+					box_max.x = fmin(box_max.x, point.x);
+					box_max.y = fmin(box_max.y, point.y);
+					box_max.z = fmin(box_max.z, point.z);
+				}
+				++count;
+			}
+			if (count > 1)
+			{
+				float distance_x = sqrtf(powf(abs(box_min.x - box_max.x), 2));
+				float distance_y = sqrtf(powf(abs(box_min.y - box_max.y), 2));
+				float distance_z = sqrtf(powf(abs(box_min.z - box_max.z), 2));
+				
+				drawTransformedBox(glm::mat4(1.f), psm_vector3f_to_glm_vec3(box_min), psm_vector3f_to_glm_vec3(box_max), glm::vec3(1.f, 1.f, 1.f));
+				drawTextAtWorldPosition(glm::mat4(1.f), psm_vector3f_to_glm_vec3(box_max), " %.2f, %.2f, %.2f cm", distance_x, distance_y, distance_z);
 			}
 		}
 
@@ -1010,7 +1049,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
 		case eMenuState::showControllerOffsets:
 		{
 			ImGui::SetNextWindowPos(ImVec2(20.f, 20.f));
-			ImGui::SetNextWindowSize(ImVec2(k_panel_width, 175));
+			ImGui::SetNextWindowSize(ImVec2(k_panel_width, 200));
 			ImGui::Begin(k_window_title, nullptr, window_flags);
 
 			if (ImGui::Button(" < ##Previous Tracker"))
@@ -1036,6 +1075,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
 			ImGui::Checkbox("Show Controller Models", &m_triangShowControllers);
 			ImGui::Checkbox("Show Tracker Frustum", &m_triangShowFrustum);
 			ImGui::Checkbox("Show Tracker Ids", &m_triangShowTrackerIds);
+			ImGui::Checkbox("Show Bounds", &m_triangShowBounds);
 
 			ImGui::Separator();
 
