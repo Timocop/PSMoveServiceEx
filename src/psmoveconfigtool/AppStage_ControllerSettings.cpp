@@ -631,7 +631,7 @@ void AppStage_ControllerSettings::renderUI()
 							else
 							{
 								ImGui::Separator();
-								if (ImGui::Button("Pair Controller (restart required)"))
+								if (ImGui::Button("Pair/Unpair Controller\n(restart required)"))
 								{
 									adminCheck.RestartAdminMode();
 								}
