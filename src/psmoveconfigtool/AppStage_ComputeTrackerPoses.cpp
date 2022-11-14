@@ -1936,7 +1936,7 @@ bool AppStage_ComputeTrackerPoses::does_tracker_see_any_controller(const PSMTrac
         if (controllerView->ControllerType == PSMControllerType::PSMController_Move &&
             controllerView->ControllerState.PSMoveState.bIsCurrentlyTracking)
         {
-            bTrackerSeesAnyController |= 
+            bTrackerSeesAnyController = 
                 (controllerView->ControllerState.PSMoveState.RawTrackerData.ValidTrackerBitmask & 
                  (1 << tracker_id)) > 0;
             break;
@@ -1944,7 +1944,7 @@ bool AppStage_ComputeTrackerPoses::does_tracker_see_any_controller(const PSMTrac
         else if (controllerView->ControllerType == PSMControllerType::PSMController_DualShock4 &&
                  controllerView->ControllerState.PSDS4State.bIsCurrentlyTracking)
         {
-            bTrackerSeesAnyController |= 
+            bTrackerSeesAnyController = 
                 (controllerView->ControllerState.PSDS4State.RawTrackerData.ValidTrackerBitmask & 
                  (1 << tracker_id)) > 0;
             break;
@@ -1952,7 +1952,7 @@ bool AppStage_ComputeTrackerPoses::does_tracker_see_any_controller(const PSMTrac
         else if (controllerView->ControllerType == PSMControllerType::PSMController_Virtual &&
                  controllerView->ControllerState.VirtualController.bIsCurrentlyTracking)
         {
-            bTrackerSeesAnyController |= 
+            bTrackerSeesAnyController = 
                 (controllerView->ControllerState.VirtualController.RawTrackerData.ValidTrackerBitmask & 
                  (1 << tracker_id)) > 0;
             break;
@@ -1974,7 +1974,7 @@ bool AppStage_ComputeTrackerPoses::does_tracker_see_any_hmd(const PSMTracker *tr
         if (hmdView->HmdType == PSMHmd_Morpheus &&
             hmdView->HmdState.MorpheusState.bIsCurrentlyTracking)
         {
-            bTrackerSeesAnyHmd= 
+            bTrackerSeesAnyHmd = 
                 (hmdView->HmdState.MorpheusState.RawTrackerData.ValidTrackerBitmask & 
                  (1 << tracker_id)) > 0;
             break;
@@ -1982,7 +1982,7 @@ bool AppStage_ComputeTrackerPoses::does_tracker_see_any_hmd(const PSMTracker *tr
         else if (hmdView->HmdType == PSMHmd_Virtual &&
                  hmdView->HmdState.VirtualHMDState.bIsCurrentlyTracking)
         {
-            bTrackerSeesAnyHmd= 
+            bTrackerSeesAnyHmd = 
                 (hmdView->HmdState.VirtualHMDState.RawTrackerData.ValidTrackerBitmask & 
                  (1 << tracker_id)) > 0;
             break;
