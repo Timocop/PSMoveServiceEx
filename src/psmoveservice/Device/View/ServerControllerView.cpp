@@ -1983,7 +1983,7 @@ static void generate_psmove_data_frame_for_stream(
 
                 if (positionEstimate != nullptr && positionEstimate->bCurrentlyTracking)
                 {
-                    validTrackerBitmask&= (1 << trackerId);
+                    validTrackerBitmask |= (1 << trackerId);
 
                     if (trackerId == selectedTrackerId)
                     {
@@ -2229,7 +2229,7 @@ static void generate_psdualshock4_data_frame_for_stream(
 
                 if (positionEstimate != nullptr && positionEstimate->bCurrentlyTracking)
                 {
-                    validTrackerBitmask&= (1 << trackerId);
+                    validTrackerBitmask |= (1 << trackerId);
 
                     if (trackerId == selectedTrackerId)
                     {
@@ -2418,7 +2418,7 @@ static void generate_virtual_controller_data_frame_for_stream(
 
 					if (positionEstimate != nullptr && positionEstimate->bCurrentlyTracking)
 					{
-						validTrackerBitmask &= (1 << trackerId);
+						validTrackerBitmask |= (1 << trackerId);
 
 						if (trackerId == selectedTrackerId)
 						{
@@ -2549,7 +2549,7 @@ static void generate_virtual_controller_data_frame_for_stream(
 
 					if (positionEstimate != nullptr && positionEstimate->bCurrentlyTracking)
 					{
-						validTrackerBitmask &= (1 << trackerId);
+						validTrackerBitmask |= (1 << trackerId);
 
 						if (trackerId == selectedTrackerId)
 						{

@@ -42,6 +42,10 @@ public:
 	typedef std::map<int, HMDState>::iterator t_hmd_state_map_iterator;
 	typedef std::pair<int, HMDState> t_id_hmd_state_pair;
 
+	typedef std::map<int, PSMVector2f> t_controller_screenloc_map;
+	typedef std::map<int, PSMVector2f>::iterator t_controller_screenloc_map_iterator;
+	typedef std::pair<int, PSMVector2f> t_controller_screenloc_pair;
+
     AppStage_ComputeTrackerPoses(class App *app);
     ~AppStage_ComputeTrackerPoses();
 
@@ -93,6 +97,10 @@ protected:
         testTracking,
 		showTrackerVideo,
         calibrateStepFailed,
+
+		pendingControllerOffsets,
+		showControllerOffsets,
+		failedControllerOffsets,
     };
 
     void setState(eMenuState newState);
@@ -108,6 +116,11 @@ protected:
     PSMTracker *get_render_tracker_view() const;
 	PSMController *get_calibration_controller_view() const;
     PSMHeadMountedDisplay *get_calibration_hmd_view() const;
+
+	void request_controller_set_tracker_offset(int ControllerID, int TrackerID);
+	static void handle_controller_set_tracker_offset_response(
+		const PSMResponseMessage *response_message,
+		void *userdata);
 
     void request_controller_list();
     static void handle_controller_list_response(
@@ -176,6 +189,16 @@ protected:
     int m_ShowTrackerVideoId;
 	PSMControllerID m_overrideControllerId;
     PSMHmdID m_overrideHmdId;
+
+	PSMTrackerID m_triangTargetTrackerId;
+	bool m_triangPendingTrackerDataIndexChange;
+	t_controller_screenloc_map m_triangTrackerScreenLocations;
+	PSMPosef m_triangLastControllerPose;
+	int m_triangSelectedTracker;
+	bool m_triangShowArrows;
+	bool m_triangShowControllers;
+	bool m_triangShowFrustum;
+	bool m_triangShowTrackerIds;
 };
 
 #endif // APP_STAGE_COMPUTE_TRACKER_POSES_H

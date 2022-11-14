@@ -46,6 +46,13 @@ AppStage_ComputeTrackerPoses::AppStage_ComputeTrackerPoses(App *app)
     , m_ShowTrackerVideoId(-1)
     , m_overrideControllerId(-1)
     , m_overrideHmdId(-1)
+	, m_triangTargetTrackerId(-1)
+	, m_triangPendingTrackerDataIndexChange(false)
+	, m_triangSelectedTracker(-1)
+	, m_triangShowArrows(true)
+	, m_triangShowControllers(false)
+	, m_triangShowFrustum(true)
+	, m_triangShowTrackerIds(false)
 { 
     m_renderTrackerIter = m_trackerViews.end();
 }
@@ -139,7 +146,8 @@ void AppStage_ComputeTrackerPoses::update()
     case eMenuState::failedControllerStartRequest:
     case eMenuState::failedHmdListRequest:
     case eMenuState::failedHmdStartRequest:
-    case eMenuState::failedTrackerStartRequest:
+	case eMenuState::failedTrackerStartRequest:
+	case eMenuState::failedControllerOffsets:
         break;
     case eMenuState::verifyTrackers:
         update_tracker_video();
@@ -165,8 +173,91 @@ void AppStage_ComputeTrackerPoses::update()
     case eMenuState::showTrackerVideo:
         update_tracker_video();
         break;
-    case eMenuState::calibrateStepFailed:
-        break;
+	case eMenuState::calibrateStepFailed:
+		break;
+	case eMenuState::pendingControllerOffsets:
+		{
+			t_controller_state_map_iterator m_controllerState = m_controllerViews.find(m_overrideControllerId);
+			t_tracker_state_map_iterator m_trackerState = m_trackerViews.find(m_triangTargetTrackerId);
+
+			// Check if controller is in list
+			if (m_controllerState == m_controllerViews.end() || 
+				m_trackerState == m_trackerViews.end())
+			{
+				setState(AppStage_ComputeTrackerPoses::failedControllerOffsets);
+			}
+			else
+			{
+				PSMController *controllerView = m_controllerState->second.controllerView;
+				PSMTracker *trackerView = m_trackerState->second.trackerView;
+				if (controllerView == nullptr || !controllerView->bValid ||
+					trackerView == nullptr)
+				{
+					setState(AppStage_ComputeTrackerPoses::failedControllerOffsets);
+				}
+				else
+				{
+					if (!m_triangPendingTrackerDataIndexChange)
+					{
+						int currentTrackerId = -1;
+						bool isTracked = false;
+						PSMPosef pose;
+						PSMVector2f screen_vector;
+
+						switch (controllerView->ControllerType)
+						{
+						case PSMController_Move:
+							pose = controllerView->ControllerState.PSMoveState.Pose;
+							screen_vector = controllerView->ControllerState.PSMoveState.RawTrackerData.ScreenLocation;
+							currentTrackerId = controllerView->ControllerState.PSMoveState.RawTrackerData.TrackerID;
+							isTracked = (controllerView->ControllerState.PSMoveState.RawTrackerData.ValidTrackerBitmask &
+								(1 << trackerView->tracker_info.tracker_id)) > 0;
+							break;
+						case PSMController_DualShock4:
+							pose = controllerView->ControllerState.PSDS4State.Pose;
+							screen_vector = controllerView->ControllerState.PSDS4State.RawTrackerData.ScreenLocation;
+							currentTrackerId = controllerView->ControllerState.PSDS4State.RawTrackerData.TrackerID;
+							isTracked = (controllerView->ControllerState.PSDS4State.RawTrackerData.ValidTrackerBitmask &
+								(1 << trackerView->tracker_info.tracker_id)) > 0;
+							break;
+						case PSMController_Virtual:
+							pose = controllerView->ControllerState.VirtualController.Pose;
+							screen_vector = controllerView->ControllerState.VirtualController.RawTrackerData.ScreenLocation;
+							currentTrackerId = controllerView->ControllerState.VirtualController.RawTrackerData.TrackerID;
+							isTracked = (controllerView->ControllerState.VirtualController.RawTrackerData.ValidTrackerBitmask &
+								(1 << trackerView->tracker_info.tracker_id)) > 0;
+							break;
+						}
+
+						if (isTracked && currentTrackerId != m_triangTargetTrackerId)
+						{
+							request_controller_set_tracker_offset(m_overrideControllerId, m_triangTargetTrackerId);
+						}
+						else
+						{
+							if (isTracked)
+							{
+								m_triangLastControllerPose = pose;
+								m_triangTrackerScreenLocations.insert(t_controller_screenloc_pair(currentTrackerId, screen_vector));
+							}
+
+							if (m_trackerViews.find(m_triangTargetTrackerId + 1) != m_trackerViews.end())
+							{
+								++m_triangTargetTrackerId;
+							}
+							else
+							{
+								setState(AppStage_ComputeTrackerPoses::showControllerOffsets);
+							}
+						}
+					}
+				}
+			}
+
+		}
+		break;
+	case eMenuState::showControllerOffsets:
+		break;
     default:
         assert(0 && "unreachable");
     }
@@ -190,7 +281,8 @@ void AppStage_ComputeTrackerPoses::render()
     case eMenuState::failedHmdListRequest:
     case eMenuState::failedHmdStartRequest:
     case eMenuState::failedTrackerListRequest:
-    case eMenuState::failedTrackerStartRequest:
+	case eMenuState::failedTrackerStartRequest:
+	case eMenuState::failedControllerOffsets:
         break;
     case eMenuState::verifyTrackers:
         {
@@ -213,7 +305,7 @@ void AppStage_ComputeTrackerPoses::render()
             for (t_tracker_state_map_iterator tracker_iter = m_trackerViews.begin(); tracker_iter != m_trackerViews.end(); ++tracker_iter)
             {
                 const PSMTracker *trackerView = tracker_iter->second.trackerView;
-                const int tracker_id= trackerView->tracker_info.tracker_id;
+				const int tracker_id= trackerView->tracker_info.tracker_id;
                 const PSMPosef trackerPose = trackerView->tracker_info.tracker_pose;
                 const glm::mat4 trackerMat4 = psm_posef_to_glm_mat4(trackerPose);
 				
@@ -226,6 +318,7 @@ void AppStage_ComputeTrackerPoses::render()
                 drawTextAtWorldPosition(glm::mat4(1.f), psm_vector3f_to_glm_vec3(trackerPose.Position), "#%d", tracker_id);
                 drawTransformedFrustum(glm::mat4(1.f), &frustum, color);
 
+				drawPS3EyeModel(trackerMat4);
                 drawTransformedAxes(trackerMat4, 20.f);
             }
 
@@ -307,8 +400,261 @@ void AppStage_ComputeTrackerPoses::render()
         {
             render_tracker_video();
         } break;
-    case eMenuState::calibrateStepFailed:
-        break;
+	case eMenuState::calibrateStepFailed:
+		break;
+	case eMenuState::pendingControllerOffsets:
+		break;
+	case eMenuState::showControllerOffsets:
+	{
+		// Draw the chaperone origin axes
+		drawTransformedAxes(glm::mat4(1.0f), 100.f);
+		drawTransformeGrid(glm::mat4(1.0f), 250.f);
+
+		// Draw the frustum for each tracking camera.
+		// The frustums are defined in PSMove tracking space.
+		// We need to transform them into chaperone space to display them along side the HMD.
+		for (t_tracker_state_map_iterator tracker_iter = m_trackerViews.begin(); tracker_iter != m_trackerViews.end(); ++tracker_iter)
+		{
+			const PSMTracker *trackerView = tracker_iter->second.trackerView;
+			const int tracker_id = trackerView->tracker_info.tracker_id;
+			const PSMPosef trackerPose = trackerView->tracker_info.tracker_pose;
+			const glm::mat4 trackerMat4 = psm_posef_to_glm_mat4(trackerPose);
+			
+			PSMFrustum frustum;
+			PSM_GetTrackerFrustum(tracker_id, &frustum);
+
+			// use color depending on tracking status
+			glm::vec3 color;
+			if (m_triangTrackerScreenLocations.find(tracker_id) != m_triangTrackerScreenLocations.end())
+			{
+				color = k_psmove_frustum_color;
+			}
+			else
+			{
+				color = k_psmove_frustum_color_no_track;
+			}
+
+			drawTextAtWorldPosition(glm::mat4(1.f), psm_vector3f_to_glm_vec3(trackerPose.Position), "#%d", tracker_id);
+			
+			if (m_triangShowFrustum)
+			{
+				drawTransformedFrustum(glm::mat4(1.f), &frustum, color);
+			}
+
+			drawPS3EyeModel(trackerMat4);
+			drawTransformedAxes(trackerMat4, 20.f);
+
+			
+		}
+
+		unsigned int processedTrackers[PSMOVESERVICE_MAX_TRACKER_COUNT];
+
+		// Draw each controller model
+		t_controller_state_map_iterator controllerState = m_controllerViews.find(m_overrideControllerId);
+		if (controllerState != m_controllerViews.end())
+		{
+			const PSMController *controllerView = controllerState->second.controllerView;
+			if (controllerView != nullptr && controllerView->bValid)
+			{
+				{
+					const PSMTrackingColorType trackingColorType = controllerState->second.trackingColorType;
+
+					PSMPosef controllerPose;
+					PSMPhysicsData physicsData;
+					switch (controllerView->ControllerType)
+					{
+					case PSMControllerType::PSMController_Move:
+						controllerPose = controllerView->ControllerState.PSMoveState.Pose;
+						physicsData = controllerView->ControllerState.PSMoveState.PhysicsData;
+						break;
+					case PSMControllerType::PSMController_DualShock4:
+						controllerPose = controllerView->ControllerState.PSDS4State.Pose;
+						physicsData = controllerView->ControllerState.PSDS4State.PhysicsData;
+						break;
+					case PSMControllerType::PSMController_Virtual:
+						controllerPose = controllerView->ControllerState.VirtualController.Pose;
+						physicsData = controllerView->ControllerState.VirtualController.PhysicsData;
+						break;
+					}
+					glm::mat4 controllerMat4 = psm_posef_to_glm_mat4(m_triangLastControllerPose);
+
+					if (m_controllerViews.size() > 1)
+					{
+						drawTextAtWorldPosition(glm::mat4(1.f), psm_vector3f_to_glm_vec3(m_triangLastControllerPose.Position), "#%d", controllerView->ControllerID);
+					}
+
+					if (m_triangShowControllers)
+					{
+						drawController(controllerView, controllerMat4, trackingColorType);
+						drawTransformedAxes(controllerMat4, 10.f);
+					}
+					else
+					{
+						drawPointCloud(glm::mat4(1.f), glm::vec3(1.f, 0.f, 0.f), reinterpret_cast<float *>(&m_triangLastControllerPose.Position), 1);
+					}
+				}
+
+				for (t_tracker_state_map_iterator tracker_iter = m_trackerViews.begin(); tracker_iter != m_trackerViews.end(); ++tracker_iter)
+				{
+					const PSMTracker *trackerView = tracker_iter->second.trackerView;
+					const int tracker_id = trackerView->tracker_info.tracker_id;
+					const PSMPosef trackerPose = trackerView->tracker_info.tracker_pose;
+					const glm::mat4 trackerMat4 = psm_posef_to_glm_mat4(trackerPose);
+					const PSMClientTrackerInfo trackerInfo = trackerView->tracker_info;
+
+					if (m_triangSelectedTracker != -1 && m_triangSelectedTracker != tracker_id)
+						continue;
+
+					cv::Matx33f tracker_inst;
+					{
+						cv::Matx<float, 5, 1> distortionOut;
+						tracker_inst(0, 0) = trackerInfo.tracker_focal_lengths.x;
+						tracker_inst(1, 1) = trackerInfo.tracker_focal_lengths.y;
+						tracker_inst(0, 2) = trackerInfo.tracker_principal_point.x;
+						tracker_inst(1, 2) = trackerInfo.tracker_principal_point.y;
+
+						tracker_inst(1, 1) *= -1;  //Negate F_PY because the screen coordinate system has +Y down.
+
+						// Fill the rest of the matrix with corrext values.
+						tracker_inst(0, 1) = 0.f;
+						tracker_inst(1, 0) = 0.f;
+						tracker_inst(2, 0) = 0.f;
+						tracker_inst(2, 1) = 0.f;
+						tracker_inst(2, 2) = 1.f;
+
+						distortionOut(0, 0) = trackerInfo.tracker_k1;
+						distortionOut(1, 0) = trackerInfo.tracker_k2;
+						distortionOut(4, 0) = trackerInfo.tracker_k3;
+						distortionOut(2, 0) = trackerInfo.tracker_p1;
+						distortionOut(3, 0) = trackerInfo.tracker_p2;
+					}
+
+					for (t_tracker_state_map_iterator trackerOther_iter = m_trackerViews.begin(); trackerOther_iter != m_trackerViews.end(); ++trackerOther_iter)
+					{
+						const PSMTracker *trackerOtherView = trackerOther_iter->second.trackerView;
+						const int trackerOther_id = trackerOtherView->tracker_info.tracker_id;
+						const PSMPosef trackerOtherPose = trackerOtherView->tracker_info.tracker_pose;
+						const glm::mat4 trackerOtherMat4 = psm_posef_to_glm_mat4(trackerOtherPose);
+						const PSMClientTrackerInfo trackerOtherInfo = trackerView->tracker_info;
+
+						if (tracker_id == trackerOther_id)
+							continue;
+
+						if((processedTrackers[trackerOther_id] & (1 << tracker_id)) > 0)
+							continue;
+
+						processedTrackers[tracker_id] |= (1 << trackerOther_id);
+
+						cv::Matx33f trackerOther_inst;
+						{
+							cv::Matx<float, 5, 1> distortionOut;
+							trackerOther_inst(0, 0) = trackerOtherInfo.tracker_focal_lengths.x;
+							trackerOther_inst(1, 1) = trackerOtherInfo.tracker_focal_lengths.y;
+							trackerOther_inst(0, 2) = trackerOtherInfo.tracker_principal_point.x;
+							trackerOther_inst(1, 2) = trackerOtherInfo.tracker_principal_point.y;
+
+							trackerOther_inst(1, 1) *= -1;  //Negate F_PY because the screen coordinate system has +Y down.
+
+							// Fill the rest of the matrix with corrext values.
+							trackerOther_inst(0, 1) = 0.f;
+							trackerOther_inst(1, 0) = 0.f;
+							trackerOther_inst(2, 0) = 0.f;
+							trackerOther_inst(2, 1) = 0.f;
+							trackerOther_inst(2, 2) = 1.f;
+
+							distortionOut(0, 0) = trackerOtherInfo.tracker_k1;
+							distortionOut(1, 0) = trackerOtherInfo.tracker_k2;
+							distortionOut(4, 0) = trackerOtherInfo.tracker_k3;
+							distortionOut(2, 0) = trackerOtherInfo.tracker_p1;
+							distortionOut(3, 0) = trackerOtherInfo.tracker_p2;
+						}
+
+						t_controller_screenloc_map_iterator tracker_point = m_triangTrackerScreenLocations.find(tracker_id);
+						t_controller_screenloc_map_iterator trackerOther_point = m_triangTrackerScreenLocations.find(trackerOther_id);
+
+						if (tracker_point != m_triangTrackerScreenLocations.end() &&
+							trackerOther_point != m_triangTrackerScreenLocations.end())
+						{
+							cv::Point2f screen_location = cv::Point2f(tracker_point->second.x, tracker_point->second.y);
+							cv::Point2f screenOther_location = cv::Point2f(trackerOther_point->second.x, trackerOther_point->second.y);
+
+							cv::Mat projPoints1 = cv::Mat(screen_location);
+							cv::Mat projPoints2 = cv::Mat(screenOther_location);
+
+							cv::Matx34f projMat1;
+							{
+								const glm::quat glm_quat(trackerPose.Orientation.w, trackerPose.Orientation.x, trackerPose.Orientation.y, trackerPose.Orientation.z);
+								const glm::vec3 glm_pos(trackerPose.Position.x, trackerPose.Position.y, trackerPose.Position.z);
+								const glm::mat4 glm_camera_xform = glm_mat4_from_pose(glm_quat, glm_pos);
+								const glm::mat4 glm_mat = glm::inverse(glm_camera_xform);
+								cv::Matx34f out;
+								out(0, 0) = glm_mat[0][0]; out(0, 1) = glm_mat[1][0]; out(0, 2) = glm_mat[2][0]; out(0, 3) = glm_mat[3][0];
+								out(1, 0) = glm_mat[0][1]; out(1, 1) = glm_mat[1][1]; out(1, 2) = glm_mat[2][1]; out(1, 3) = glm_mat[3][1];
+								out(2, 0) = glm_mat[0][2]; out(2, 1) = glm_mat[1][2]; out(2, 2) = glm_mat[2][2]; out(2, 3) = glm_mat[3][2];
+
+								// intrinsic matrix * extrinsic matrix
+								projMat1 = cv::Mat(tracker_inst * out);
+							}
+
+							cv::Matx34f projMat2;
+							{
+								const glm::quat glm_quat(trackerOtherPose.Orientation.w, trackerOtherPose.Orientation.x, trackerOtherPose.Orientation.y, trackerOtherPose.Orientation.z);
+								const glm::vec3 glm_pos(trackerOtherPose.Position.x, trackerOtherPose.Position.y, trackerOtherPose.Position.z);
+								const glm::mat4 glm_camera_xform = glm_mat4_from_pose(glm_quat, glm_pos);
+								const glm::mat4 glm_mat = glm::inverse(glm_camera_xform);
+								cv::Matx34f out;
+								out(0, 0) = glm_mat[0][0]; out(0, 1) = glm_mat[1][0]; out(0, 2) = glm_mat[2][0]; out(0, 3) = glm_mat[3][0];
+								out(1, 0) = glm_mat[0][1]; out(1, 1) = glm_mat[1][1]; out(1, 2) = glm_mat[2][1]; out(1, 3) = glm_mat[3][1];
+								out(2, 0) = glm_mat[0][2]; out(2, 1) = glm_mat[1][2]; out(2, 2) = glm_mat[2][2]; out(2, 3) = glm_mat[3][2];
+
+								// intrinsic matrix * extrinsic matrix
+								projMat2 = cv::Mat(trackerOther_inst * out);
+							}
+
+							cv::Mat point3D(1, 1, CV_32FC4);
+							cv::triangulatePoints(projMat1, projMat2, projPoints1, projPoints2, point3D);
+
+							PSMVector3f result;
+							const float w = point3D.at<float>(3, 0);
+							result.x = point3D.at<float>(0, 0) / w;
+							result.y = point3D.at<float>(1, 0) / w;
+							result.z = point3D.at<float>(2, 0) / w;
+
+							PSMPosef offset_pose;
+							offset_pose.Position.x = result.x;
+							offset_pose.Position.y = result.y;
+							offset_pose.Position.z = result.z;
+							offset_pose.Orientation = m_triangLastControllerPose.Orientation;
+									
+							glm::mat4 controllerMat4 = psm_posef_to_glm_mat4(offset_pose);
+
+							if (m_triangShowControllers)
+							{
+								drawController(controllerView, controllerMat4, PSMTrackingColorType::PSMTrackingColorType_MaxColorTypes);
+								drawTransformedAxes(controllerMat4, 10.f);
+							}
+							else
+							{
+								drawPointCloud(glm::mat4(1.f), glm::vec3(1.f, 1.f, 1.f), reinterpret_cast<float *>(&offset_pose.Position), 1);
+							}
+
+							if (m_triangShowTrackerIds)
+							{
+								drawTextAtWorldPosition(glm::mat4(1.f), psm_vector3f_to_glm_vec3(offset_pose.Position), "#%d+#%d", tracker_id, trackerOther_id);
+							}
+							
+							if (m_triangShowArrows)
+							{
+								drawArrow(glm::mat4(1.f), psm_vector3f_to_glm_vec3(trackerPose.Position), psm_vector3f_to_glm_vec3(offset_pose.Position), 0.1f, glm::vec3(1.f, 1.f, 1.f));
+								drawArrow(glm::mat4(1.f), psm_vector3f_to_glm_vec3(trackerOtherPose.Position), psm_vector3f_to_glm_vec3(offset_pose.Position), 0.1f, glm::vec3(1.f, 1.f, 1.f));
+							}
+						}
+					}
+				}
+			}
+		}
+
+	} break;
     default:
         assert(0 && "unreachable");
     }
@@ -356,7 +702,8 @@ void AppStage_ComputeTrackerPoses::renderUI()
     case eMenuState::failedHmdListRequest:
     case eMenuState::failedHmdStartRequest:
     case eMenuState::failedTrackerListRequest:
-    case eMenuState::failedTrackerStartRequest:
+	case eMenuState::failedTrackerStartRequest:
+	case eMenuState::failedControllerOffsets:
         {
             ImGui::SetNextWindowPosCenter();
             ImGui::SetNextWindowSize(ImVec2(k_panel_width, 180));
@@ -379,9 +726,12 @@ void AppStage_ComputeTrackerPoses::renderUI()
             case eMenuState::failedTrackerListRequest:
                 ImGui::Text("Failed tracker list retrieval!");
                 break;
-            case eMenuState::failedTrackerStartRequest:
-                ImGui::Text("Failed tracker stream start!");
-                break;
+			case eMenuState::failedTrackerStartRequest:
+				ImGui::Text("Failed tracker stream start!");
+				break;
+			case eMenuState::failedControllerOffsets:
+				ImGui::Text("Failed tracker data stream start!");
+				break;
             }
 
             if (ImGui::Button(" OK "))
@@ -482,7 +832,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
     case eMenuState::testTracking:
         {
             ImGui::SetNextWindowPos(ImVec2(20.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(250.f, 260.f));
+            ImGui::SetNextWindowSize(ImVec2(250.f, 300.f));
             ImGui::Begin("Test Tracking Pose", nullptr, window_flags);
 
             // display per tracker UI
@@ -522,7 +872,18 @@ void AppStage_ComputeTrackerPoses::renderUI()
                 ImGui::PopItemWidth();
             }
 
-            ImGui::Separator();
+			ImGui::Separator();
+
+			if (m_controllerViews.size() > 0 && m_overrideControllerId != -1)
+			{
+				ImGui::Text("Controller ID: #%d", m_overrideControllerId);
+				if (ImGui::Button("Show Tracker Triangulations"))
+				{
+					setState(eMenuState::pendingControllerOffsets);
+				}
+
+				ImGui::Separator();
+			}
 
             if (!m_bSkipCalibration)
             {
@@ -600,27 +961,80 @@ void AppStage_ComputeTrackerPoses::renderUI()
         }
         break;
 
-    case eMenuState::calibrateStepFailed:
-        {
-            ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
-            ImGui::Begin(k_window_title, nullptr, window_flags);
+		case eMenuState::calibrateStepFailed:
+		{
+			ImGui::SetNextWindowPosCenter();
+			ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
+			ImGui::Begin(k_window_title, nullptr, window_flags);
 
-            ImGui::Text("Calibration Failed");
+			ImGui::Text("Calibration Failed");
 
-            if (ImGui::Button("Restart Calibration"))
-            {
-                setState(eMenuState::verifyTrackers);
-            }
+			if (ImGui::Button("Restart Calibration"))
+			{
+				setState(eMenuState::verifyTrackers);
+			}
 
-            if (ImGui::Button("Cancel"))
-            {
-                m_app->setAppStage(AppStage_TrackerSettings::APP_STAGE_NAME);
-            }
+			if (ImGui::Button("Cancel"))
+			{
+				m_app->setAppStage(AppStage_TrackerSettings::APP_STAGE_NAME);
+			}
 
-            ImGui::End();
-        }
-        break;
+			ImGui::End();
+		}
+		break;
+
+		case eMenuState::pendingControllerOffsets:
+		{
+			ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
+			ImGui::SetNextWindowSize(ImVec2(k_panel_width, 80));
+			ImGui::Begin(k_window_title, nullptr, window_flags);
+
+			ImGui::Text("Reading tracker data streams...");
+
+			ImGui::End();
+		}
+		break;
+
+		case eMenuState::showControllerOffsets:
+		{
+			ImGui::SetNextWindowPos(ImVec2(20.f, 20.f));
+			ImGui::SetNextWindowSize(ImVec2(k_panel_width, 175));
+			ImGui::Begin(k_window_title, nullptr, window_flags);
+
+			if (ImGui::Button(" < ##Previous Tracker"))
+			{
+				m_triangSelectedTracker = fmax(m_triangSelectedTracker - 1, -1);
+			}
+			ImGui::SameLine();
+			if (ImGui::Button(" > ##Next Tracker"))
+			{
+				m_triangSelectedTracker = fmin(m_triangSelectedTracker + 1, m_trackerViews.size() - 1);
+			}
+			ImGui::SameLine();
+			if (m_triangSelectedTracker == -1)
+			{
+				ImGui::Text("Tracker ID: <ALL>");
+			}
+			else
+			{
+				ImGui::Text("Tracker ID: #%d", m_triangSelectedTracker);
+			}
+
+			ImGui::Checkbox("Show Arrows", &m_triangShowArrows);
+			ImGui::Checkbox("Show Controller Models", &m_triangShowControllers);
+			ImGui::Checkbox("Show Tracker Frustum", &m_triangShowFrustum);
+			ImGui::Checkbox("Show Tracker Ids", &m_triangShowTrackerIds);
+
+			ImGui::Separator();
+
+			if (ImGui::Button("Return to Test Tracking Pose"))
+			{
+				setState(eMenuState::testTracking);
+			}
+
+			ImGui::End();
+		}
+		break;
 
     default:
         assert(0 && "unreachable");
@@ -656,7 +1070,8 @@ void AppStage_ComputeTrackerPoses::onExitState(eMenuState newState)
     case eMenuState::failedHmdListRequest:
     case eMenuState::failedHmdStartRequest:
     case eMenuState::failedTrackerListRequest:
-    case eMenuState::failedTrackerStartRequest:
+	case eMenuState::failedTrackerStartRequest:
+	case eMenuState::failedControllerOffsets:
         break;
     case eMenuState::verifyTrackers:
         break;
@@ -670,8 +1085,13 @@ void AppStage_ComputeTrackerPoses::onExitState(eMenuState newState)
         break;
     case eMenuState::showTrackerVideo:
         break;
-    case eMenuState::calibrateStepFailed:
-        break;
+	case eMenuState::calibrateStepFailed:
+		break;
+	case eMenuState::pendingControllerOffsets:
+		break;
+	case eMenuState::showControllerOffsets:
+		m_app->setCameraType(_cameraFixed);
+		break;
     default:
         assert(0 && "unreachable");
     }
@@ -706,7 +1126,8 @@ void AppStage_ComputeTrackerPoses::onEnterState(eMenuState newState)
     case eMenuState::failedHmdListRequest:
     case eMenuState::failedHmdStartRequest:
     case eMenuState::failedTrackerListRequest:
-    case eMenuState::failedTrackerStartRequest:
+	case eMenuState::failedTrackerStartRequest:
+	case eMenuState::failedControllerOffsets:
         break;
     case eMenuState::verifyTrackers:
         m_renderTrackerIter = m_trackerViews.begin();
@@ -738,8 +1159,26 @@ void AppStage_ComputeTrackerPoses::onEnterState(eMenuState newState)
         break;
     case eMenuState::showTrackerVideo:
         break;
-    case eMenuState::calibrateStepFailed:
-        break;
+	case eMenuState::calibrateStepFailed:
+		break;
+	case eMenuState::pendingControllerOffsets:
+		{
+			m_triangTargetTrackerId = 0;
+			m_triangPendingTrackerDataIndexChange = false;
+			m_triangTrackerScreenLocations.clear();
+			m_triangLastControllerPose.Position.x = 0.f;
+			m_triangLastControllerPose.Position.y = 0.f;
+			m_triangLastControllerPose.Position.z = 0.f;
+			m_triangLastControllerPose.Orientation.x = 0.f;
+			m_triangLastControllerPose.Orientation.y = 0.f;
+			m_triangLastControllerPose.Orientation.z = 0.f;
+			m_triangLastControllerPose.Orientation.w = 1.f;
+		}
+		break;
+	case eMenuState::showControllerOffsets:
+		
+		m_app->setCameraType(_cameraOrbit);
+		break;
     default:
         assert(0 && "unreachable");
     }
@@ -957,7 +1396,7 @@ void AppStage_ComputeTrackerPoses::handle_controller_list_response(
                             static_cast<PSMTrackingColorType>(protocolControllerResponse.tracking_color_type());
 
                         thisPtr->request_start_controller_stream(trackedControllerId, list_index, trackingColorType);
-                        bStartedAnyControllers = true;
+						bStartedAnyControllers = true;
                     }
                 }
 
@@ -1006,6 +1445,41 @@ void AppStage_ComputeTrackerPoses::handle_controller_list_response(
     }
 }
 
+void AppStage_ComputeTrackerPoses::request_controller_set_tracker_offset(
+	int ControllerID,
+	int TrackerID)
+{
+	m_triangPendingTrackerDataIndexChange = true;
+
+	PSMRequestID requestId;
+	PSM_SetControllerDataStreamTrackerIndexAsync(ControllerID, TrackerID, &requestId);
+	PSM_RegisterCallback(requestId, &AppStage_ComputeTrackerPoses::handle_controller_set_tracker_offset_response, this);
+}
+
+void AppStage_ComputeTrackerPoses::handle_controller_set_tracker_offset_response(
+	const PSMResponseMessage *response_message,
+	void *userdata)
+{
+	AppStage_ComputeTrackerPoses *thisPtr = static_cast<AppStage_ComputeTrackerPoses *>(userdata);
+
+	const PSMResult ResultCode = response_message->result_code;
+
+	switch (ResultCode)
+	{
+	case PSMResult_Success:
+	{
+		thisPtr->m_triangPendingTrackerDataIndexChange = false;
+	} break;
+
+	case PSMResult_Error:
+	case PSMResult_Canceled:
+	case PSMResult_Timeout:
+	{
+		thisPtr->setState(AppStage_ComputeTrackerPoses::failedControllerOffsets);
+	} break;
+	}
+}
+
 void AppStage_ComputeTrackerPoses::request_start_controller_stream(
     int ControllerID,
     int listIndex,
@@ -1043,7 +1517,7 @@ void AppStage_ComputeTrackerPoses::request_start_controller_stream(
     // Start off getting getting projection data from tracker 0
     {
         PSMRequestID requestId;
-
+		
         PSM_SetControllerDataStreamTrackerIndexAsync(controllerState.controllerView->ControllerID, 0, &requestId);
         PSM_EatResponse(requestId);
     }
@@ -1358,7 +1832,7 @@ void AppStage_ComputeTrackerPoses::handle_tracker_start_stream_response(
             // The context holds everything a handler needs to evaluate a response
             TrackerState &trackerState = trackerStateEntry->second;
             PSMClientTrackerInfo &trackerInfo= trackerState.trackerView->tracker_info;
-
+			
             // Open the shared memory that the video stream is being written to
             if (PSM_OpenTrackerVideoStream(trackerInfo.tracker_id) == PSMResult_Success)
             {
@@ -1462,24 +1936,24 @@ bool AppStage_ComputeTrackerPoses::does_tracker_see_any_controller(const PSMTrac
         if (controllerView->ControllerType == PSMControllerType::PSMController_Move &&
             controllerView->ControllerState.PSMoveState.bIsCurrentlyTracking)
         {
-            bTrackerSeesAnyController= 
-                (controllerView->ControllerState.PSMoveState.RawTrackerData.ValidTrackerBitmask | 
+            bTrackerSeesAnyController |= 
+                (controllerView->ControllerState.PSMoveState.RawTrackerData.ValidTrackerBitmask & 
                  (1 << tracker_id)) > 0;
             break;
         }
         else if (controllerView->ControllerType == PSMControllerType::PSMController_DualShock4 &&
                  controllerView->ControllerState.PSDS4State.bIsCurrentlyTracking)
         {
-            bTrackerSeesAnyController= 
-                (controllerView->ControllerState.PSDS4State.RawTrackerData.ValidTrackerBitmask | 
+            bTrackerSeesAnyController |= 
+                (controllerView->ControllerState.PSDS4State.RawTrackerData.ValidTrackerBitmask & 
                  (1 << tracker_id)) > 0;
             break;
         }
         else if (controllerView->ControllerType == PSMControllerType::PSMController_Virtual &&
                  controllerView->ControllerState.VirtualController.bIsCurrentlyTracking)
         {
-            bTrackerSeesAnyController= 
-                (controllerView->ControllerState.VirtualController.RawTrackerData.ValidTrackerBitmask | 
+            bTrackerSeesAnyController |= 
+                (controllerView->ControllerState.VirtualController.RawTrackerData.ValidTrackerBitmask & 
                  (1 << tracker_id)) > 0;
             break;
         }
@@ -1501,7 +1975,7 @@ bool AppStage_ComputeTrackerPoses::does_tracker_see_any_hmd(const PSMTracker *tr
             hmdView->HmdState.MorpheusState.bIsCurrentlyTracking)
         {
             bTrackerSeesAnyHmd= 
-                (hmdView->HmdState.MorpheusState.RawTrackerData.ValidTrackerBitmask | 
+                (hmdView->HmdState.MorpheusState.RawTrackerData.ValidTrackerBitmask & 
                  (1 << tracker_id)) > 0;
             break;
         }
@@ -1509,7 +1983,7 @@ bool AppStage_ComputeTrackerPoses::does_tracker_see_any_hmd(const PSMTracker *tr
                  hmdView->HmdState.VirtualHMDState.bIsCurrentlyTracking)
         {
             bTrackerSeesAnyHmd= 
-                (hmdView->HmdState.VirtualHMDState.RawTrackerData.ValidTrackerBitmask | 
+                (hmdView->HmdState.VirtualHMDState.RawTrackerData.ValidTrackerBitmask & 
                  (1 << tracker_id)) > 0;
             break;
         }

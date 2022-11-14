@@ -1319,7 +1319,7 @@ static void generate_morpheus_hmd_data_frame_for_stream(
 
                 if (positionEstimate != nullptr && positionEstimate->bCurrentlyTracking)
                 {
-                    validTrackerBitmask&= (1 << trackerId);
+                    validTrackerBitmask |= (1 << trackerId);
 
                     if (trackerId == selectedTrackerId)
                     {
@@ -1438,7 +1438,7 @@ static void generate_virtual_hmd_data_frame_for_stream(
 
                 if (positionEstimate != nullptr && positionEstimate->bCurrentlyTracking)
                 {
-                    validTrackerBitmask&= (1 << trackerId);
+                    validTrackerBitmask |= (1 << trackerId);
 
                     if (trackerId == selectedTrackerId)
                     {
