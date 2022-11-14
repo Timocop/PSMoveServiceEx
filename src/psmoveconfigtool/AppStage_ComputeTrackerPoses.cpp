@@ -1932,30 +1932,23 @@ bool AppStage_ComputeTrackerPoses::does_tracker_see_any_controller(const PSMTrac
         const PSMController *controllerView = controller_iter->second.controllerView;
         const int tracker_id= trackerView->tracker_info.tracker_id;
 
-        glm::vec3 color;
-        if (controllerView->ControllerType == PSMControllerType::PSMController_Move &&
-            controllerView->ControllerState.PSMoveState.bIsCurrentlyTracking)
+        if (controllerView->ControllerType == PSMControllerType::PSMController_Move)
         {
-            bTrackerSeesAnyController = 
+            bTrackerSeesAnyController |= 
                 (controllerView->ControllerState.PSMoveState.RawTrackerData.ValidTrackerBitmask & 
                  (1 << tracker_id)) > 0;
-            break;
         }
-        else if (controllerView->ControllerType == PSMControllerType::PSMController_DualShock4 &&
-                 controllerView->ControllerState.PSDS4State.bIsCurrentlyTracking)
+        else if (controllerView->ControllerType == PSMControllerType::PSMController_DualShock4)
         {
-            bTrackerSeesAnyController = 
+            bTrackerSeesAnyController |= 
                 (controllerView->ControllerState.PSDS4State.RawTrackerData.ValidTrackerBitmask & 
                  (1 << tracker_id)) > 0;
-            break;
         }
-        else if (controllerView->ControllerType == PSMControllerType::PSMController_Virtual &&
-                 controllerView->ControllerState.VirtualController.bIsCurrentlyTracking)
+        else if (controllerView->ControllerType == PSMControllerType::PSMController_Virtual)
         {
-            bTrackerSeesAnyController = 
+            bTrackerSeesAnyController |= 
                 (controllerView->ControllerState.VirtualController.RawTrackerData.ValidTrackerBitmask & 
                  (1 << tracker_id)) > 0;
-            break;
         }
     }
 
@@ -1970,22 +1963,19 @@ bool AppStage_ComputeTrackerPoses::does_tracker_see_any_hmd(const PSMTracker *tr
         const PSMHeadMountedDisplay *hmdView = hmd_iter->second.hmdView;
         const int tracker_id= trackerView->tracker_info.tracker_id;
 
-        glm::vec3 color;
         if (hmdView->HmdType == PSMHmd_Morpheus &&
             hmdView->HmdState.MorpheusState.bIsCurrentlyTracking)
         {
-            bTrackerSeesAnyHmd = 
+            bTrackerSeesAnyHmd |= 
                 (hmdView->HmdState.MorpheusState.RawTrackerData.ValidTrackerBitmask & 
                  (1 << tracker_id)) > 0;
-            break;
         }
         else if (hmdView->HmdType == PSMHmd_Virtual &&
                  hmdView->HmdState.VirtualHMDState.bIsCurrentlyTracking)
         {
-            bTrackerSeesAnyHmd = 
+            bTrackerSeesAnyHmd |= 
                 (hmdView->HmdState.VirtualHMDState.RawTrackerData.ValidTrackerBitmask & 
                  (1 << tracker_id)) > 0;
-            break;
         }
     }
 
