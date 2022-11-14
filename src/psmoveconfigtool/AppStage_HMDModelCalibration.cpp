@@ -518,6 +518,7 @@ void AppStage_HMDModelCalibration::render()
 					drawTransformedFrustum(glm::mat4(1.f), &frustum, color);
 				}
 
+				drawPS3EyeModel(chaperoneSpaceTransform);
 				drawTransformedAxes(chaperoneSpaceTransform, 20.f);
 			}
 
