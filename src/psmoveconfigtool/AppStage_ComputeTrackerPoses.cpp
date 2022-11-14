@@ -843,7 +843,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
                 ImGui::PushItemWidth(125.f);
                 if (does_tracker_see_any_device(trackerView))
                 {
-                    ImGui::Text("Tracker #%d: OK", trackerView->tracker_info.tracker_id);
+                    ImGui::Text("Tracker #%d: OK  ", trackerView->tracker_info.tracker_id);
                 }
                 else 
                 {
