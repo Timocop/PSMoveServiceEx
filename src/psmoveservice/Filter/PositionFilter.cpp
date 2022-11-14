@@ -14,13 +14,13 @@
 #define k_accelerometer_frequency_cutoff 1000.f // Hz
 
 // Decay rate to apply to the jerk
-#define k_jerk_decay 0.9f
+#define k_jerk_decay 0.6f
 
 // Decay rate to apply to the acceleration
-#define k_acceleration_decay 0.99f
+#define k_acceleration_decay 0.7f
 
 // Decay rate to apply to the velocity
-#define k_velocity_decay 0.99f
+#define k_velocity_decay 0.7f
 
 // Past this time the complimentary filter will no longer keep doing
 // IMU extrapolation of an unseen controller
