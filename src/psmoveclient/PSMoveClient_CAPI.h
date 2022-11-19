@@ -209,71 +209,189 @@ typedef struct
 typedef struct
 {
 	/// ID of the selected tracker
-    PSMTrackerID            TrackerID;
+	PSMTrackerID            TrackerID;
 	/// Pixel position of device projection centroid on each tracker
-    PSMVector2f             ScreenLocation;
+	PSMVector2f             ScreenLocation;
 	/// Tracker relative device 3d position on each tracker
-    PSMVector3f             RelativePositionCm;
+	PSMVector3f             RelativePositionCm;
 	/// Tracker relative device 3d orientation on each tracker
-    PSMQuatf                RelativeOrientation;
+	PSMQuatf                RelativeOrientation;
 	/// Tracker relative device projection geometry on each tracker
-    PSMTrackingProjection   TrackingProjection;
+	PSMTrackingProjection   TrackingProjection;
 	/// A bitmask of the trackers with valid projections
-    unsigned int            ValidTrackerBitmask;
+	unsigned int            ValidTrackerBitmask;
 
-    // Multicam triangulated position and orientation, pre-filtered
+	// Multicam triangulated position and orientation, pre-filtered
 	/// Optically derived world space position of device in cm
-    PSMVector3f             MulticamPositionCm;
+	PSMVector3f             MulticamPositionCm;
 	/// Optically derived world space orientation of device in cm
-    PSMQuatf                MulticamOrientation;
+	PSMQuatf                MulticamOrientation;
 	/// Flag if the world space optical position is valid
-    bool                    bMulticamPositionValid;
+	bool                    bMulticamPositionValid;
 	/// Flag if the world space optical orientation is valid
-    bool                    bMulticamOrientationValid;
+	bool                    bMulticamOrientationValid;
 } PSMRawTrackerData;
+
+/// Device projection geometry as seen by each tracker
+typedef struct
+{
+	/// ID of the selected tracker
+	PSMTrackerID            TrackerID;
+	/// Pixel position of device projection centroid on each tracker
+	PSMVector2f             ScreenLocation;
+	/// Tracker relative device 3d position on each tracker
+	PSMVector3f             RelativePositionCm;
+	/// Tracker relative device 3d orientation on each tracker
+	PSMQuatf                RelativeOrientation;
+	/// Tracker relative device projection geometry on each tracker
+	PSMTrackingProjectionEllipse   TrackingProjection;
+	/// A bitmask of the trackers with valid projections
+	unsigned int            ValidTrackerBitmask;
+
+	// Multicam triangulated position and orientation, pre-filtered
+	/// Optically derived world space position of device in cm
+	PSMVector3f             MulticamPositionCm;
+	/// Optically derived world space orientation of device in cm
+	PSMQuatf                MulticamOrientation;
+	/// Flag if the world space optical position is valid
+	bool                    bMulticamPositionValid;
+	/// Flag if the world space optical orientation is valid
+	bool                    bMulticamOrientationValid;
+} PSMRawTrackerDataEllipse;
+
+/// Device projection geometry as seen by each tracker
+typedef struct
+{
+	/// ID of the selected tracker
+	PSMTrackerID            TrackerID;
+	/// Pixel position of device projection centroid on each tracker
+	PSMVector2f             ScreenLocation;
+	/// Tracker relative device 3d position on each tracker
+	PSMVector3f             RelativePositionCm;
+	/// Tracker relative device 3d orientation on each tracker
+	PSMQuatf                RelativeOrientation;
+	/// Tracker relative device projection geometry on each tracker
+	PSMTrackingProjectionLightbat   TrackingProjection;
+	/// A bitmask of the trackers with valid projections
+	unsigned int            ValidTrackerBitmask;
+
+	// Multicam triangulated position and orientation, pre-filtered
+	/// Optically derived world space position of device in cm
+	PSMVector3f             MulticamPositionCm;
+	/// Optically derived world space orientation of device in cm
+	PSMQuatf                MulticamOrientation;
+	/// Flag if the world space optical position is valid
+	bool                    bMulticamPositionValid;
+	/// Flag if the world space optical orientation is valid
+	bool                    bMulticamOrientationValid;
+} PSMRawTrackerDataLightbat;
+
+/// Device projection geometry as seen by each tracker
+typedef struct
+{
+	/// ID of the selected tracker
+	PSMTrackerID            TrackerID;
+	/// Pixel position of device projection centroid on each tracker
+	PSMVector2f             ScreenLocation;
+	/// Tracker relative device 3d position on each tracker
+	PSMVector3f             RelativePositionCm;
+	/// Tracker relative device 3d orientation on each tracker
+	PSMQuatf                RelativeOrientation;
+	/// Tracker relative device projection geometry on each tracker
+	PSMTrackingProjectionPointcloud   TrackingProjection;
+	/// A bitmask of the trackers with valid projections
+	unsigned int            ValidTrackerBitmask;
+
+	// Multicam triangulated position and orientation, pre-filtered
+	/// Optically derived world space position of device in cm
+	PSMVector3f             MulticamPositionCm;
+	/// Optically derived world space orientation of device in cm
+	PSMQuatf                MulticamOrientation;
+	/// Flag if the world space optical position is valid
+	bool                    bMulticamPositionValid;
+	/// Flag if the world space optical orientation is valid
+	bool                    bMulticamOrientationValid;
+} PSMRawTrackerDataPointcloud;
 
 /// PSMove Controller State in Controller Pool Entry
 typedef struct
 {
-    bool                         bHasValidHardwareCalibration;
-    bool                         bIsTrackingEnabled;
-    bool                         bIsCurrentlyTracking;
-    bool                         bIsOrientationValid;
-    bool                         bIsPositionValid;
-    bool                         bHasUnpublishedState;
-    
-    char                         DevicePath[256];
-    char                         DeviceSerial[128];
-    char                         AssignedHostSerial[128];
-    bool                         PairedToHost;
-    PSMConnectionType            ConnectionType;
-    
-    PSMTrackingColorType         TrackingColorType;
-    PSMPosef                     Pose;
-    PSMPhysicsData               PhysicsData;
-    PSMPSMoveRawSensorData          RawSensorData;
-    PSMPSMoveCalibratedSensorData   CalibratedSensorData;
-    PSMRawTrackerData            RawTrackerData;
-    
-    PSMButtonState               TriangleButton;
-    PSMButtonState               CircleButton;
-    PSMButtonState               CrossButton;
-    PSMButtonState               SquareButton;
-    PSMButtonState               SelectButton;
-    PSMButtonState               StartButton;
-    PSMButtonState               PSButton;
-    PSMButtonState               MoveButton;
-    PSMButtonState               TriggerButton;
-    PSMBatteryState              BatteryValue;
-    unsigned char                TriggerValue;
-    unsigned char                Rumble;
-    unsigned char                LED_r, LED_g, LED_b;
+	bool                         bHasValidHardwareCalibration;
+	bool                         bIsTrackingEnabled;
+	bool                         bIsCurrentlyTracking;
+	bool                         bIsOrientationValid;
+	bool                         bIsPositionValid;
+	bool                         bHasUnpublishedState;
 
-    long long                    ResetPoseButtonPressTime;
-    bool                         bResetPoseRequestSent;
-    bool                         bPoseResetButtonEnabled;
-    
+	char                         DevicePath[256];
+	char                         DeviceSerial[128];
+	char                         AssignedHostSerial[128];
+	bool                         PairedToHost;
+	PSMConnectionType            ConnectionType;
+	PSMTrackingColorType         TrackingColorType;
+
+	PSMPosef                     Pose;
+	PSMPhysicsData               PhysicsData;
+	PSMPSMoveRawSensorData          RawSensorData;
+	PSMPSMoveCalibratedSensorData   CalibratedSensorData;
+	PSMRawTrackerData            RawTrackerData;
+
+	PSMButtonState               TriangleButton;
+	PSMButtonState               CircleButton;
+	PSMButtonState               CrossButton;
+	PSMButtonState               SquareButton;
+	PSMButtonState               SelectButton;
+	PSMButtonState               StartButton;
+	PSMButtonState               PSButton;
+	PSMButtonState               MoveButton;
+	PSMButtonState               TriggerButton;
+	PSMBatteryState              BatteryValue;
+	unsigned char                TriggerValue;
+	unsigned char                Rumble;
+	unsigned char                LED_r, LED_g, LED_b;
+
+	long long                    ResetPoseButtonPressTime;
+	bool                         bResetPoseRequestSent;
+	bool                         bPoseResetButtonEnabled;
+
 } PSMPSMove;
+
+/// PSMove Controller State in Controller Pool Entry
+typedef struct
+{
+	bool                         bHasValidHardwareCalibration;
+	bool                         bIsTrackingEnabled;
+	bool                         bIsCurrentlyTracking;
+	bool                         bIsOrientationValid;
+	bool                         bIsPositionValid;
+	bool                         bHasUnpublishedState;
+
+	char                         DevicePath[256];
+	char                         DeviceSerial[128];
+	char                         AssignedHostSerial[128];
+	bool                         PairedToHost;
+	PSMConnectionType            ConnectionType;
+	PSMTrackingColorType         TrackingColorType;
+	 
+	PSMButtonState               TriangleButton;
+	PSMButtonState               CircleButton;
+	PSMButtonState               CrossButton;
+	PSMButtonState               SquareButton;
+	PSMButtonState               SelectButton;
+	PSMButtonState               StartButton;
+	PSMButtonState               PSButton;
+	PSMButtonState               MoveButton;
+	PSMButtonState               TriggerButton;
+	PSMBatteryState              BatteryValue;
+	unsigned char                TriggerValue;
+	unsigned char                Rumble;
+	unsigned char                LED_r, LED_g, LED_b;
+
+	long long                    ResetPoseButtonPressTime;
+	bool                         bResetPoseRequestSent;
+	bool                         bPoseResetButtonEnabled;
+
+} PSMPSMoveEx;
 
 /// PSNavi Controller State in Controller Pool Entry
 typedef struct
@@ -313,111 +431,205 @@ typedef struct
 /// DualShock4 Controller State in Controller Pool Entry
 typedef struct
 {
-    bool                         bHasValidHardwareCalibration;
-    bool                         bIsTrackingEnabled;
-    bool                         bIsCurrentlyTracking;
-    bool                         bIsOrientationValid;
-    bool                         bIsPositionValid;
-    bool                         bHasUnpublishedState;
-    
-    char                         DevicePath[256];
-    char                         DeviceSerial[128];
-    char                         AssignedHostSerial[128];
-    bool                         PairedToHost;
-    PSMConnectionType            ConnectionType;
-    
-    PSMTrackingColorType         TrackingColorType;
-    PSMPosef                     Pose;
-    PSMPhysicsData               PhysicsData;
-    PSMDS4RawSensorData           RawSensorData;
-    PSMDS4CalibratedSensorData    CalibratedSensorData;
-    PSMRawTrackerData            RawTrackerData;
-    
-    PSMButtonState               DPadUpButton;
-    PSMButtonState               DPadDownButton;
-    PSMButtonState               DPadLeftButton;
-    PSMButtonState               DPadRightButton;
+	bool                         bHasValidHardwareCalibration;
+	bool                         bIsTrackingEnabled;
+	bool                         bIsCurrentlyTracking;
+	bool                         bIsOrientationValid;
+	bool                         bIsPositionValid;
+	bool                         bHasUnpublishedState;
 
-    PSMButtonState               SquareButton;
-    PSMButtonState               CrossButton;
-    PSMButtonState               CircleButton;
-    PSMButtonState               TriangleButton;
+	char                         DevicePath[256];
+	char                         DeviceSerial[128];
+	char                         AssignedHostSerial[128];
+	bool                         PairedToHost;
+	PSMConnectionType            ConnectionType;
 
-    PSMButtonState               L1Button;
-    PSMButtonState               R1Button;
-    PSMButtonState               L2Button;
-    PSMButtonState               R2Button;
-    PSMButtonState               L3Button;
-    PSMButtonState               R3Button;
+	PSMTrackingColorType         TrackingColorType;
+	PSMPosef                     Pose;
+	PSMPhysicsData               PhysicsData;
+	PSMDS4RawSensorData           RawSensorData;
+	PSMDS4CalibratedSensorData    CalibratedSensorData;
+	PSMRawTrackerData            RawTrackerData;
 
-    PSMButtonState               ShareButton;
-    PSMButtonState               OptionsButton;
+	PSMButtonState               DPadUpButton;
+	PSMButtonState               DPadDownButton;
+	PSMButtonState               DPadLeftButton;
+	PSMButtonState               DPadRightButton;
 
-    PSMButtonState               PSButton;
-    PSMButtonState               TrackPadButton;
+	PSMButtonState               SquareButton;
+	PSMButtonState               CrossButton;
+	PSMButtonState               CircleButton;
+	PSMButtonState               TriangleButton;
 
-    float                        LeftAnalogX;
-    float                        LeftAnalogY;
-    float                        RightAnalogX;
-    float                        RightAnalogY;
-    float                        LeftTriggerValue;
-    float                        RightTriggerValue;
+	PSMButtonState               L1Button;
+	PSMButtonState               R1Button;
+	PSMButtonState               L2Button;
+	PSMButtonState               R2Button;
+	PSMButtonState               L3Button;
+	PSMButtonState               R3Button;
 
-    unsigned char                BigRumble, SmallRumble;
-    unsigned char                LED_r, LED_g, LED_b;
+	PSMButtonState               ShareButton;
+	PSMButtonState               OptionsButton;
 
-    long long                    ResetPoseButtonPressTime;
-    bool                         bResetPoseRequestSent;
-    bool                         bPoseResetButtonEnabled;
-    
+	PSMButtonState               PSButton;
+	PSMButtonState               TrackPadButton;
+
+	float                        LeftAnalogX;
+	float                        LeftAnalogY;
+	float                        RightAnalogX;
+	float                        RightAnalogY;
+	float                        LeftTriggerValue;
+	float                        RightTriggerValue;
+
+	unsigned char                BigRumble, SmallRumble;
+	unsigned char                LED_r, LED_g, LED_b;
+
+	long long                    ResetPoseButtonPressTime;
+	bool                         bResetPoseRequestSent;
+	bool                         bPoseResetButtonEnabled;
+
 } PSMDualShock4;
+
+/// DualShock4 Controller State in Controller Pool Entry
+typedef struct
+{
+	bool                         bHasValidHardwareCalibration;
+	bool                         bIsTrackingEnabled;
+	bool                         bIsCurrentlyTracking;
+	bool                         bIsOrientationValid;
+	bool                         bIsPositionValid;
+	bool                         bHasUnpublishedState;
+
+	char                         DevicePath[256];
+	char                         DeviceSerial[128];
+	char                         AssignedHostSerial[128];
+	bool                         PairedToHost;
+	PSMConnectionType            ConnectionType; 
+	PSMTrackingColorType         TrackingColorType;
+
+	PSMButtonState               DPadUpButton;
+	PSMButtonState               DPadDownButton;
+	PSMButtonState               DPadLeftButton;
+	PSMButtonState               DPadRightButton;
+
+	PSMButtonState               SquareButton;
+	PSMButtonState               CrossButton;
+	PSMButtonState               CircleButton;
+	PSMButtonState               TriangleButton;
+
+	PSMButtonState               L1Button;
+	PSMButtonState               R1Button;
+	PSMButtonState               L2Button;
+	PSMButtonState               R2Button;
+	PSMButtonState               L3Button;
+	PSMButtonState               R3Button;
+
+	PSMButtonState               ShareButton;
+	PSMButtonState               OptionsButton;
+
+	PSMButtonState               PSButton;
+	PSMButtonState               TrackPadButton;
+
+	float                        LeftAnalogX;
+	float                        LeftAnalogY;
+	float                        RightAnalogX;
+	float                        RightAnalogY;
+	float                        LeftTriggerValue;
+	float                        RightTriggerValue;
+
+	unsigned char                BigRumble, SmallRumble;
+	unsigned char                LED_r, LED_g, LED_b;
+
+	long long                    ResetPoseButtonPressTime;
+	bool                         bResetPoseRequestSent;
+	bool                         bPoseResetButtonEnabled;
+
+} PSMDualShock4Ex;
 
 /// Virtual Controller State in Controller Pool Entry
 typedef struct
 {
-    bool                         bIsTrackingEnabled;
-    bool                         bIsCurrentlyTracking;
-    bool                         bIsPositionValid;
-    
-    char                         DevicePath[256];
+	bool                         bIsTrackingEnabled;
+	bool                         bIsCurrentlyTracking;
+	bool                         bIsPositionValid;
 
-    int                          vendorID;
-    int                          productID;
-    
-    int                          numAxes;
-    int                          numButtons;
-    
-    unsigned char                axisStates[PSM_MAX_VIRTUAL_CONTROLLER_AXES];
-    PSMButtonState               buttonStates[PSM_MAX_VIRTUAL_CONTROLLER_BUTTONS];
-    
-    PSMTrackingColorType         TrackingColorType;
-    PSMPosef                     Pose;
-    PSMPhysicsData               PhysicsData;
-    PSMRawTrackerData            RawTrackerData;   
-    
+	char                         DevicePath[256];
+
+	int                          vendorID;
+	int                          productID;
+
+	int                          numAxes;
+	int                          numButtons;
+
+	unsigned char                axisStates[PSM_MAX_VIRTUAL_CONTROLLER_AXES];
+	PSMButtonState               buttonStates[PSM_MAX_VIRTUAL_CONTROLLER_BUTTONS];
+
+	PSMTrackingColorType         TrackingColorType;
+	PSMPosef                     Pose;
+	PSMPhysicsData               PhysicsData;
+	PSMRawTrackerData            RawTrackerData;
+
 } PSMVirtualController;
+
+/// Virtual Controller State in Controller Pool Entry
+typedef struct
+{
+	bool                         bIsTrackingEnabled;
+	bool                         bIsCurrentlyTracking;
+	bool                         bIsPositionValid;
+
+	char                         DevicePath[256];
+
+	int                          vendorID;
+	int                          productID;
+
+	int                          numAxes;
+	int                          numButtons;
+
+	unsigned char                axisStates[PSM_MAX_VIRTUAL_CONTROLLER_AXES];
+	PSMButtonState               buttonStates[PSM_MAX_VIRTUAL_CONTROLLER_BUTTONS];
+
+	PSMTrackingColorType         TrackingColorType;
+
+} PSMVirtualControllerEx;
 
 /// Controller Pool Entry
 typedef struct
 {
-    PSMControllerID ControllerID;
-    PSMControllerType ControllerType;
+	PSMControllerID ControllerID;
+	PSMControllerType ControllerType;
 	PSMControllerHand ControllerHand;
-    union
-    {
-        PSMPSMove PSMoveState;
-        PSMPSNavi PSNaviState;
+	union
+	{
+		PSMPSMove PSMoveState;
+		PSMPSNavi PSNaviState;
 		PSMDualShock4 PSDS4State;
-        PSMVirtualController VirtualController;
-    }               ControllerState;
-    bool            bValid;
-    int             OutputSequenceNum;
-    int             InputSequenceNum;
-    bool            IsConnected;
-    long long       DataFrameLastReceivedTime;
-    float           DataFrameAverageFPS;
-    int             ListenerCount;
+		PSMVirtualController VirtualController;
+	}               ControllerState;
+	bool            bValid;
+	int             OutputSequenceNum;
+	int             InputSequenceNum;
+	bool            IsConnected;
+	long long       DataFrameLastReceivedTime;
+	float           DataFrameAverageFPS;
+	int             ListenerCount;
 } PSMController;
+
+/// Controller Pool Entry
+typedef struct
+{
+	PSMControllerID ControllerID;
+	PSMControllerType ControllerType;
+	PSMControllerHand ControllerHand;
+
+	bool            bValid;
+	int             OutputSequenceNum;
+	int             InputSequenceNum;
+	bool            IsConnected;
+	long long       DataFrameLastReceivedTime;
+	float           DataFrameAverageFPS;
+	int             ListenerCount;
+} PSMControllerEx;
 
 // Tracker State
 //--------------
@@ -493,47 +705,78 @@ typedef struct
 /// Morpheus HMD State in HMD Pool Entry
 typedef struct
 {
-    bool                         bIsTrackingEnabled;
-    bool                         bIsCurrentlyTracking;
-    bool                         bIsOrientationValid;
-    bool                         bIsPositionValid;
-    
-    PSMPosef                     Pose;
-    PSMPhysicsData               PhysicsData;
-    PSMMorpheusRawSensorData     RawSensorData;
-    PSMMorpheusCalibratedSensorData CalibratedSensorData;
-    PSMRawTrackerData            RawTrackerData;
+	bool                         bIsTrackingEnabled;
+	bool                         bIsCurrentlyTracking;
+	bool                         bIsOrientationValid;
+	bool                         bIsPositionValid;
+
+	PSMPosef                     Pose;
+	PSMPhysicsData               PhysicsData;
+	PSMMorpheusRawSensorData     RawSensorData;
+	PSMMorpheusCalibratedSensorData CalibratedSensorData;
+	PSMRawTrackerData            RawTrackerData;
 } PSMMorpheus;
+
+/// Morpheus HMD State in HMD Pool Entry
+typedef struct
+{
+	bool                         bIsTrackingEnabled;
+	bool                         bIsCurrentlyTracking;
+	bool                         bIsOrientationValid;
+	bool                         bIsPositionValid;
+} PSMMorpheusEx;
 
 /// Virtual HMD State in HMD Pool Entry
 typedef struct
 {
-    bool                         bIsTrackingEnabled;
-    bool                         bIsCurrentlyTracking;
-    bool                         bIsPositionValid;
-    
-    PSMPosef                     Pose;
-    PSMPhysicsData               PhysicsData;
-    PSMRawTrackerData            RawTrackerData;
+	bool                         bIsTrackingEnabled;
+	bool                         bIsCurrentlyTracking;
+	bool                         bIsPositionValid;
+
+	PSMPosef                     Pose;
+	PSMPhysicsData               PhysicsData;
+	PSMRawTrackerData            RawTrackerData;
 } PSMVirtualHMD;
+
+/// Virtual HMD State in HMD Pool Entry
+typedef struct
+{
+	bool                         bIsTrackingEnabled;
+	bool                         bIsCurrentlyTracking;
+	bool                         bIsPositionValid;
+} PSMVirtualHMDEx;
 
 /// HMD Pool Entry
 typedef struct
 {
-    PSMHmdID HmdID;
-    PSMHmdType HmdType;
-    union
-    {
-        PSMMorpheus  MorpheusState;
-        PSMVirtualHMD VirtualHMDState;
-    }               HmdState;
-    bool            bValid;
-    int             OutputSequenceNum;
-    bool            IsConnected;
-    long long       DataFrameLastReceivedTime;
-    float           DataFrameAverageFPS;
-    int             ListenerCount;
+	PSMHmdID HmdID;
+	PSMHmdType HmdType;
+	union
+	{
+		PSMMorpheus  MorpheusState;
+		PSMVirtualHMD VirtualHMDState;
+	}               HmdState;
+	bool            bValid;
+	int             OutputSequenceNum;
+	bool            IsConnected;
+	long long       DataFrameLastReceivedTime;
+	float           DataFrameAverageFPS;
+	int             ListenerCount;
 } PSMHeadMountedDisplay;
+
+/// HMD Pool Entry
+typedef struct
+{
+	PSMHmdID HmdID;
+	PSMHmdType HmdType;
+
+	bool            bValid;
+	int             OutputSequenceNum;
+	bool            IsConnected;
+	long long       DataFrameLastReceivedTime;
+	float           DataFrameAverageFPS;
+	int             ListenerCount;
+} PSMHeadMountedDisplayEx;
 
 // Service Events
 //------------------
@@ -884,14 +1127,23 @@ PSM_PUBLIC_FUNCTION(PSMResult) PSM_EatResponse(PSMRequestID request_id);
 
 // Controller Pool
 /** \brief Fetches the \ref PSMController data for the given controller
-	The client API maintains a pool of controller structs. 
-	We can fetch a given controller by \ref PSMControllerID.
-	DO NOT DELETE the controller pointer returned by this function.
-	It is safe to copy this pointer on to other structures so long as the pointer is cleared once the client API is shutdown.
-	\param controller_id The id of the controler structure to fetch
-	\return A pointer to a \ref PSMController
- */
+The client API maintains a pool of controller structs.
+We can fetch a given controller by \ref PSMControllerID.
+DO NOT DELETE the controller pointer returned by this function.
+It is safe to copy this pointer on to other structures so long as the pointer is cleared once the client API is shutdown.
+\param controller_id The id of the controler structure to fetch
+\return A pointer to a \ref PSMController
+*/
 PSM_PUBLIC_FUNCTION(PSMController *) PSM_GetController(PSMControllerID controller_id);
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetControllerEx(PSMControllerID controller_id, PSMControllerEx *controller_out);
+
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetControllerPSMoveState(PSMControllerID controller_id, PSMPSMove *controller_out);
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetControllerPSMoveStateEx(PSMControllerID controller_id, PSMPSMoveEx *controller_out);
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetControllerPSNaviState(PSMControllerID controller_id, PSMPSNavi *controller_out);
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetControllerDualShock4State(PSMControllerID controller_id, PSMDualShock4 *controller_out);
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetControllerDualShock4StateEx(PSMControllerID controller_id, PSMDualShock4Ex *controller_out);
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetControllerVirtualControllerState(PSMControllerID controller_id, PSMVirtualController *controller_out);
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetControllerVirtualControllerStateEx(PSMControllerID controller_id, PSMVirtualControllerEx *controller_out);
 
 /** \brief Allocate a reference to a controller.
 	This function tells the client API to increment a reference count for a given controller.
@@ -1018,6 +1270,14 @@ PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetControllerPosition(PSMControllerID control
  */
 PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetControllerPose(PSMControllerID controller_id, PSMPosef *out_pose);
 
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetControllerPhysicsData(PSMControllerID controller_id, PSMPhysicsData *out_physics);
+
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetControllerPSMoveRawSensorData(PSMControllerID controller_id, PSMPSMoveRawSensorData *out_data);
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetControllerDualShock4RawSensorData(PSMControllerID controller_id, PSMDS4RawSensorData *out_data);
+
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetControllerPSMoveSensorData(PSMControllerID controller_id, PSMPSMoveCalibratedSensorData *out_data);
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetControllerDualShock4SensorData(PSMControllerID controller_id, PSMDS4CalibratedSensorData *out_data);
+
 /** \brief Get the current rumble fraction of a controller
 	\param controller_id The id of the controller
 	\param channel The channel to get the rumble for. The PSMove has one channel. The DualShock4 has two.
@@ -1036,11 +1296,17 @@ PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetControllerRumble(PSMControllerID controlle
 PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetIsControllerStable(PSMControllerID controller_id, bool *out_is_stable);
 
 /** \brief See if the controller is currently being tracked by at least one tracking camera.
-	\param controller_id The id of the controller
-	\param[out] out_is_tracking True if the controller is currently tracking
-	\return PSMResult_Success if controller can be tracked at all.
- */
+\param controller_id The id of the controller
+\param[out] out_is_tracking True if the controller is currently tracking
+\return PSMResult_Success if controller can be tracked at all.
+*/
 PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetIsControllerTracking(PSMControllerID controller_id, bool *out_is_tracking);
+
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetControllerRawTrackerData(PSMControllerID controller_id, PSMRawTrackerData *out_tracker_data);
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetControllerRawTrackerShape(PSMControllerID controller_id, PSMTrackingProjection::eShapeType *out_shape_type);
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetControllerRawTrackerDataEllipse(PSMControllerID controller_id, PSMRawTrackerDataEllipse *out_tracker_data);
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetControllerRawTrackerDataLightbar(PSMControllerID controller_id, PSMRawTrackerDataLightbat *out_tracker_data);
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetControllerRawTrackerDataPointcloud(PSMControllerID controller_id, PSMRawTrackerDataPointcloud *out_tracker_data);
 
 /** \brief Helper function for getting the tracking centroid for a controller on a given tracker
 	Each tracking camera sees a projection of a controllers tracking light. 
@@ -1392,6 +1658,16 @@ PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetTrackingSpaceSettingsAsync(PSMRequestID *o
 	\return A pointer to a \ref PSMHeadMountedDisplay
  */
 PSM_PUBLIC_FUNCTION(PSMHeadMountedDisplay *) PSM_GetHmd(PSMHmdID hmd_id);
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetHmdEx(PSMHmdID hmd_id, PSMHeadMountedDisplayEx *out_hmd);
+
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetHmdMorpheusState(PSMHmdID hmd_id, PSMMorpheus *hmd_state);
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetHmdMorpheusStateEx(PSMHmdID hmd_id, PSMMorpheusEx *hmd_state);
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetHmdVirtualState(PSMHmdID hmd_id, PSMVirtualHMD *hmd_state);
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetHmdVirtualStateEx(PSMHmdID hmd_id, PSMVirtualHMDEx *hmd_state);
+
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetHmdPhysicsData(PSMHmdID hmd_id, PSMPhysicsData *out_physics);
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetHmdMorpheusRawSensorData(PSMHmdID hmd_id, PSMMorpheusRawSensorData *out_data);
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetHmdMorpheusSensorData(PSMHmdID hmd_id, PSMMorpheusCalibratedSensorData *out_data);
 
 /** \brief Allocate a reference to an HMD.
 	This function tells the client API to increment a reference count for a given HMD.
@@ -1439,6 +1715,12 @@ PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetHmdPose(PSMHmdID hmd_id, PSMPosef *out_pos
 	\return PSMResult_Success if HMD can be tested for stability.
  */
 PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetIsHmdStable(PSMHmdID hmd_id, bool *out_is_stable);
+
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetHmdRawTrackerData(PSMHmdID hmd_id, PSMRawTrackerData *out_tracker_data);
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetHmdRawTrackerShape(PSMHmdID hmd_id, PSMTrackingProjection::eShapeType *out_shape_type);
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetHmdRawTrackerDataEllipse(PSMHmdID hmd_id, PSMRawTrackerDataEllipse *out_tracker_data);
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetHmdRawTrackerDataLightbar(PSMHmdID hmd_id, PSMRawTrackerDataLightbat *out_tracker_data);
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetHmdRawTrackerDataPointcloud(PSMHmdID hmd_id, PSMRawTrackerDataPointcloud *out_tracker_data);
 
 /** \brief See if the HMD is currently being tracked by at least one tracking camera.
 	\param hmd_id The id of the HMD

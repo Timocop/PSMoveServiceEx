@@ -20,6 +20,8 @@
 #define IS_VALID_TRACKER_INDEX(x) ((x) >= 0 && (x) < PSMOVESERVICE_MAX_TRACKER_COUNT)
 #define IS_VALID_HMD_INDEX(x) ((x) >= 0 && (x) < PSMOVESERVICE_MAX_HMD_COUNT)
 
+#define COPY_PROP(x) (out.x = state->x)
+
 // -- constants ----
 const PSMVector3f k_identity_gravity_calibration_direction= {0.f, 1.f, 0.f};
 
@@ -313,7 +315,283 @@ PSMResult PSM_UpdateNoPollMessages()
 
 PSMController *PSM_GetController(PSMControllerID controller_id)
 {
-    return (g_psm_client != nullptr && IS_VALID_CONTROLLER_INDEX(controller_id)) ? g_psm_client->get_controller_view(controller_id) : nullptr;
+	return (g_psm_client != nullptr && IS_VALID_CONTROLLER_INDEX(controller_id)) ? g_psm_client->get_controller_view(controller_id) : nullptr;
+}
+
+PSMResult PSM_GetControllerEx(PSMControllerID controller_id, PSMControllerEx *controller_out)
+{
+	PSMResult result = PSMResult_Error;
+	 
+	if (g_psm_client != nullptr && IS_VALID_CONTROLLER_INDEX(controller_id))
+	{
+		PSMController *state = g_psm_client->get_controller_view(controller_id); 
+		PSMControllerEx out = {};
+
+		COPY_PROP(ControllerID);
+		COPY_PROP(ControllerType);
+		COPY_PROP(ControllerHand);
+
+		COPY_PROP(bValid);
+		COPY_PROP(OutputSequenceNum);
+		COPY_PROP(InputSequenceNum);
+		COPY_PROP(IsConnected);
+		COPY_PROP(DataFrameLastReceivedTime);
+		COPY_PROP(DataFrameAverageFPS);
+		COPY_PROP(ListenerCount);
+
+		*controller_out = out;
+		result = PSMResult_Success;
+	}
+
+	return result;
+}
+
+PSMResult PSM_GetControllerPSMoveState(PSMControllerID controller_id, PSMPSMove *controller_out)
+{
+	PSMResult result = PSMResult_Error;
+
+	if (g_psm_client != nullptr && IS_VALID_CONTROLLER_INDEX(controller_id))
+	{
+		PSMController *controller = g_psm_client->get_controller_view(controller_id);
+
+		if (controller->ControllerType == PSMControllerType::PSMController_Move)
+		{
+			*controller_out = controller->ControllerState.PSMoveState;
+
+			result = PSMResult_Success;
+		}
+	}
+
+	return result;
+}
+
+PSMResult PSM_GetControllerPSMoveStateEx(PSMControllerID controller_id, PSMPSMoveEx *controller_out)
+{
+	PSMResult result = PSMResult_Error;
+
+	if (g_psm_client != nullptr && IS_VALID_CONTROLLER_INDEX(controller_id))
+	{
+		PSMController *controller = g_psm_client->get_controller_view(controller_id);
+
+		if (controller->ControllerType == PSMControllerType::PSMController_Move)
+		{
+			const PSMPSMove *state = &controller->ControllerState.PSMoveState; 
+			PSMPSMoveEx out = {};
+			
+			COPY_PROP(bHasValidHardwareCalibration);
+			COPY_PROP(bIsTrackingEnabled);
+			COPY_PROP(bIsCurrentlyTracking);
+			COPY_PROP(bIsOrientationValid);
+			COPY_PROP(bIsPositionValid);
+			COPY_PROP(bHasUnpublishedState);
+
+			memcpy(out.DevicePath, state->DevicePath, sizeof(PSMPSMoveEx::DevicePath));
+			memcpy(out.DeviceSerial, state->DeviceSerial, sizeof(PSMPSMoveEx::DeviceSerial));
+			memcpy(out.AssignedHostSerial, state->AssignedHostSerial, sizeof(PSMPSMoveEx::AssignedHostSerial));
+
+			COPY_PROP(PairedToHost);
+			COPY_PROP(ConnectionType);
+			COPY_PROP(TrackingColorType);
+
+			COPY_PROP(TriangleButton);
+			COPY_PROP(CircleButton);
+			COPY_PROP(CrossButton);
+			COPY_PROP(SquareButton);
+			COPY_PROP(SelectButton);
+			COPY_PROP(StartButton);
+			COPY_PROP(PSButton);
+			COPY_PROP(MoveButton);
+			COPY_PROP(TriggerButton);
+			COPY_PROP(BatteryValue);
+			COPY_PROP(TriggerValue);
+			COPY_PROP(Rumble);
+			COPY_PROP(LED_r);
+			COPY_PROP(LED_g);
+			COPY_PROP(LED_b);
+
+			COPY_PROP(ResetPoseButtonPressTime);
+			COPY_PROP(bResetPoseRequestSent);
+			COPY_PROP(bPoseResetButtonEnabled);
+
+			*controller_out = out;
+			result = PSMResult_Success;
+		}
+	}
+
+	return result;
+}
+
+PSMResult PSM_GetControllerPSNaviState(PSMControllerID controller_id, PSMPSNavi *controller_out)
+{
+	PSMResult result = PSMResult_Error;
+
+	if (g_psm_client != nullptr && IS_VALID_CONTROLLER_INDEX(controller_id))
+	{
+		PSMController *controller = g_psm_client->get_controller_view(controller_id);
+
+		if (controller->ControllerType == PSMControllerType::PSMController_Navi)
+		{
+			*controller_out = controller->ControllerState.PSNaviState;
+
+			result = PSMResult_Success;
+		}
+	}
+
+	return result;
+}
+
+PSMResult PSM_GetControllerDualShock4State(PSMControllerID controller_id, PSMDualShock4 *controller_out)
+{
+	PSMResult result = PSMResult_Error;
+
+	if (g_psm_client != nullptr && IS_VALID_CONTROLLER_INDEX(controller_id))
+	{
+		PSMController *controller = g_psm_client->get_controller_view(controller_id);
+
+		if (controller->ControllerType == PSMControllerType::PSMController_DualShock4)
+		{
+			*controller_out = controller->ControllerState.PSDS4State;
+
+			result = PSMResult_Success;
+		}
+
+	}
+
+	return result;
+}
+
+PSMResult PSM_GetControllerDualShock4StateEx(PSMControllerID controller_id, PSMDualShock4Ex *controller_out)
+{
+	PSMResult result = PSMResult_Error;
+
+	if (g_psm_client != nullptr && IS_VALID_CONTROLLER_INDEX(controller_id))
+	{
+		PSMController *controller = g_psm_client->get_controller_view(controller_id);
+
+		if (controller->ControllerType == PSMControllerType::PSMController_DualShock4)
+		{
+			const PSMDualShock4 *state = &controller->ControllerState.PSDS4State; 
+			PSMDualShock4Ex out = {};
+
+			COPY_PROP(bHasValidHardwareCalibration);
+			COPY_PROP(bIsTrackingEnabled);
+			COPY_PROP(bIsCurrentlyTracking);
+			COPY_PROP(bIsOrientationValid);
+			COPY_PROP(bIsPositionValid);
+			COPY_PROP(bHasUnpublishedState);
+
+			memcpy(out.DevicePath, state->DevicePath, sizeof(PSMDualShock4Ex::DevicePath));
+			memcpy(out.DeviceSerial, state->DeviceSerial, sizeof(PSMDualShock4Ex::DeviceSerial));
+			memcpy(out.AssignedHostSerial, state->AssignedHostSerial, sizeof(PSMDualShock4Ex::AssignedHostSerial));
+
+			COPY_PROP(PairedToHost);
+			COPY_PROP(ConnectionType);
+			COPY_PROP(TrackingColorType);
+
+			COPY_PROP(DPadUpButton);
+			COPY_PROP(DPadDownButton);
+			COPY_PROP(DPadLeftButton);
+			COPY_PROP(DPadRightButton);
+
+			COPY_PROP(SquareButton);
+			COPY_PROP(CrossButton);
+			COPY_PROP(CircleButton);
+			COPY_PROP(TriangleButton);
+
+			COPY_PROP(L1Button);
+			COPY_PROP(R1Button);
+			COPY_PROP(L2Button);
+			COPY_PROP(R2Button);
+			COPY_PROP(L3Button);
+			COPY_PROP(R3Button);
+
+			COPY_PROP(ShareButton);
+			COPY_PROP(OptionsButton);
+
+			COPY_PROP(PSButton);
+			COPY_PROP(TrackPadButton);
+
+			COPY_PROP(LeftAnalogX);
+			COPY_PROP(LeftAnalogY);
+			COPY_PROP(RightAnalogX);
+			COPY_PROP(RightAnalogY);
+			COPY_PROP(LeftTriggerValue);
+			COPY_PROP(RightTriggerValue);
+
+			COPY_PROP(BigRumble);
+			COPY_PROP(BigRumble);
+			COPY_PROP(LED_r);
+			COPY_PROP(LED_g);
+			COPY_PROP(LED_b);
+
+			COPY_PROP(ResetPoseButtonPressTime);
+			COPY_PROP(bResetPoseRequestSent);
+			COPY_PROP(bPoseResetButtonEnabled);
+
+			*controller_out = out;
+			result = PSMResult_Success;
+		}
+	}
+
+	return result;
+}
+
+PSMResult PSM_GetControllerVirtualControllerState(PSMControllerID controller_id, PSMVirtualController *controller_out)
+{
+	PSMResult result = PSMResult_Error;
+
+	if (g_psm_client != nullptr && IS_VALID_CONTROLLER_INDEX(controller_id))
+	{
+		PSMController *controller = g_psm_client->get_controller_view(controller_id);
+
+		if (controller->ControllerType == PSMControllerType::PSMController_Virtual)
+		{
+			*controller_out = controller->ControllerState.VirtualController;
+
+			result = PSMResult_Success;
+		}
+
+	}
+
+	return result;
+}
+
+PSMResult PSM_GetControllerVirtualControllerStateEx(PSMControllerID controller_id, PSMVirtualControllerEx *controller_out)
+{
+	PSMResult result = PSMResult_Error;
+
+	if (g_psm_client != nullptr && IS_VALID_CONTROLLER_INDEX(controller_id))
+	{
+		PSMController *controller = g_psm_client->get_controller_view(controller_id);
+
+		if (controller->ControllerType == PSMControllerType::PSMController_Virtual)
+		{
+			const PSMVirtualController *state = &controller->ControllerState.VirtualController;
+			PSMVirtualControllerEx out = {};
+
+			COPY_PROP(bIsTrackingEnabled);
+			COPY_PROP(bIsCurrentlyTracking);
+			COPY_PROP(bIsPositionValid);
+
+			memcpy(out.DevicePath, state->DevicePath, sizeof(PSMVirtualControllerEx::DevicePath));
+
+			COPY_PROP(vendorID);
+			COPY_PROP(productID);
+
+			COPY_PROP(numAxes);
+			COPY_PROP(numButtons);
+
+			memcpy(out.axisStates, state->axisStates, sizeof(PSMVirtualControllerEx::axisStates));
+			memcpy(out.buttonStates, state->buttonStates, sizeof(PSMVirtualControllerEx::buttonStates));
+
+			COPY_PROP(TrackingColorType);
+
+			*controller_out = out;
+			result = PSMResult_Success;
+		}
+	}
+
+	return result;
 }
 
 PSMResult PSM_GetControllerListAsync(PSMRequestID *out_request_id)
@@ -692,42 +970,166 @@ PSMResult PSM_GetControllerPosition(PSMControllerID controller_id, PSMVector3f *
 
 PSMResult PSM_GetControllerPose(PSMControllerID controller_id, PSMPosef *out_pose)
 {
-    PSMResult result= PSMResult_Error;
+	PSMResult result = PSMResult_Error;
 	assert(out_pose);
 
-    if (g_psm_client != nullptr && IS_VALID_CONTROLLER_INDEX(controller_id))
-    {
-        PSMController *controller= g_psm_client->get_controller_view(controller_id);
-        
-        switch (controller->ControllerType)
-        {
-        case PSMController_Move:
-            {
-				PSMPSMove State= controller->ControllerState.PSMoveState;
-				*out_pose = State.Pose;
+	if (g_psm_client != nullptr && IS_VALID_CONTROLLER_INDEX(controller_id))
+	{
+		PSMController *controller = g_psm_client->get_controller_view(controller_id);
 
-				result= (State.bIsOrientationValid && State.bIsPositionValid) ? PSMResult_Success : PSMResult_Error;
-            } break;
-        case PSMController_Navi:
-            break;
-        case PSMController_DualShock4:
-            {
-				PSMDualShock4 State= controller->ControllerState.PSDS4State;
-				*out_pose = State.Pose;
+		switch (controller->ControllerType)
+		{
+		case PSMController_Move:
+		{
+			PSMPSMove State = controller->ControllerState.PSMoveState;
+			*out_pose = State.Pose;
 
-				result= (State.bIsOrientationValid && State.bIsPositionValid) ? PSMResult_Success : PSMResult_Error;
-            } break;
-        case PSMController_Virtual:
-            {
-				PSMVirtualController State= controller->ControllerState.VirtualController;
-				*out_pose = State.Pose;
+			result = (State.bIsOrientationValid && State.bIsPositionValid) ? PSMResult_Success : PSMResult_Error;
+		} break;
+		case PSMController_Navi:
+			break;
+		case PSMController_DualShock4:
+		{
+			PSMDualShock4 State = controller->ControllerState.PSDS4State;
+			*out_pose = State.Pose;
 
-				result= (State.bIsPositionValid) ? PSMResult_Success : PSMResult_Error;
-            } break;
-        }
-    }
+			result = (State.bIsOrientationValid && State.bIsPositionValid) ? PSMResult_Success : PSMResult_Error;
+		} break;
+		case PSMController_Virtual:
+		{
+			PSMVirtualController State = controller->ControllerState.VirtualController;
+			*out_pose = State.Pose;
 
-    return result;
+			result = (State.bIsPositionValid) ? PSMResult_Success : PSMResult_Error;
+		} break;
+		}
+	}
+
+	return result;
+}
+
+PSMResult PSM_GetControllerPhysicsData(PSMControllerID controller_id, PSMPhysicsData *out_physics)
+{
+	PSMResult result = PSMResult_Error;
+	assert(out_physics);
+
+	if (g_psm_client != nullptr && IS_VALID_CONTROLLER_INDEX(controller_id))
+	{
+		PSMController *controller = g_psm_client->get_controller_view(controller_id);
+
+		switch (controller->ControllerType)
+		{
+		case PSMController_Move:
+		{
+			PSMPSMove State = controller->ControllerState.PSMoveState;
+			*out_physics = State.PhysicsData;
+
+			result = PSMResult_Success;
+		} break;
+		case PSMController_Navi:
+			break;
+		case PSMController_DualShock4:
+		{
+			PSMDualShock4 State = controller->ControllerState.PSDS4State;
+			*out_physics = State.PhysicsData;
+
+			result = PSMResult_Success;
+		} break;
+		case PSMController_Virtual:
+		{
+			PSMVirtualController State = controller->ControllerState.VirtualController;
+			*out_physics = State.PhysicsData;
+
+			result = PSMResult_Success;
+		} break;
+		}
+	}
+
+	return result;
+}
+
+PSMResult PSM_GetControllerPSMoveRawSensorData(PSMControllerID controller_id, PSMPSMoveRawSensorData *out_data)
+{
+	PSMResult result = PSMResult_Error;
+	assert(out_data);
+
+	if (g_psm_client != nullptr && IS_VALID_CONTROLLER_INDEX(controller_id))
+	{
+		PSMController *controller = g_psm_client->get_controller_view(controller_id);
+
+		if (controller->ControllerType == PSMControllerType::PSMController_Move)
+		{
+			PSMPSMove State = controller->ControllerState.PSMoveState;
+			*out_data = State.RawSensorData;
+
+			result = PSMResult_Success;
+		}
+	}
+
+	return result;
+}
+
+PSMResult PSM_GetControllerDualShock4RawSensorData(PSMControllerID controller_id, PSMDS4RawSensorData *out_data)
+{
+	PSMResult result = PSMResult_Error;
+	assert(out_data);
+
+	if (g_psm_client != nullptr && IS_VALID_CONTROLLER_INDEX(controller_id))
+	{
+		PSMController *controller = g_psm_client->get_controller_view(controller_id);
+
+		if (controller->ControllerType == PSMControllerType::PSMController_DualShock4)
+		{
+			PSMDualShock4 State = controller->ControllerState.PSDS4State;
+			*out_data = State.RawSensorData;
+
+			result = PSMResult_Success;
+		}
+	}
+
+	return result;
+}
+
+PSMResult PSM_GetControllerPSMoveSensorData(PSMControllerID controller_id, PSMPSMoveCalibratedSensorData *out_data)
+{
+	PSMResult result = PSMResult_Error;
+	assert(out_data);
+
+	if (g_psm_client != nullptr && IS_VALID_CONTROLLER_INDEX(controller_id))
+	{
+		PSMController *controller = g_psm_client->get_controller_view(controller_id);
+
+		if (controller->ControllerType == PSMControllerType::PSMController_Move)
+		{
+			PSMPSMove State = controller->ControllerState.PSMoveState;
+			*out_data = State.CalibratedSensorData;
+
+			result = PSMResult_Success;
+		}
+	}
+
+	return result;
+}
+
+PSMResult PSM_GetControllerDualShock4SensorData(PSMControllerID controller_id, PSMDS4CalibratedSensorData *out_data)
+{
+	PSMResult result = PSMResult_Error;
+	assert(out_data);
+
+	if (g_psm_client != nullptr && IS_VALID_CONTROLLER_INDEX(controller_id))
+	{
+		PSMController *controller = g_psm_client->get_controller_view(controller_id);
+
+		if (controller->ControllerType == PSMControllerType::PSMController_DualShock4)
+		{
+			PSMDualShock4 State = controller->ControllerState.PSDS4State;
+			*out_data = State.CalibratedSensorData;
+
+			result = PSMResult_Success;
+		}
+	}
+
+	return result;
 }
 
 PSMResult PSM_GetIsControllerStable(PSMControllerID controller_id, bool *out_is_stable)
@@ -785,36 +1187,274 @@ PSMResult PSM_GetIsControllerStable(PSMControllerID controller_id, bool *out_is_
 
 PSMResult PSM_GetIsControllerTracking(PSMControllerID controller_id, bool *out_is_tracking)
 {
-    PSMResult result= PSMResult_Error;
+	PSMResult result = PSMResult_Error;
 	assert(out_is_tracking);
 
-    if (g_psm_client != nullptr && IS_VALID_CONTROLLER_INDEX(controller_id))
-    {
-        PSMController *controller= g_psm_client->get_controller_view(controller_id);
-        
-        switch (controller->ControllerType)
-        {
-        case PSMController_Move:
-            {
-				*out_is_tracking = controller->ControllerState.PSMoveState.bIsCurrentlyTracking;
-				result= PSMResult_Success;
-            } break;
-        case PSMController_Navi:
-            break;
-        case PSMController_DualShock4:
-            {
-				*out_is_tracking = controller->ControllerState.PSDS4State.bIsCurrentlyTracking;
-				result= PSMResult_Success;
-            } break;
-        case PSMController_Virtual:
-            {
-				*out_is_tracking = controller->ControllerState.VirtualController.bIsCurrentlyTracking;
-				result= PSMResult_Success;
-            } break;
-        }
-    }
+	if (g_psm_client != nullptr && IS_VALID_CONTROLLER_INDEX(controller_id))
+	{
+		PSMController *controller = g_psm_client->get_controller_view(controller_id);
 
-    return result;
+		switch (controller->ControllerType)
+		{
+		case PSMController_Move:
+		{
+			*out_is_tracking = controller->ControllerState.PSMoveState.bIsCurrentlyTracking;
+			result = PSMResult_Success;
+		} break;
+		case PSMController_Navi:
+			break;
+		case PSMController_DualShock4:
+		{
+			*out_is_tracking = controller->ControllerState.PSDS4State.bIsCurrentlyTracking;
+			result = PSMResult_Success;
+		} break;
+		case PSMController_Virtual:
+		{
+			*out_is_tracking = controller->ControllerState.VirtualController.bIsCurrentlyTracking;
+			result = PSMResult_Success;
+		} break;
+		}
+	}
+
+	return result;
+}
+
+PSMResult PSM_GetControllerRawTrackerData(PSMControllerID controller_id, PSMRawTrackerData *out_tracker_data)
+{
+	PSMResult result = PSMResult_Error;
+	assert(out_tracker_data);
+
+	if (g_psm_client != nullptr && IS_VALID_CONTROLLER_INDEX(controller_id))
+	{
+		PSMController *controller = g_psm_client->get_controller_view(controller_id);
+
+		switch (controller->ControllerType)
+		{
+		case PSMController_Move:
+		{
+			*out_tracker_data = controller->ControllerState.PSMoveState.RawTrackerData;
+			result = PSMResult_Success;
+		} break;
+		case PSMController_Navi:
+			break;
+		case PSMController_DualShock4:
+		{
+			*out_tracker_data = controller->ControllerState.PSDS4State.RawTrackerData;
+			result = PSMResult_Success;
+		} break;
+		case PSMController_Virtual:
+		{
+			*out_tracker_data = controller->ControllerState.VirtualController.RawTrackerData;
+			result = PSMResult_Success;
+		} break;
+		}
+	}
+
+	return result;
+}
+
+PSMResult PSM_GetControllerRawTrackerShape(PSMControllerID controller_id, PSMTrackingProjection::eShapeType *out_shape_type)
+{
+	PSMResult result = PSMResult_Error;
+	assert(out_shape_type);
+
+	if (g_psm_client != nullptr && IS_VALID_CONTROLLER_INDEX(controller_id))
+	{
+		PSMController *controller = g_psm_client->get_controller_view(controller_id);
+
+		switch (controller->ControllerType)
+		{
+		case PSMController_Move:
+		{
+			*out_shape_type = controller->ControllerState.PSMoveState.RawTrackerData.TrackingProjection.shape_type;
+			result = PSMResult_Success;
+		} break;
+		case PSMController_Navi:
+			break;
+		case PSMController_DualShock4:
+		{
+			*out_shape_type = controller->ControllerState.PSDS4State.RawTrackerData.TrackingProjection.shape_type;
+			result = PSMResult_Success;
+		} break;
+		case PSMController_Virtual:
+		{
+			*out_shape_type = controller->ControllerState.VirtualController.RawTrackerData.TrackingProjection.shape_type;
+			result = PSMResult_Success;
+		} break;
+		}
+	}
+
+	return result;
+}
+
+PSMResult PSM_GetControllerRawTrackerDataEllipse(PSMControllerID controller_id, PSMRawTrackerDataEllipse *out_tracker_data)
+{
+	PSMResult result = PSMResult_Error;
+	assert(out_tracker_data);
+
+	if (g_psm_client != nullptr && IS_VALID_CONTROLLER_INDEX(controller_id))
+	{
+		PSMController *controller = g_psm_client->get_controller_view(controller_id);
+		PSMRawTrackerData *state = nullptr;
+
+		switch (controller->ControllerType)
+		{
+		case PSMController_Move:
+		{
+			state = &controller->ControllerState.PSMoveState.RawTrackerData;
+		} break;
+		case PSMController_Navi:
+			break;
+		case PSMController_DualShock4:
+		{
+			state = &controller->ControllerState.PSDS4State.RawTrackerData;
+		} break;
+		case PSMController_Virtual:
+		{
+			state = &controller->ControllerState.VirtualController.RawTrackerData;
+		} break;
+		}
+
+		if (state != nullptr &&
+			state->TrackingProjection.shape_type == PSMTrackingProjection::eShapeType::PSMShape_Ellipse)
+		{
+			PSMRawTrackerDataEllipse out = {};
+
+			COPY_PROP(TrackerID);
+
+			COPY_PROP(ScreenLocation);
+			COPY_PROP(RelativePositionCm);
+			COPY_PROP(RelativeOrientation);
+
+			out.TrackingProjection.angle = state->TrackingProjection.shape.ellipse.angle;
+			out.TrackingProjection.center = state->TrackingProjection.shape.ellipse.center;
+			out.TrackingProjection.half_x_extent = state->TrackingProjection.shape.ellipse.half_x_extent;
+			out.TrackingProjection.half_y_extent = state->TrackingProjection.shape.ellipse.half_y_extent;
+
+			COPY_PROP(ValidTrackerBitmask);
+			COPY_PROP(MulticamPositionCm);
+			COPY_PROP(MulticamOrientation);
+			COPY_PROP(bMulticamPositionValid);
+			COPY_PROP(bMulticamOrientationValid);
+
+			*out_tracker_data = out;
+			result = PSMResult_Success;
+		}
+	}
+
+	return result;
+}
+
+PSMResult PSM_GetControllerRawTrackerDataLightbar(PSMControllerID controller_id, PSMRawTrackerDataLightbat *out_tracker_data)
+{
+	PSMResult result = PSMResult_Error;
+	assert(out_tracker_data);
+
+	if (g_psm_client != nullptr && IS_VALID_CONTROLLER_INDEX(controller_id))
+	{
+		PSMController *controller = g_psm_client->get_controller_view(controller_id);
+		PSMRawTrackerData *state = nullptr;
+
+		switch (controller->ControllerType)
+		{
+		case PSMController_Move:
+		{
+			state = &controller->ControllerState.PSMoveState.RawTrackerData;
+		} break;
+		case PSMController_Navi:
+			break;
+		case PSMController_DualShock4:
+		{
+			state = &controller->ControllerState.PSDS4State.RawTrackerData;
+		} break;
+		case PSMController_Virtual:
+		{
+			state = &controller->ControllerState.VirtualController.RawTrackerData;
+		} break;
+		}
+
+		if (state != nullptr &&
+			state->TrackingProjection.shape_type == PSMTrackingProjection::eShapeType::PSMShape_LightBar)
+		{
+			PSMRawTrackerDataLightbat out = {};
+
+			COPY_PROP(TrackerID);
+
+			COPY_PROP(ScreenLocation);
+			COPY_PROP(RelativePositionCm);
+			COPY_PROP(RelativeOrientation);
+
+			memcpy(out.TrackingProjection.triangle, state->TrackingProjection.shape.lightbar.triangle, sizeof(PSMTrackingProjectionLightbat::triangle));
+			memcpy(out.TrackingProjection.quad, state->TrackingProjection.shape.lightbar.quad, sizeof(PSMTrackingProjectionLightbat::quad));
+
+			COPY_PROP(ValidTrackerBitmask);
+			COPY_PROP(MulticamPositionCm);
+			COPY_PROP(MulticamOrientation);
+			COPY_PROP(bMulticamPositionValid);
+			COPY_PROP(bMulticamOrientationValid);
+
+			*out_tracker_data = out;
+			result = PSMResult_Success;
+		}
+	}
+
+	return result;
+}
+
+PSMResult PSM_GetControllerRawTrackerDataPointcloud(PSMControllerID controller_id, PSMRawTrackerDataPointcloud *out_tracker_data)
+{
+	PSMResult result = PSMResult_Error;
+	assert(out_tracker_data);
+
+	if (g_psm_client != nullptr && IS_VALID_CONTROLLER_INDEX(controller_id))
+	{
+		PSMController *controller = g_psm_client->get_controller_view(controller_id);
+		PSMRawTrackerData *state = nullptr;
+
+		switch (controller->ControllerType)
+		{
+		case PSMController_Move:
+		{
+			state = &controller->ControllerState.PSMoveState.RawTrackerData;
+		} break;
+		case PSMController_Navi:
+			break;
+		case PSMController_DualShock4:
+		{
+			state = &controller->ControllerState.PSDS4State.RawTrackerData;
+		} break;
+		case PSMController_Virtual:
+		{
+			state = &controller->ControllerState.VirtualController.RawTrackerData;
+		} break;
+		}
+
+		if (state != nullptr &&
+			state->TrackingProjection.shape_type == PSMTrackingProjection::eShapeType::PSMShape_PointCloud)
+		{
+			PSMRawTrackerDataPointcloud out = {};
+
+			COPY_PROP(TrackerID);
+
+			COPY_PROP(ScreenLocation);
+			COPY_PROP(RelativePositionCm);
+			COPY_PROP(RelativeOrientation);
+
+			memcpy(out.TrackingProjection.points, state->TrackingProjection.shape.pointcloud.points, sizeof(PSMTrackingProjectionPointcloud::points));
+			out.TrackingProjection.point_count = state->TrackingProjection.shape.pointcloud.point_count;
+
+			COPY_PROP(ValidTrackerBitmask);
+			COPY_PROP(MulticamPositionCm);
+			COPY_PROP(MulticamOrientation);
+			COPY_PROP(bMulticamPositionValid);
+			COPY_PROP(bMulticamOrientationValid);
+
+			*out_tracker_data = out;
+			result = PSMResult_Success;
+		}
+	}
+
+	return result;
 }
 
 PSMResult PSM_GetControllerPixelLocationOnTracker(PSMControllerID controller_id, PSMTrackerID *outTrackerId, PSMVector2f *outLocation)
@@ -1328,10 +1968,197 @@ PSMResult PSM_GetTrackingSpaceSettingsAsync(PSMRequestID *out_request_id)
 /// HMD Pool
 PSMHeadMountedDisplay *PSM_GetHmd(PSMHmdID hmd_id)
 {
-    if (g_psm_client != nullptr)
-	    return g_psm_client->get_hmd_view(hmd_id);
-    else
-        return nullptr;
+	if (g_psm_client != nullptr)
+		return g_psm_client->get_hmd_view(hmd_id);
+	else
+		return nullptr;
+}
+
+/// HMD Pool
+PSMResult PSM_GetHmdEx(PSMHmdID hmd_id, PSMHeadMountedDisplayEx *out_hmd)
+{
+	PSMResult result = PSMResult_Error;
+
+	if (g_psm_client != nullptr && IS_VALID_HMD_INDEX(hmd_id))
+	{
+		PSMHeadMountedDisplay *state = g_psm_client->get_hmd_view(hmd_id); 
+		PSMHeadMountedDisplayEx out = {};
+
+		COPY_PROP(HmdID);
+		COPY_PROP(HmdType);
+
+		COPY_PROP(bValid);
+		COPY_PROP(OutputSequenceNum);
+		COPY_PROP(IsConnected);
+		COPY_PROP(DataFrameLastReceivedTime);
+		COPY_PROP(DataFrameAverageFPS);
+		COPY_PROP(ListenerCount);
+
+		*out_hmd = out;
+		result = PSMResult_Success;
+	}
+
+	return result;
+}
+
+PSMResult PSM_GetHmdMorpheusState(PSMHmdID hmd_id, PSMMorpheus *hmd_state)
+{
+	PSMResult result = PSMResult_Error;
+
+	if (g_psm_client != nullptr && IS_VALID_HMD_INDEX(hmd_id))
+	{
+		PSMHeadMountedDisplay *state = g_psm_client->get_hmd_view(hmd_id);
+
+		if (state->HmdType == PSMHmdType::PSMHmd_Morpheus)
+		{
+			*hmd_state = state->HmdState.MorpheusState;
+			result = PSMResult_Success;
+		}
+	}
+
+	return result;
+}
+
+PSMResult PSM_GetHmdMorpheusStateEx(PSMHmdID hmd_id, PSMMorpheusEx *hmd_state)
+{
+	PSMResult result = PSMResult_Error;
+
+	if (g_psm_client != nullptr && IS_VALID_HMD_INDEX(hmd_id))
+	{
+		PSMHeadMountedDisplay *view = g_psm_client->get_hmd_view(hmd_id);
+
+		if (view->HmdType == PSMHmdType::PSMHmd_Morpheus)
+		{
+			const PSMMorpheus *state = &view->HmdState.MorpheusState;
+			PSMMorpheusEx out = {};
+
+			COPY_PROP(bIsTrackingEnabled);
+			COPY_PROP(bIsCurrentlyTracking);
+			COPY_PROP(bIsOrientationValid);
+			COPY_PROP(bIsPositionValid);
+
+			*hmd_state = out;
+			result = PSMResult_Success;
+		}
+	}
+
+	return result;
+}
+
+PSMResult PSM_GetHmdVirtualState(PSMHmdID hmd_id, PSMVirtualHMD *hmd_state)
+{
+	PSMResult result = PSMResult_Error;
+
+	if (g_psm_client != nullptr && IS_VALID_HMD_INDEX(hmd_id))
+	{
+		PSMHeadMountedDisplay *state = g_psm_client->get_hmd_view(hmd_id);
+
+		if (state->HmdType == PSMHmdType::PSMHmd_Virtual)
+		{
+			*hmd_state = state->HmdState.VirtualHMDState;
+			result = PSMResult_Success;
+		}
+	}
+
+	return result;
+}
+
+PSMResult PSM_GetHmdVirtualStateEx(PSMHmdID hmd_id, PSMVirtualHMDEx *hmd_state)
+{
+	PSMResult result = PSMResult_Error;
+
+	if (g_psm_client != nullptr && IS_VALID_HMD_INDEX(hmd_id))
+	{
+		PSMHeadMountedDisplay *view = g_psm_client->get_hmd_view(hmd_id);
+
+		if (view->HmdType == PSMHmdType::PSMHmd_Morpheus)
+		{
+			const PSMVirtualHMD *state = &view->HmdState.VirtualHMDState;
+			PSMVirtualHMDEx out = {};
+
+			COPY_PROP(bIsTrackingEnabled);
+			COPY_PROP(bIsCurrentlyTracking); 
+			COPY_PROP(bIsPositionValid);
+
+			*hmd_state = out;
+			result = PSMResult_Success;
+		}
+	}
+
+	return result;
+}
+
+PSMResult PSM_GetHmdPhysicsData(PSMHmdID hmd_id, PSMPhysicsData *out_physics)
+{
+	PSMResult result = PSMResult_Error;
+	assert(out_physics);
+
+	if (g_psm_client != nullptr && IS_VALID_HMD_INDEX(hmd_id))
+	{
+		PSMHeadMountedDisplay *hmd = g_psm_client->get_hmd_view(hmd_id);
+
+		switch (hmd->HmdType)
+		{
+		case PSMHmd_Morpheus:
+		{
+			PSMMorpheus State = hmd->HmdState.MorpheusState;
+			*out_physics = State.PhysicsData;
+
+			result = PSMResult_Success;
+		} break;
+		case PSMHmd_Virtual:
+		{
+			PSMVirtualHMD State = hmd->HmdState.VirtualHMDState;
+			*out_physics = State.PhysicsData;
+
+			result = PSMResult_Success;
+		} break;
+		}
+	}
+
+	return result;
+}
+
+PSMResult PSM_GetHmdMorpheusRawSensorData(PSMHmdID hmd_id, PSMMorpheusRawSensorData *out_data)
+{
+	PSMResult result = PSMResult_Error;
+	assert(out_physics);
+
+	if (g_psm_client != nullptr && IS_VALID_HMD_INDEX(hmd_id))
+	{
+		PSMHeadMountedDisplay *hmd = g_psm_client->get_hmd_view(hmd_id);
+
+		if (hmd->HmdType == PSMHmdType::PSMHmd_Morpheus)
+		{
+			PSMMorpheus State = hmd->HmdState.MorpheusState;
+			*out_data = State.RawSensorData;
+
+			result = PSMResult_Success;
+		}
+	}
+
+	return result;
+}
+
+PSMResult PSM_GetHmdMorpheusSensorData(PSMHmdID hmd_id, PSMMorpheusCalibratedSensorData *out_data)
+{
+	PSMResult result = PSMResult_Error;
+	assert(out_data);
+
+	if (g_psm_client != nullptr && IS_VALID_HMD_INDEX(hmd_id))
+	{
+		PSMHeadMountedDisplay *hmd = g_psm_client->get_hmd_view(hmd_id);
+
+		if (hmd->HmdType == PSMHmdType::PSMHmd_Morpheus)
+		{
+			PSMMorpheus State = hmd->HmdState.MorpheusState;
+			*out_data = State.CalibratedSensorData;
+
+			result = PSMResult_Success;
+		}
+	}
+
+	return result;
 }
 
 PSMResult PSM_AllocateHmdListener(PSMHmdID hmd_id)
@@ -1486,6 +2313,212 @@ PSMResult PSM_GetIsHmdStable(PSMHmdID hmd_id, bool *out_is_stable)
     }
 
     return result;
+}
+
+PSMResult PSM_GetHmdRawTrackerData(PSMHmdID hmd_id, PSMRawTrackerData *out_tracker_data)
+{
+	PSMResult result = PSMResult_Error;
+	assert(out_tracker_data);
+
+	if (g_psm_client != nullptr && IS_VALID_HMD_INDEX(hmd_id))
+	{
+		PSMHeadMountedDisplay *hmd = g_psm_client->get_hmd_view(hmd_id);
+
+		switch (hmd->HmdType)
+		{
+		case PSMHmd_Morpheus:
+		{
+			*out_tracker_data = hmd->HmdState.MorpheusState.RawTrackerData;
+			result = PSMResult_Success;
+		} break;
+		case PSMHmd_Virtual:
+		{
+			*out_tracker_data = hmd->HmdState.VirtualHMDState.RawTrackerData;
+			result = PSMResult_Success;
+		} break;
+		}
+	}
+
+	return result;
+}
+
+PSMResult PSM_GetHmdRawTrackerShape(PSMHmdID hmd_id, PSMTrackingProjection::eShapeType *out_shape_type)
+{
+	PSMResult result = PSMResult_Error;
+	assert(out_shape_type);
+
+	if (g_psm_client != nullptr && IS_VALID_HMD_INDEX(hmd_id))
+	{
+		PSMHeadMountedDisplay *hmd = g_psm_client->get_hmd_view(hmd_id);
+
+		switch (hmd->HmdType)
+		{
+		case PSMHmd_Morpheus:
+		{
+			*out_shape_type = hmd->HmdState.MorpheusState.RawTrackerData.TrackingProjection.shape_type;
+			result = PSMResult_Success;
+		} break;
+		case PSMHmd_Virtual:
+		{
+			*out_shape_type = hmd->HmdState.VirtualHMDState.RawTrackerData.TrackingProjection.shape_type;
+			result = PSMResult_Success;
+		} break;
+		}
+	}
+
+	return result;
+}
+
+PSMResult PSM_GetHmdRawTrackerDataEllipse(PSMHmdID hmd_id, PSMRawTrackerDataEllipse *out_tracker_data)
+{
+	PSMResult result = PSMResult_Error;
+	assert(out_tracker_data);
+
+	if (g_psm_client != nullptr && IS_VALID_CONTROLLER_INDEX(hmd_id))
+	{
+		PSMHeadMountedDisplay *hmd = g_psm_client->get_hmd_view(hmd_id);
+		PSMRawTrackerData *state = nullptr;
+
+		switch (hmd->HmdType)
+		{
+		case PSMHmd_Morpheus:
+		{
+			state = &hmd->HmdState.MorpheusState.RawTrackerData;
+		} break;
+		case PSMHmd_Virtual:
+		{
+			state = &hmd->HmdState.VirtualHMDState.RawTrackerData;
+		} break;
+		}
+
+		if (state != nullptr &&
+			state->TrackingProjection.shape_type == PSMTrackingProjection::eShapeType::PSMShape_Ellipse)
+		{
+			PSMRawTrackerDataEllipse out = {};
+
+			COPY_PROP(TrackerID);
+
+			COPY_PROP(ScreenLocation);
+			COPY_PROP(RelativePositionCm);
+			COPY_PROP(RelativeOrientation);
+
+			out.TrackingProjection.angle = state->TrackingProjection.shape.ellipse.angle;
+			out.TrackingProjection.center = state->TrackingProjection.shape.ellipse.center;
+			out.TrackingProjection.half_x_extent = state->TrackingProjection.shape.ellipse.half_x_extent;
+			out.TrackingProjection.half_y_extent = state->TrackingProjection.shape.ellipse.half_y_extent;
+
+			COPY_PROP(ValidTrackerBitmask);
+			COPY_PROP(MulticamPositionCm);
+			COPY_PROP(MulticamOrientation);
+			COPY_PROP(bMulticamPositionValid);
+			COPY_PROP(bMulticamOrientationValid);
+
+			*out_tracker_data = out;
+			result = PSMResult_Success;
+		}
+	}
+
+	return result;
+}
+
+PSMResult PSM_GetHmdRawTrackerDataLightbar(PSMHmdID hmd_id, PSMRawTrackerDataLightbat *out_tracker_data)
+{
+	PSMResult result = PSMResult_Error;
+	assert(out_tracker_data);
+
+	if (g_psm_client != nullptr && IS_VALID_CONTROLLER_INDEX(hmd_id))
+	{
+		PSMHeadMountedDisplay *hmd = g_psm_client->get_hmd_view(hmd_id);
+		PSMRawTrackerData *state = nullptr;
+
+		switch (hmd->HmdType)
+		{
+		case PSMHmd_Morpheus:
+		{
+			state = &hmd->HmdState.MorpheusState.RawTrackerData;
+		} break;
+		case PSMHmd_Virtual:
+		{
+			state = &hmd->HmdState.VirtualHMDState.RawTrackerData;
+		} break;
+		}
+
+		if (state != nullptr &&
+			state->TrackingProjection.shape_type == PSMTrackingProjection::eShapeType::PSMShape_LightBar)
+		{
+			PSMRawTrackerDataLightbat out = {};
+
+			COPY_PROP(TrackerID);
+
+			COPY_PROP(ScreenLocation);
+			COPY_PROP(RelativePositionCm);
+			COPY_PROP(RelativeOrientation);
+
+			memcpy(out.TrackingProjection.triangle, state->TrackingProjection.shape.lightbar.triangle, sizeof(PSMTrackingProjectionLightbat::triangle));
+			memcpy(out.TrackingProjection.quad, state->TrackingProjection.shape.lightbar.quad, sizeof(PSMTrackingProjectionLightbat::quad));
+
+			COPY_PROP(ValidTrackerBitmask);
+			COPY_PROP(MulticamPositionCm);
+			COPY_PROP(MulticamOrientation);
+			COPY_PROP(bMulticamPositionValid);
+			COPY_PROP(bMulticamOrientationValid);
+
+			*out_tracker_data = out;
+			result = PSMResult_Success;
+		}
+	}
+
+	return result;
+}
+
+PSMResult PSM_GetHmdRawTrackerDataPointcloud(PSMHmdID hmd_id, PSMRawTrackerDataPointcloud *out_tracker_data)
+{
+	PSMResult result = PSMResult_Error;
+	assert(out_tracker_data);
+
+	if (g_psm_client != nullptr && IS_VALID_CONTROLLER_INDEX(hmd_id))
+	{
+		PSMHeadMountedDisplay *hmd = g_psm_client->get_hmd_view(hmd_id);
+		PSMRawTrackerData *state = nullptr;
+
+		switch (hmd->HmdType)
+		{
+		case PSMHmd_Morpheus:
+		{
+			state = &hmd->HmdState.MorpheusState.RawTrackerData;
+		} break;
+		case PSMHmd_Virtual:
+		{
+			state = &hmd->HmdState.VirtualHMDState.RawTrackerData;
+		} break;
+		}
+
+		if (state != nullptr &&
+			state->TrackingProjection.shape_type == PSMTrackingProjection::eShapeType::PSMShape_PointCloud)
+		{
+			PSMRawTrackerDataPointcloud out = {};
+
+			COPY_PROP(TrackerID);
+
+			COPY_PROP(ScreenLocation);
+			COPY_PROP(RelativePositionCm);
+			COPY_PROP(RelativeOrientation);
+
+			memcpy(out.TrackingProjection.points, state->TrackingProjection.shape.pointcloud.points, sizeof(PSMTrackingProjectionPointcloud::points));
+			out.TrackingProjection.point_count = state->TrackingProjection.shape.pointcloud.point_count;
+
+			COPY_PROP(ValidTrackerBitmask);
+			COPY_PROP(MulticamPositionCm);
+			COPY_PROP(MulticamOrientation);
+			COPY_PROP(bMulticamPositionValid);
+			COPY_PROP(bMulticamOrientationValid);
+
+			*out_tracker_data = out;
+			result = PSMResult_Success;
+		}
+	}
+
+	return result;
 }
 
 PSMResult PSM_GetIsHmdTracking(PSMHmdID hmd_id, bool *out_is_tracking)

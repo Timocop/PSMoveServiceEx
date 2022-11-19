@@ -684,7 +684,7 @@ void PSMoveClient::free_controller_listener(PSMControllerID ControllerID)
 		}
 	}
 }
-    
+
 PSMController* PSMoveClient::get_controller_view(PSMControllerID controller_id)
 {
 	return IS_VALID_CONTROLLER_INDEX(controller_id) ? &m_controllers[controller_id] : nullptr;

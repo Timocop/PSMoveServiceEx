@@ -77,31 +77,51 @@ typedef struct
 /// The projection of a tracking shape onto the image plane of a tracker video feed
 typedef struct
 {
-    enum eShapeType
-    {
-        PSMShape_INVALID_PROJECTION = -1,
-        PSMShape_Ellipse,					///< The 2D projection of a sphere (think conic sectioc)
-        PSMShape_LightBar,					///< The 2D projection of a 3D quad (bounding shape of DS4 lightbar) 
+	enum eShapeType
+	{
+		PSMShape_INVALID_PROJECTION = -1,
+		PSMShape_Ellipse,					///< The 2D projection of a sphere (think conic sectioc)
+		PSMShape_LightBar,					///< The 2D projection of a 3D quad (bounding shape of DS4 lightbar) 
 		PSMShape_PointCloud					///< The 2D projection of a 3D point cloud (morpheus tracking lights)
-    }                               shape_type;
-    union{
-        struct {
-            PSMVector2f center;
-            float half_x_extent;
-            float half_y_extent;
-            float angle;
-        } ellipse;
-        struct {
-            PSMVector2f triangle[3];
+	}                               shape_type;
+	union {
+		struct {
+			PSMVector2f center;
+			float half_x_extent;
+			float half_y_extent;
+			float angle;
+		} ellipse;
+		struct {
+			PSMVector2f triangle[3];
 			PSMVector2f quad[4];
-        } lightbar;
+		} lightbar;
 		struct {
 			PSMVector2f points[7];
 			int point_count;
 		} pointcloud;
-    }                               shape;
-    
+	}                               shape;
+
 } PSMTrackingProjection;
+
+typedef struct
+{
+	PSMVector2f center;
+	float half_x_extent;
+	float half_y_extent;
+	float angle;
+} PSMTrackingProjectionEllipse;
+
+typedef struct
+{
+	PSMVector2f triangle[3];
+	PSMVector2f quad[4];
+} PSMTrackingProjectionLightbat;
+
+typedef struct
+{
+	PSMVector2f points[7];
+	int point_count;
+} PSMTrackingProjectionPointcloud;
 
 // Interface
 //----------
