@@ -225,15 +225,6 @@ public:
         const struct ControllerStreamInfo *stream_info,
         PSMoveProtocol::DeviceOutputDataFrame *data_frame);
 
-	void generate_controller_data_frame_for_pipe(
-		const ServerControllerView *controller_view);
-
-	void generate_psmove_data_frame_for_pipe(
-		const ServerControllerView *controller_view, std::vector<std::string> &dataArray);
-
-	void publish_controller_data_frame_for_pipe(
-		const int deviceId, std::vector<std::string> dataArray);
-
 	// Incoming device data callbacks
 	void notifySensorDataReceived(const CommonDeviceState *sensor_state) override;
 
