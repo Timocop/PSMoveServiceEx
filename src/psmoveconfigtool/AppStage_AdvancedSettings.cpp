@@ -232,7 +232,7 @@ TrackerConfig::config2ptree()
 
 	pt.put("min_valid_projection_area", min_valid_projection_area);
 	pt.put("occluded_area_on_loss_size", occluded_area_on_loss_size);
-	pt.put("occluded_area_ignore_trackers", occluded_area_ignore_trackers);
+	pt.put("occluded_area_ignore_num_trackers", occluded_area_ignore_num_trackers);
 	pt.put("occluded_area_regain_projection_size", occluded_area_regain_projection_size);
 	pt.put("projection_collision_avoid", projection_collision_avoid);
 	pt.put("projection_collision_offset", projection_collision_offset);
@@ -269,7 +269,7 @@ TrackerConfig::ptree2config(const boost::property_tree::ptree &pt)
 
 	min_valid_projection_area = pt.get<float>("min_valid_projection_area", min_valid_projection_area);
 	occluded_area_on_loss_size = pt.get<float>("occluded_area_on_loss_size", occluded_area_on_loss_size);
-	occluded_area_ignore_trackers = pt.get<int>("occluded_area_ignore_trackers", occluded_area_ignore_trackers);
+	occluded_area_ignore_num_trackers = pt.get<int>("occluded_area_ignore_num_trackers", occluded_area_ignore_num_trackers);
 	occluded_area_regain_projection_size = pt.get<float>("occluded_area_regain_projection_size", occluded_area_regain_projection_size);
 	projection_collision_avoid = pt.get<bool>("projection_collision_avoid", projection_collision_avoid);
 	projection_collision_offset = pt.get<float>("projection_collision_offset", projection_collision_offset);
@@ -698,16 +698,16 @@ void AppStage_AdvancedSettings::renderUI()
 					ImGui::Text("Occluded area number of ignored trackers:");
 					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 					ImGui::PushItemWidth(100.f);
-					if (ImGui::InputInt("##OccludedAreaIgnoreTrackers", &cfg_tracker.occluded_area_ignore_trackers, 1, 5))
+					if (ImGui::InputInt("##OccludedAreaIgnoreTrackers", &cfg_tracker.occluded_area_ignore_num_trackers, 1, 5))
 					{
-						cfg_tracker.occluded_area_ignore_trackers = static_cast<int>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.occluded_area_ignore_trackers)));
+						cfg_tracker.occluded_area_ignore_num_trackers = static_cast<int>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.occluded_area_ignore_num_trackers)));
 					}
 					ImGui::PopItemWidth();
 
 					if (ImGui::IsItemHovered())
 						ImGui::SetTooltip(
 							"The number of trackers that will ignore occluded areas (sorted by biggest projection).\n"
-							"(The default value is 0)"
+							"(The default value is 2)"
 						);
 				}
 

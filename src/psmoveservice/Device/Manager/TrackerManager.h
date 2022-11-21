@@ -64,7 +64,7 @@ public:
 	bool exclude_opposed_cameras;
 	float min_valid_projection_area;
 	float occluded_area_on_loss_size;
-	int occluded_area_ignore_trackers;
+	int occluded_area_ignore_num_trackers;
 	float occluded_area_regain_projection_size;
 	bool projection_collision_avoid;
 	float projection_collision_offset;

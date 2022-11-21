@@ -48,7 +48,7 @@ public:
 		exclude_opposed_cameras = false;
 		min_valid_projection_area = 6;
 		occluded_area_on_loss_size = 4.f;
-		occluded_area_ignore_trackers = 0;
+		occluded_area_ignore_num_trackers = 2;
 		occluded_area_regain_projection_size = 32.f;
 		average_position_cache_enabled = false;
 		average_position_cache_cell_size = 15.f;
@@ -79,7 +79,7 @@ public:
 	bool exclude_opposed_cameras;
 	float min_valid_projection_area;
 	float occluded_area_on_loss_size;
-	int occluded_area_ignore_trackers;
+	int occluded_area_ignore_num_trackers;
 	float occluded_area_regain_projection_size;
 	bool average_position_cache_enabled;
 	float average_position_cache_cell_size;

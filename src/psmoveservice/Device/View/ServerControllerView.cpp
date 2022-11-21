@@ -769,7 +769,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 					{
 						bBlacklisted = false;
 
-						if (!bIsOccluded || projections_found < trackerMgrConfig.occluded_area_ignore_trackers)
+						if (!bIsOccluded || projections_found < trackerMgrConfig.occluded_area_ignore_num_trackers)
 						{
 							bOccluded = false;
 
