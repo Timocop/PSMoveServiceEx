@@ -3427,7 +3427,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 
 					int cacheIndex = -1;
 					float lastCacheDistance = cell_size;
-					for (int j = globalPositionOffsetCaching[tracker_id][other_tracker_id].size() - 1; j > 0; --j)
+					for (int j = globalPositionOffsetCaching[tracker_id][other_tracker_id].size() - 1; j >= 0; --j)
 					{
 						if (!globalPositionOffsetCaching[tracker_id][other_tracker_id][j].isValid)
 							continue;
@@ -3489,7 +3489,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 						CommonDevicePosition average_new_position = { 0.f, 0.f, 0.f };
 						int average_new_position_pair = 0;
 
-						for (int j = globalPositionOffsetCaching[tracker_id][other_tracker_id].size() - 1; j > 0; --j)
+						for (int j = globalPositionOffsetCaching[tracker_id][other_tracker_id].size() - 1; j >= 0; --j)
 						{
 							if (!globalPositionOffsetCaching[tracker_id][other_tracker_id][j].isValid)
 								continue;
@@ -3537,7 +3537,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 						// Find nearest average position regardless of distance
 						int nearCacheIndex = -1;
 						float lastCacheDistance = -1.f;
-						for (int j = globalPositionOffsetCaching[tracker_id][other_tracker_id].size() - 1; j > 0; --j)
+						for (int j = globalPositionOffsetCaching[tracker_id][other_tracker_id].size() - 1; j >= 0; --j)
 						{
 							if (!globalPositionOffsetCaching[tracker_id][other_tracker_id][j].isValid)
 								continue;
@@ -3628,7 +3628,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 		if (cfg.average_position_cache_enabled)
 		{
 			// Renew cached average world position when we have more samples
-			for (int j = newPositionOffsetCaching.size() - 1; j > 0; --j)
+			for (int j = newPositionOffsetCaching.size() - 1; j >= 0; --j)
 			{
 				const orgPositionOffsetCaching orgCache = newPositionOffsetCaching[j];
 				positionOffsetCaching *cache = &globalPositionOffsetCaching[orgCache.tracker_1_id][orgCache.tracker_2_id][orgCache.index];
