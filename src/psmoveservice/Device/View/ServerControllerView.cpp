@@ -606,148 +606,155 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 						}
 					}
 
-					if (bWasTracking || bIsVisibleThisUpdate)
-					{
-						project_avoid_valid[tracker_id][controller_id] = true;
-						porject_avoid_region[tracker_id][controller_id][0] = trackerPoseEstimateRef.projection.shape.ellipse.center.x;
-						porject_avoid_region[tracker_id][controller_id][1] = trackerPoseEstimateRef.projection.shape.ellipse.center.y;
-						porject_avoid_region[tracker_id][controller_id][2] = trackerPoseEstimateRef.projection.screen_area;
-					}
-					else
-					{
-						project_avoid_valid[tracker_id][controller_id] = false;
-					}
-
 					bool bIsOccluded = false;
 					bool bIsBlacklisted = false;
 
-					//Create an occlusion area at the last seen valid tracked projection.
-					//If the projection center is near the occluded area it will not mark the projection as valid.
-					//This will remove jitter when the shape of the controllers is partially visible to the trackers.
-					if (!getIsROIDisabled())
+					//Only available
+					if (trackerPoseEstimateRef.projection.shape_type == eCommonTrackingProjectionType::ProjectionType_Ellipse)
 					{
-						if (trackerMgrConfig.occluded_area_on_loss_size >= 0.01)
+						if (bWasTracking || bIsVisibleThisUpdate)
 						{
-							if (!occluded_tracker_ids[tracker_id][controller_id])
+							project_avoid_valid[tracker_id][controller_id] = true;
+							porject_avoid_region[tracker_id][controller_id][0] = trackerPoseEstimateRef.projection.shape.ellipse.center.x;
+							porject_avoid_region[tracker_id][controller_id][1] = trackerPoseEstimateRef.projection.shape.ellipse.center.y;
+							porject_avoid_region[tracker_id][controller_id][2] = trackerPoseEstimateRef.projection.screen_area;
+						}
+						else
+						{
+							project_avoid_valid[tracker_id][controller_id] = false;
+						}
+
+						//Create an occlusion area at the last seen valid tracked projection.
+						//If the projection center is near the occluded area it will not mark the projection as valid.
+						//This will remove jitter when the shape of the controllers is partially visible to the trackers.
+						if (!getIsROIDisabled())
+						{
+							if (trackerMgrConfig.occluded_area_on_loss_size >= 0.01)
 							{
-								if (bWasTracking || bIsVisibleThisUpdate)
+								if (!occluded_tracker_ids[tracker_id][controller_id])
 								{
-									occluded_tracker_ids[tracker_id][controller_id] = false;
-									occluded_projection_tracker_ids[tracker_id][controller_id][0] = trackerPoseEstimateRef.projection.shape.ellipse.center.x;
-									occluded_projection_tracker_ids[tracker_id][controller_id][1] = trackerPoseEstimateRef.projection.shape.ellipse.center.y;
-								}
-								else
-								{
-									occluded_tracker_ids[tracker_id][controller_id] = true;
-								}
-							}
-
-							if (occluded_tracker_ids[tracker_id][controller_id])
-							{
-								if (bWasTracking || bIsVisibleThisUpdate)
-								{
-									bool bInArea = (abs(trackerPoseEstimateRef.projection.shape.ellipse.center.x - occluded_projection_tracker_ids[tracker_id][controller_id][0])
-										< trackerMgrConfig.occluded_area_on_loss_size
-										&& abs(trackerPoseEstimateRef.projection.shape.ellipse.center.y - occluded_projection_tracker_ids[tracker_id][controller_id][1])
-										< trackerMgrConfig.occluded_area_on_loss_size);
-
-									bool bRegain = (fmaxf(trackerPoseEstimateRef.projection.screen_area, trackerMgrConfig.min_valid_projection_area)
-										> trackerMgrConfig.occluded_area_regain_projection_size);
-
-									if (bInArea && !bRegain)
+									if (bWasTracking || bIsVisibleThisUpdate)
 									{
-										bIsOccluded = true;
-
-										trackerPoseEstimateRef.occlusionAreaSize = trackerMgrConfig.occluded_area_on_loss_size;
-										trackerPoseEstimateRef.occlusionAreaPos.x = occluded_projection_tracker_ids[tracker_id][controller_id][0];
-										trackerPoseEstimateRef.occlusionAreaPos.y = occluded_projection_tracker_ids[tracker_id][controller_id][1];
+										occluded_tracker_ids[tracker_id][controller_id] = false;
+										occluded_projection_tracker_ids[tracker_id][controller_id][0] = trackerPoseEstimateRef.projection.shape.ellipse.center.x;
+										occluded_projection_tracker_ids[tracker_id][controller_id][1] = trackerPoseEstimateRef.projection.shape.ellipse.center.y;
 									}
 									else
 									{
-										occluded_tracker_ids[tracker_id][controller_id] = false;
+										occluded_tracker_ids[tracker_id][controller_id] = true;
+									}
+								}
+
+								if (occluded_tracker_ids[tracker_id][controller_id])
+								{
+									if (bWasTracking || bIsVisibleThisUpdate)
+									{
+										bool bInArea = (abs(trackerPoseEstimateRef.projection.shape.ellipse.center.x - occluded_projection_tracker_ids[tracker_id][controller_id][0])
+											< trackerMgrConfig.occluded_area_on_loss_size
+											&& abs(trackerPoseEstimateRef.projection.shape.ellipse.center.y - occluded_projection_tracker_ids[tracker_id][controller_id][1])
+											< trackerMgrConfig.occluded_area_on_loss_size);
+
+										bool bRegain = (fmaxf(trackerPoseEstimateRef.projection.screen_area, trackerMgrConfig.min_valid_projection_area)
+											> trackerMgrConfig.occluded_area_regain_projection_size);
+
+										if (bInArea && !bRegain)
+										{
+											bIsOccluded = true;
+
+											trackerPoseEstimateRef.occlusionAreaSize = trackerMgrConfig.occluded_area_on_loss_size;
+											trackerPoseEstimateRef.occlusionAreaPos.x = occluded_projection_tracker_ids[tracker_id][controller_id][0];
+											trackerPoseEstimateRef.occlusionAreaPos.y = occluded_projection_tracker_ids[tracker_id][controller_id][1];
+										}
+										else
+										{
+											occluded_tracker_ids[tracker_id][controller_id] = false;
+										}
+									}
+									else
+									{
+										// Recenter to last visible projection origin
+										occluded_projection_tracker_ids[tracker_id][controller_id][0] = trackerPoseEstimateRef.projection.shape.ellipse.center.x;
+										occluded_projection_tracker_ids[tracker_id][controller_id][1] = trackerPoseEstimateRef.projection.shape.ellipse.center.y;
 									}
 								}
 							}
 						}
-					}
 
-					if (bWasTracking || bIsVisibleThisUpdate)
-					{
-						// Blacklisted projections
-						for (int i = 0; i < eCommonBlacklistProjection::MAX_BLACKLIST_PROJECTIONS; ++i)
+						if (bWasTracking || bIsVisibleThisUpdate)
 						{
-							float x, y, w, h;
-							if (tracker->getBlacklistProjection(i, x, y, w, h))
+							// Blacklisted projections
+							for (int i = 0; i < eCommonBlacklistProjection::MAX_BLACKLIST_PROJECTIONS; ++i)
 							{
-								const float tracker_x = trackerPoseEstimateRef.projection.shape.ellipse.center.x;
-								const float tracker_y = trackerPoseEstimateRef.projection.shape.ellipse.center.y;
-
-								bool bInArea = (tracker_x > x)
-									&& (tracker_y > y)
-									&& (tracker_x < x + w)
-									&& (tracker_y < y + h);
-
-								if (bInArea)
+								float x, y, w, h;
+								if (tracker->getBlacklistProjection(i, x, y, w, h))
 								{
-									trackerPoseEstimateRef.blacklistedAreaRec.x = x;
-									trackerPoseEstimateRef.blacklistedAreaRec.y = y;
-									trackerPoseEstimateRef.blacklistedAreaRec.w = w;
-									trackerPoseEstimateRef.blacklistedAreaRec.h = h;
+									const float tracker_x = trackerPoseEstimateRef.projection.shape.ellipse.center.x;
+									const float tracker_y = trackerPoseEstimateRef.projection.shape.ellipse.center.y;
 
-									bIsBlacklisted = true;
-									break;
+									bool bInArea = (tracker_x > x)
+										&& (tracker_y > y)
+										&& (tracker_x < x + w)
+										&& (tracker_y < y + h);
+
+									if (bInArea)
+									{
+										trackerPoseEstimateRef.blacklistedAreaRec.x = x;
+										trackerPoseEstimateRef.blacklistedAreaRec.y = y;
+										trackerPoseEstimateRef.blacklistedAreaRec.w = w;
+										trackerPoseEstimateRef.blacklistedAreaRec.h = h;
+
+										bIsBlacklisted = true;
+										break;
+									}
 								}
 							}
-						}
 
-
-						// Avoid other device projections
-						if (trackerMgrConfig.projection_collision_avoid)
-						{
-							for (int i = 0; i < ControllerManager::k_max_devices; ++i)
+							// Avoid other device projections
+							if (trackerMgrConfig.projection_collision_avoid)
 							{
-								if (i == controller_id)
-									continue;
-
-								if (!project_avoid_valid[tracker_id][i])
-									continue;
-								
-								ServerControllerViewPtr controllerView = m_controllerManager->getControllerViewPtr(i);
-								if (!controllerView ||
-									!controllerView->getIsOpen())
+								for (int i = 0; i < ControllerManager::k_max_devices; ++i)
 								{
-									continue;
-								}
+									if (i == controller_id)
+										continue;
 
-								float other_x = porject_avoid_region[tracker_id][i][0];
-								float other_y = porject_avoid_region[tracker_id][i][1];
-								float other_area = porject_avoid_region[tracker_id][i][2];
+									if (!project_avoid_valid[tracker_id][i])
+										continue;
 
-								float x = trackerPoseEstimateRef.projection.shape.ellipse.center.x - trackerPoseEstimateRef.projection.shape.ellipse.half_x_extent - trackerMgrConfig.projection_collision_offset;
-								float y = trackerPoseEstimateRef.projection.shape.ellipse.center.y - trackerPoseEstimateRef.projection.shape.ellipse.half_y_extent - trackerMgrConfig.projection_collision_offset;
-								float w = (trackerPoseEstimateRef.projection.shape.ellipse.half_x_extent * 2) + (trackerMgrConfig.projection_collision_offset * 2);
-								float h = (trackerPoseEstimateRef.projection.shape.ellipse.half_y_extent * 2) + (trackerMgrConfig.projection_collision_offset * 2);
-								float area = trackerPoseEstimateRef.projection.screen_area;
+									ServerControllerViewPtr controllerView = m_controllerManager->getControllerViewPtr(i);
+									if (!controllerView || !controllerView->getIsOpen())
+										continue;
 
-								if (area > other_area)
-									continue;
+									float other_x = porject_avoid_region[tracker_id][i][0];
+									float other_y = porject_avoid_region[tracker_id][i][1];
+									float other_area = porject_avoid_region[tracker_id][i][2];
 
-								bool bInArea = (other_x > x)
-									&& (other_y > y)
-									&& (other_x < x + w)
-									&& (other_y < y + h);
+									float x = trackerPoseEstimateRef.projection.shape.ellipse.center.x - trackerPoseEstimateRef.projection.shape.ellipse.half_x_extent - trackerMgrConfig.projection_collision_offset;
+									float y = trackerPoseEstimateRef.projection.shape.ellipse.center.y - trackerPoseEstimateRef.projection.shape.ellipse.half_y_extent - trackerMgrConfig.projection_collision_offset;
+									float w = (trackerPoseEstimateRef.projection.shape.ellipse.half_x_extent * 2) + (trackerMgrConfig.projection_collision_offset * 2);
+									float h = (trackerPoseEstimateRef.projection.shape.ellipse.half_y_extent * 2) + (trackerMgrConfig.projection_collision_offset * 2);
+									float area = trackerPoseEstimateRef.projection.screen_area;
 
-								// Blacklist if the projection are is already used by another.
-								// Avoiding color collisions between controllers.
-								if (bInArea)
-								{
-									trackerPoseEstimateRef.blacklistedAreaRec.x = x;
-									trackerPoseEstimateRef.blacklistedAreaRec.y = y;
-									trackerPoseEstimateRef.blacklistedAreaRec.w = w;
-									trackerPoseEstimateRef.blacklistedAreaRec.h = h;
+									// $TODO Should we just ignore both?
+									if (area > other_area)
+										continue;
 
-									bIsBlacklisted = true;
-									break;
+									bool bInArea = (other_x > x)
+										&& (other_y > y)
+										&& (other_x < x + w)
+										&& (other_y < y + h);
+
+									// Blacklist if the projection are is already used by another.
+									// Avoiding color collisions between controllers.
+									if (bInArea)
+									{
+										trackerPoseEstimateRef.blacklistedAreaRec.x = x;
+										trackerPoseEstimateRef.blacklistedAreaRec.y = y;
+										trackerPoseEstimateRef.blacklistedAreaRec.w = w;
+										trackerPoseEstimateRef.blacklistedAreaRec.h = h;
+
+										bIsBlacklisted = true;
+										break;
+									}
 								}
 							}
 						}
