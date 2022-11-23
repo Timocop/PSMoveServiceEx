@@ -62,6 +62,10 @@ public:
 		, orientation_variance_exp_fit_b(-0.00267515215f)
 		, tracking_color_id(eCommonTrackingColorID::INVALID_COLOR)
 		, hand("Any")
+		, filter_prediction_distance(10.f)
+		, filter_prediction_smoothing(0.40f)
+		, filter_lowpassoptical_distance(10.f)
+		, filter_lowpassoptical_smoothing(0.40f)
     {
 		offset_position.set(0.0, 0.0, 0.0);
 		offset_orientation.set(0.0, 0.0, 0.0);
@@ -185,6 +189,12 @@ public:
 
 	// The assigned hand for this controller
 	std::string hand;
+
+	// Filter settings
+	float filter_prediction_distance;
+	float filter_prediction_smoothing;
+	float filter_lowpassoptical_distance;
+	float filter_lowpassoptical_smoothing;
 };
 
 struct DualShock4ControllerInputState : public CommonControllerState

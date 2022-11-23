@@ -316,6 +316,11 @@ MorpheusHMDConfig::ptree2config(const boost::property_tree::ptree &pt)
 
 		// Read the tracking color
 		tracking_color_id = static_cast<eCommonTrackingColorID>(readTrackingColor(pt));
+
+		filter_prediction_distance = pt.get<float>("FilterSettings.filter_prediction_distance", 10.f);
+		filter_prediction_smoothing = pt.get<float>("FilterSettings.filter_prediction_smoothing", 0.40f);
+		filter_lowpassoptical_distance = pt.get<float>("FilterSettings.LowPassOptical.filter_lowpassoptical_distance", 10.f);
+		filter_lowpassoptical_smoothing = pt.get<float>("FilterSettings.LowPassOptical.filter_lowpassoptical_smoothing", 0.40f);
     }
     else
     {

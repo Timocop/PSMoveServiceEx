@@ -27,11 +27,6 @@ public:
 
     int version;
     int virtual_controller_count;
-	 
-	float filter_prediction_distance;
-	float filter_prediction_smoothing;
-	float filter_lowpassoptical_smoothing;
-	float filter_lowpassoptical_distance;
 };
 
 class ControllerManager : public DeviceTypeManager

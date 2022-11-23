@@ -46,6 +46,11 @@ public:
 		DeviceOrientation OffsetOrientation;
 		DevicePosition OffsetPosition;
 		DevicePosition OffsetScale;
+
+		float FilterPredictionDistance;
+		float FilterPredictionSmoothing;
+		float FilterLowPassOpticalDistance;
+		float FilterLowPassOpticalSmoothing;
     };
 
 
@@ -84,6 +89,12 @@ protected:
 	void request_set_hmd_tracking_color_id(
 		const int hmd_id,
 		PSMTrackingColorType tracking_color_type);
+	void request_set_hmd_filter_settings(
+		const int HmdID,
+		float filter_prediction_distance,
+		float filter_prediction_smoothing,
+		float filter_lowpassoptical_distance,
+		float filter_lowpassoptical_smoothing);
 	void request_set_hmd_offsets(
 		int ControllerID,
 		float offset_orientation_x,

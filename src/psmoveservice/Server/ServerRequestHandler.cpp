@@ -410,6 +410,14 @@ public:
 				response = new PSMoveProtocol::Response;
 				handle_request__set_playspace_offsets(context, response);
 				break;
+			case PSMoveProtocol::Request_RequestType_SET_CONTROLLER_FILTER_SETTINGS:
+				response = new PSMoveProtocol::Response;
+				handle_request__set_controller_filter_settings(context, response);
+				break;
+			case PSMoveProtocol::Request_RequestType_SET_HMD_FILTER_SETTINGS:
+				response = new PSMoveProtocol::Response;
+				handle_request__set_hmd_filter_settings(context, response);
+				break;
 
             default:
                 assert(0 && "Whoops, bad request!");
@@ -699,6 +707,11 @@ protected:
 
                 int gamepad_index= -1;
 
+				float filter_prediction_distance;
+				float filter_prediction_smoothing;
+				float filter_lowpassoptical_distance;
+				float filter_lowpassoptical_smoothing;
+
                 switch(controller_view->getControllerDeviceType())
                 {
                 case CommonControllerState::PSMove:
@@ -719,6 +732,11 @@ protected:
 						offset_position.set(config->offset_position.x, config->offset_position.y, config->offset_position.z);
 						offset_scale.set(config->offset_scale.x, config->offset_scale.y, config->offset_scale.z);
 						offset_magnetometer = config->offset_magnetometer_center;
+
+						filter_prediction_distance = config->filter_prediction_distance;
+						filter_prediction_smoothing = config->filter_prediction_smoothing;
+						filter_lowpassoptical_distance = config->filter_lowpassoptical_distance;
+						filter_lowpassoptical_smoothing = config->filter_lowpassoptical_smoothing;
 
                         controller_info->set_controller_type(PSMoveProtocol::PSMOVE);
                     }
@@ -777,7 +795,12 @@ protected:
                         prediction_time = config->prediction_time;
 						controller_hand= config->hand;
 
-                    controller_info->set_controller_type(PSMoveProtocol::PSDUALSHOCK4);
+						filter_prediction_distance = config->filter_prediction_distance;
+						filter_prediction_smoothing = config->filter_prediction_smoothing;
+						filter_lowpassoptical_distance = config->filter_lowpassoptical_distance;
+						filter_lowpassoptical_smoothing = config->filter_lowpassoptical_smoothing;
+
+						controller_info->set_controller_type(PSMoveProtocol::PSDUALSHOCK4);
                     }
                     break;
                 case CommonControllerState::VirtualController:
@@ -794,9 +817,15 @@ protected:
 						offset_position.set(config->offset_position.x, config->offset_position.y, config->offset_position.z);
 						offset_scale.set(config->offset_scale.x, config->offset_scale.y, config->offset_scale.z);
 
-                        controller_info->set_controller_type(PSMoveProtocol::VIRTUALCONTROLLER);
                         gamepad_index= config->gamepad_index;
 						controller_hand= config->hand;
+
+						filter_prediction_distance = config->filter_prediction_distance;
+						filter_prediction_smoothing = config->filter_prediction_smoothing;
+						filter_lowpassoptical_distance = config->filter_lowpassoptical_distance;
+						filter_lowpassoptical_smoothing = config->filter_lowpassoptical_smoothing;
+
+						controller_info->set_controller_type(PSMoveProtocol::VIRTUALCONTROLLER);
                     }
                     break;
                 default:
@@ -847,6 +876,11 @@ protected:
 					controller_info->set_controller_hand(PSMoveProtocol::HAND_RIGHT);
 				else
 					controller_info->set_controller_hand(PSMoveProtocol::HAND_ANY);
+
+				controller_info->set_filter_prediction_distance(filter_prediction_distance);
+				controller_info->set_filter_prediction_smoothing(filter_prediction_smoothing);
+				controller_info->set_filter_lowpassoptical_distance(filter_lowpassoptical_distance);
+				controller_info->set_filter_lowpassoptical_smoothing(filter_lowpassoptical_smoothing);
             }
         }
 
@@ -2865,6 +2899,92 @@ protected:
 		}
 	}
 
+	void handle_request__set_controller_filter_settings(
+		const RequestContext &context,
+		PSMoveProtocol::Response *response)
+	{
+		const int controller_id = context.request->request_set_controller_filter_settings().controller_id();
+
+		ServerControllerViewPtr ControllerView = m_device_manager.getControllerViewPtr(controller_id);
+		const PSMoveProtocol::Request_RequestSetControllerFilterSettings &request =
+			context.request->request_set_controller_filter_settings();
+
+		if (ControllerView && ControllerView->getIsOpen())
+		{
+			switch (ControllerView->getControllerDeviceType())
+			{
+			case CommonDeviceState::PSMove:
+			{
+				PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
+				PSMoveControllerConfig config = *controller->getConfig();
+
+				if (config.filter_prediction_distance != request.filter_prediction_distance() ||
+					config.filter_prediction_smoothing != request.filter_prediction_smoothing() ||
+					config.filter_lowpassoptical_distance != request.filter_lowpassoptical_distance() ||
+					config.filter_lowpassoptical_smoothing != request.filter_lowpassoptical_smoothing())
+				{
+					config.filter_prediction_distance = request.filter_prediction_distance();
+					config.filter_prediction_smoothing = request.filter_prediction_smoothing();
+					config.filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
+					config.filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
+
+					controller->setConfig(&config);
+				}
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+				break;
+			}
+			case CommonDeviceState::PSDualShock4:
+			{
+				PSDualShock4Controller *controller = ControllerView->castChecked<PSDualShock4Controller>();
+				PSDualShock4ControllerConfig config = *controller->getConfig();
+
+				if (config.filter_prediction_distance != request.filter_prediction_distance() ||
+					config.filter_prediction_smoothing != request.filter_prediction_smoothing() ||
+					config.filter_lowpassoptical_distance != request.filter_lowpassoptical_distance() ||
+					config.filter_lowpassoptical_smoothing != request.filter_lowpassoptical_smoothing())
+				{
+					config.filter_prediction_distance = request.filter_prediction_distance();
+					config.filter_prediction_smoothing = request.filter_prediction_smoothing();
+					config.filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
+					config.filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
+
+					controller->setConfig(&config);
+				}
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+				break;
+			}
+			case CommonDeviceState::VirtualController:
+			{
+				VirtualController *controller = ControllerView->castChecked<VirtualController>();
+				VirtualControllerConfig *config = controller->getConfigMutable();
+				
+				if (config->filter_prediction_distance != request.filter_prediction_distance() ||
+					config->filter_prediction_smoothing != request.filter_prediction_smoothing() ||
+					config->filter_lowpassoptical_distance != request.filter_lowpassoptical_distance() ||
+					config->filter_lowpassoptical_smoothing != request.filter_lowpassoptical_smoothing())
+				{
+					config->filter_prediction_distance = request.filter_prediction_distance();
+					config->filter_prediction_smoothing = request.filter_prediction_smoothing();
+					config->filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
+					config->filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
+
+					config->save();
+				}
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+				break;
+			}
+			default:
+			{
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+			}
+			}
+		}
+		else
+		{
+			response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+		}
+	}
+
 	void handle_request__set_hmd_offsets(
 		const RequestContext &context,
 		PSMoveProtocol::Response *response)
@@ -2933,6 +3053,72 @@ protected:
 					config->offset_scale.x = request.offset_scale().x();
 					config->offset_scale.y = request.offset_scale().y();
 					config->offset_scale.z = request.offset_scale().z();
+
+					config->save();
+				}
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+				break;
+			}
+			default:
+			{
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+			}
+			}
+		}
+		else
+		{
+			response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+		}
+	}
+
+	void handle_request__set_hmd_filter_settings(
+		const RequestContext &context,
+		PSMoveProtocol::Response *response)
+	{
+		const int hmd_id = context.request->request_set_hmd_filter_settings().hmd_id();
+
+		ServerHMDViewPtr HmdView = m_device_manager.getHMDViewPtr(hmd_id);
+		const PSMoveProtocol::Request_RequestSetHmdFilterSettings &request =
+			context.request->request_set_hmd_filter_settings();
+
+		if (HmdView && HmdView->getIsOpen())
+		{
+			switch (HmdView->getHMDDeviceType())
+			{
+			case CommonDeviceState::Morpheus:
+			{
+				MorpheusHMD *hmd = HmdView->castChecked<MorpheusHMD>();
+				MorpheusHMDConfig *config = hmd->getConfigMutable();
+
+				if (config->filter_prediction_distance != request.filter_prediction_distance() ||
+					config->filter_prediction_smoothing != request.filter_prediction_smoothing() ||
+					config->filter_lowpassoptical_distance != request.filter_lowpassoptical_distance() ||
+					config->filter_lowpassoptical_smoothing != request.filter_lowpassoptical_smoothing())
+				{
+					config->filter_prediction_distance = request.filter_prediction_distance();
+					config->filter_prediction_smoothing = request.filter_prediction_smoothing();
+					config->filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
+					config->filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
+
+					config->save();
+				}
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+				break;
+			}
+			case CommonDeviceState::VirtualHMD:
+			{
+				VirtualHMD *virt = HmdView->castChecked<VirtualHMD>();
+				VirtualHMDConfig *config = virt->getConfigMutable();
+
+				if (config->filter_prediction_distance != request.filter_prediction_distance() ||
+					config->filter_prediction_smoothing != request.filter_prediction_smoothing() ||
+					config->filter_lowpassoptical_distance != request.filter_lowpassoptical_distance() ||
+					config->filter_lowpassoptical_smoothing != request.filter_lowpassoptical_smoothing())
+				{
+					config->filter_prediction_distance = request.filter_prediction_distance();
+					config->filter_prediction_smoothing = request.filter_prediction_smoothing();
+					config->filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
+					config->filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
 
 					config->save();
 				}
@@ -3226,6 +3412,11 @@ protected:
 				offset_scale.clear();
 				offset_scale.set(1.f, 1.f, 1.f);
 
+				float filter_prediction_distance;
+				float filter_prediction_smoothing;
+				float filter_lowpassoptical_distance;
+				float filter_lowpassoptical_smoothing;
+
                 switch (hmd_view->getHMDDeviceType())
                 {
                 case CommonHMDState::Morpheus:
@@ -3233,7 +3424,6 @@ protected:
                         const MorpheusHMD *morpheusHMD= hmd_view->castCheckedConst<MorpheusHMD>();
                         const MorpheusHMDConfig *config= morpheusHMD->getConfig();
 
-                        hmd_info->set_hmd_type(PSMoveProtocol::Morpheus);
                         hmd_info->set_prediction_time(config->prediction_time);
                         hmd_info->set_orientation_filter(config->orientation_filter_type);
                         hmd_info->set_position_filter(config->position_filter_type);
@@ -3242,6 +3432,13 @@ protected:
 						offset_position.set(config->offset_position.x, config->offset_position.y, config->offset_position.z);
 						offset_scale.set(config->offset_scale.x, config->offset_scale.y, config->offset_scale.z);
 
+						filter_prediction_distance = config->filter_prediction_distance;
+						filter_prediction_smoothing = config->filter_prediction_smoothing;
+						filter_lowpassoptical_distance = config->filter_lowpassoptical_distance;
+						filter_lowpassoptical_smoothing = config->filter_lowpassoptical_smoothing;
+
+						hmd_info->set_hmd_type(PSMoveProtocol::Morpheus);
+
                     }
                     break;
                 case CommonHMDState::VirtualHMD:
@@ -3249,13 +3446,19 @@ protected:
                         const VirtualHMD *virtualHMD= hmd_view->castCheckedConst<VirtualHMD>();
                         const VirtualHMDConfig *config= virtualHMD->getConfig();
 
-                        hmd_info->set_hmd_type(PSMoveProtocol::VirtualHMD);
                         hmd_info->set_prediction_time(config->prediction_time);
                         hmd_info->set_position_filter(config->position_filter_type);
 
 						offset_orientation.set(config->offset_orientation.x, config->offset_orientation.y, config->offset_orientation.z);
 						offset_position.set(config->offset_position.x, config->offset_position.y, config->offset_position.z);
 						offset_scale.set(config->offset_scale.x, config->offset_scale.y, config->offset_scale.z);
+
+						filter_prediction_distance = config->filter_prediction_distance;
+						filter_prediction_smoothing = config->filter_prediction_smoothing;
+						filter_lowpassoptical_distance = config->filter_lowpassoptical_distance;
+						filter_lowpassoptical_smoothing = config->filter_lowpassoptical_smoothing;
+
+						hmd_info->set_hmd_type(PSMoveProtocol::VirtualHMD);
                     }
                     break;
                 default:
@@ -3279,6 +3482,11 @@ protected:
 				mutable_offset_scale->set_x(offset_scale.x);
 				mutable_offset_scale->set_y(offset_scale.y);
 				mutable_offset_scale->set_z(offset_scale.z);
+
+				hmd_info->set_filter_prediction_distance(filter_prediction_distance);
+				hmd_info->set_filter_prediction_smoothing(filter_prediction_smoothing);
+				hmd_info->set_filter_lowpassoptical_distance(filter_lowpassoptical_distance);
+				hmd_info->set_filter_lowpassoptical_smoothing(filter_lowpassoptical_smoothing);
             }
         }
 

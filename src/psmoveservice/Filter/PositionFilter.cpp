@@ -340,10 +340,73 @@ void PositionFilterPassThru::update(
 #if !defined(IS_TESTING_KALMAN) 
 	if (packet.controllerDeviceId > -1)
 	{
-		const ControllerManagerConfig cfg = DeviceManager::getInstance()->m_controller_manager->getConfig();
+		ServerControllerViewPtr ControllerView = DeviceManager::getInstance()->getControllerViewPtr(packet.controllerDeviceId);
+		if (ControllerView != nullptr && ControllerView->getIsOpen())
+		{
+			switch (ControllerView->getControllerDeviceType())
+			{
+			case CommonDeviceState::PSMove:
+			{
+				PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
+				PSMoveControllerConfig config = *controller->getConfig();
 
-		predict_smoothing_distance = clampf(cfg.filter_prediction_distance, 1.f, 9999.f) * k_centimeters_to_meters;
-		predict_smoothing_power = clampf(cfg.filter_prediction_smoothing, 0.01f, 1.f); 
+				predict_smoothing_distance = clampf(config.filter_prediction_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
+				predict_smoothing_power = clampf(config.filter_prediction_smoothing, 0.1f, 1.f);
+
+				break;
+			}
+			case CommonDeviceState::PSDualShock4:
+			{
+				PSDualShock4Controller *controller = ControllerView->castChecked<PSDualShock4Controller>();
+				PSDualShock4ControllerConfig config = *controller->getConfig();
+
+				predict_smoothing_distance = clampf(config.filter_prediction_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
+				predict_smoothing_power = clampf(config.filter_prediction_smoothing, 0.1f, 1.f);
+
+				break;
+			}
+			case CommonDeviceState::VirtualController:
+			{
+				VirtualController *controller = ControllerView->castChecked<VirtualController>();
+				VirtualControllerConfig *config = controller->getConfigMutable();
+
+				predict_smoothing_distance = clampf(config->filter_prediction_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
+				predict_smoothing_power = clampf(config->filter_prediction_smoothing, 0.1f, 1.f);
+
+				break;
+			}
+			}
+		}
+	}
+	else if (packet.hmdDeviceId > -1)
+	{
+		ServerHMDViewPtr HmdView = DeviceManager::getInstance()->getHMDViewPtr(packet.hmdDeviceId);
+		if (HmdView != nullptr && HmdView->getIsOpen())
+		{
+			switch (HmdView->getHMDDeviceType())
+			{
+			case CommonDeviceState::Morpheus:
+			{
+				MorpheusHMD *controller = HmdView->castChecked<MorpheusHMD>();
+				MorpheusHMDConfig *config = controller->getConfigMutable();
+
+				predict_smoothing_distance = clampf(config->filter_prediction_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
+				predict_smoothing_power = clampf(config->filter_prediction_smoothing, 0.1f, 1.f);
+
+				break;
+			}
+			case CommonDeviceState::VirtualHMD:
+			{
+				VirtualHMD *controller = HmdView->castChecked<VirtualHMD>();
+				VirtualHMDConfig *config = controller->getConfigMutable();
+
+				predict_smoothing_distance = clampf(config->filter_prediction_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
+				predict_smoothing_power = clampf(config->filter_prediction_smoothing, 0.1f, 1.f);
+
+				break;
+			}
+			}
+		}
 	}
 #endif
 
@@ -407,12 +470,83 @@ void PositionFilterLowPassOptical::update(
 #if !defined(IS_TESTING_KALMAN) 
 	if (packet.controllerDeviceId > -1)
 	{
-		const ControllerManagerConfig cfg = DeviceManager::getInstance()->m_controller_manager->getConfig();
+		ServerControllerViewPtr ControllerView = DeviceManager::getInstance()->getControllerViewPtr(packet.controllerDeviceId);
+		if (ControllerView != nullptr && ControllerView->getIsOpen())
+		{
+			switch (ControllerView->getControllerDeviceType())
+			{
+			case CommonDeviceState::PSMove:
+			{
+				PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
+				PSMoveControllerConfig config = *controller->getConfig();
 
-		predict_smoothing_distance = clampf(cfg.filter_prediction_distance, 1.f, 9999.f) * k_centimeters_to_meters;
-		predict_smoothing_power = clampf(cfg.filter_prediction_smoothing, 0.01f, 1.f);
-		smoothing_distance = clampf(cfg.filter_lowpassoptical_distance, 1.f, 9999.f) * k_centimeters_to_meters;
-		smoothing_power = clampf(cfg.filter_lowpassoptical_smoothing, 0.01f, 1.f);
+				predict_smoothing_distance = clampf(config.filter_prediction_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
+				predict_smoothing_power = clampf(config.filter_prediction_smoothing, 0.1f, 1.f);
+				smoothing_distance = clampf(config.filter_lowpassoptical_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
+				smoothing_power = clampf(config.filter_lowpassoptical_smoothing, 0.1f, 1.f);
+
+				break;
+			}
+			case CommonDeviceState::PSDualShock4:
+			{
+				PSDualShock4Controller *controller = ControllerView->castChecked<PSDualShock4Controller>();
+				PSDualShock4ControllerConfig config = *controller->getConfig();
+
+				predict_smoothing_distance = clampf(config.filter_prediction_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
+				predict_smoothing_power = clampf(config.filter_prediction_smoothing, 0.1f, 1.f);
+				smoothing_distance = clampf(config.filter_lowpassoptical_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
+				smoothing_power = clampf(config.filter_lowpassoptical_smoothing, 0.1f, 1.f);
+
+				break;
+			}
+			case CommonDeviceState::VirtualController:
+			{
+				VirtualController *controller = ControllerView->castChecked<VirtualController>();
+				VirtualControllerConfig *config = controller->getConfigMutable();
+
+				predict_smoothing_distance = clampf(config->filter_prediction_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
+				predict_smoothing_power = clampf(config->filter_prediction_smoothing, 0.1f, 1.f);
+				smoothing_distance = clampf(config->filter_lowpassoptical_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
+				smoothing_power = clampf(config->filter_lowpassoptical_smoothing, 0.1f, 1.f);
+
+				break;
+			}
+			}
+		}
+	}
+	else if (packet.hmdDeviceId > -1)
+	{
+		ServerHMDViewPtr HmdView = DeviceManager::getInstance()->getHMDViewPtr(packet.hmdDeviceId);
+		if (HmdView != nullptr && HmdView->getIsOpen())
+		{
+			switch (HmdView->getHMDDeviceType())
+			{
+			case CommonDeviceState::Morpheus:
+			{
+				MorpheusHMD *controller = HmdView->castChecked<MorpheusHMD>();
+				MorpheusHMDConfig *config = controller->getConfigMutable();
+
+				predict_smoothing_distance = clampf(config->filter_prediction_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
+				predict_smoothing_power = clampf(config->filter_prediction_smoothing, 0.1f, 1.f);
+				smoothing_distance = clampf(config->filter_lowpassoptical_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
+				smoothing_power = clampf(config->filter_lowpassoptical_smoothing, 0.1f, 1.f);
+
+				break;
+			}
+			case CommonDeviceState::VirtualHMD:
+			{
+				VirtualHMD *controller = HmdView->castChecked<VirtualHMD>();
+				VirtualHMDConfig *config = controller->getConfigMutable();
+
+				predict_smoothing_distance = clampf(config->filter_prediction_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
+				predict_smoothing_power = clampf(config->filter_prediction_smoothing, 0.1f, 1.f);
+				smoothing_distance = clampf(config->filter_lowpassoptical_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
+				smoothing_power = clampf(config->filter_lowpassoptical_smoothing, 0.1f, 1.f);
+
+				break;
+			}
+			}
+		}
 	}
 #endif
 
@@ -586,13 +720,76 @@ void PositionFilterLowPassExponential::update(const float delta_time, const Pose
 	float smoothing_distance = k_max_lowpass_smoothing_distance;
 	float smoothing_power = k_lowpass_smoothing_power;
 
-#if !defined(IS_TESTING_KALMAN)
+#if !defined(IS_TESTING_KALMAN) 
 	if (packet.controllerDeviceId > -1)
 	{
-		const ControllerManagerConfig cfg = DeviceManager::getInstance()->m_controller_manager->getConfig();
+		ServerControllerViewPtr ControllerView = DeviceManager::getInstance()->getControllerViewPtr(packet.controllerDeviceId);
+		if (ControllerView != nullptr && ControllerView->getIsOpen())
+		{
+			switch (ControllerView->getControllerDeviceType())
+			{
+			case CommonDeviceState::PSMove:
+			{
+				PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
+				PSMoveControllerConfig config = *controller->getConfig();
 
-		smoothing_distance = clampf(cfg.filter_lowpassoptical_distance, 1.f, 9999.f) * k_centimeters_to_meters;
-		smoothing_power = clampf(cfg.filter_lowpassoptical_smoothing, 0.01f, 1.f);
+				smoothing_distance = clampf(config.filter_lowpassoptical_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
+				smoothing_power = clampf(config.filter_lowpassoptical_smoothing, 0.1f, 1.f);
+
+				break;
+			}
+			case CommonDeviceState::PSDualShock4:
+			{
+				PSDualShock4Controller *controller = ControllerView->castChecked<PSDualShock4Controller>();
+				PSDualShock4ControllerConfig config = *controller->getConfig();
+
+				smoothing_distance = clampf(config.filter_lowpassoptical_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
+				smoothing_power = clampf(config.filter_lowpassoptical_smoothing, 0.1f, 1.f);
+
+				break;
+			}
+			case CommonDeviceState::VirtualController:
+			{
+				VirtualController *controller = ControllerView->castChecked<VirtualController>();
+				VirtualControllerConfig *config = controller->getConfigMutable();
+
+				smoothing_distance = clampf(config->filter_lowpassoptical_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
+				smoothing_power = clampf(config->filter_lowpassoptical_smoothing, 0.1f, 1.f);
+
+				break;
+			}
+			}
+		}
+	}
+	else if (packet.hmdDeviceId > -1)
+	{
+		ServerHMDViewPtr HmdView = DeviceManager::getInstance()->getHMDViewPtr(packet.hmdDeviceId);
+		if (HmdView != nullptr && HmdView->getIsOpen())
+		{
+			switch (HmdView->getHMDDeviceType())
+			{
+			case CommonDeviceState::Morpheus:
+			{
+				MorpheusHMD *controller = HmdView->castChecked<MorpheusHMD>();
+				MorpheusHMDConfig *config = controller->getConfigMutable();
+
+				smoothing_distance = clampf(config->filter_lowpassoptical_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
+				smoothing_power = clampf(config->filter_lowpassoptical_smoothing, 0.1f, 1.f);
+
+				break;
+			}
+			case CommonDeviceState::VirtualHMD:
+			{
+				VirtualHMD *controller = HmdView->castChecked<VirtualHMD>();
+				VirtualHMDConfig *config = controller->getConfigMutable();
+
+				smoothing_distance = clampf(config->filter_lowpassoptical_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
+				smoothing_power = clampf(config->filter_lowpassoptical_smoothing, 0.1f, 1.f);
+
+				break;
+			}
+			}
+		}
 	}
 #endif
 

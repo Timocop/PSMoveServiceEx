@@ -324,6 +324,9 @@ void AppStage_HMDSettings::renderUI()
 						{
 							request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
 						}
+
+						ImGui::Separator();
+
 						if (ImGui::Button("Reset Filter Defaults"))
 						{
 							hmdInfo.PositionFilterIndex = k_default_hmd_position_filter_index;
@@ -374,6 +377,107 @@ void AppStage_HMDSettings::renderUI()
 					ImGui::EndChild();
 				}
             }
+
+			if (ImGui::CollapsingHeader("Filter Settings", 0, true, false))
+			{
+				static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
+				ImGui::BeginChild("##FilterSettingsChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
+				ImGui::BeginGroup();
+				{
+					bool request_offset = false;
+					bool settings_shown = false;
+
+					if (hmdInfo.PositionFilterName == "PassThru" ||
+						hmdInfo.PositionFilterName == "LowPassOptical" ||
+						hmdInfo.PositionFilterName == "LowPassExponential")
+					{
+						settings_shown = true;
+
+						ImGui::Text("Position Prediction\nSmoothing Distance: ");
+						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+						ImGui::PushItemWidth(120.f);
+						if (ImGui::InputFloat("##PredictionSmoothingDistance", &hmdInfo.FilterPredictionDistance, 1.f, 5.f, 2))
+						{
+							hmdInfo.FilterPredictionDistance = clampf(hmdInfo.FilterPredictionDistance, 1.0f, (1 << 16));
+
+							request_offset = true;
+						}
+						ImGui::PopItemWidth();
+
+						ImGui::Text("Position Prediction\nSmoothing Power (%%): ");
+						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+						ImGui::PushItemWidth(120.f);
+						float filter_predict_smoothing = (1.f - hmdInfo.FilterPredictionSmoothing) * 100.f;
+						if (ImGui::InputFloat("##PredictionSmoothingPower", &filter_predict_smoothing, 1.f, 5.f, 2))
+						{
+							hmdInfo.FilterPredictionSmoothing = clampf(1.f - (filter_predict_smoothing / 100.f), 0.1f, 1.0f);
+
+							request_offset = true;
+						}
+						ImGui::PopItemWidth();
+
+						if (hmdInfo.PositionFilterName == "LowPassOptical")
+						{
+							ImGui::Text("Position Smoothing Distance: ");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(120.f);
+							if (ImGui::InputFloat("##LowPassOpticalSmoothingDistance", &hmdInfo.FilterLowPassOpticalDistance, 1.f, 5.f, 2))
+							{
+								hmdInfo.FilterLowPassOpticalDistance = clampf(hmdInfo.FilterLowPassOpticalDistance, 1.0f, (1 << 16));
+
+								request_offset = true;
+							}
+							ImGui::PopItemWidth();
+
+							ImGui::Text("Position Smoothing Power (%%): ");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(120.f);
+							float filter_lowpassoptical_smoothing = (1.f - hmdInfo.FilterLowPassOpticalSmoothing) * 100.f;
+							if (ImGui::InputFloat("##LowPassOpticalSmoothingPower", &filter_lowpassoptical_smoothing, 1.f, 5.f, 2))
+							{
+								hmdInfo.FilterLowPassOpticalSmoothing = clampf(1.f - (filter_lowpassoptical_smoothing / 100.f), 0.1f, 1.0f);
+
+								request_offset = true;
+							}
+							ImGui::PopItemWidth();
+						}
+
+					}
+
+					if (!settings_shown)
+					{
+						ImGui::Text("There are no settings for this filter.");
+					}
+
+					ImGui::Separator();
+
+					if (ImGui::Button("Reset Filter Settings Defaults"))
+					{
+						hmdInfo.FilterPredictionDistance = 10.f;
+						hmdInfo.FilterPredictionSmoothing = 0.40f;
+						hmdInfo.FilterLowPassOpticalDistance = 10.f;
+						hmdInfo.FilterLowPassOpticalSmoothing = 0.40f;
+
+						request_offset = true;
+
+					}
+
+					if (request_offset)
+					{
+						request_set_hmd_filter_settings(
+							hmdInfo.HmdID,
+							hmdInfo.FilterPredictionDistance,
+							hmdInfo.FilterPredictionSmoothing,
+							hmdInfo.FilterLowPassOpticalDistance,
+							hmdInfo.FilterLowPassOpticalSmoothing
+						);
+					}
+				}
+				ImGui::EndGroup();
+				if (ImGui::IsItemVisible())
+					lastChildVec = ImGui::GetItemRectSize();
+				ImGui::EndChild();
+			}
 
 			if (hmdInfo.HmdType == AppStage_HMDSettings::eHMDType::Morpheus)
 			{
@@ -755,6 +859,31 @@ void AppStage_HMDSettings::request_set_hmd_tracking_color_id(
 	PSM_SendOpaqueRequest(&request, nullptr);
 }
 
+void AppStage_HMDSettings::request_set_hmd_filter_settings(
+	const int HmdID,
+	float filter_prediction_distance,
+	float filter_prediction_smoothing,
+	float filter_lowpassoptical_distance,
+	float filter_lowpassoptical_smoothing
+)
+{
+	RequestPtr request(new PSMoveProtocol::Request());
+	request->set_type(PSMoveProtocol::Request_RequestType_SET_HMD_FILTER_SETTINGS);
+
+	PSMoveProtocol::Request_RequestSetHmdFilterSettings *filter_settings =
+		request->mutable_request_set_hmd_filter_settings();
+
+	filter_settings->set_hmd_id(HmdID);
+	filter_settings->set_filter_prediction_distance(filter_prediction_distance);
+	filter_settings->set_filter_prediction_smoothing(filter_prediction_smoothing);
+	filter_settings->set_filter_lowpassoptical_distance(filter_lowpassoptical_distance);
+	filter_settings->set_filter_lowpassoptical_smoothing(filter_lowpassoptical_smoothing);
+
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_EatResponse(request_id);
+}
+
 void AppStage_HMDSettings::request_set_hmd_offsets(
 	int HmdID,
 	float offset_orientation_x,
@@ -843,6 +972,11 @@ void AppStage_HMDSettings::handle_hmd_list_response(
 				HmdInfo.OffsetScale.x = HmdResponse.offset_scale().x();
 				HmdInfo.OffsetScale.y = HmdResponse.offset_scale().y();
 				HmdInfo.OffsetScale.z = HmdResponse.offset_scale().z();
+
+				HmdInfo.FilterPredictionDistance = HmdResponse.filter_prediction_distance();
+				HmdInfo.FilterPredictionSmoothing = HmdResponse.filter_prediction_smoothing();
+				HmdInfo.FilterLowPassOpticalDistance = HmdResponse.filter_lowpassoptical_distance();
+				HmdInfo.FilterLowPassOpticalSmoothing = HmdResponse.filter_lowpassoptical_smoothing();
 
                 if (HmdInfo.HmdType == AppStage_HMDSettings::Morpheus)
                 {

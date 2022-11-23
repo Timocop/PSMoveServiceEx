@@ -64,6 +64,10 @@ public:
 		, offset_magnetometer_center(0.f)
 		, tracking_color_id(eCommonTrackingColorID::INVALID_COLOR)
 		, hand("Any")
+		, filter_prediction_distance(10.f)
+		, filter_prediction_smoothing(0.40f)
+		, filter_lowpassoptical_distance(10.f)
+		, filter_lowpassoptical_smoothing(0.40f)
     {
         magnetometer_identity.clear();
         magnetometer_center.clear();
@@ -190,6 +194,13 @@ public:
 
 	// The assigned hand for this controller
 	std::string hand;
+
+	 // Filter settings
+	float filter_prediction_distance;
+	float filter_prediction_smoothing;
+	float filter_lowpassoptical_distance;
+	float filter_lowpassoptical_smoothing;
+
 };
 
 struct PSMoveControllerInputState : public CommonControllerState

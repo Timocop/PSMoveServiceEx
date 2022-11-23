@@ -714,8 +714,8 @@ void AppStage_ControllerSettings::renderUI()
 				if (!m_app->excludePositionSettings &&
 					(controllerInfo.IsBluetooth || controllerInfo.ControllerType == PSMController_Virtual))
                 {
-                    if (ImGui::CollapsingHeader("Filters", 0, true, false))
-                    {
+					if (ImGui::CollapsingHeader("Filters", 0, true, false))
+					{
 						static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
 						ImGui::BeginChild("##FiltersChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
 						ImGui::BeginGroup();
@@ -750,6 +750,9 @@ void AppStage_ControllerSettings::renderUI()
 								{
 									request_set_controller_prediction(controllerInfo.ControllerID, controllerInfo.PredictionTime);
 								}
+
+								ImGui::Separator();
+
 								if (ImGui::Button("Reset Filter Defaults"))
 								{
 									controllerInfo.PositionFilterIndex = k_default_position_filter_index;
@@ -797,6 +800,9 @@ void AppStage_ControllerSettings::renderUI()
 								{
 									request_set_controller_prediction(controllerInfo.ControllerID, controllerInfo.PredictionTime);
 								}
+
+								ImGui::Separator();
+
 								if (ImGui::Button("Reset Filter Defaults"))
 								{
 									controllerInfo.PositionFilterIndex = k_default_ds4_position_filter_index;
@@ -816,7 +822,111 @@ void AppStage_ControllerSettings::renderUI()
 						if (ImGui::IsItemVisible())
 							lastChildVec = ImGui::GetItemRectSize();
 						ImGui::EndChild();
-                    }
+					}
+
+					if (controllerInfo.ControllerType != PSMController_Navi)
+					{
+						if (ImGui::CollapsingHeader("Filter Settings", 0, true, false))
+						{
+							static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
+							ImGui::BeginChild("##FilterSettingsChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
+							ImGui::BeginGroup();
+							{
+								bool request_offset = false;
+								bool settings_shown = false;
+
+								if (controllerInfo.PositionFilterName == "PassThru" ||
+									controllerInfo.PositionFilterName == "LowPassOptical" ||
+									controllerInfo.PositionFilterName == "LowPassExponential")
+								{
+									settings_shown = true;
+
+									ImGui::Text("Position Prediction\nSmoothing Distance: ");
+									ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+									ImGui::PushItemWidth(120.f);
+									if (ImGui::InputFloat("##PredictionSmoothingDistance", &controllerInfo.FilterPredictionDistance, 1.f, 5.f, 2))
+									{
+										controllerInfo.FilterPredictionDistance = clampf(controllerInfo.FilterPredictionDistance, 1.0f, (1 << 16));
+
+										request_offset = true;
+									}
+									ImGui::PopItemWidth();
+
+									ImGui::Text("Position Prediction\nSmoothing Power (%%): ");
+									ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+									ImGui::PushItemWidth(120.f);
+									float filter_predict_smoothing = (1.f - controllerInfo.FilterPredictionSmoothing) * 100.f;
+									if (ImGui::InputFloat("##PredictionSmoothingPower", &filter_predict_smoothing, 1.f, 5.f, 2))
+									{
+										controllerInfo.FilterPredictionSmoothing = clampf(1.f - (filter_predict_smoothing / 100.f) , 0.1f, 1.0f);
+
+										request_offset = true;
+									}
+									ImGui::PopItemWidth();
+
+									if (controllerInfo.PositionFilterName == "LowPassOptical")
+									{
+										ImGui::Text("Position Smoothing Distance: ");
+										ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+										ImGui::PushItemWidth(120.f);
+										if (ImGui::InputFloat("##LowPassOpticalSmoothingDistance", &controllerInfo.FilterLowPassOpticalDistance, 1.f, 5.f, 2))
+										{
+											controllerInfo.FilterLowPassOpticalDistance = clampf(controllerInfo.FilterLowPassOpticalDistance, 1.0f, (1 << 16));
+
+											request_offset = true;
+										}
+										ImGui::PopItemWidth();
+
+										ImGui::Text("Position Smoothing Power (%%): ");
+										ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+										ImGui::PushItemWidth(120.f);
+										float filter_lowpassoptical_smoothing = (1.f - controllerInfo.FilterLowPassOpticalSmoothing) * 100.f;
+										if (ImGui::InputFloat("##LowPassOpticalSmoothingPower", &filter_lowpassoptical_smoothing, 1.f, 5.f, 2))
+										{
+											controllerInfo.FilterLowPassOpticalSmoothing = clampf(1.f - (filter_lowpassoptical_smoothing / 100.f) , 0.1f, 1.0f);
+
+											request_offset = true;
+										}
+										ImGui::PopItemWidth();
+									}
+
+								}
+
+								if (!settings_shown)
+								{
+									ImGui::Text("There are no settings for this filter.");
+								}
+
+								ImGui::Separator();
+
+								if (ImGui::Button("Reset Filter Settings Defaults"))
+								{
+									controllerInfo.FilterPredictionDistance = 10.f;
+									controllerInfo.FilterPredictionSmoothing = 0.40f;
+									controllerInfo.FilterLowPassOpticalDistance = 10.f;
+									controllerInfo.FilterLowPassOpticalSmoothing = 0.40f;
+
+									request_offset = true;
+
+								}
+
+								if (request_offset)
+								{
+									request_set_controller_filter_settings(
+										controllerInfo.ControllerID,
+										controllerInfo.FilterPredictionDistance,
+										controllerInfo.FilterPredictionSmoothing,
+										controllerInfo.FilterLowPassOpticalDistance,
+										controllerInfo.FilterLowPassOpticalSmoothing
+									);
+								}
+							}
+							ImGui::EndGroup();
+							if (ImGui::IsItemVisible())
+								lastChildVec = ImGui::GetItemRectSize();
+							ImGui::EndChild();
+						}
+					}
 
 					if (ImGui::CollapsingHeader("Offsets", 0, true, false))
 					{
@@ -1362,6 +1472,31 @@ void AppStage_ControllerSettings::request_set_controller_hand(
 	PSM_EatResponse(request_id);
 }
 
+void AppStage_ControllerSettings::request_set_controller_filter_settings(
+	const int controller_id,
+	float filter_prediction_distance,
+	float filter_prediction_smoothing,
+	float filter_lowpassoptical_distance,
+	float filter_lowpassoptical_smoothing
+)
+{
+	RequestPtr request(new PSMoveProtocol::Request());
+	request->set_type(PSMoveProtocol::Request_RequestType_SET_CONTROLLER_FILTER_SETTINGS);
+
+	PSMoveProtocol::Request_RequestSetControllerFilterSettings *filter_settings =
+		request->mutable_request_set_controller_filter_settings();
+
+	filter_settings->set_controller_id(controller_id);
+	filter_settings->set_filter_prediction_distance(filter_prediction_distance);
+	filter_settings->set_filter_prediction_smoothing(filter_prediction_smoothing);
+	filter_settings->set_filter_lowpassoptical_distance(filter_lowpassoptical_distance);
+	filter_settings->set_filter_lowpassoptical_smoothing(filter_lowpassoptical_smoothing);
+
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_EatResponse(request_id);
+}
+
 void AppStage_ControllerSettings::handle_controller_list_response(
     const PSMResponseMessage *response_message,
     void *userdata)
@@ -1440,6 +1575,11 @@ void AppStage_ControllerSettings::handle_controller_list_response(
 				ControllerInfo.OffsetScale.y = ControllerResponse.offset_scale().y();
 				ControllerInfo.OffsetScale.z = ControllerResponse.offset_scale().z();
 				ControllerInfo.OffsetMagnetometer = ControllerResponse.offset_magnetometer();
+
+				ControllerInfo.FilterPredictionDistance = ControllerResponse.filter_prediction_distance();
+				ControllerInfo.FilterPredictionSmoothing = ControllerResponse.filter_prediction_smoothing();
+				ControllerInfo.FilterLowPassOpticalDistance = ControllerResponse.filter_lowpassoptical_distance();
+				ControllerInfo.FilterLowPassOpticalSmoothing = ControllerResponse.filter_lowpassoptical_smoothing();
 
                 if (ControllerInfo.ControllerType == PSMController_Move)
                 {

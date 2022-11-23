@@ -211,6 +211,8 @@ message Request {
 		SET_HMD_OFFSETS = 52;
 		GET_PLAYSPACE_OFFSETS = 53;
 		SET_PLAYSPACE_OFFSETS = 54;
+		SET_CONTROLLER_FILTER_SETTINGS = 55;
+		SET_HMD_FILTER_SETTINGS = 56;
     }
     RequestType type = 2;
 
@@ -627,6 +629,26 @@ message Request {
     }
     RequestSetPlayspaceOffsets request_set_playspace_offsets = 54;
 	
+    // Parameters for SET_CONTROLLER_FILTER_SETTINGS
+    message RequestSetControllerFilterSettings {
+        int32 controller_id = 1;
+		float filter_prediction_distance = 2;
+		float filter_prediction_smoothing = 3;
+		float filter_lowpassoptical_smoothing = 4;
+		float filter_lowpassoptical_distance = 5;
+    }
+    RequestSetControllerFilterSettings request_set_controller_filter_settings = 55;
+	
+    // Parameters for SET_HMD_FILTER_SETTINGS
+    message RequestSetHmdFilterSettings {
+        int32 hmd_id = 1;
+		float filter_prediction_distance = 2;
+		float filter_prediction_smoothing = 3;
+		float filter_lowpassoptical_smoothing = 4;
+		float filter_lowpassoptical_distance = 5;
+    }
+    RequestSetHmdFilterSettings request_set_hmd_filter_settings = 56;
+	
 }
 
 // Reliable (TCP) responses to requests
@@ -719,6 +741,11 @@ message Response {
 			Position offset_position = 21;
 			Position offset_scale = 22;
 			float offset_magnetometer = 23;
+			
+			float filter_prediction_distance = 24;
+			float filter_prediction_smoothing = 25;
+			float filter_lowpassoptical_smoothing = 26;
+			float filter_lowpassoptical_distance = 27;
         }
         repeated ControllerInfo controllers = 1;
         string host_serial = 2;
@@ -842,6 +869,11 @@ message Response {
 			Euler offset_orientation = 8;
 			Position offset_position = 9;
 			Position offset_scale = 10;
+			
+			float filter_prediction_distance = 11;
+			float filter_prediction_smoothing = 12;
+			float filter_lowpassoptical_smoothing = 13;
+			float filter_lowpassoptical_distance = 14;
         }
         repeated HMDInfo hmd_entries = 1;
     }

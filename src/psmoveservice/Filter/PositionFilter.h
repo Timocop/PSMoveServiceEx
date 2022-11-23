@@ -5,9 +5,15 @@
 #include "PoseFilterInterface.h"
 
 #if !defined(IS_TESTING_KALMAN)
-	#include "ControllerManager.h"
-	#include "ServerControllerView.h"
-	#include "DeviceManager.h" 
+#include "DeviceManager.h" 
+#include "ControllerManager.h"
+#include "ServerControllerView.h"
+#include "ServerHMDView.h"
+#include "PSMoveController.h"
+#include "PSDualShock4Controller.h"
+#include "VirtualController.h"
+#include "MorpheusHMD.h"
+#include "VirtualHMD.h"
 #endif
 
 #include <chrono>
