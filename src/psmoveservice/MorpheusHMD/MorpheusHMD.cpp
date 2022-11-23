@@ -249,6 +249,11 @@ MorpheusHMDConfig::config2ptree()
 	pt.put("prediction_time", prediction_time);
 	pt.put("max_poll_failure_count_ex", max_poll_failure_count_ex);
 
+	pt.put("FilterSettings.filter_prediction_distance", filter_prediction_distance);
+	pt.put("FilterSettings.filter_prediction_smoothing", filter_prediction_smoothing);
+	pt.put("FilterSettings.LowPassOptical.filter_lowpassoptical_distance", filter_lowpassoptical_distance);
+	pt.put("FilterSettings.LowPassOptical.filter_lowpassoptical_smoothing", filter_lowpassoptical_smoothing);
+
 	writeTrackingColor(pt, tracking_color_id);
 
     return pt;
