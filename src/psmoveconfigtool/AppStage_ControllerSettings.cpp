@@ -864,32 +864,48 @@ void AppStage_ControllerSettings::renderUI()
 									}
 									ImGui::PopItemWidth();
 
-									if (controllerInfo.PositionFilterName == "LowPassOptical")
+								}
+
+								if (controllerInfo.PositionFilterName == "LowPassOptical")
+								{
+									settings_shown = true;
+
+									ImGui::Text("Position Smoothing Distance: ");
+									ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+									ImGui::PushItemWidth(120.f);
+									if (ImGui::InputFloat("##LowPassOpticalSmoothingDistance", &controllerInfo.FilterLowPassOpticalDistance, 1.f, 5.f, 2))
 									{
-										ImGui::Text("Position Smoothing Distance: ");
-										ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-										ImGui::PushItemWidth(120.f);
-										if (ImGui::InputFloat("##LowPassOpticalSmoothingDistance", &controllerInfo.FilterLowPassOpticalDistance, 1.f, 5.f, 2))
-										{
-											controllerInfo.FilterLowPassOpticalDistance = clampf(controllerInfo.FilterLowPassOpticalDistance, 1.0f, (1 << 16));
+										controllerInfo.FilterLowPassOpticalDistance = clampf(controllerInfo.FilterLowPassOpticalDistance, 1.0f, (1 << 16));
 
-											request_offset = true;
-										}
-										ImGui::PopItemWidth();
-
-										ImGui::Text("Position Smoothing Power (%%): ");
-										ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-										ImGui::PushItemWidth(120.f);
-										float filter_lowpassoptical_smoothing = (1.f - controllerInfo.FilterLowPassOpticalSmoothing) * 100.f;
-										if (ImGui::InputFloat("##LowPassOpticalSmoothingPower", &filter_lowpassoptical_smoothing, 1.f, 5.f, 2))
-										{
-											controllerInfo.FilterLowPassOpticalSmoothing = clampf(1.f - (filter_lowpassoptical_smoothing / 100.f) , 0.1f, 1.0f);
-
-											request_offset = true;
-										}
-										ImGui::PopItemWidth();
+										request_offset = true;
 									}
+									ImGui::PopItemWidth();
 
+									ImGui::Text("Position Smoothing Power (%%): ");
+									ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+									ImGui::PushItemWidth(120.f);
+									float filter_lowpassoptical_smoothing = (1.f - controllerInfo.FilterLowPassOpticalSmoothing) * 100.f;
+									if (ImGui::InputFloat("##LowPassOpticalSmoothingPower", &filter_lowpassoptical_smoothing, 1.f, 5.f, 2))
+									{
+										controllerInfo.FilterLowPassOpticalSmoothing = clampf(1.f - (filter_lowpassoptical_smoothing / 100.f), 0.1f, 1.0f);
+
+										request_offset = true;
+									}
+									ImGui::PopItemWidth();
+								}
+
+								if (controllerInfo.OrientationFilterName == "ComplementaryMARG")
+								{
+									settings_shown = true;
+
+									ImGui::Text("Use Passive Drift Correction: ");
+									ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+									ImGui::PushItemWidth(120.f);
+									if (ImGui::Checkbox("##UsePassiveDriftCorrection", &controllerInfo.FilterUsePassiveDriftCorrection))
+									{
+										request_offset = true;
+									}
+									ImGui::PopItemWidth();
 								}
 
 								if (!settings_shown)
@@ -905,6 +921,7 @@ void AppStage_ControllerSettings::renderUI()
 									controllerInfo.FilterPredictionSmoothing = 0.40f;
 									controllerInfo.FilterLowPassOpticalDistance = 10.f;
 									controllerInfo.FilterLowPassOpticalSmoothing = 0.40f;
+									controllerInfo.FilterUsePassiveDriftCorrection = true;
 
 									request_offset = true;
 
@@ -912,13 +929,14 @@ void AppStage_ControllerSettings::renderUI()
 
 								if (request_offset)
 								{
-									request_set_controller_filter_settings(
-										controllerInfo.ControllerID,
-										controllerInfo.FilterPredictionDistance,
-										controllerInfo.FilterPredictionSmoothing,
-										controllerInfo.FilterLowPassOpticalDistance,
-										controllerInfo.FilterLowPassOpticalSmoothing
-									);
+									FilterSettings filterSettings;
+									filterSettings.filter_prediction_distance = controllerInfo.FilterPredictionDistance;
+									filterSettings.filter_prediction_smoothing = controllerInfo.FilterPredictionSmoothing;
+									filterSettings.filter_lowpassoptical_distance = controllerInfo.FilterLowPassOpticalDistance;
+									filterSettings.filter_lowpassoptical_smoothing = controllerInfo.FilterLowPassOpticalSmoothing;
+									filterSettings.filter_use_passive_drift_correction = controllerInfo.FilterUsePassiveDriftCorrection;
+
+									request_set_controller_filter_settings(controllerInfo.ControllerID, filterSettings);
 								}
 							}
 							ImGui::EndGroup();
@@ -1474,11 +1492,7 @@ void AppStage_ControllerSettings::request_set_controller_hand(
 
 void AppStage_ControllerSettings::request_set_controller_filter_settings(
 	const int controller_id,
-	float filter_prediction_distance,
-	float filter_prediction_smoothing,
-	float filter_lowpassoptical_distance,
-	float filter_lowpassoptical_smoothing
-)
+	FilterSettings filterSettings)
 {
 	RequestPtr request(new PSMoveProtocol::Request());
 	request->set_type(PSMoveProtocol::Request_RequestType_SET_CONTROLLER_FILTER_SETTINGS);
@@ -1487,10 +1501,11 @@ void AppStage_ControllerSettings::request_set_controller_filter_settings(
 		request->mutable_request_set_controller_filter_settings();
 
 	filter_settings->set_controller_id(controller_id);
-	filter_settings->set_filter_prediction_distance(filter_prediction_distance);
-	filter_settings->set_filter_prediction_smoothing(filter_prediction_smoothing);
-	filter_settings->set_filter_lowpassoptical_distance(filter_lowpassoptical_distance);
-	filter_settings->set_filter_lowpassoptical_smoothing(filter_lowpassoptical_smoothing);
+	filter_settings->set_filter_prediction_distance(filterSettings.filter_prediction_distance);
+	filter_settings->set_filter_prediction_smoothing(filterSettings.filter_prediction_smoothing);
+	filter_settings->set_filter_lowpassoptical_distance(filterSettings.filter_lowpassoptical_distance);
+	filter_settings->set_filter_lowpassoptical_smoothing(filterSettings.filter_lowpassoptical_smoothing);
+	filter_settings->set_filter_use_passive_drift_correction(filterSettings.filter_use_passive_drift_correction);
 
 	PSMRequestID request_id;
 	PSM_SendOpaqueRequest(&request, &request_id);
@@ -1580,6 +1595,7 @@ void AppStage_ControllerSettings::handle_controller_list_response(
 				ControllerInfo.FilterPredictionSmoothing = ControllerResponse.filter_prediction_smoothing();
 				ControllerInfo.FilterLowPassOpticalDistance = ControllerResponse.filter_lowpassoptical_distance();
 				ControllerInfo.FilterLowPassOpticalSmoothing = ControllerResponse.filter_lowpassoptical_smoothing();
+				ControllerInfo.FilterUsePassiveDriftCorrection = ControllerResponse.filter_use_passive_drift_correction();
 
                 if (ControllerInfo.ControllerType == PSMController_Move)
                 {

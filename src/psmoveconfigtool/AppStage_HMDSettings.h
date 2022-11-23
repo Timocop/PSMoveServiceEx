@@ -30,6 +30,13 @@ public:
 		float z;
 	};
 
+	struct FilterSettings
+	{
+		float filter_prediction_distance;
+		float filter_prediction_smoothing;
+		float filter_lowpassoptical_distance;
+		float filter_lowpassoptical_smoothing;
+	};
 
     struct HMDInfo
     {
@@ -91,10 +98,7 @@ protected:
 		PSMTrackingColorType tracking_color_type);
 	void request_set_hmd_filter_settings(
 		const int HmdID,
-		float filter_prediction_distance,
-		float filter_prediction_smoothing,
-		float filter_lowpassoptical_distance,
-		float filter_lowpassoptical_smoothing);
+		FilterSettings filterSettings);
 	void request_set_hmd_offsets(
 		int ControllerID,
 		float offset_orientation_x,

@@ -415,33 +415,34 @@ void AppStage_HMDSettings::renderUI()
 							request_offset = true;
 						}
 						ImGui::PopItemWidth();
+					}
 
-						if (hmdInfo.PositionFilterName == "LowPassOptical")
+					if (hmdInfo.PositionFilterName == "LowPassOptical")
+					{
+						settings_shown = true;
+
+						ImGui::Text("Position Smoothing Distance: ");
+						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+						ImGui::PushItemWidth(120.f);
+						if (ImGui::InputFloat("##LowPassOpticalSmoothingDistance", &hmdInfo.FilterLowPassOpticalDistance, 1.f, 5.f, 2))
 						{
-							ImGui::Text("Position Smoothing Distance: ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##LowPassOpticalSmoothingDistance", &hmdInfo.FilterLowPassOpticalDistance, 1.f, 5.f, 2))
-							{
-								hmdInfo.FilterLowPassOpticalDistance = clampf(hmdInfo.FilterLowPassOpticalDistance, 1.0f, (1 << 16));
+							hmdInfo.FilterLowPassOpticalDistance = clampf(hmdInfo.FilterLowPassOpticalDistance, 1.0f, (1 << 16));
 
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-
-							ImGui::Text("Position Smoothing Power (%%): ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							float filter_lowpassoptical_smoothing = (1.f - hmdInfo.FilterLowPassOpticalSmoothing) * 100.f;
-							if (ImGui::InputFloat("##LowPassOpticalSmoothingPower", &filter_lowpassoptical_smoothing, 1.f, 5.f, 2))
-							{
-								hmdInfo.FilterLowPassOpticalSmoothing = clampf(1.f - (filter_lowpassoptical_smoothing / 100.f), 0.1f, 1.0f);
-
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
+							request_offset = true;
 						}
+						ImGui::PopItemWidth();
 
+						ImGui::Text("Position Smoothing Power (%%): ");
+						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+						ImGui::PushItemWidth(120.f);
+						float filter_lowpassoptical_smoothing = (1.f - hmdInfo.FilterLowPassOpticalSmoothing) * 100.f;
+						if (ImGui::InputFloat("##LowPassOpticalSmoothingPower", &filter_lowpassoptical_smoothing, 1.f, 5.f, 2))
+						{
+							hmdInfo.FilterLowPassOpticalSmoothing = clampf(1.f - (filter_lowpassoptical_smoothing / 100.f), 0.1f, 1.0f);
+
+							request_offset = true;
+						}
+						ImGui::PopItemWidth();
 					}
 
 					if (!settings_shown)
@@ -464,13 +465,13 @@ void AppStage_HMDSettings::renderUI()
 
 					if (request_offset)
 					{
-						request_set_hmd_filter_settings(
-							hmdInfo.HmdID,
-							hmdInfo.FilterPredictionDistance,
-							hmdInfo.FilterPredictionSmoothing,
-							hmdInfo.FilterLowPassOpticalDistance,
-							hmdInfo.FilterLowPassOpticalSmoothing
-						);
+						FilterSettings filterSettings;
+						filterSettings.filter_prediction_distance = hmdInfo.FilterPredictionDistance;
+						filterSettings.filter_prediction_smoothing = hmdInfo.FilterPredictionSmoothing;
+						filterSettings.filter_lowpassoptical_distance = hmdInfo.FilterLowPassOpticalDistance;
+						filterSettings.filter_lowpassoptical_smoothing = hmdInfo.FilterLowPassOpticalSmoothing;
+
+						request_set_hmd_filter_settings(hmdInfo.HmdID, filterSettings);
 					}
 				}
 				ImGui::EndGroup();
@@ -861,10 +862,7 @@ void AppStage_HMDSettings::request_set_hmd_tracking_color_id(
 
 void AppStage_HMDSettings::request_set_hmd_filter_settings(
 	const int HmdID,
-	float filter_prediction_distance,
-	float filter_prediction_smoothing,
-	float filter_lowpassoptical_distance,
-	float filter_lowpassoptical_smoothing
+	FilterSettings filterSettings
 )
 {
 	RequestPtr request(new PSMoveProtocol::Request());
@@ -874,10 +872,10 @@ void AppStage_HMDSettings::request_set_hmd_filter_settings(
 		request->mutable_request_set_hmd_filter_settings();
 
 	filter_settings->set_hmd_id(HmdID);
-	filter_settings->set_filter_prediction_distance(filter_prediction_distance);
-	filter_settings->set_filter_prediction_smoothing(filter_prediction_smoothing);
-	filter_settings->set_filter_lowpassoptical_distance(filter_lowpassoptical_distance);
-	filter_settings->set_filter_lowpassoptical_smoothing(filter_lowpassoptical_smoothing);
+	filter_settings->set_filter_prediction_distance(filterSettings.filter_prediction_distance);
+	filter_settings->set_filter_prediction_smoothing(filterSettings.filter_prediction_smoothing);
+	filter_settings->set_filter_lowpassoptical_distance(filterSettings.filter_lowpassoptical_distance);
+	filter_settings->set_filter_lowpassoptical_smoothing(filterSettings.filter_lowpassoptical_smoothing);
 
 	PSMRequestID request_id;
 	PSM_SendOpaqueRequest(&request, &request_id);

@@ -28,7 +28,16 @@ public:
 		float z;
 	};
 
-    struct ControllerInfo
+	struct FilterSettings
+	{
+		float filter_prediction_distance;
+		float filter_prediction_smoothing;
+		float filter_lowpassoptical_distance;
+		float filter_lowpassoptical_smoothing;
+		bool filter_use_passive_drift_correction;
+	};
+	
+	struct ControllerInfo
     {
         int ControllerID;
 		int FirmwareVersion;
@@ -64,6 +73,7 @@ public:
 		float FilterPredictionSmoothing;
 		float FilterLowPassOpticalDistance;
 		float FilterLowPassOpticalSmoothing;
+		bool FilterUsePassiveDriftCorrection;
 
 		static bool ParentControllerComboItemGetter(void* userdata, int index, const char** out_string)
 		{
@@ -137,10 +147,7 @@ protected:
 	void request_set_controller_hand(const int controller_id, const PSMControllerHand controller_hand);
 	void request_set_controller_filter_settings(
 		const int controller_id,
-		float filter_prediction_distance,
-		float filter_prediction_smoothing,
-		float filter_lowpassoptical_distance,
-		float filter_lowpassoptical_smoothing
+		FilterSettings filterSettings
 	);
 
 	int find_controller_id_by_serial(std::string parent_controller_serial) const;

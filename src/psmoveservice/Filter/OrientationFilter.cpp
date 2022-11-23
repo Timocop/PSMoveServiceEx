@@ -723,9 +723,31 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 			m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, delta_time);
 		}
 
-		static bool b_enable_passive_mag = false;
+		bool filter_use_passive_drift_correction = false;
 
-		if (b_enable_passive_mag)
+#if !defined(IS_TESTING_KALMAN) 
+		if (packet.controllerDeviceId > -1)
+		{
+			ServerControllerViewPtr ControllerView = DeviceManager::getInstance()->getControllerViewPtr(packet.controllerDeviceId);
+			if (ControllerView != nullptr && ControllerView->getIsOpen())
+			{
+				switch (ControllerView->getControllerDeviceType())
+				{
+				case CommonDeviceState::PSMove:
+				{
+					PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
+					PSMoveControllerConfig config = *controller->getConfig();
+
+					filter_use_passive_drift_correction = config.filter_use_passive_drift_correction;
+
+					break;
+				}
+				}
+			}
+		}
+#endif
+
+		if (filter_use_passive_drift_correction)
 		{
 			// Gather sensor state from the previous frame
 			const Eigen::Vector3f &old_accelerometer = last_accelerometer_g_units;

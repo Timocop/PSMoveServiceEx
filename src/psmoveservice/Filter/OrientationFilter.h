@@ -4,6 +4,19 @@
 //-- includes -----
 #include "PoseFilterInterface.h"
 
+#if !defined(IS_TESTING_KALMAN)
+#include "DeviceManager.h" 
+#include "ControllerManager.h"
+#include "ServerControllerView.h"
+#include "ServerHMDView.h"
+#include "PSMoveController.h"
+#include "PSDualShock4Controller.h"
+#include "VirtualController.h"
+#include "MorpheusHMD.h"
+#include "VirtualHMD.h"
+#endif
+
+
 //-- definitions --
 /// Abstract base class for all orientation only filters
 class OrientationFilter : public IOrientationFilter

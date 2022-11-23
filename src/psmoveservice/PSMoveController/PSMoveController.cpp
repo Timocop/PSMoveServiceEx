@@ -605,6 +605,7 @@ PSMoveControllerConfig::config2ptree()
 	pt.put("FilterSettings.filter_prediction_smoothing", filter_prediction_smoothing);
 	pt.put("FilterSettings.LowPassOptical.filter_lowpassoptical_distance", filter_lowpassoptical_distance);
 	pt.put("FilterSettings.LowPassOptical.filter_lowpassoptical_smoothing", filter_lowpassoptical_smoothing);
+	pt.put("FilterSettings.OrientationFilterComplementaryMARG.filter_use_passive_drift_correction", filter_use_passive_drift_correction);
 
 	writeTrackingColor(pt, tracking_color_id);
 
@@ -713,6 +714,7 @@ PSMoveControllerConfig::ptree2config(const boost::property_tree::ptree &pt)
 		filter_prediction_smoothing = pt.get<float>("FilterSettings.filter_prediction_smoothing", 0.40f);
 		filter_lowpassoptical_distance = pt.get<float>("FilterSettings.LowPassOptical.filter_lowpassoptical_distance", 10.f);
 		filter_lowpassoptical_smoothing = pt.get<float>("FilterSettings.LowPassOptical.filter_lowpassoptical_smoothing", 0.40f);
+		filter_use_passive_drift_correction = pt.get<bool>("FilterSettings.OrientationFilterComplementaryMARG.filter_use_passive_drift_correction", true);
     }
     else
     {

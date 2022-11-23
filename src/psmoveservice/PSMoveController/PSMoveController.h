@@ -68,6 +68,7 @@ public:
 		, filter_prediction_smoothing(0.40f)
 		, filter_lowpassoptical_distance(10.f)
 		, filter_lowpassoptical_smoothing(0.40f)
+		, filter_use_passive_drift_correction(true)
     {
         magnetometer_identity.clear();
         magnetometer_center.clear();
@@ -200,6 +201,7 @@ public:
 	float filter_prediction_smoothing;
 	float filter_lowpassoptical_distance;
 	float filter_lowpassoptical_smoothing;
+	bool filter_use_passive_drift_correction;
 
 };
 

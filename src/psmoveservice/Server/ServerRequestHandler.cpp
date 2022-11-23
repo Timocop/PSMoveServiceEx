@@ -711,6 +711,7 @@ protected:
 				float filter_prediction_smoothing;
 				float filter_lowpassoptical_distance;
 				float filter_lowpassoptical_smoothing;
+				bool filter_use_passive_drift_correction;
 
                 switch(controller_view->getControllerDeviceType())
                 {
@@ -737,6 +738,7 @@ protected:
 						filter_prediction_smoothing = config->filter_prediction_smoothing;
 						filter_lowpassoptical_distance = config->filter_lowpassoptical_distance;
 						filter_lowpassoptical_smoothing = config->filter_lowpassoptical_smoothing;
+						filter_use_passive_drift_correction = config->filter_use_passive_drift_correction;
 
                         controller_info->set_controller_type(PSMoveProtocol::PSMOVE);
                     }
@@ -881,6 +883,7 @@ protected:
 				controller_info->set_filter_prediction_smoothing(filter_prediction_smoothing);
 				controller_info->set_filter_lowpassoptical_distance(filter_lowpassoptical_distance);
 				controller_info->set_filter_lowpassoptical_smoothing(filter_lowpassoptical_smoothing);
+				controller_info->set_filter_use_passive_drift_correction(filter_use_passive_drift_correction);
             }
         }
 
@@ -2921,12 +2924,14 @@ protected:
 				if (config.filter_prediction_distance != request.filter_prediction_distance() ||
 					config.filter_prediction_smoothing != request.filter_prediction_smoothing() ||
 					config.filter_lowpassoptical_distance != request.filter_lowpassoptical_distance() ||
-					config.filter_lowpassoptical_smoothing != request.filter_lowpassoptical_smoothing())
+					config.filter_lowpassoptical_smoothing != request.filter_lowpassoptical_smoothing() ||
+					config.filter_use_passive_drift_correction != request.filter_use_passive_drift_correction())
 				{
 					config.filter_prediction_distance = request.filter_prediction_distance();
 					config.filter_prediction_smoothing = request.filter_prediction_smoothing();
 					config.filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
 					config.filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
+					config.filter_use_passive_drift_correction = request.filter_use_passive_drift_correction();
 
 					controller->setConfig(&config);
 				}
