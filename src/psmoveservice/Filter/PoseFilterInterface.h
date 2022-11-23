@@ -103,8 +103,9 @@ struct PoseSensorPacket
 /// used to update a state filter
 struct PoseFilterPacket : PoseSensorPacket
 {
-	int controllerDeviceId = -1;
-	int hmdDeviceId = -1;
+	int controllerDeviceId;
+	int hmdDeviceId;
+	bool isCurrentlyTracking;
 
 	bool isSynced = false;
 
@@ -128,6 +129,7 @@ struct PoseFilterPacket : PoseSensorPacket
 		PoseSensorPacket::clear();
 		controllerDeviceId = -1;
 		hmdDeviceId = -1;
+		isCurrentlyTracking = false;
 		isSynced = false;
 		current_orientation= Eigen::Quaternionf::Identity();
 		current_position_cm= Eigen::Vector3f::Zero();

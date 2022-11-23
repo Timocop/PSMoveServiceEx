@@ -3,6 +3,13 @@
 
 //-- includes -----
 #include "PoseFilterInterface.h"
+
+#if !defined(IS_TESTING_KALMAN)
+	#include "ControllerManager.h"
+	#include "ServerControllerView.h"
+	#include "DeviceManager.h" 
+#endif
+
 #include <chrono>
 #include <list>
 

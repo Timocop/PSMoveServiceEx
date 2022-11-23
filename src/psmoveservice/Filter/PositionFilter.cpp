@@ -10,6 +10,8 @@
 // The max distance between samples that we apply low pass filter on the optical position filter
 #define k_max_lowpass_smoothing_distance 10.f * k_centimeters_to_meters // meters
 
+#define k_lowpass_smoothing_power 0.40f
+
 // Used for lowpass filter of accelerometer
 #define k_accelerometer_frequency_cutoff 1000.f // Hz
 
@@ -222,10 +224,14 @@ static Eigen::Vector3f lowpass_filter_vector3f(
 static Eigen::Vector3f lowpass_prediction_vector3f(
 	const float delta_time,
 	const Eigen::Vector3f &old_filtered_vector,
-	const Eigen::Vector3f &new_vector);
+	const Eigen::Vector3f &new_vector,
+	const float smoothing_distance,
+	const float smoothing_power);
 static Eigen::Vector3f lowpass_filter_optical_position_using_distance(
     const PoseFilterPacket *filter_packet,
-    const PositionFilterState *fusion_state);
+    const PositionFilterState *fusion_state,
+	const float smoothing_distance,
+	const float smoothing_power);
 static Eigen::Vector3f lowpass_filter_optical_position_using_variance(
 	const ExponentialCurve &position_variance_curve,
     const PoseFilterPacket *packet,
@@ -328,6 +334,25 @@ void PositionFilterPassThru::update(
 {
 	const int history_queue_length = 5;
 
+	float predict_smoothing_distance = k_max_lowpass_smoothing_distance;
+	float predict_smoothing_power = k_lowpass_smoothing_power; 
+
+#if !defined(IS_TESTING_KALMAN) 
+	if (packet.controllerDeviceId > -1)
+	{
+		const ControllerManagerConfig cfg = DeviceManager::getInstance()->m_controller_manager->getConfig();
+
+		predict_smoothing_distance = clampf(cfg.filter_prediction_distance, 1.f, 9999.f) * k_centimeters_to_meters;
+		predict_smoothing_power = clampf(cfg.filter_prediction_smoothing, 0.01f, 1.f); 
+	}
+#endif
+
+	// If device isnt tracking, clear position history to remove over-prediction
+	if (!packet.isCurrentlyTracking)
+	{
+		blendedPositionHistory.clear();
+	}
+
 	if (packet.has_optical_measurement() && packet.isSynced)
 	{
 		Eigen::Vector3f old_position_meters;
@@ -354,7 +379,7 @@ void PositionFilterPassThru::update(
 		if (sampleCount > 0)
 		{
 			new_position_meters_sec =
-				lowpass_prediction_vector3f(delta_time, (old_position_meters / sampleCount), new_position_meters);
+				lowpass_prediction_vector3f(delta_time, (old_position_meters / sampleCount), new_position_meters, predict_smoothing_distance, predict_smoothing_power);
 		}
 		else
 		{
@@ -374,7 +399,30 @@ void PositionFilterLowPassOptical::update(
 	const float delta_time, 
 	const PoseFilterPacket &packet)
 {
+	float predict_smoothing_distance = k_max_lowpass_smoothing_distance;
+	float predict_smoothing_power = k_lowpass_smoothing_power;
+	float smoothing_distance = k_max_lowpass_smoothing_distance;
+	float smoothing_power = k_lowpass_smoothing_power;
+
+#if !defined(IS_TESTING_KALMAN) 
+	if (packet.controllerDeviceId > -1)
+	{
+		const ControllerManagerConfig cfg = DeviceManager::getInstance()->m_controller_manager->getConfig();
+
+		predict_smoothing_distance = clampf(cfg.filter_prediction_distance, 1.f, 9999.f) * k_centimeters_to_meters;
+		predict_smoothing_power = clampf(cfg.filter_prediction_smoothing, 0.01f, 1.f);
+		smoothing_distance = clampf(cfg.filter_lowpassoptical_distance, 1.f, 9999.f) * k_centimeters_to_meters;
+		smoothing_power = clampf(cfg.filter_lowpassoptical_smoothing, 0.01f, 1.f);
+	}
+#endif
+
 	const int history_queue_length = 5;
+
+	// If device isnt tracking, clear position history to remove over-prediction
+	if (!packet.isCurrentlyTracking)
+	{
+		blendedPositionHistory.clear();
+	}
 
 	if (packet.has_optical_measurement() && packet.isSynced)
 	{
@@ -385,7 +433,7 @@ void PositionFilterLowPassOptical::update(
         if (m_state->bIsValid)
         {
             // New position is blended against the old position
-            new_position_meters = lowpass_filter_optical_position_using_distance(&packet, m_state);
+            new_position_meters = lowpass_filter_optical_position_using_distance(&packet, m_state, smoothing_distance, smoothing_power);
         }
         else
         {
@@ -413,7 +461,7 @@ void PositionFilterLowPassOptical::update(
 		if (sampleCount > 0)
 		{
 			new_position_meters_sec =
-				lowpass_prediction_vector3f(delta_time, (old_position_meters / sampleCount), new_position_meters);
+				lowpass_prediction_vector3f(delta_time, (old_position_meters / sampleCount), new_position_meters, predict_smoothing_distance, predict_smoothing_power);
 		}
 		else
 		{
@@ -535,8 +583,27 @@ void PositionFilterLowPassExponential::update(const float delta_time, const Pose
 {
 	const int history_queue_length = 20;
 
+	float smoothing_distance = k_max_lowpass_smoothing_distance;
+	float smoothing_power = k_lowpass_smoothing_power;
+
+#if !defined(IS_TESTING_KALMAN)
+	if (packet.controllerDeviceId > -1)
+	{
+		const ControllerManagerConfig cfg = DeviceManager::getInstance()->m_controller_manager->getConfig();
+
+		smoothing_distance = clampf(cfg.filter_lowpassoptical_distance, 1.f, 9999.f) * k_centimeters_to_meters;
+		smoothing_power = clampf(cfg.filter_lowpassoptical_smoothing, 0.01f, 1.f);
+	}
+#endif
+
+	// If device isnt tracking, clear position history to remove over-prediction
+	if (!packet.isCurrentlyTracking)
+	{
+		blendedPositionHistory.clear();
+	}
+
 	if (packet.has_optical_measurement() && packet.isSynced)
-    {        
+	{
 		Eigen::Vector3f new_position_meters;
 		Eigen::Vector3f new_velocity_m_per_sec= Eigen::Vector3f::Zero();
 
@@ -544,7 +611,7 @@ void PositionFilterLowPassExponential::update(const float delta_time, const Pose
         {
 			// Blend the latest position against the last position in the filter state ...
             Eigen::Vector3f lowpass_position_meters = 
-				lowpass_filter_optical_position_using_distance(&packet, m_state);
+				lowpass_filter_optical_position_using_distance(&packet, m_state, smoothing_distance, smoothing_power);
 
 			// ... Then blend that result with the blended position at the start of the history
 			const float k_history_blend = 0.8f;
@@ -641,7 +708,9 @@ static Eigen::Vector3f lowpass_filter_vector3f(
 static Eigen::Vector3f lowpass_prediction_vector3f(
 	const float delta_time,
 	const Eigen::Vector3f &old_filtered_vector,
-	const Eigen::Vector3f &new_vector)
+	const Eigen::Vector3f &new_vector,
+	const float smoothing_distance,
+	const float smoothing_power)
 {
 	Eigen::Vector3f new_position_meters_sec;
 
@@ -649,7 +718,7 @@ static Eigen::Vector3f lowpass_prediction_vector3f(
 	// We need to convert meters to centimeters otherwise it wont work. I assume value too small for decimal point precision.
 	Eigen::Vector3f diff = (new_vector - old_filtered_vector) * k_meters_to_centimeters;
 	float distance = diff.norm();
-	float new_position_weight = clampf01(lerpf(0.40f, 1.00f, distance / (k_max_lowpass_smoothing_distance * k_meters_to_centimeters)));
+	float new_position_weight = clampf01(lerpf(smoothing_distance, 1.00f, distance / (smoothing_distance * k_meters_to_centimeters)));
 
 	static float g_cutoff_frequency = k_accelerometer_frequency_cutoff;
 	new_position_meters_sec =
@@ -662,7 +731,9 @@ static Eigen::Vector3f lowpass_prediction_vector3f(
 
 static Eigen::Vector3f lowpass_filter_optical_position_using_distance(
     const PoseFilterPacket *packet,
-    const PositionFilterState *state)
+    const PositionFilterState *state,
+	const float smoothing_distance,
+	const float smoothing_power)
 {
     assert(state->bIsValid);
 	assert(packet->has_optical_measurement());
@@ -672,7 +743,7 @@ static Eigen::Vector3f lowpass_filter_optical_position_using_distance(
 	// We need to convert meters to centimeters otherwise it wont work. I assume value too small for decimal point precision.
     Eigen::Vector3f diff = (packet->get_optical_position_in_meters() - state->position_meters) * k_meters_to_centimeters;
     float distance = diff.norm();
-    float new_position_weight = clampf01(lerpf(0.40f, 1.00f, distance / (k_max_lowpass_smoothing_distance * k_meters_to_centimeters)));
+    float new_position_weight = clampf01(lerpf(smoothing_power, 1.00f, distance / (smoothing_distance * k_meters_to_centimeters)));
 
     // New position is blended against the old position
     const Eigen::Vector3f &old_position = state->position_meters;

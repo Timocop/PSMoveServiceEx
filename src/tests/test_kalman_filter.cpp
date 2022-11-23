@@ -2,7 +2,7 @@
 #include "KalmanPoseFilter.h"
 #include "CompoundPoseFilter.h"
 #include "MathAlignment.h"
-
+ 
 #if defined(__linux) || defined (__APPLE__)
 #include <unistd.h>
 #endif
