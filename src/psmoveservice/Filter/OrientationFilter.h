@@ -82,13 +82,25 @@ public:
     OrientationFilterComplementaryMARG()
         : OrientationFilter()
         , mg_weight(1.f)
-    {}
+		, mg_ignored(false)
+    {
+		timeStableDelay = std::chrono::high_resolution_clock::now();
+
+		last_accelerometer_g_units = Eigen::Vector3f(0.f, 0.f, 0.f);
+		last_accelerometer_derivative_g_per_sec = Eigen::Vector3f(0.f, 0.f, 0.f);
+		last_acceleration_m_per_sec_sqr = Eigen::Vector3f(0.f, 0.f, 0.f);
+	}
 
     void resetState() override;
     void update(const float delta_time, const PoseFilterPacket &packet) override;
 
 protected:
     float mg_weight;
+	bool mg_ignored;
+	std::chrono::time_point<std::chrono::high_resolution_clock> timeStableDelay;
+	Eigen::Vector3f last_accelerometer_g_units;
+	Eigen::Vector3f last_accelerometer_derivative_g_per_sec;
+	Eigen::Vector3f last_acceleration_m_per_sec_sqr;
 };
 
 #endif // ORIENTATION_FILTER_H

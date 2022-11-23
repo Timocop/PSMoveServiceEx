@@ -14,6 +14,21 @@
 // Max length of the orientation history we keep
 #define k_orientation_history_max 16
 
+// Used for lowpass filter of accelerometer
+#define k_accelerometer_frequency_cutoff 1000.f // Hz
+
+// Decay rate to apply to the jerk
+#define k_jerk_decay 0.8f
+
+// Decay rate to apply to the acceleration
+#define k_acceleration_decay 0.8f
+
+// Decay rate to apply to the velocity
+#define k_velocity_decay 0.8f
+
+#define k_mg_cap_m_per_sec_sqr 3.f
+
+
 // -- private definitions -----
 struct OrientationFilterState
 {
@@ -611,20 +626,52 @@ void OrientationFilterComplementaryMARG::resetState()
     mg_weight= 1.f;
 }
 
+static Eigen::Vector3f threshold_vector3f(const Eigen::Vector3f &vector, const float min_length)
+{
+	const float length = vector.norm();
+	const Eigen::Vector3f result = (length > min_length) ? vector : Eigen::Vector3f::Zero();
+
+	return result;
+}
+
+static Eigen::Vector3f lowpass_filter_vector3f(
+	const float alpha,
+	const Eigen::Vector3f &old_filtered_vector,
+	const Eigen::Vector3f &new_vector)
+{
+	const Eigen::Vector3f filtered_vector = alpha*new_vector + (1.f - alpha)*old_filtered_vector;
+
+	return filtered_vector;
+}
+
+static Eigen::Vector3f lowpass_filter_vector3f(
+	const float delta_time,
+	const float cutoff_frequency,
+	const Eigen::Vector3f &old_filtered_vector,
+	const Eigen::Vector3f &new_vector)
+{
+	// https://en.wikipedia.org/wiki/Low-pass_filter
+	const float RC = 1.f / (k_real_two_pi*cutoff_frequency);
+	const float alpha = clampf01(delta_time / (RC + delta_time));
+	const Eigen::Vector3f filtered_vector = lowpass_filter_vector3f(alpha, old_filtered_vector, new_vector);
+
+	return filtered_vector;
+}
+
 void OrientationFilterComplementaryMARG::update(const float delta_time, const PoseFilterPacket &packet)
 {
 	if (packet.has_imu_measurements())
 	{
 		// Time delta used for filter update is time delta passed in
 		// plus the accumulated time since the packet hasn't has an IMU measurement
-		const float total_delta_time= (float)m_state->accumulated_imu_time_delta + delta_time;
+		const float total_delta_time = (float)m_state->accumulated_imu_time_delta + delta_time;
 
-		const Eigen::Vector3f &current_omega= packet.imu_gyroscope_rad_per_sec;
+		const Eigen::Vector3f &current_omega = packet.imu_gyroscope_rad_per_sec;
 
-		Eigen::Vector3f current_g= packet.imu_accelerometer_g_units;
+		Eigen::Vector3f current_g = packet.imu_accelerometer_g_units;
 		eigen_vector3f_normalize_with_default(current_g, Eigen::Vector3f::Zero());
 
-		Eigen::Vector3f current_m= packet.imu_magnetometer_unit;
+		Eigen::Vector3f current_m = packet.imu_magnetometer_unit;
 		eigen_vector3f_normalize_with_default(current_m, Eigen::Vector3f::Zero());
 
 		// Get the direction of the magnetic fields in the identity pose.	
@@ -637,7 +684,7 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 		//-----------------------------
 		// Compute the rate of change of the orientation purely from the gyroscope
 		// q_dot = 0.5*q*omega
-		Eigen::Quaternionf q_current= m_state->orientation;
+		Eigen::Quaternionf q_current = m_state->orientation;
 
 		Eigen::Quaternionf q_omega = Eigen::Quaternionf(0.f, current_omega.x(), current_omega.y(), current_omega.z());
 		Eigen::Quaternionf q_derivative = Eigen::Quaternionf(q_current.coeffs()*0.5f) * q_omega;
@@ -668,17 +715,99 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 		// Derive the second derivative
 		{
 			// The final rotation is a blend between the integrated orientation and absolute rotation from the earth-frame
-			const Eigen::Quaternionf new_orientation = 
-				eigen_quaternion_normalized_lerp(ar_orientation, mg_orientation, mg_weight);            
-			const Eigen::Vector3f new_angular_velocity= Eigen::Vector3f::Zero(); // current_omega;
+			const Eigen::Quaternionf new_orientation =
+				eigen_quaternion_normalized_lerp(ar_orientation, mg_orientation, mg_weight);
+			const Eigen::Vector3f new_angular_velocity = Eigen::Vector3f::Zero(); // current_omega;
 			const Eigen::Vector3f new_angular_acceleration = Eigen::Vector3f::Zero(); // (current_omega - m_state->angular_velocity) / delta_time;
 
 			m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, delta_time);
 		}
 
-		// Update the blend weight
-		// -- Exponential blend the MG weight from 1 down to k_base_earth_frame_align_weight
-		mg_weight = lerp_clampf(mg_weight, k_base_earth_frame_align_weight, 0.9f);
+		static bool b_enable_passive_mag = false;
+
+		if (b_enable_passive_mag)
+		{
+			// Gather sensor state from the previous frame
+			const Eigen::Vector3f &old_accelerometer = last_accelerometer_g_units;
+			const Eigen::Vector3f &old_accelerometer_derivative = last_accelerometer_derivative_g_per_sec;
+			const Eigen::Vector3f &old_acceleration = last_acceleration_m_per_sec_sqr;
+
+			// Gather new sensor readings
+			// Need to negate the accelerometer reading since it points the opposite direction of gravity)
+			const Eigen::Vector3f &new_accelerometer = -packet.world_accelerometer;
+
+			// Compute the filtered derivative of the accelerometer (a.k.a. the "jerk")
+			Eigen::Vector3f new_accelerometer_derivative = Eigen::Vector3f::Zero();
+			{
+				const Eigen::Vector3f accelerometer_derivative =
+					(new_accelerometer - old_accelerometer) / total_delta_time;
+
+				// Apply a decay filter to the jerk
+				static float g_jerk_decay = k_jerk_decay;
+				new_accelerometer_derivative = accelerometer_derivative*g_jerk_decay;
+			}
+
+			// The accelerometer is in "g-units", where 1 g-unit = 9.8m/s^2
+			const Eigen::Vector3f old_jerk = old_accelerometer_derivative * k_g_units_to_ms2;
+			const Eigen::Vector3f new_jerk = new_accelerometer_derivative * k_g_units_to_ms2;
+
+			// Convert the new acceleration by integrating the jerk
+			Eigen::Vector3f new_acceleration =
+				0.5f*(old_jerk + new_jerk)*total_delta_time
+				+ old_acceleration;
+
+			// Apply a lowpass filter to the acceleration
+			static float g_cutoff_frequency = k_accelerometer_frequency_cutoff;
+			new_acceleration =
+				lowpass_filter_vector3f(total_delta_time, g_cutoff_frequency, old_acceleration, new_acceleration);
+
+			// Apply a decay filter to the acceleration
+			static float g_acceleration_decay = k_acceleration_decay;
+			new_acceleration *= g_acceleration_decay;
+
+			// Save out the updated sensor state
+			last_accelerometer_g_units = new_accelerometer;
+			last_accelerometer_derivative_g_per_sec = new_accelerometer_derivative;
+			last_acceleration_m_per_sec_sqr = new_acceleration;
+
+			std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+
+			if (abs(new_acceleration.x()) < k_mg_cap_m_per_sec_sqr &&
+				abs(new_acceleration.y()) < k_mg_cap_m_per_sec_sqr &&
+				abs(new_acceleration.z()) < k_mg_cap_m_per_sec_sqr &&
+				current_omega.x() < k_mg_cap_m_per_sec_sqr &&
+				current_omega.y() < k_mg_cap_m_per_sec_sqr &&
+				current_omega.z() < k_mg_cap_m_per_sec_sqr)
+			{
+				if (mg_ignored)
+				{
+					std::chrono::duration<double, std::milli> stableDuration = now - timeStableDelay;
+
+					if (stableDuration.count() > 5.f)
+					{
+						mg_ignored = false;
+					}
+				}
+				else
+				{
+					// Update the blend weight
+					// -- Exponential blend the MG weight from 1 down to k_base_earth_frame_align_weight
+					mg_weight = lerp_clampf(mg_weight, k_base_earth_frame_align_weight, 0.9f);
+				}
+			}
+			else
+			{
+				timeStableDelay = now;
+				mg_ignored = true;
+				mg_weight = 0.f;
+			}
+		}
+		else
+		{
+			// Update the blend weight
+			// -- Exponential blend the MG weight from 1 down to k_base_earth_frame_align_weight
+			mg_weight = lerp_clampf(mg_weight, k_base_earth_frame_align_weight, 0.9f);
+		}
 	}
 	else
 	{
