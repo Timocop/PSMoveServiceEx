@@ -2583,10 +2583,14 @@ pose_filter_factory(
         {
             orientation_filter_enum= OrientationFilterTypeComplementaryOpticalARG;
         }
-        else if (orientation_filter_type == "ComplementaryMARG")
-        {
-            orientation_filter_enum= OrientationFilterTypeComplementaryMARG;
-        }
+		else if (orientation_filter_type == "ComplementaryMARG")
+		{
+			orientation_filter_enum = OrientationFilterTypeComplementaryMARG;
+		}
+		else if (orientation_filter_type == "OrientationTargetOpticalARG")
+		{
+			orientation_filter_enum = OrientationFilterTypeOrientationTargetOpticalARG;
+		}
 		else if (orientation_filter_type == "OrientationKalman")
 		{
 			orientation_filter_enum = OrientationFilterTypeKalman;

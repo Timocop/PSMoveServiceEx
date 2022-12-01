@@ -13,6 +13,7 @@ enum OrientationFilterType {
     OrientationFilterTypeMadgwickMARG,
     OrientationFilterTypeComplementaryOpticalARG,
     OrientationFilterTypeComplementaryMARG,
+	OrientationFilterTypeOrientationTargetOpticalARG,
 	OrientationFilterTypeKalman,
 	OrientationFilterTypeExternal,
 };

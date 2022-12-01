@@ -8,6 +8,7 @@
 #if !defined(IS_TESTING_KALMAN)
 #include "ExternalOrientationFilter.h"
 #include "PositionExternalAttachment.h"
+#include "OpticalOrientationFilter.h"
 #endif
 
 // -- public interface --
@@ -84,8 +85,15 @@ void CompoundPoseFilter::allocate_filters(
     case OrientationFilterTypeComplementaryOpticalARG:
 		m_orientation_filter = new OrientationFilterComplementaryOpticalARG;
 		break;
-    case OrientationFilterTypeComplementaryMARG:
+	case OrientationFilterTypeComplementaryMARG:
 		m_orientation_filter = new OrientationFilterComplementaryMARG;
+		break;
+	case OrientationFilterTypeOrientationTargetOpticalARG:
+#if !defined(IS_TESTING_KALMAN)
+		m_orientation_filter = new OrientationTargetOpticalARG;
+#else
+		m_orientation_filter = nullptr;
+#endif
 		break;
 	case OrientationFilterTypeKalman:
 		{

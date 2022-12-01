@@ -42,7 +42,7 @@ eigen_quaternion_angle_axis(float radians, const Eigen::Vector3f &axis)
 
 Eigen::Quaternionf
 eigen_quaternion_normalized_lerp(const Eigen::Quaternionf &a, const Eigen::Quaternionf &b, const float u)
-{	
+{
 	Eigen::Quaternionf q(a.coeffs()*(1.f - u) + b.coeffs()*u);
 	q.normalize();
 
@@ -322,6 +322,118 @@ Eigen::EulerAngles<T> eigen_quaternion_to_euler_angles(const Eigen::Quaternion<T
 		static_cast<T>(bank_radians),
 		static_cast<T>(heading_radians),
 		static_cast<T>(attitude_radians));
+}
+
+Eigen::Vector3f
+eigen_vector3f_projection(const Eigen::Vector3f &a, const Eigen::Vector3f &b)
+{
+	const float projected_length_of_a_on_b = a.dot(b.normalized());
+	const Eigen::Vector3f a_projected_on_b = projected_length_of_a_on_b * b;
+
+	return a_projected_on_b;
+}
+
+Eigen::Quaternionf
+eigen_quaternionf_projection(const Eigen::Quaternionf &q, const Eigen::Vector3f &direction)
+{
+	Eigen::Vector3f r = Eigen::Vector3f(q.x(), q.y(), q.z());
+	Eigen::Vector3f proj = eigen_vector3f_projection(r, direction);
+	Eigen::Quaternionf rot = Eigen::Quaternionf(q.w(), proj.x(), proj.y(), proj.z());
+	rot.normalize();
+
+	return rot;
+}
+
+///**
+//https://stackoverflow.com/questions/3684269/component-of-a-quaternion-rotation-around-an-axis
+//Decompose the rotation on to 2 parts.
+//1. Twist - rotation around the "direction" vector
+//2. Swing - rotation around axis that is perpendicular to "direction" vector
+//The rotation can be composed back by
+//rotation = swing * twist
+//has singularity in case of swing_rotation close to 180 degrees rotation.
+//if the input quaternion is of non-unit length, the outputs are non-unit as well
+//otherwise, outputs are both unit
+//
+void
+eigen_quaternionf_to_swing_twist(
+	const Eigen::Quaternionf &rotation,
+	const Eigen::Vector3f &direction,
+	Eigen::Quaternionf &swing,
+	Eigen::Quaternionf &twist)
+{
+	Eigen::Vector3f ra(rotation.x(), rotation.y(), rotation.z()); // rotation axis
+	Eigen::Vector3f p = eigen_vector3f_projection(ra, direction); // return projection v1 on to v2  (parallel component)
+
+	twist = Eigen::Quaternionf(rotation.w(), p.x(), p.y(), p.z()).normalized();
+	swing = rotation * twist.conjugate();
+}
+
+void
+eigen_quaternionf_to_yaw_pitch_roll(
+	const Eigen::Quaternionf &rot1,
+	const Eigen::Quaternionf &rot2,
+	Eigen::Quaternionf &yaw,
+	Eigen::Quaternionf &pitch,
+	Eigen::Quaternionf &roll)
+{
+	Eigen::Vector3f pitchAxis = rot1 * Eigen::Vector3f::UnitX();
+	Eigen::Vector3f rollAxis = rot1 * Eigen::Vector3f::UnitZ();
+	Eigen::Vector3f yawAxis = rot1 * Eigen::Vector3f::UnitY();
+
+	Eigen::Quaternionf diffQ = rot2 * rot1.inverse();
+
+	Eigen::Vector3f r = Eigen::Vector3f(diffQ.x(), diffQ.y(), diffQ.z());
+	
+	if (r.norm() < k_real_epsilon)
+	{
+		Eigen::Vector3f rotatedPitchAxis = diffQ * pitchAxis;
+		Eigen::Vector3f rotatedYawAxis = pitchAxis.cross(rotatedPitchAxis);
+		Eigen::Vector3f rotatedRollAxis = diffQ * rollAxis;
+
+		if (rotatedYawAxis.norm() > k_real_epsilon)
+		{
+			float yawAngle = eigen_vector3f_get_angle(pitchAxis, rotatedPitchAxis);
+			yaw = eigen_quaternion_angle_axis(yawAngle * k_degrees_to_radians, rotatedYawAxis);
+		}
+		else
+		{
+			yaw = Eigen::Quaternionf::Identity();
+		}
+
+		if (rotatedRollAxis.norm() > k_real_epsilon)
+		{
+			float rollAngle = eigen_vector3f_get_angle(yawAxis, rotatedYawAxis);
+			roll = eigen_quaternion_angle_axis(rollAngle * k_degrees_to_radians, rotatedRollAxis);
+		}
+		else
+		{
+			roll = Eigen::Quaternionf::Identity();
+		}
+
+		pitch = eigen_quaternion_angle_axis(180.f * k_degrees_to_radians, pitchAxis);
+	}
+	else
+	{
+		pitch = eigen_quaternionf_projection(diffQ, pitchAxis);
+		roll = eigen_quaternionf_projection(diffQ, rollAxis);
+		yaw = diffQ * pitch.inverse();
+	}
+}
+
+float
+eigen_vector3f_get_angle(const Eigen::Vector3f &a, const Eigen::Vector3f &b)
+{
+	float sq = (a.norm() * b.norm());
+	if (sq > k_real_epsilon)
+	{
+		float dot = a.dot(b.normalized()) / sq;
+		float arcAcos = acosf(dot);
+
+		return (arcAcos * k_radians_to_degreees);
+	}
+
+	return 0.0f;
 }
 
 Eigen::Quaterniond

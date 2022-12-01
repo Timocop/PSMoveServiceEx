@@ -178,5 +178,27 @@ eigen_quaterniond_to_euler_angles(const Eigen::Quaterniond &q);
 Eigen::EulerAnglesf
 eigen_quaternionf_to_euler_angles(const Eigen::Quaternionf &q);
 
+Eigen::Vector3f
+eigen_vector3f_projection(const Eigen::Vector3f &a, const Eigen::Vector3f &b);
+
+Eigen::Quaternionf
+eigen_quaternionf_projection(const Eigen::Quaternionf &q, const Eigen::Vector3f &direction);
+
+// Decompose the rotation into "swing" and "twist" rotation
+void
+eigen_quaternionf_to_swing_twist(
+	const Eigen::Quaternionf &rotation, const Eigen::Vector3f &direction,
+	Eigen::Quaternionf &swing, Eigen::Quaternionf &twist);
+
+void
+eigen_quaternionf_to_yaw_pitch_roll(
+	const Eigen::Quaternionf &rot1,
+	const Eigen::Quaternionf &rot2,
+	Eigen::Quaternionf &yaw,
+	Eigen::Quaternionf &pitch,
+	Eigen::Quaternionf &roll);
+
+float
+eigen_vector3f_get_angle(const Eigen::Vector3f &a, const Eigen::Vector3f &b);
 
 #endif // MATH_EIGEN_H

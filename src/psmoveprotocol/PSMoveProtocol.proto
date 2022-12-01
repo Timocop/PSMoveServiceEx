@@ -637,6 +637,7 @@ message Request {
 		float filter_lowpassoptical_smoothing = 4;
 		float filter_lowpassoptical_distance = 5;
 		bool filter_use_passive_drift_correction = 6;
+		int32 filter_opticaltarget_controller_id = 7;
     }
     RequestSetControllerFilterSettings request_set_controller_filter_settings = 55;
 	
@@ -748,6 +749,7 @@ message Response {
 			float filter_lowpassoptical_smoothing = 26;
 			float filter_lowpassoptical_distance = 27;
 			bool filter_use_passive_drift_correction = 28;
+			int32 filter_opticaltarget_controller_id = 29;
         }
         repeated ControllerInfo controllers = 1;
         string host_serial = 2;
