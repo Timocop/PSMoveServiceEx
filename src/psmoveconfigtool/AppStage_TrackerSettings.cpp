@@ -368,29 +368,31 @@ void AppStage_TrackerSettings::renderUI()
 							}
 							break;
 						}
+
+						ImGui::Separator();
+
+						if (m_app->getIsLocalServer())
+						{
+							if (ImGui::Button("Test Video Feed"))
+							{
+								m_app->setAppStage(AppStage_TestTracker::APP_STAGE_NAME);
+							}
+
+							if (ImGui::Button("Calibrate Tracker Distortion"))
+							{
+								m_app->setAppStage(AppStage_DistortionCalibration::APP_STAGE_NAME);
+							}
+						}
+						else
+						{
+							ImGui::Button("Test Video Feed\n(Unavailable)");
+							ImGui::Button("Calibrate Tracker Distortion\n(Unavailable)");
+						}
 					}
 					ImGui::EndGroup();
 					if (ImGui::IsItemVisible())
 						lastChildVec = ImGui::GetItemRectSize();
 					ImGui::EndChild();
-				}
-
-				if (m_app->getIsLocalServer())
-				{
-					if (ImGui::Button("Test Video Feed"))
-					{
-						m_app->setAppStage(AppStage_TestTracker::APP_STAGE_NAME);
-					}
-
-					if (ImGui::Button("Calibrate Tracker Distortion"))
-					{
-						m_app->setAppStage(AppStage_DistortionCalibration::APP_STAGE_NAME);
-					}
-				}
-				else
-				{
-					ImGui::TextDisabled("Test Video Feed");
-					ImGui::TextDisabled("Calibrate Tracker Distortion");
 				}
 			}
 			else
