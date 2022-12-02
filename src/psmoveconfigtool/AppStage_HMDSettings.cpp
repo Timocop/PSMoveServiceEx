@@ -511,7 +511,7 @@ void AppStage_HMDSettings::renderUI()
 							}
 							else
 							{
-								ImGui::Button("Calibrate LED Model\n(Unavailable)");
+								ImGui::Button("Calibrate LED Model (Unavailable)");
 								ImGui::Bullet();
 								ImGui::SameLine();
 								ImGui::PushTextWrapPos();

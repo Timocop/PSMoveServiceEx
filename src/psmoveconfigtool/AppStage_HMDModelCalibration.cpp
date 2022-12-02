@@ -640,12 +640,12 @@ void AppStage_HMDModelCalibration::renderUI()
 			go_next_tracker();
 		}
 
-		if (ImGui::Button("Looks Good!"))
+		if (ImGui::Button("Start Calibration"))
 		{
 			setState(eMenuState::calibrate);
 		}
 
-		if (ImGui::Button("Hmm... Something is wrong."))
+		if (ImGui::Button("Return to HMD Settings"))
 		{
 			request_exit_to_app_stage(AppStage_HMDSettings::APP_STAGE_NAME);
 		}

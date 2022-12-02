@@ -917,7 +917,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
                 }
                 else
                 {
-                    ImGui::TextDisabled("Tracker Video");
+                    ImGui::Button("Tracker Video (Unavailable)");
                 }
                 ImGui::PopID();
                 ImGui::PopItemWidth();

@@ -1245,7 +1245,7 @@ void AppStage_ControllerSettings::renderUI()
 								}
 								else
 								{
-									ImGui::Button("Calibrate Magnetometer\n(Magnetometer Unavailable)");
+									ImGui::Button("Calibrate Magnetometer (Unavailable)");
 									ImGui::Bullet();
 									ImGui::SameLine();
 									ImGui::PushTextWrapPos();

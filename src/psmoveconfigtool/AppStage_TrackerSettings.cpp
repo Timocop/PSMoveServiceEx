@@ -340,30 +340,36 @@ void AppStage_TrackerSettings::renderUI()
 									ImGui::ColorButton(colorBlue, true);
 									if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
 									ImGui::SameLine();
-									ImGui::TextWrapped(
+									ImGui::PushTextWrapPos();
+									ImGui::TextDisabled(
 										"USB 3.2 (20 Gbit) controller or higher is required."
 										"This amount of trackers connected to a USB 3.1 (10 Gbit) controller may not work due to bandwidth issues."
 									);
+									ImGui::PopTextWrapPos();
 								}
 								else if (sameDevices.size() >= 3)
 								{
 									ImGui::ColorButton(colorBlue, true);
 									if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
 									ImGui::SameLine();
-									ImGui::TextWrapped(
+									ImGui::PushTextWrapPos();
+									ImGui::TextDisabled(
 										"USB 3.1 (10 Gbit) controller or higher is required.\n"
 										"This amount of trackers connected to a USB 3.0 (5 Gbit) controller may not work due to bandwidth issues."
 									);
+									ImGui::PopTextWrapPos();
 								}
 								else if (sameDevices.size() >= 2)
 								{
 									ImGui::ColorButton(colorBlue, true);
 									if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
 									ImGui::SameLine();
-									ImGui::TextWrapped(
+									ImGui::PushTextWrapPos();
+									ImGui::TextDisabled(
 										"USB 3.0 (5 Gbit) controller or higher is required.\n"
 										"This amount of trackers connected to a USB 2.0 (500 Mbit) controller may not work due to bandwidth issues."
 									);
+									ImGui::PopTextWrapPos();
 								}
 							}
 							break;
@@ -385,8 +391,8 @@ void AppStage_TrackerSettings::renderUI()
 						}
 						else
 						{
-							ImGui::Button("Test Video Feed\n(Unavailable)");
-							ImGui::Button("Calibrate Tracker Distortion\n(Unavailable)");
+							ImGui::Button("Test Video Feed (Unavailable)");
+							ImGui::Button("Calibrate Tracker Distortion (Unavailable)");
 						}
 					}
 					ImGui::EndGroup();
@@ -543,13 +549,13 @@ void AppStage_TrackerSettings::renderUI()
 										}
 										else
 										{
-											ImGui::TextDisabled("Calibrate Tracking Colors");
-											ImGui::TextDisabled("Calibrate Tracker Poses");
-											ImGui::TextDisabled("Calibrate Optical Noise");
+											ImGui::Button("Calibrate Tracking Colors (Unavailable)");
+											ImGui::Button("Calibrate Tracker Poses (Unavailable)");
+											ImGui::Button("Calibrate Optical Noise (Unavailable)");
 
 											//ImGui::Separator();
 
-											//ImGui::TextDisabled("Optical Playspace Recenter");
+											//ImGui::Button("Optical Playspace Recenter (Unavailable)");
 										}
 									}
 									ImGui::EndGroup();
@@ -727,8 +733,8 @@ void AppStage_TrackerSettings::renderUI()
 									}
 									else
 									{
-										ImGui::TextDisabled("Calibrate Tracking Colors");
-										ImGui::TextDisabled("Calibrate Tracker Poses");
+										ImGui::Button("Calibrate Tracking Colors (Unavailable)");
+										ImGui::Button("Calibrate Tracker Poses (Unavailable)");
 									}
 								}
 								ImGui::EndGroup();
