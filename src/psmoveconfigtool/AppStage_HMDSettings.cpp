@@ -149,7 +149,7 @@ void AppStage_HMDSettings::renderUI()
     case eHmdMenuState::idle:
     {
         ImGui::SetNextWindowPosCenter();
-        ImGui::SetNextWindowSize(ImVec2(400, 500));
+		ImGui::SetNextWindowSize(ImVec2(500, ImGui::GetIO().DisplaySize.y - 32));
         ImGui::Begin(k_window_title, nullptr, window_flags & ~ImGuiWindowFlags_NoScrollbar);
 
         if (m_hmdInfos.size() > 0)

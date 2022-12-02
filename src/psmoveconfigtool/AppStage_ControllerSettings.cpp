@@ -350,7 +350,7 @@ void AppStage_ControllerSettings::renderUI()
     case eControllerMenuState::idle:
         {
             ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(400, 500));
+            ImGui::SetNextWindowSize(ImVec2(500, ImGui::GetIO().DisplaySize.y - 32));
             ImGui::Begin("Controller Settings", nullptr, window_flags & ~ImGuiWindowFlags_NoScrollbar);
 
 			{
@@ -841,7 +841,7 @@ void AppStage_ControllerSettings::renderUI()
 								{
 									settings_shown = true;
 
-									ImGui::Text("Position Prediction\nSmoothing Distance: ");
+									ImGui::Text("Position Prediction Smoothing Distance: ");
 									ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 									ImGui::PushItemWidth(120.f);
 									if (ImGui::InputFloat("##PredictionSmoothingDistance", &controllerInfo.FilterPredictionDistance, 1.f, 5.f, 2))
@@ -852,7 +852,7 @@ void AppStage_ControllerSettings::renderUI()
 									}
 									ImGui::PopItemWidth();
 
-									ImGui::Text("Position Prediction\nSmoothing Power (%%): ");
+									ImGui::Text("Position Prediction Smoothing Power (%%): ");
 									ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 									ImGui::PushItemWidth(120.f);
 									float filter_predict_smoothing = (1.f - controllerInfo.FilterPredictionSmoothing) * 100.f;
