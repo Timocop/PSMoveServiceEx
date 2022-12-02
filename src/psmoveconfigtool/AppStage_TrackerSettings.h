@@ -25,6 +25,12 @@ public:
 		PSMHmdType HmdType;
 	};
 
+	struct TrackerBusInfo
+	{
+		char port_path[32];
+		int TrackerID;
+	};
+
     AppStage_TrackerSettings(class App *app);
 
     const PSMClientTrackerInfo *getSelectedTrackerInfo() const;
@@ -117,7 +123,7 @@ protected:
         pendingSearchForNewTrackersRequest,
     };
     eTrackerMenuState m_menuState;
-
+	std::vector<TrackerBusInfo> m_trackerBusInfo;
     std::vector<PSMClientTrackerInfo> m_trackerInfos;
 	std::vector<ControllerInfo> m_controllerInfos;
 	std::vector<HMDInfo> m_hmdInfos;

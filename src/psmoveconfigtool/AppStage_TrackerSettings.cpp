@@ -300,6 +300,74 @@ void AppStage_TrackerSettings::renderUI()
 						ImGui::BulletText("Device Path: ");
 						ImGui::SameLine();
 						ImGui::TextWrapped("%s", trackerInfo.device_path);
+
+						// Warn user if bus could be overloaded by the amount of cameras.
+						for (int i = m_trackerBusInfo.size() - 1; i >= 0; --i)
+						{
+							if (m_trackerBusInfo[i].TrackerID != m_selectedTrackerIndex)
+								continue;
+							
+							std::vector<int> sameDevices;
+							for (int j = m_trackerBusInfo.size() - 1; j >= 0; --j)
+							{
+								if (strcmp(m_trackerBusInfo[j].port_path, m_trackerBusInfo[i].port_path) != 0)
+									continue;
+
+								sameDevices.push_back(m_trackerBusInfo[j].TrackerID);
+							}
+
+							if (sameDevices.size() > 1)
+							{
+								ImGui::Separator();
+								ImGui::Text("Sharing USB Controller with Trackers:", sameDevices.size());
+								ImGui::Separator();
+
+								for (int j = sameDevices.size() - 1; j >= 0; --j)
+								{
+									ImGui::Bullet();
+									ImGui::SameLine();
+									ImGui::Text("Tracker #%d", sameDevices[j]);
+								}
+
+								const ImColor colorGreen = ImColor(0.f, 1.f, 0.f);
+								const ImColor colorOrange = ImColor(1.f, .5f, 0.f);
+								const ImColor colorRed = ImColor(1.f, 0.f, 0.f);
+								const ImColor colorBlue = ImColor(0.f, 0.25f, 1.f);
+
+								// Warn if theres too many PSeyes on one USB controller causing possible bandwidth issues.
+								if (sameDevices.size() >= 4)
+								{
+									ImGui::ColorButton(colorBlue, true);
+									if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+									ImGui::SameLine();
+									ImGui::TextWrapped(
+										"USB 3.2 (20 Gbit) controller or higher is required."
+										"This amount of trackers connected to a USB 3.1 (10 Gbit) controller may not work due to bandwidth issues."
+									);
+								}
+								else if (sameDevices.size() >= 3)
+								{
+									ImGui::ColorButton(colorBlue, true);
+									if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+									ImGui::SameLine();
+									ImGui::TextWrapped(
+										"USB 3.1 (10 Gbit) controller or higher is required.\n"
+										"This amount of trackers connected to a USB 3.0 (5 Gbit) controller may not work due to bandwidth issues."
+									);
+								}
+								else if (sameDevices.size() >= 2)
+								{
+									ImGui::ColorButton(colorBlue, true);
+									if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+									ImGui::SameLine();
+									ImGui::TextWrapped(
+										"USB 3.0 (5 Gbit) controller or higher is required.\n"
+										"This amount of trackers connected to a USB 2.0 (500 Mbit) controller may not work due to bandwidth issues."
+									);
+								}
+							}
+							break;
+						}
 					}
 					ImGui::EndGroup();
 					if (ImGui::IsItemVisible())
@@ -795,7 +863,7 @@ void AppStage_TrackerSettings::renderUI()
 					ImGui::EndChild();
 				}
 			}
-
+			
 			ImGui::Separator();
 
 			if (ImGui::Button("Return to Main Menu"))
@@ -899,12 +967,32 @@ void AppStage_TrackerSettings::handle_tracker_list_response(
 
             thisPtr->m_selectedTrackerIndex = -1;
             thisPtr->m_trackerInfos.clear();
+			thisPtr->m_trackerBusInfo.clear();
 
             for (int tracker_index = 0; tracker_index < tracker_list.count; ++tracker_index)
             {
                 const PSMClientTrackerInfo &TrackerInfo = tracker_list.trackers[tracker_index];
 
                 thisPtr->m_trackerInfos.push_back(TrackerInfo);
+
+				// Find trackers in the same bus.
+				std::string devicePath = std::string(TrackerInfo.device_path);
+				if (devicePath.find("USB") == 0)
+				{
+					int bus_start = devicePath.rfind("\\");
+					int bus_end = devicePath.find(".");
+					if (bus_start != std::string::npos && bus_end != std::string::npos)
+					{
+						std::string bus = devicePath.substr(bus_start + 1, bus_end - bus_start - 1);
+
+						TrackerBusInfo info;
+						info.TrackerID = TrackerInfo.tracker_id;
+						size_t len = bus.copy(info.port_path, sizeof(info.port_path));
+						info.port_path[len] = 0;
+
+						thisPtr->m_trackerBusInfo.push_back(info);
+					}
+				}
             }
 
             if (oldSelectedTrackerIndex != -1)
