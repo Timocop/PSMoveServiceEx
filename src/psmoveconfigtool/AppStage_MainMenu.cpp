@@ -119,7 +119,7 @@ void AppStage_MainMenu::renderUI()
                 ImGuiWindowFlags_NoCollapse;
             ImGui::SetNextWindowPosCenter();
             ImGui::Begin("Status", nullptr, ImVec2(300, 150), k_background_alpha, window_flags);
-            ImGui::Text("Connecting to PSMoveService...");
+            ImGui::Text("Connecting to PSMoveServiceEx...");
             if (ImGui::Button("Exit"))
             {
                 m_app->requestShutdown();
@@ -141,11 +141,11 @@ void AppStage_MainMenu::renderUI()
 
 			if (m_menuState == failedConnectionToService)
 			{
-	            ImGui::Text("Failed to connect to PSMoveService!");
+	            ImGui::Text("Failed to connect to PSMoveServiceEx!");
 			}
 			else if (m_menuState == disconnectedFromService)
 			{
-				ImGui::Text("Disconnected from PSMoveService!");
+				ImGui::Text("Disconnected from PSMoveServiceEx!");
 			}
             
 			ImGui::PushItemWidth(125.f);

@@ -70,9 +70,9 @@ public:
         {
             if (startup())
             {
-				SERVER_LOG_INFO("PSMoveService") << "------------------------------------------";
-				SERVER_LOG_INFO("PSMoveService") << "Startup successful! Entering main loop...";
-				SERVER_LOG_INFO("PSMoveService") << "------------------------------------------";
+				SERVER_LOG_INFO("PSMoveServiceEx") << "------------------------------------------";
+				SERVER_LOG_INFO("PSMoveServiceEx") << "Startup successful! Entering main loop...";
+				SERVER_LOG_INFO("PSMoveServiceEx") << "------------------------------------------";
 
                 m_status = context.find<boost::application::status>();
 
@@ -103,10 +103,10 @@ public:
 						{
 							firstUpdate = false;
 
-							SERVER_LOG_INFO("PSMoveService") << "------------------------------------------";
-							SERVER_LOG_INFO("PSMoveService") << "Successfully Initialized!";
-							SERVER_LOG_INFO("PSMoveService") << "------------------------------------------";
-							SERVER_LOG_INFO("PSMoveService") << "Calculating average main thread FPS...";
+							SERVER_LOG_INFO("PSMoveServiceEx") << "------------------------------------------";
+							SERVER_LOG_INFO("PSMoveServiceEx") << "Successfully Initialized!";
+							SERVER_LOG_INFO("PSMoveServiceEx") << "------------------------------------------";
+							SERVER_LOG_INFO("PSMoveServiceEx") << "Calculating average main thread FPS...";
 
 							m_lastSync = std::chrono::high_resolution_clock::now();
 						}
@@ -125,12 +125,12 @@ public:
 
 								int avgFps = (int)ceilf(frames / (k_maxSamplingTime / 1000.f));
 
-								SERVER_LOG_INFO("PSMoveService") << "Main thread running at " << avgFps << " FPS.";
+								SERVER_LOG_INFO("PSMoveServiceEx") << "Main thread running at " << avgFps << " FPS.";
 
 								if (avgFps < 100)
 								{
-									SERVER_LOG_WARNING("PSMoveService") << "Main thread running at too low FPS! Tracking jitter and input lag might occur!";
-									SERVER_LOG_WARNING("PSMoveService") << "Reduce the 'Processing thread sleep' in 'Advanced Settings' to speed up the main thread.";
+									SERVER_LOG_WARNING("PSMoveServiceEx") << "Main thread running at too low FPS! Tracking jitter and input lag might occur!";
+									SERVER_LOG_WARNING("PSMoveServiceEx") << "Reduce the 'Processing thread sleep' in 'Advanced Settings' to speed up the main thread.";
 								}
 							}
 						}
@@ -144,12 +144,12 @@ public:
             }
             else
             {
-                SERVER_LOG_FATAL("PSMoveService") << "Failed to startup the PSMove service";
+                SERVER_LOG_FATAL("PSMoveServiceEx") << "Failed to startup PSMoveServiceEx";
             }
         }
         catch (std::exception& e) 
         {
-            SERVER_LOG_FATAL("EXCEPTION - PSMoveService") << e.what();
+            SERVER_LOG_FATAL("EXCEPTION - PSMoveServiceEx") << e.what();
         }
 
         // Attempt to shutdown the service
@@ -169,7 +169,7 @@ public:
     {
         if (m_status->state() != boost::application::status::stoped)
         {
-            SERVER_LOG_WARNING("PSMoveService") << "Received stop request. Stopping Service.";
+            SERVER_LOG_WARNING("PSMoveServiceEx") << "Received stop request. Stopping Service.";
             m_status->state(boost::application::status::stoped);
         }
 
@@ -180,7 +180,7 @@ public:
     {
         if (m_status->state() == boost::application::status::running)
         {
-            SERVER_LOG_WARNING("PSMoveService") << "Received pause request. Pausing Service.";
+            SERVER_LOG_WARNING("PSMoveServiceEx") << "Received pause request. Pausing Service.";
             m_status->state(boost::application::status::paused);
         }
 
@@ -191,7 +191,7 @@ public:
     {
         if (m_status->state() == boost::application::status::paused)
         {
-            SERVER_LOG_WARNING("PSMoveService") << "Received resume request. Resuming Service.";
+            SERVER_LOG_WARNING("PSMoveServiceEx") << "Received resume request. Resuming Service.";
             m_status->state(boost::application::status::running);
         }
 
@@ -212,7 +212,7 @@ private:
 		{
 			if(ec.value() != boost::interprocess::already_exists_error && ec.value() != boost::interprocess::no_error)
 			{
-				SERVER_LOG_FATAL("PSMoveService") << "Failed to create the shared memory directory: " << ec.message();
+				SERVER_LOG_FATAL("PSMoveServiceEx") << "Failed to create the shared memory directory: " << ec.message();
 				success= false;
 			}
 		}
@@ -223,7 +223,7 @@ private:
         {
             if (!m_usb_device_manager.startup())
             {
-                SERVER_LOG_FATAL("PSMoveService") << "Failed to initialize the usb async request manager";
+                SERVER_LOG_FATAL("PSMoveServiceEx") << "Failed to initialize the usb async request manager";
                 success = false;
             }
         }
@@ -233,7 +233,7 @@ private:
         {
             if (!m_device_manager.startup())
             {
-                SERVER_LOG_FATAL("PSMoveService") << "Failed to initialize the controller manager";
+                SERVER_LOG_FATAL("PSMoveServiceEx") << "Failed to initialize the controller manager";
                 success= false;
             }
         }
@@ -245,7 +245,7 @@ private:
         {
             if (!m_network_manager.startup(&m_io_service, &m_request_handler))
             {
-                SERVER_LOG_FATAL("PSMoveService") << "Failed to initialize the service network manager";
+                SERVER_LOG_FATAL("PSMoveServiceEx") << "Failed to initialize the service network manager";
                 success= false;
             }
         }
@@ -255,7 +255,7 @@ private:
         {
             if (!m_request_handler.startup())
             {
-                SERVER_LOG_FATAL("PSMoveService") << "Failed to initialize the service request handler";
+                SERVER_LOG_FATAL("PSMoveServiceEx") << "Failed to initialize the service request handler";
                 success= false;
             }
         }
@@ -302,7 +302,7 @@ private:
     void handle_termination_signal()
     {
         // flag the service as stopped
-        SERVER_LOG_WARNING("PSMoveService") << "Received termination signal. Stopping Service.";
+        SERVER_LOG_WARNING("PSMoveServiceEx") << "Received termination signal. Stopping Service.";
         m_status->state(boost::application::status::stoped);
     }
 
@@ -635,10 +635,10 @@ int PSMoveService::exec(int argc, char *argv[])
 	}
 
     // initialize logging system
-    log_init(this->getProgramSettings()->log_level, "PSMoveService.log");
+    log_init(this->getProgramSettings()->log_level, "PSMoveServiceEx.log");
 
     // Start the service app
-    SERVER_LOG_INFO("main") << "Starting PSMoveService v" << PSM_RELEASE_VERSION_STRING << " (protocol v" << PSM_PROTOCOL_VERSION_STRING << ")";
+    SERVER_LOG_INFO("main") << "Starting PSMoveServiceEx v" << PSM_RELEASE_VERSION_STRING << " (protocol v" << PSM_PROTOCOL_VERSION_STRING << ")";
     try
     {
         PSMoveServiceImpl app;
@@ -689,21 +689,21 @@ int PSMoveService::exec(int argc, char *argv[])
     }
     catch (boost::system::system_error& se)
     {
-        SERVER_LOG_FATAL("main") << "Failed to start PSMoveService: " << se.what();
+        SERVER_LOG_FATAL("main") << "Failed to start PSMoveServiceEx: " << se.what();
         return 1;
     }
     catch (std::exception &e)
     {
-        SERVER_LOG_FATAL("main") << "Failed to start PSMoveService: " <<  e.what();
+        SERVER_LOG_FATAL("main") << "Failed to start PSMoveServiceEx: " <<  e.what();
         return 1;
     }
     catch (...)
     {
-        SERVER_LOG_FATAL("main") << "Failed to start PSMoveService: Unknown error.";
+        SERVER_LOG_FATAL("main") << "Failed to start PSMoveServiceEx: Unknown error.";
         return 1;
     }
 
-    SERVER_LOG_INFO("main") << "Exiting PSMoveService";
+    SERVER_LOG_INFO("main") << "Exiting PSMoveServiceEx";
 
 	log_dispose();
 
