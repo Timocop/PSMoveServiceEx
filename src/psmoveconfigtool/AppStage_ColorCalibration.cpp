@@ -794,295 +794,303 @@ void AppStage_ColorCalibration::renderUI()
         // Video Control Panel
         if (m_bShowWindows && !m_bAlignDetectColor)
         {
+			static ImVec2 lastWindowVec = ImVec2(0.f, 4.f);
+
             ImGui::SetNextWindowPos(ImVec2(10.f, 10.f));
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, ImGui::GetIO().DisplaySize.y - 32));
+			ImGui::SetNextWindowSize(ImVec2(k_panel_width, fminf(lastWindowVec.y + 32.f, ImGui::GetIO().DisplaySize.y - 32)));
             ImGui::Begin(k_window_title, nullptr, window_flags);
-
-            if (ImGui::Button("Return to Main Menu"))
-            {
-                request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
-            }
-            
-            if (ImGui::Button("Return to Tracker Settings"))
-            {
-                request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
-            }
-
-			ImGui::Separator();
-
-			// $TODO: Not needed?
-			/*if (m_video_buffer_state != nullptr)*/
+			ImGui::BeginGroup();
 			{
-				int displayMode = m_videoDisplayMode;
-				ImGui::Text("Video Preview:");
-				ImGui::PushItemWidth(260.f);
-				if (ImGui::Combo("##VideoFilterMode", &displayMode, "Color (BGR)\0Hue, Saturation, Value (HSV)\0Masked\0\0"))
+
+				if (ImGui::Button("Return to Main Menu"))
 				{
-					m_videoDisplayMode = static_cast<eVideoDisplayMode>(displayMode);
+					request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
 				}
-				ImGui::PopItemWidth();
-				
-				if (ImGui::CollapsingHeader("Advanced Settings", 0, true, false))
+
+				if (ImGui::Button("Return to Tracker Settings"))
 				{
-					static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
-					ImGui::BeginChild("##TrackerAdvancedSettingsChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
-					ImGui::BeginGroup();
+					request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
+				}
+
+				ImGui::Separator();
+
+				// $TODO: Not needed?
+				/*if (m_video_buffer_state != nullptr)*/
+				{
+					int displayMode = m_videoDisplayMode;
+					ImGui::Text("Video Preview:");
+					ImGui::PushItemWidth(260.f);
+					if (ImGui::Combo("##VideoFilterMode", &displayMode, "Color (BGR)\0Hue, Saturation, Value (HSV)\0Masked\0\0"))
 					{
-						if (is_tracker_virtual())
-						{
-							ImGui::PushTextWrapPos();
-							ImGui::TextDisabled("Virtual Trackers do not have any properties.");
-							ImGui::PopTextWrapPos();
-						}
-						else
-						{
-							if (ImGui::Button(" - ##FrameWidth"))
-							{
-								if (m_trackerFrameWidth == 640) request_tracker_set_frame_width(m_trackerFrameWidth - 320);
-							}
-							ImGui::SameLine();
-							if (ImGui::Button(" + ##FrameWidth"))
-							{
-								if (m_trackerFrameWidth == 320) request_tracker_set_frame_width(m_trackerFrameWidth + 320);
-							}
-							ImGui::SameLine();
-							ImGui::Text("Frame Width: %.0f", m_trackerFrameWidth);
+						m_videoDisplayMode = static_cast<eVideoDisplayMode>(displayMode);
+					}
+					ImGui::PopItemWidth();
 
-							int frame_rate_positive_change = 10;
-							int frame_rate_negative_change = -10;
-
-							double val = m_trackerFrameRate;
-							if (m_trackerFrameWidth == 320)
+					if (ImGui::CollapsingHeader("Advanced Settings", 0, true, false))
+					{
+						static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
+						ImGui::BeginChild("##TrackerAdvancedSettingsChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
+						ImGui::BeginGroup();
+						{
+							if (is_tracker_virtual())
 							{
-								if (val == 2) { frame_rate_positive_change = 1; frame_rate_negative_change = 0; }
-								else if (val == 3) { frame_rate_positive_change = 2; frame_rate_negative_change = -1; }
-								else if (val == 5) { frame_rate_positive_change = 2; frame_rate_negative_change = -0; }
-								else if (val == 7) { frame_rate_positive_change = 3; frame_rate_negative_change = -2; }
-								else if (val == 10) { frame_rate_positive_change = 2; frame_rate_negative_change = -3; }
-								else if (val == 12) { frame_rate_positive_change = 3; frame_rate_negative_change = -2; }
-								else if (val == 15) { frame_rate_positive_change = 4; frame_rate_negative_change = -3; }
-								else if (val == 17) { frame_rate_positive_change = 13; frame_rate_negative_change = -4; }
-								else if (val == 30) { frame_rate_positive_change = 7; frame_rate_negative_change = -13; }
-								else if (val == 37) { frame_rate_positive_change = 3; frame_rate_negative_change = -7; }
-								else if (val == 40) { frame_rate_positive_change = 10; frame_rate_negative_change = -3; }
-								else if (val == 50) { frame_rate_positive_change = 10; frame_rate_negative_change = -10; }
-								else if (val == 60) { frame_rate_positive_change = 15; frame_rate_negative_change = -10; }
-								else if (val == 75) { frame_rate_positive_change = 15; frame_rate_negative_change = -15; }
-								else if (val == 90) { frame_rate_positive_change = 10; frame_rate_negative_change = -15; }
-								else if (val == 100) { frame_rate_positive_change = 25; frame_rate_negative_change = -10; }
-								else if (val == 125) { frame_rate_positive_change = 12; frame_rate_negative_change = -25; }
-								else if (val == 137) { frame_rate_positive_change = 13; frame_rate_negative_change = -12; }
-								else if (val == 150) { frame_rate_positive_change = 37; frame_rate_negative_change = -13; }
-								else if (val == 187) { frame_rate_positive_change = 0; frame_rate_negative_change = -37; }
-								else if (val == 205) { frame_rate_positive_change = 0; frame_rate_negative_change = -18; }
-								else if (val == 290) { frame_rate_positive_change = 0; frame_rate_negative_change = -85; }
+								ImGui::PushTextWrapPos();
+								ImGui::TextDisabled("Virtual Trackers do not have any properties.");
+								ImGui::PopTextWrapPos();
 							}
 							else
 							{
-								if (val == 2) { frame_rate_positive_change = 1; frame_rate_negative_change = 0; }
-								else if (val == 3) { frame_rate_positive_change = 2; frame_rate_negative_change = -1; }
-								else if (val == 5) { frame_rate_positive_change = 3; frame_rate_negative_change = -0; }
-								else if (val == 8) { frame_rate_positive_change = 2; frame_rate_negative_change = -3; }
-								else if (val == 10) { frame_rate_positive_change = 5; frame_rate_negative_change = -2; }
-								else if (val == 15) { frame_rate_positive_change = 5; frame_rate_negative_change = -5; }
-								else if (val == 20) { frame_rate_positive_change = 5; frame_rate_negative_change = -5; }
-								else if (val == 25) { frame_rate_positive_change = 5; frame_rate_negative_change = -5; }
-								else if (val == 30) { { frame_rate_negative_change = -5; } }
-								else if (val == 60) { { frame_rate_positive_change = 15; } }
-								else if (val == 75) { frame_rate_positive_change = 0; frame_rate_negative_change = -15; }
-								else if (val == 83) { frame_rate_positive_change = 0; frame_rate_negative_change = -8; }
-							}
-
-							if (ImGui::Button(" - ##FrameRate"))
-							{
-								request_tracker_set_frame_rate(m_trackerFrameRate + frame_rate_negative_change);
-							}
-							ImGui::SameLine();
-							if (ImGui::Button(" + ##FrameRate"))
-							{
-								request_tracker_set_frame_rate(m_trackerFrameRate + frame_rate_positive_change);
-							}
-							ImGui::SameLine();
-							ImGui::Text("Frame Rate: %.0f", m_trackerFrameRate);
-
-							if (ImGui::Button(" - ##Exposure"))
-							{
-								request_tracker_set_exposure(m_trackerExposure - 8);
-							}
-							ImGui::SameLine();
-							if (ImGui::Button(" + ##Exposure"))
-							{
-								request_tracker_set_exposure(m_trackerExposure + 8);
-							}
-							ImGui::SameLine();
-							ImGui::Text("Exposure: %.0f", m_trackerExposure);
-
-							if (ImGui::Button(" - ##Gain"))
-							{
-								request_tracker_set_gain(m_trackerGain - 8);
-							}
-							ImGui::SameLine();
-							if (ImGui::Button(" + ##Gain"))
-							{
-								request_tracker_set_gain(m_trackerGain + 8);
-							}
-							ImGui::SameLine();
-							ImGui::Text("Gain: %.0f", m_trackerGain);
-
-							// Render all of the option sets fetched from the settings query
-							for (auto it = m_trackerOptions.begin(); it != m_trackerOptions.end(); ++it)
-							{
-								TrackerOption &option = *it;
-								const int value_count = static_cast<int>(option.option_strings.size());
-
-								ImGui::PushID(option.option_name.c_str());
-								if (ImGui::Button(" < ##CustomProperty"))
+								if (ImGui::Button(" - ##FrameWidth"))
 								{
-									request_tracker_set_option(option, (option.option_index + value_count - 1) % value_count);
+									if (m_trackerFrameWidth == 640) request_tracker_set_frame_width(m_trackerFrameWidth - 320);
 								}
 								ImGui::SameLine();
-								if (ImGui::Button(" > ##CustomProperty"))
+								if (ImGui::Button(" + ##FrameWidth"))
 								{
-									request_tracker_set_option(option, (option.option_index + 1) % value_count);
+									if (m_trackerFrameWidth == 320) request_tracker_set_frame_width(m_trackerFrameWidth + 320);
 								}
 								ImGui::SameLine();
-								ImGui::Text("%s: %s", option.option_name.c_str(), option.option_strings[option.option_index].c_str());
+								ImGui::Text("Frame Width: %.0f", m_trackerFrameWidth);
+
+								int frame_rate_positive_change = 10;
+								int frame_rate_negative_change = -10;
+
+								double val = m_trackerFrameRate;
+								if (m_trackerFrameWidth == 320)
+								{
+									if (val == 2) { frame_rate_positive_change = 1; frame_rate_negative_change = 0; }
+									else if (val == 3) { frame_rate_positive_change = 2; frame_rate_negative_change = -1; }
+									else if (val == 5) { frame_rate_positive_change = 2; frame_rate_negative_change = -0; }
+									else if (val == 7) { frame_rate_positive_change = 3; frame_rate_negative_change = -2; }
+									else if (val == 10) { frame_rate_positive_change = 2; frame_rate_negative_change = -3; }
+									else if (val == 12) { frame_rate_positive_change = 3; frame_rate_negative_change = -2; }
+									else if (val == 15) { frame_rate_positive_change = 4; frame_rate_negative_change = -3; }
+									else if (val == 17) { frame_rate_positive_change = 13; frame_rate_negative_change = -4; }
+									else if (val == 30) { frame_rate_positive_change = 7; frame_rate_negative_change = -13; }
+									else if (val == 37) { frame_rate_positive_change = 3; frame_rate_negative_change = -7; }
+									else if (val == 40) { frame_rate_positive_change = 10; frame_rate_negative_change = -3; }
+									else if (val == 50) { frame_rate_positive_change = 10; frame_rate_negative_change = -10; }
+									else if (val == 60) { frame_rate_positive_change = 15; frame_rate_negative_change = -10; }
+									else if (val == 75) { frame_rate_positive_change = 15; frame_rate_negative_change = -15; }
+									else if (val == 90) { frame_rate_positive_change = 10; frame_rate_negative_change = -15; }
+									else if (val == 100) { frame_rate_positive_change = 25; frame_rate_negative_change = -10; }
+									else if (val == 125) { frame_rate_positive_change = 12; frame_rate_negative_change = -25; }
+									else if (val == 137) { frame_rate_positive_change = 13; frame_rate_negative_change = -12; }
+									else if (val == 150) { frame_rate_positive_change = 37; frame_rate_negative_change = -13; }
+									else if (val == 187) { frame_rate_positive_change = 0; frame_rate_negative_change = -37; }
+									else if (val == 205) { frame_rate_positive_change = 0; frame_rate_negative_change = -18; }
+									else if (val == 290) { frame_rate_positive_change = 0; frame_rate_negative_change = -85; }
+								}
+								else
+								{
+									if (val == 2) { frame_rate_positive_change = 1; frame_rate_negative_change = 0; }
+									else if (val == 3) { frame_rate_positive_change = 2; frame_rate_negative_change = -1; }
+									else if (val == 5) { frame_rate_positive_change = 3; frame_rate_negative_change = -0; }
+									else if (val == 8) { frame_rate_positive_change = 2; frame_rate_negative_change = -3; }
+									else if (val == 10) { frame_rate_positive_change = 5; frame_rate_negative_change = -2; }
+									else if (val == 15) { frame_rate_positive_change = 5; frame_rate_negative_change = -5; }
+									else if (val == 20) { frame_rate_positive_change = 5; frame_rate_negative_change = -5; }
+									else if (val == 25) { frame_rate_positive_change = 5; frame_rate_negative_change = -5; }
+									else if (val == 30) { { frame_rate_negative_change = -5; } }
+									else if (val == 60) { { frame_rate_positive_change = 15; } }
+									else if (val == 75) { frame_rate_positive_change = 0; frame_rate_negative_change = -15; }
+									else if (val == 83) { frame_rate_positive_change = 0; frame_rate_negative_change = -8; }
+								}
+
+								if (ImGui::Button(" - ##FrameRate"))
+								{
+									request_tracker_set_frame_rate(m_trackerFrameRate + frame_rate_negative_change);
+								}
+								ImGui::SameLine();
+								if (ImGui::Button(" + ##FrameRate"))
+								{
+									request_tracker_set_frame_rate(m_trackerFrameRate + frame_rate_positive_change);
+								}
+								ImGui::SameLine();
+								ImGui::Text("Frame Rate: %.0f", m_trackerFrameRate);
+
+								if (ImGui::Button(" - ##Exposure"))
+								{
+									request_tracker_set_exposure(m_trackerExposure - 8);
+								}
+								ImGui::SameLine();
+								if (ImGui::Button(" + ##Exposure"))
+								{
+									request_tracker_set_exposure(m_trackerExposure + 8);
+								}
+								ImGui::SameLine();
+								ImGui::Text("Exposure: %.0f", m_trackerExposure);
+
+								if (ImGui::Button(" - ##Gain"))
+								{
+									request_tracker_set_gain(m_trackerGain - 8);
+								}
+								ImGui::SameLine();
+								if (ImGui::Button(" + ##Gain"))
+								{
+									request_tracker_set_gain(m_trackerGain + 8);
+								}
+								ImGui::SameLine();
+								ImGui::Text("Gain: %.0f", m_trackerGain);
+
+								// Render all of the option sets fetched from the settings query
+								for (auto it = m_trackerOptions.begin(); it != m_trackerOptions.end(); ++it)
+								{
+									TrackerOption &option = *it;
+									const int value_count = static_cast<int>(option.option_strings.size());
+
+									ImGui::PushID(option.option_name.c_str());
+									if (ImGui::Button(" < ##CustomProperty"))
+									{
+										request_tracker_set_option(option, (option.option_index + value_count - 1) % value_count);
+									}
+									ImGui::SameLine();
+									if (ImGui::Button(" > ##CustomProperty"))
+									{
+										request_tracker_set_option(option, (option.option_index + 1) % value_count);
+									}
+									ImGui::SameLine();
+									ImGui::Text("%s: %s", option.option_name.c_str(), option.option_strings[option.option_index].c_str());
+									ImGui::PopID();
+								}
+							}
+						}
+						ImGui::EndGroup();
+						if (ImGui::IsItemVisible())
+							lastChildVec = ImGui::GetItemRectSize();
+						ImGui::EndChild();
+					}
+
+					if (ImGui::CollapsingHeader("Blacklisted Areas", 0, true, false))
+					{
+						static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
+						ImGui::BeginChild("##BlacklistedAreasChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
+						ImGui::BeginGroup();
+						{
+							ImGui::Checkbox("Show Blacklisted Areas", &m_bProjectionBlacklistedShow);
+
+							for (int i = 0; i < eCommonBlacklistProjection::MAX_BLACKLIST_PROJECTIONS; ++i)
+							{
+								std::string option_name = std::to_string(i);
+
+								ImGui::PushID(option_name.c_str());
+								if (ImGui::CollapsingHeader(option_name.c_str(), 0, true, true))
+								{
+									float val;
+
+									ImGui::Text("X: ");
+									ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+									ImGui::PushItemWidth(120.f);
+									val = m_blacklisted_projection[i].x;
+									if (ImGui::InputFloat("##BlacklistedAreaX", &val, 4.f, 32.f, 2))
+									{
+										m_blacklisted_projection[i].x = fmaxf(0.f, val);
+										request_tracker_set_projectionblacklist(m_blacklisted_projection);
+									}
+									ImGui::PopItemWidth();
+
+									ImGui::Text("Y: ");
+									ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+									ImGui::PushItemWidth(120.f);
+									val = m_blacklisted_projection[i].y;
+									if (ImGui::InputFloat("##BlacklistedAreaY", &val, 4.f, 32.f, 2))
+									{
+										m_blacklisted_projection[i].y = fmaxf(0.f, val);
+										request_tracker_set_projectionblacklist(m_blacklisted_projection);
+									}
+									ImGui::PopItemWidth();
+
+									ImGui::Text("Width: ");
+									ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+									ImGui::PushItemWidth(120.f);
+									val = m_blacklisted_projection[i].w;
+									if (ImGui::InputFloat("##BlacklistedAreaW", &val, 4.f, 32.f, 2))
+									{
+										m_blacklisted_projection[i].w = fmaxf(0.f, val);
+										request_tracker_set_projectionblacklist(m_blacklisted_projection);
+									}
+									ImGui::PopItemWidth();
+
+									ImGui::Text("Height: ");
+									ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+									ImGui::PushItemWidth(120.f);
+									val = m_blacklisted_projection[i].h;
+									if (ImGui::InputFloat("##BlacklistedAreaH", &val, 4.f, 32.f, 2))
+									{
+										m_blacklisted_projection[i].h = fmaxf(0.f, val);
+										request_tracker_set_projectionblacklist(m_blacklisted_projection);
+									}
+									ImGui::PopItemWidth();
+
+									if (ImGui::Button("Reset"))
+									{
+										m_blacklisted_projection[i].x = 0.f;
+										m_blacklisted_projection[i].y = 0.f;
+										m_blacklisted_projection[i].w = 0.f;
+										m_blacklisted_projection[i].h = 0.f;
+										request_tracker_set_projectionblacklist(m_blacklisted_projection);
+									}
+								}
 								ImGui::PopID();
 							}
 						}
+						ImGui::EndGroup();
+						if (ImGui::IsItemVisible())
+							lastChildVec = ImGui::GetItemRectSize();
+						ImGui::EndChild();
 					}
-					ImGui::EndGroup();
-					if (ImGui::IsItemVisible())
-						lastChildVec = ImGui::GetItemRectSize();
-					ImGui::EndChild();
-				}
 
-				if (ImGui::CollapsingHeader("Blacklisted Areas", 0, true, false))
-				{
-					static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
-					ImGui::BeginChild("##BlacklistedAreasChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
-					ImGui::BeginGroup();
+					if (m_masterControllerView != nullptr)
 					{
-						ImGui::Checkbox("Show Blacklisted Areas", &m_bProjectionBlacklistedShow);
-
-						for (int i = 0; i < eCommonBlacklistProjection::MAX_BLACKLIST_PROJECTIONS; ++i)
+						if (ImGui::Checkbox("Turn on all bulbs", &m_bTurnOnAllControllers))
 						{
-							std::string option_name = std::to_string(i);
+							request_turn_on_all_tracking_bulbs(m_bTurnOnAllControllers || m_bColorCollsionShow);
+						}
 
-							ImGui::PushID(option_name.c_str());
-							if (ImGui::CollapsingHeader(option_name.c_str(), 0, true, true))
-							{
-								float val;
-
-								ImGui::Text("X: ");
-								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-								ImGui::PushItemWidth(120.f);
-								val = m_blacklisted_projection[i].x;
-								if (ImGui::InputFloat("##BlacklistedAreaX", &val, 4.f, 32.f, 2))
-								{
-									m_blacklisted_projection[i].x = fmaxf(0.f, val);
-									request_tracker_set_projectionblacklist(m_blacklisted_projection);
-								}
-								ImGui::PopItemWidth();
-
-								ImGui::Text("Y: ");
-								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-								ImGui::PushItemWidth(120.f);
-								val = m_blacklisted_projection[i].y;
-								if (ImGui::InputFloat("##BlacklistedAreaY", &val, 4.f, 32.f, 2))
-								{
-									m_blacklisted_projection[i].y = fmaxf(0.f, val);
-									request_tracker_set_projectionblacklist(m_blacklisted_projection);
-								}
-								ImGui::PopItemWidth();
-
-								ImGui::Text("Width: ");
-								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-								ImGui::PushItemWidth(120.f);
-								val = m_blacklisted_projection[i].w;
-								if (ImGui::InputFloat("##BlacklistedAreaW", &val, 4.f, 32.f, 2))
-								{
-									m_blacklisted_projection[i].w = fmaxf(0.f, val);
-									request_tracker_set_projectionblacklist(m_blacklisted_projection);
-								}
-								ImGui::PopItemWidth();
-
-								ImGui::Text("Height: ");
-								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-								ImGui::PushItemWidth(120.f);
-								val = m_blacklisted_projection[i].h;
-								if (ImGui::InputFloat("##BlacklistedAreaH", &val, 4.f, 32.f, 2))
-								{
-									m_blacklisted_projection[i].h = fmaxf(0.f, val);
-									request_tracker_set_projectionblacklist(m_blacklisted_projection);
-								}
-								ImGui::PopItemWidth();
-
-								if (ImGui::Button("Reset"))
-								{
-									m_blacklisted_projection[i].x = 0.f;
-									m_blacklisted_projection[i].y = 0.f;
-									m_blacklisted_projection[i].w = 0.f;
-									m_blacklisted_projection[i].h = 0.f;
-									request_tracker_set_projectionblacklist(m_blacklisted_projection);
-								}
-							}
-							ImGui::PopID();
+						if (ImGui::Checkbox("Show color collisions", &m_bColorCollsionShow))
+						{
+							request_turn_on_all_tracking_bulbs(m_bTurnOnAllControllers || m_bColorCollsionShow);
 						}
 					}
-					ImGui::EndGroup();
-					if (ImGui::IsItemVisible())
-						lastChildVec = ImGui::GetItemRectSize();
-					ImGui::EndChild();
-				}
 
-				if (m_masterControllerView != nullptr)
-				{
-					if (ImGui::Checkbox("Turn on all bulbs", &m_bTurnOnAllControllers))
+					ImGui::Separator();
+
+					std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+					std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastStreamFps;
+					if (timeSinceLast.count() > 1000.f)
 					{
-						request_turn_on_all_tracking_bulbs(m_bTurnOnAllControllers || m_bColorCollsionShow);
+						m_displayFps = m_streamFps;
+						m_streamFps = 0;
+						m_lastStreamFps = now;
+					}
+					if (m_displayFps < m_trackerFrameRate - 7.5f)
+					{
+						ImGui::TextColored(ImColor(1.f, 0.f, 0.f), "Tracker Frame Rate: %d", m_displayFps);
+					}
+					else
+					{
+						ImGui::Text("Tracker Frame Rate: %d", m_displayFps);
 					}
 
-					if (ImGui::Checkbox("Show color collisions", &m_bColorCollsionShow))
+					ImGui::Separator();
+
+					if (ImGui::CollapsingHeader("Miscellaneous"))
 					{
-						request_turn_on_all_tracking_bulbs(m_bTurnOnAllControllers || m_bColorCollsionShow);
-					}
-				}
+						if (ImGui::Button("Save Default Profile"))
+						{
+							request_save_default_tracker_profile();
+						}
 
-				ImGui::Separator();
-
-				std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
-				std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastStreamFps;
-				if (timeSinceLast.count() > 1000.f)
-				{
-					m_displayFps = m_streamFps;
-					m_streamFps = 0;
-					m_lastStreamFps = now;
-				}
-				if (m_displayFps < m_trackerFrameRate - 7.5f)
-				{
-					ImGui::TextColored(ImColor(1.f, 0.f, 0.f), "Tracker Frame Rate: %d", m_displayFps);
-				}
-				else
-				{
-					ImGui::Text("Tracker Frame Rate: %d", m_displayFps);
-				}
-
-				ImGui::Separator();
-
-				if (ImGui::CollapsingHeader("Miscellaneous"))
-				{
-					if (ImGui::Button("Save Default Profile"))
-					{
-						request_save_default_tracker_profile();
-					}
-
-					if (ImGui::Button("Apply Default Profile"))
-					{
-						request_apply_default_tracker_profile();
+						if (ImGui::Button("Apply Default Profile"))
+						{
+							request_apply_default_tracker_profile();
+						}
 					}
 				}
 			}
+			ImGui::EndGroup();
+			if (ImGui::IsItemVisible())
+				lastWindowVec = ImGui::GetItemRectSize();
 
             ImGui::End();
         }
@@ -1090,750 +1098,758 @@ void AppStage_ColorCalibration::renderUI()
         // Color Control Panel
 		if (m_bShowWindows && !m_bAlignDetectColor)
 		{
+			static ImVec2 lastWindowVec = ImVec2(0.f, 4.f);
+
 			ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - k_panel_width - 10, 10.f));
-			ImGui::SetNextWindowSize(ImVec2(k_panel_width, ImGui::GetIO().DisplaySize.y - 32));
+			ImGui::SetNextWindowSize(ImVec2(k_panel_width, fminf(lastWindowVec.y + 32.f, ImGui::GetIO().DisplaySize.y - 32)));
 			ImGui::Begin("Controller Color", nullptr, window_flags);
-
-			if (m_masterControllerView != nullptr)
+			ImGui::BeginGroup();
 			{
-				if (ImGui::Button(" < ##Color"))
+
+				if (m_masterControllerView != nullptr)
 				{
-					PSMTrackingColorType new_color =
-						static_cast<PSMTrackingColorType>(
-						(m_masterTrackingColorType + PSMTrackingColorType_MaxColorTypes - 1)
-							% PSMTrackingColorType_MaxColorTypes);
-					request_set_controller_tracking_color(m_masterControllerView, new_color);
-					m_masterTrackingColorType = new_color;
+					if (ImGui::Button(" < ##Color"))
+					{
+						PSMTrackingColorType new_color =
+							static_cast<PSMTrackingColorType>(
+							(m_masterTrackingColorType + PSMTrackingColorType_MaxColorTypes - 1)
+								% PSMTrackingColorType_MaxColorTypes);
+						request_set_controller_tracking_color(m_masterControllerView, new_color);
+						m_masterTrackingColorType = new_color;
+					}
+					ImGui::SameLine();
+					if (ImGui::Button(" > ##Color"))
+					{
+						PSMTrackingColorType new_color =
+							static_cast<PSMTrackingColorType>(
+							(m_masterTrackingColorType + 1) % PSMTrackingColorType_MaxColorTypes);
+						request_set_controller_tracking_color(m_masterControllerView, new_color);
+						m_masterTrackingColorType = new_color;
+					}
+					ImGui::SameLine();
+				}
+				ImGui::Text("Tracking Color: %s", k_tracking_color_names[m_masterTrackingColorType]);
+
+				if (ImGui::CollapsingHeader("Advanced Settings", 0, true, false))
+				{
+					static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
+					ImGui::BeginChild("##ColorAdvancedSettingsChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
+					ImGui::BeginGroup();
+					{
+						// -- Hue --
+						if (ImGui::Button(" - ##HueCenter"))
+						{
+							TrackerColorPreset preset = getColorPreset();
+							preset.hue_center = wrap_range(preset.hue_center - 5.f, 0.f, 180.f);
+							request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+						}
+						ImGui::SameLine();
+						if (ImGui::Button(" + ##HueCenter"))
+						{
+							TrackerColorPreset preset = getColorPreset();
+							preset.hue_center = wrap_range(preset.hue_center + 5.f, 0.f, 180.f);
+							request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+						}
+						ImGui::SameLine();
+						ImGui::Text("Hue Angle: %f", getColorPreset().hue_center);
+
+						if (ImGui::Button(" - ##HueRange"))
+						{
+							TrackerColorPreset preset = getColorPreset();
+							preset.hue_range = clampf(preset.hue_range - 5.f, 0.f, 90.f);
+							request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+						}
+						ImGui::SameLine();
+						if (ImGui::Button(" + ##HueRange"))
+						{
+							TrackerColorPreset preset = getColorPreset();
+							preset.hue_range = clampf(preset.hue_range + 5.f, 0.f, 90.f);
+							request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+						}
+						ImGui::SameLine();
+						ImGui::Text("Hue Range: %f", getColorPreset().hue_range);
+
+						// -- Saturation --
+						if (ImGui::Button(" - ##SaturationCenter"))
+						{
+							TrackerColorPreset preset = getColorPreset();
+							preset.saturation_center = clampf(preset.saturation_center - 5.f, 0.f, 255.f);
+							request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+						}
+						ImGui::SameLine();
+						if (ImGui::Button(" + ##SaturationCenter"))
+						{
+							TrackerColorPreset preset = getColorPreset();
+							preset.saturation_center = clampf(preset.saturation_center + 5.f, 0.f, 255.f);
+							request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+						}
+						ImGui::SameLine();
+						ImGui::Text("Saturation Center: %f", getColorPreset().saturation_center);
+
+						if (ImGui::Button(" - ##SaturationRange"))
+						{
+							TrackerColorPreset preset = getColorPreset();
+							preset.saturation_range = clampf(preset.saturation_range - 5.f, 0.f, 125.f);
+							request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+						}
+						ImGui::SameLine();
+						if (ImGui::Button(" + ##SaturationRange"))
+						{
+							TrackerColorPreset preset = getColorPreset();
+							preset.saturation_range = clampf(preset.saturation_range + 5.f, 0.f, 125.f);
+							request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+						}
+						ImGui::SameLine();
+						ImGui::Text("Saturation Range: %f", getColorPreset().saturation_range);
+
+						// -- Value --
+						if (ImGui::Button(" - ##ValueCenter"))
+						{
+							TrackerColorPreset preset = getColorPreset();
+							preset.value_center = clampf(preset.value_center - 5.f, 0.f, 255.f);
+							request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+						}
+						ImGui::SameLine();
+						if (ImGui::Button(" + ##ValueCenter"))
+						{
+							TrackerColorPreset preset = getColorPreset();
+							preset.value_center = clampf(preset.value_center + 5.f, 0.f, 255.f);
+							request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+						}
+						ImGui::SameLine();
+						ImGui::Text("Value Center: %f", getColorPreset().value_center);
+
+						if (ImGui::Button(" - ##ValueRange"))
+						{
+							TrackerColorPreset preset = getColorPreset();
+							preset.value_range = clampf(preset.value_range - 5.f, 0.f, 125.f);
+							request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+						}
+						ImGui::SameLine();
+						if (ImGui::Button(" + ##ValueRange"))
+						{
+							TrackerColorPreset preset = getColorPreset();
+							preset.value_range = clampf(preset.value_range + 5.f, 0.f, 125.f);
+							request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+						}
+						ImGui::SameLine();
+						ImGui::Text("Value Range: %f", getColorPreset().value_range);
+					}
+					ImGui::EndGroup();
+					if (ImGui::IsItemVisible())
+						lastChildVec = ImGui::GetItemRectSize();
+					ImGui::EndChild();
+				}
+
+				// -- Change Controller --
+				if (m_masterControllerView != nullptr)
+				{
+					if (ImGui::Button(" < ##Controller"))
+					{
+						request_change_controller(-1);
+						request_change_tracker(0);
+					}
+					ImGui::SameLine();
+					if (ImGui::Button(" > ##Controller"))
+					{
+						request_change_controller(1);
+						request_change_tracker(0);
+					}
+					ImGui::SameLine();
+					ImGui::Text("PSMove Controller ID: %d", m_overrideControllerId);
+				}
+
+				// -- Change Tracker --
+				if (ImGui::Button(" < ##Tracker"))
+				{
+					request_change_tracker(-1);
 				}
 				ImGui::SameLine();
-				if (ImGui::Button(" > ##Color"))
+				if (ImGui::Button(" > ##Tracker"))
 				{
-					PSMTrackingColorType new_color =
-						static_cast<PSMTrackingColorType>(
-						(m_masterTrackingColorType + 1) % PSMTrackingColorType_MaxColorTypes);
-					request_set_controller_tracking_color(m_masterControllerView, new_color);
-					m_masterTrackingColorType = new_color;
+					request_change_tracker(1);
 				}
 				ImGui::SameLine();
-			}
-			ImGui::Text("Tracking Color: %s", k_tracking_color_names[m_masterTrackingColorType]);
+				ImGui::Text("Tracker ID: %d", tracker_index);
 
-			if (ImGui::CollapsingHeader("Advanced Settings", 0, true, false))
-			{
-				static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
-				ImGui::BeginChild("##ColorAdvancedSettingsChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
-				ImGui::BeginGroup();
+				if (m_masterControllerView != nullptr)
 				{
-					// -- Hue --
-					if (ImGui::Button(" - ##HueCenter"))
+					if (ImGui::Button("Test Tracking Pose"))
 					{
-						TrackerColorPreset preset = getColorPreset();
-						preset.hue_center = wrap_range(preset.hue_center - 5.f, 0.f, 180.f);
-						request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+						m_app->getAppStage<AppStage_TrackerSettings>()->gotoTestControllerTracking(true);
+						request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
 					}
 					ImGui::SameLine();
-					if (ImGui::Button(" + ##HueCenter"))
+					if (ImGui::Button("Test One"))
 					{
-						TrackerColorPreset preset = getColorPreset();
-						preset.hue_center = wrap_range(preset.hue_center + 5.f, 0.f, 180.f);
-						request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+						m_app->getAppStage<AppStage_TrackerSettings>()->gotoTrackingControllerVideo(true);
+						request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
 					}
 					ImGui::SameLine();
-					ImGui::Text("Hue Angle: %f", getColorPreset().hue_center);
-
-					if (ImGui::Button(" - ##HueRange"))
+					if (ImGui::Button("Test All"))
 					{
-						TrackerColorPreset preset = getColorPreset();
-						preset.hue_range = clampf(preset.hue_range - 5.f, 0.f, 90.f);
-						request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+						m_app->getAppStage<AppStage_TrackerSettings>()->gotoTrackingVideoALL(true);
+						request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
 					}
-					ImGui::SameLine();
-					if (ImGui::Button(" + ##HueRange"))
-					{
-						TrackerColorPreset preset = getColorPreset();
-						preset.hue_range = clampf(preset.hue_range + 5.f, 0.f, 90.f);
-						request_tracker_set_color_preset(m_masterTrackingColorType, preset);
-					}
-					ImGui::SameLine();
-					ImGui::Text("Hue Range: %f", getColorPreset().hue_range);
-
-					// -- Saturation --
-					if (ImGui::Button(" - ##SaturationCenter"))
-					{
-						TrackerColorPreset preset = getColorPreset();
-						preset.saturation_center = clampf(preset.saturation_center - 5.f, 0.f, 255.f);
-						request_tracker_set_color_preset(m_masterTrackingColorType, preset);
-					}
-					ImGui::SameLine();
-					if (ImGui::Button(" + ##SaturationCenter"))
-					{
-						TrackerColorPreset preset = getColorPreset();
-						preset.saturation_center = clampf(preset.saturation_center + 5.f, 0.f, 255.f);
-						request_tracker_set_color_preset(m_masterTrackingColorType, preset);
-					}
-					ImGui::SameLine();
-					ImGui::Text("Saturation Center: %f", getColorPreset().saturation_center);
-
-					if (ImGui::Button(" - ##SaturationRange"))
-					{
-						TrackerColorPreset preset = getColorPreset();
-						preset.saturation_range = clampf(preset.saturation_range - 5.f, 0.f, 125.f);
-						request_tracker_set_color_preset(m_masterTrackingColorType, preset);
-					}
-					ImGui::SameLine();
-					if (ImGui::Button(" + ##SaturationRange"))
-					{
-						TrackerColorPreset preset = getColorPreset();
-						preset.saturation_range = clampf(preset.saturation_range + 5.f, 0.f, 125.f);
-						request_tracker_set_color_preset(m_masterTrackingColorType, preset);
-					}
-					ImGui::SameLine();
-					ImGui::Text("Saturation Range: %f", getColorPreset().saturation_range);
-
-					// -- Value --
-					if (ImGui::Button(" - ##ValueCenter"))
-					{
-						TrackerColorPreset preset = getColorPreset();
-						preset.value_center = clampf(preset.value_center - 5.f, 0.f, 255.f);
-						request_tracker_set_color_preset(m_masterTrackingColorType, preset);
-					}
-					ImGui::SameLine();
-					if (ImGui::Button(" + ##ValueCenter"))
-					{
-						TrackerColorPreset preset = getColorPreset();
-						preset.value_center = clampf(preset.value_center + 5.f, 0.f, 255.f);
-						request_tracker_set_color_preset(m_masterTrackingColorType, preset);
-					}
-					ImGui::SameLine();
-					ImGui::Text("Value Center: %f", getColorPreset().value_center);
-
-					if (ImGui::Button(" - ##ValueRange"))
-					{
-						TrackerColorPreset preset = getColorPreset();
-						preset.value_range = clampf(preset.value_range - 5.f, 0.f, 125.f);
-						request_tracker_set_color_preset(m_masterTrackingColorType, preset);
-					}
-					ImGui::SameLine();
-					if (ImGui::Button(" + ##ValueRange"))
-					{
-						TrackerColorPreset preset = getColorPreset();
-						preset.value_range = clampf(preset.value_range + 5.f, 0.f, 125.f);
-						request_tracker_set_color_preset(m_masterTrackingColorType, preset);
-					}
-					ImGui::SameLine();
-					ImGui::Text("Value Range: %f", getColorPreset().value_range);
 				}
-				ImGui::EndGroup();
-				if (ImGui::IsItemVisible())
-					lastChildVec = ImGui::GetItemRectSize();
-				ImGui::EndChild();
-			}
-
-            // -- Change Controller --
-            if (m_masterControllerView != nullptr)
-            {
-                if (ImGui::Button(" < ##Controller"))
-                {
-                    request_change_controller(-1);
-					request_change_tracker(0);
-                }
-                ImGui::SameLine();
-                if (ImGui::Button(" > ##Controller"))
-                {
-                    request_change_controller(1);
-					request_change_tracker(0);
-                }
-                ImGui::SameLine();
-                ImGui::Text("PSMove Controller ID: %d", m_overrideControllerId);
-            }
-
-            // -- Change Tracker --
-            if (ImGui::Button(" < ##Tracker"))
-            {
-                request_change_tracker(-1);
-            }
-            ImGui::SameLine();
-            if (ImGui::Button(" > ##Tracker"))
-            {
-                request_change_tracker(1);
-            }
-            ImGui::SameLine();
-            ImGui::Text("Tracker ID: %d", tracker_index);
-
-            if (m_masterControllerView != nullptr)
-            {
-                if (ImGui::Button("Test Tracking Pose"))
-                {
-                    m_app->getAppStage<AppStage_TrackerSettings>()->gotoTestControllerTracking(true);
-                    request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
-                }
-                ImGui::SameLine();
-                if (ImGui::Button("Test One"))
-                {
-                    m_app->getAppStage<AppStage_TrackerSettings>()->gotoTrackingControllerVideo(true);
-                    request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
-                }
-                ImGui::SameLine();
-                if (ImGui::Button("Test All"))
-                {
-                    m_app->getAppStage<AppStage_TrackerSettings>()->gotoTrackingVideoALL(true);
-                    request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
-                }
-            }
-            else if (m_hmdView != nullptr)
-            {
-                if (ImGui::Button("Test Tracking Pose"))
-                {
-                    m_app->getAppStage<AppStage_TrackerSettings>()->gotoTestHMDTracking(true);
-                    request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
-                }
-                ImGui::SameLine();
-                if (ImGui::Button("Test One"))
-                {
-                    m_app->getAppStage<AppStage_TrackerSettings>()->gotoTrackingHMDVideo(true);
-                    request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
-                }
-                ImGui::SameLine();
-                if (ImGui::Button("Test All"))
-                {
-                    m_app->getAppStage<AppStage_TrackerSettings>()->gotoTrackingVideoALL(true);
-                    request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
-                }
-            }
-
-			// -- Auto Calibration --
-			if (ImGui::CollapsingHeader("Color Detection", 0, true, true))
-			{
-				static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
-				ImGui::BeginChild("##ColorDetectionChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
-				ImGui::BeginGroup();
+				else if (m_hmdView != nullptr)
 				{
-					if (m_masterControllerView != nullptr)
+					if (ImGui::Button("Test Tracking Pose"))
 					{
-						if (ImGui::Button("Automatically Detect Colors"))
-						{
-							setState(eMenuState::detection_init);
-						}
+						m_app->getAppStage<AppStage_TrackerSettings>()->gotoTestHMDTracking(true);
+						request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
 					}
-
-					if (ImGui::Button("Manually Detect Colors"))
+					ImGui::SameLine();
+					if (ImGui::Button("Test One"))
 					{
-						m_bAlignDetectColor = true;
+						m_app->getAppStage<AppStage_TrackerSettings>()->gotoTrackingHMDVideo(true);
+						request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
 					}
-
-					if (ImGui::CollapsingHeader("Automatic Detection Settings", 0, true, true))
+					ImGui::SameLine();
+					if (ImGui::Button("Test All"))
 					{
-						static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
-						ImGui::BeginChild("##AutoColorDetectionSettingsChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
-						ImGui::BeginGroup();
+						m_app->getAppStage<AppStage_TrackerSettings>()->gotoTrackingVideoALL(true);
+						request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
+					}
+				}
+
+				// -- Auto Calibration --
+				if (ImGui::CollapsingHeader("Color Detection", 0, true, true))
+				{
+					static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
+					ImGui::BeginChild("##ColorDetectionChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
+					ImGui::BeginGroup();
+					{
+						if (m_masterControllerView != nullptr)
 						{
-							int adjustMethod = m_iDetectingAdjustMethod;
-							ImGui::Text("Automatic exposure/gain options:");
-							if (ImGui::Combo("##DetectAdjustMethod", &adjustMethod, "Keep Settings\0Adjust Exposure\0Adjust Gain\0\0"))
+							if (ImGui::Button("Automatically Detect Colors"))
 							{
-								m_iDetectingAdjustMethod = static_cast<eDetectionAdjustMethod>(adjustMethod);
+								setState(eMenuState::detection_init);
 							}
 						}
-						ImGui::EndGroup();
-						if (ImGui::IsItemVisible())
-							lastChildVec2 = ImGui::GetItemRectSize();
-						ImGui::EndChild();
-					}
 
-					if (ImGui::CollapsingHeader("Automatic/Manual Detection Settings", 0, true, true))
-					{
-						static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
-						ImGui::BeginChild("##AutoManualColorDetectionSettingsChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
-						ImGui::BeginGroup();
+						if (ImGui::Button("Manually Detect Colors"))
 						{
-							int colorSensitivity = m_iColorSensitivity;
-							ImGui::Text("Color detection sensitivity:");
-							if (ImGui::Combo("##SensitivityPostProcessing", &colorSensitivity, "Keep Settings\0Normal Sensitivity\0Medium Sensitivity\0High Sensitivity\0Aggressive Sensitivity\0Extreme Sensitivity\0\0"))
+							m_bAlignDetectColor = true;
+						}
+
+						if (ImGui::CollapsingHeader("Automatic Detection Settings", 0, true, true))
+						{
+							static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
+							ImGui::BeginChild("##AutoColorDetectionSettingsChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
+							ImGui::BeginGroup();
 							{
-								if (colorSensitivity >= sensitivity_MAX)
-									colorSensitivity = sensitivity_MAX - 1;
-
-								m_iColorSensitivity = static_cast<eColorDetectionSensitivity>(colorSensitivity);
+								int adjustMethod = m_iDetectingAdjustMethod;
+								ImGui::Text("Automatic exposure/gain options:");
+								if (ImGui::Combo("##DetectAdjustMethod", &adjustMethod, "Keep Settings\0Adjust Exposure\0Adjust Gain\0\0"))
+								{
+									m_iDetectingAdjustMethod = static_cast<eDetectionAdjustMethod>(adjustMethod);
+								}
 							}
+							ImGui::EndGroup();
+							if (ImGui::IsItemVisible())
+								lastChildVec2 = ImGui::GetItemRectSize();
+							ImGui::EndChild();
+						}
 
-							if (ImGui::IsItemHovered())
-								ImGui::SetTooltip(
-									"Automatically adjusts the color hue, hue range, saturation center,\n"
-									"saturation range, value center and value range.\n"
-									"Using higher sensitivity can help improve tracking quality and\n"
-									"tracking range but also creates more color noise and collisions\n"
-									"between colors!"
-								);
+						if (ImGui::CollapsingHeader("Automatic/Manual Detection Settings", 0, true, true))
+						{
+							static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
+							ImGui::BeginChild("##AutoManualColorDetectionSettingsChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
+							ImGui::BeginGroup();
+							{
+								int colorSensitivity = m_iColorSensitivity;
+								ImGui::Text("Color detection sensitivity:");
+								if (ImGui::Combo("##SensitivityPostProcessing", &colorSensitivity, "Keep Settings\0Normal Sensitivity\0Medium Sensitivity\0High Sensitivity\0Aggressive Sensitivity\0Extreme Sensitivity\0\0"))
+								{
+									if (colorSensitivity >= sensitivity_MAX)
+										colorSensitivity = sensitivity_MAX - 1;
 
-							if (m_iColorSensitivity > sensitivity_disabled) {
-								ImGui::Checkbox("Prevent color collisions", &m_bColorCollisionPrevent);
+									m_iColorSensitivity = static_cast<eColorDetectionSensitivity>(colorSensitivity);
+								}
 
 								if (ImGui::IsItemHovered())
 									ImGui::SetTooltip(
-										"Adjusts the hue range to avoid collisions between controller colors and potential color noise.\n"
-										"This will reduce tracking quality if enabled."
+										"Automatically adjusts the color hue, hue range, saturation center,\n"
+										"saturation range, value center and value range.\n"
+										"Using higher sensitivity can help improve tracking quality and\n"
+										"tracking range but also creates more color noise and collisions\n"
+										"between colors!"
 									);
+
+								if (m_iColorSensitivity > sensitivity_disabled) {
+									ImGui::Checkbox("Prevent color collisions", &m_bColorCollisionPrevent);
+
+									if (ImGui::IsItemHovered())
+										ImGui::SetTooltip(
+											"Adjusts the hue range to avoid collisions between controller colors and potential color noise.\n"
+											"This will reduce tracking quality if enabled."
+										);
+								}
 							}
+							ImGui::EndGroup();
+							if (ImGui::IsItemVisible())
+								lastChildVec2 = ImGui::GetItemRectSize();
+							ImGui::EndChild();
 						}
-						ImGui::EndGroup();
-						if (ImGui::IsItemVisible())
-							lastChildVec2 = ImGui::GetItemRectSize();
-						ImGui::EndChild();
-					}
 
-					if (m_masterControllerView != nullptr)
-					{
-						ImGui::Checkbox("Automatically switch color", &m_bAutoChangeColor);
+						if (m_masterControllerView != nullptr)
+						{
+							ImGui::Checkbox("Automatically switch color", &m_bAutoChangeColor);
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"Cycles through all available colors automatically.\n"
+									"(This is always enabled when using 'Automatically detect colors')"
+								);
+
+							ImGui::Checkbox("Automatically switch controller", &m_bAutoChangeController);
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"Cycles through all available controllers automatically."
+								);
+						}
+
+						ImGui::Checkbox("Automatically switch tracker", &m_bAutoChangeTracker);
 						if (ImGui::IsItemHovered())
 							ImGui::SetTooltip(
-								"Cycles through all available colors automatically.\n"
-								"(This is always enabled when using 'Automatically detect colors')"
-							);
-
-						ImGui::Checkbox("Automatically switch controller", &m_bAutoChangeController);
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"Cycles through all available controllers automatically."
+								"Cycles through all available trackers automatically."
 							);
 					}
-
-					ImGui::Checkbox("Automatically switch tracker", &m_bAutoChangeTracker);
-					if (ImGui::IsItemHovered())
-						ImGui::SetTooltip(
-							"Cycles through all available trackers automatically."
-						);
-				}
-				ImGui::EndGroup();
-				if (ImGui::IsItemVisible())
-					lastChildVec = ImGui::GetItemRectSize();
-				ImGui::EndChild();
-			}
-
-			if (ImGui::CollapsingHeader("Warnings and Issues", 0, true, true))
-			{
-				ImColor colorGreen = ImColor(0.f, 1.f, 0.f);
-				ImColor colorOrange = ImColor(1.f, .5f, 0.f);
-				ImColor colorRed = ImColor(1.f, 0.f, 0.f);
-				ImColor colorBlue = ImColor(0.f, 0.25f, 1.f);
-
-				bool bHasIssues = false;
-
-				{
-					// Tell if its a virtual device.
-					if (is_tracker_virtual())
-					{
-						ImGui::ColorButton(colorBlue, true);
-						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
-						ImGui::SameLine();
-						ImGui::TextWrapped(
-							"Tracker is virtual. "
-							"Some settings on this page might not be available or have to be set manually."
-						);
-					}
-
-					if (m_masterControllerView != nullptr && m_masterControllerView->ControllerType == PSMController_Virtual)
-					{
-						ImGui::ColorButton(colorBlue, true);
-						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
-						ImGui::SameLine();
-						ImGui::TextWrapped(
-							"Controller is virtual. "
-							"Some settings on this page might not be available or have to be set manually."
-						);
-					}
-
-					if (m_hmdView != nullptr && m_hmdView->HmdType == PSMHmd_Virtual)
-					{
-						ImGui::ColorButton(colorBlue, true);
-						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
-						ImGui::SameLine();
-						ImGui::TextWrapped(
-							"HMD is virtual. "
-							"Some settings on this page might not be available or have to be set manually."
-						);
-					}
+					ImGui::EndGroup();
+					if (ImGui::IsItemVisible())
+						lastChildVec = ImGui::GetItemRectSize();
+					ImGui::EndChild();
 				}
 
+				if (ImGui::CollapsingHeader("Warnings and Issues", 0, true, true))
 				{
-					// Recommend exposure adjustments rather than gain adjustments
-					if (!is_tracker_virtual() && m_trackerGain > 32)
+					ImColor colorGreen = ImColor(0.f, 1.f, 0.f);
+					ImColor colorOrange = ImColor(1.f, .5f, 0.f);
+					ImColor colorRed = ImColor(1.f, 0.f, 0.f);
+					ImColor colorBlue = ImColor(0.f, 0.25f, 1.f);
+
+					bool bHasIssues = false;
+
 					{
-						ImGui::ColorButton(colorBlue, true);
-						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
-						ImGui::SameLine();
-						ImGui::TextWrapped(
-							"Tracker gain not default. "
-							"It's recommended to adjust exposure instead of gain. "
-							"Increasing gain will increase random color noise which can negatively affect tracking quality."
-						);
-					}
-				}
-
-				{
-					// Recommend higher fps
-					if (!is_tracker_virtual() && m_trackerFrameRate < 30)
-					{
-						ImGui::ColorButton(colorBlue, true);
-						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
-						ImGui::SameLine();
-						ImGui::TextWrapped(
-							"Tracker frame rate too low. "
-							"It's recommended to run trackers at least at 30 fps or higher. "
-							"Lowering the frame rate of the tracker below 30 fps can lead to less responsive tracking, input lag and tracking loss on fast movements."
-						);
-					}
-				}
-
-				{
-					// Validate Exposure/Gain
-					TrackerColorPreset preset = getColorPreset();
-
-					// Saturation too low, its too bright!
-					if (preset.saturation_center < 40)
-					{
-						ImGui::ColorButton(colorRed, true);
-						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
-						ImGui::SameLine();
-						ImGui::TextWrapped("Color saturation too low! The tracking color is way too bright and will cause tracking problems! Adjust your tracker exposure/gain settings!");
-						bHasIssues = true;
-					}
-					else if (preset.saturation_center < 80)
-					{
-						ImGui::ColorButton(colorOrange, true);
-						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
-						ImGui::SameLine();
-						ImGui::TextWrapped("Color saturation not optimal! The tracking color is too bright and could cause tracking problems! Adjust your tracker exposure/gain settings.");
-						bHasIssues = true;
-					}
-
-					// Value too low, its too dark!
-					if (preset.value_center < 40)
-					{
-						ImGui::ColorButton(colorOrange, true);
-						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
-						ImGui::SameLine();
-						ImGui::TextWrapped("Color value too low! The tracking color is way too dark and could cause tracking problems! Adjust your tracker exposure/gain settings!");
-						bHasIssues = true;
-					}
-					else if (preset.value_center < 80)
-					{
-						ImGui::ColorButton(colorOrange, true);
-						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
-						ImGui::SameLine();
-						ImGui::TextWrapped("Color value not optimal! The tracking color is too dark and could cause tracking problems! Adjust your tracker exposure/gain settings.");
-						bHasIssues = true;
-					}
-				}
-
-				{
-					// Validate color settings
-					TrackerColorPreset preset = getColorPreset();
-					switch (m_masterTrackingColorType)
-					{
-					case PSMTrackingColorType::PSMTrackingColorType_Red:
-					{
-						const int targetHue = 0;
-						const int targetRange = 25;
-						const float hue_min = preset.hue_center - targetRange;
-						const float hue_max = preset.hue_center + targetRange;
-						bool invalidHue = false;
-						if (hue_min < 0)
-						{
-							invalidHue = (preset.hue_center < ((targetHue + (180 - targetRange)) % 180) && preset.hue_center > ((targetHue + targetRange) % 180));
-						}
-						else if (hue_max > 180)
-						{
-							invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) && preset.hue_center > ((targetHue + targetRange) % 180));
-						}
-						else
-						{
-							invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) || preset.hue_center > ((targetHue + targetRange) % 180));
-						}
-
-						if (invalidHue)
-						{
-							ImGui::ColorButton(colorRed, true);
-							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
-							ImGui::SameLine();
-							ImGui::TextWrapped(
-								"Wrong tracking color set! "
-								"The target tracking color is set to RED but the target hue center is not RED. "
-								"This can cause collisions with other colors! "
-								"Adjust your tracking color settings!"
-							);
-							bHasIssues = true;
-						}
-
-						break;
-					}
-					case PSMTrackingColorType::PSMTrackingColorType_Green:
-					{
-						int targetHue = 60;
-						const int targetRange = 25;
-						const float hue_min = preset.hue_center - targetRange;
-						const float hue_max = preset.hue_center + targetRange;
-						bool invalidHue = false;
-						if (hue_min < 0)
-						{
-							invalidHue = (preset.hue_center < ((targetHue + (180 - targetRange)) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
-						}
-						else if (hue_max > 180)
-						{
-							invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
-						}
-						else
-						{
-							invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) || preset.hue_center >((targetHue + targetRange) % 180));
-						}
-
-						if (invalidHue)
-						{
-							ImGui::ColorButton(colorRed, true);
-							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
-							ImGui::SameLine();
-							ImGui::TextWrapped(
-								"Wrong tracking color set! "
-								"The target tracking color is set to GREEN but the target hue center is not GREEN. "
-								"This can cause collisions with other colors! "
-								"Adjust your tracking color settings!"
-							);
-							bHasIssues = true;
-						}
-
-						break;
-					}
-					case PSMTrackingColorType::PSMTrackingColorType_Blue:
-					{
-						int targetHue = 120;
-						const int targetRange = 25;
-						const float hue_min = preset.hue_center - targetRange;
-						const float hue_max = preset.hue_center + targetRange;
-						bool invalidHue = false;
-						if (hue_min < 0)
-						{
-							invalidHue = (preset.hue_center < ((targetHue + (180 - targetRange)) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
-						}
-						else if (hue_max > 180)
-						{
-							invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
-						}
-						else
-						{
-							invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) || preset.hue_center >((targetHue + targetRange) % 180));
-						}
-
-						if (invalidHue)
-						{
-							ImGui::ColorButton(colorRed, true);
-							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
-							ImGui::SameLine();
-							ImGui::TextWrapped(
-								"Wrong tracking color set! "
-								"The target tracking color is set to BLUE but the target hue center is not BLUE. "
-								"This can cause collisions with other colors! "
-								"Adjust your tracking color settings!"
-							);
-							bHasIssues = true;
-						}
-
-						break;
-					}
-					case PSMTrackingColorType::PSMTrackingColorType_Magenta:
-					{
-						int targetHue = 150;
-						const int targetRange = 25;
-						const float hue_min = preset.hue_center - targetRange;
-						const float hue_max = preset.hue_center + targetRange;
-						bool invalidHue = false;
-						if (hue_min < 0)
-						{
-							invalidHue = (preset.hue_center < ((targetHue + (180 - targetRange)) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
-						}
-						else if (hue_max > 180)
-						{
-							invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
-						}
-						else
-						{
-							invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) || preset.hue_center >((targetHue + targetRange) % 180));
-						}
-
-						if (invalidHue)
-						{
-							ImGui::ColorButton(colorRed, true);
-							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
-							ImGui::SameLine();
-							ImGui::TextWrapped(
-								"Wrong tracking color set! "
-								"The target tracking color is set to MAGENTA but the target hue center is not MAGENTA. "
-								"This can cause collisions with other colors! "
-								"Adjust your tracking color settings!"
-							);
-							bHasIssues = true;
-						}
-
-						break;
-					}
-					case PSMTrackingColorType::PSMTrackingColorType_Cyan:
-					{
-						int targetHue = 90;
-						const int targetRange = 25;
-						const float hue_min = preset.hue_center - targetRange;
-						const float hue_max = preset.hue_center + targetRange;
-						bool invalidHue = false;
-						if (hue_min < 0)
-						{
-							invalidHue = (preset.hue_center < ((targetHue + (180 - targetRange)) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
-						}
-						else if (hue_max > 180)
-						{
-							invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
-						}
-						else
-						{
-							invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) || preset.hue_center >((targetHue + targetRange) % 180));
-						}
-
-						if (invalidHue)
-						{
-							ImGui::ColorButton(colorRed, true);
-							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
-							ImGui::SameLine();
-							ImGui::TextWrapped(
-								"Wrong tracking color set! "
-								"The target tracking color is set to CYAN but the target hue center is not CYAN. "
-								"This can cause collisions with other colors! "
-								"Adjust your tracking color settings!"
-							);
-							bHasIssues = true;
-						}
-
-						break;
-					}
-					case PSMTrackingColorType::PSMTrackingColorType_Yellow:
-					{
-						int targetHue = 30;
-						const int targetRange = 25;
-						const float hue_min = preset.hue_center - targetRange;
-						const float hue_max = preset.hue_center + targetRange;
-						bool invalidHue = false;
-						if (hue_min < 0)
-						{
-							invalidHue = (preset.hue_center < ((targetHue + (180 - targetRange)) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
-						}
-						else if (hue_max > 180)
-						{
-							invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
-						}
-						else
-						{
-							invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) || preset.hue_center >((targetHue + targetRange) % 180));
-						}
-
-						if (invalidHue)
-						{
-							ImGui::ColorButton(colorRed, true);
-							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
-							ImGui::SameLine();
-							ImGui::TextWrapped(
-								"Wrong tracking color set! "
-								"The target tracking color is set to YELLOW but the target hue center is not YELLOW. "
-								"This can cause collisions with other colors! "
-								"Adjust your tracking color settings!"
-							);
-							bHasIssues = true;
-						}
-
-						break;
-					}
-					case PSMTrackingColorType::PSMTrackingColorType_Custom0:
-					case PSMTrackingColorType::PSMTrackingColorType_Custom1:
-					case PSMTrackingColorType::PSMTrackingColorType_Custom2:
-					case PSMTrackingColorType::PSMTrackingColorType_Custom3:
-					case PSMTrackingColorType::PSMTrackingColorType_Custom4:
-					case PSMTrackingColorType::PSMTrackingColorType_Custom5:
-					case PSMTrackingColorType::PSMTrackingColorType_Custom6:
-					case PSMTrackingColorType::PSMTrackingColorType_Custom7:
-					case PSMTrackingColorType::PSMTrackingColorType_Custom8:
-					case PSMTrackingColorType::PSMTrackingColorType_Custom9:
-					{
-						if (m_masterControllerView != nullptr && m_masterControllerView->ControllerType == PSMController_Move)
+						// Tell if its a virtual device.
+						if (is_tracker_virtual())
 						{
 							ImGui::ColorButton(colorBlue, true);
 							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
 							ImGui::SameLine();
 							ImGui::TextWrapped(
-								"Custom preset color set. PSmove bulb has been turned off."
+								"Tracker is virtual. "
+								"Some settings on this page might not be available or have to be set manually."
 							);
 						}
 
-						break;
-					}
-					}
-				}
+						if (m_masterControllerView != nullptr && m_masterControllerView->ControllerType == PSMController_Virtual)
+						{
+							ImGui::ColorButton(colorBlue, true);
+							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::SameLine();
+							ImGui::TextWrapped(
+								"Controller is virtual. "
+								"Some settings on this page might not be available or have to be set manually."
+							);
+						}
 
-				{
-					// Get the avg of detected contures to avoid frequent UI changes.
-					const int DETECTED_CONTURES_SMOOTH_SIZE = 32;
-					static int detectedContures = 0;
-					static int detectedConturesAvg = 0;
-					static int detectedConturesCount = 0;
-
-					detectedConturesAvg += static_cast<int>(m_mDetectedContures.size());
-					if (++detectedConturesCount > DETECTED_CONTURES_SMOOTH_SIZE)
-					{
-						detectedContures = static_cast<int>(floor(detectedConturesAvg / DETECTED_CONTURES_SMOOTH_SIZE));
-						detectedConturesAvg = 0;
-						detectedConturesCount = 0;
+						if (m_hmdView != nullptr && m_hmdView->HmdType == PSMHmd_Virtual)
+						{
+							ImGui::ColorButton(colorBlue, true);
+							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::SameLine();
+							ImGui::TextWrapped(
+								"HMD is virtual. "
+								"Some settings on this page might not be available or have to be set manually."
+							);
+						}
 					}
 
-					// Check for color noise and if the color can be found at all.
-					switch (detectedContures)
 					{
-					case 0:
+						// Recommend exposure adjustments rather than gain adjustments
+						if (!is_tracker_virtual() && m_trackerGain > 32)
+						{
+							ImGui::ColorButton(colorBlue, true);
+							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::SameLine();
+							ImGui::TextWrapped(
+								"Tracker gain not default. "
+								"It's recommended to adjust exposure instead of gain. "
+								"Increasing gain will increase random color noise which can negatively affect tracking quality."
+							);
+						}
+					}
+
 					{
-						ImGui::ColorButton(colorRed, true);
+						// Recommend higher fps
+						if (!is_tracker_virtual() && m_trackerFrameRate < 30)
+						{
+							ImGui::ColorButton(colorBlue, true);
+							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::SameLine();
+							ImGui::TextWrapped(
+								"Tracker frame rate too low. "
+								"It's recommended to run trackers at least at 30 fps or higher. "
+								"Lowering the frame rate of the tracker below 30 fps can lead to less responsive tracking, input lag and tracking loss on fast movements."
+							);
+						}
+					}
+
+					{
+						// Validate Exposure/Gain
+						TrackerColorPreset preset = getColorPreset();
+
+						// Saturation too low, its too bright!
+						if (preset.saturation_center < 40)
+						{
+							ImGui::ColorButton(colorRed, true);
+							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::SameLine();
+							ImGui::TextWrapped("Color saturation too low! The tracking color is way too bright and will cause tracking problems! Adjust your tracker exposure/gain settings!");
+							bHasIssues = true;
+						}
+						else if (preset.saturation_center < 80)
+						{
+							ImGui::ColorButton(colorOrange, true);
+							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::SameLine();
+							ImGui::TextWrapped("Color saturation not optimal! The tracking color is too bright and could cause tracking problems! Adjust your tracker exposure/gain settings.");
+							bHasIssues = true;
+						}
+
+						// Value too low, its too dark!
+						if (preset.value_center < 40)
+						{
+							ImGui::ColorButton(colorOrange, true);
+							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::SameLine();
+							ImGui::TextWrapped("Color value too low! The tracking color is way too dark and could cause tracking problems! Adjust your tracker exposure/gain settings!");
+							bHasIssues = true;
+						}
+						else if (preset.value_center < 80)
+						{
+							ImGui::ColorButton(colorOrange, true);
+							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::SameLine();
+							ImGui::TextWrapped("Color value not optimal! The tracking color is too dark and could cause tracking problems! Adjust your tracker exposure/gain settings.");
+							bHasIssues = true;
+						}
+					}
+
+					{
+						// Validate color settings
+						TrackerColorPreset preset = getColorPreset();
+						switch (m_masterTrackingColorType)
+						{
+						case PSMTrackingColorType::PSMTrackingColorType_Red:
+						{
+							const int targetHue = 0;
+							const int targetRange = 25;
+							const float hue_min = preset.hue_center - targetRange;
+							const float hue_max = preset.hue_center + targetRange;
+							bool invalidHue = false;
+							if (hue_min < 0)
+							{
+								invalidHue = (preset.hue_center < ((targetHue + (180 - targetRange)) % 180) && preset.hue_center > ((targetHue + targetRange) % 180));
+							}
+							else if (hue_max > 180)
+							{
+								invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) && preset.hue_center > ((targetHue + targetRange) % 180));
+							}
+							else
+							{
+								invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) || preset.hue_center > ((targetHue + targetRange) % 180));
+							}
+
+							if (invalidHue)
+							{
+								ImGui::ColorButton(colorRed, true);
+								if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+								ImGui::SameLine();
+								ImGui::TextWrapped(
+									"Wrong tracking color set! "
+									"The target tracking color is set to RED but the target hue center is not RED. "
+									"This can cause collisions with other colors! "
+									"Adjust your tracking color settings!"
+								);
+								bHasIssues = true;
+							}
+
+							break;
+						}
+						case PSMTrackingColorType::PSMTrackingColorType_Green:
+						{
+							int targetHue = 60;
+							const int targetRange = 25;
+							const float hue_min = preset.hue_center - targetRange;
+							const float hue_max = preset.hue_center + targetRange;
+							bool invalidHue = false;
+							if (hue_min < 0)
+							{
+								invalidHue = (preset.hue_center < ((targetHue + (180 - targetRange)) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
+							}
+							else if (hue_max > 180)
+							{
+								invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
+							}
+							else
+							{
+								invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) || preset.hue_center >((targetHue + targetRange) % 180));
+							}
+
+							if (invalidHue)
+							{
+								ImGui::ColorButton(colorRed, true);
+								if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+								ImGui::SameLine();
+								ImGui::TextWrapped(
+									"Wrong tracking color set! "
+									"The target tracking color is set to GREEN but the target hue center is not GREEN. "
+									"This can cause collisions with other colors! "
+									"Adjust your tracking color settings!"
+								);
+								bHasIssues = true;
+							}
+
+							break;
+						}
+						case PSMTrackingColorType::PSMTrackingColorType_Blue:
+						{
+							int targetHue = 120;
+							const int targetRange = 25;
+							const float hue_min = preset.hue_center - targetRange;
+							const float hue_max = preset.hue_center + targetRange;
+							bool invalidHue = false;
+							if (hue_min < 0)
+							{
+								invalidHue = (preset.hue_center < ((targetHue + (180 - targetRange)) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
+							}
+							else if (hue_max > 180)
+							{
+								invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
+							}
+							else
+							{
+								invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) || preset.hue_center >((targetHue + targetRange) % 180));
+							}
+
+							if (invalidHue)
+							{
+								ImGui::ColorButton(colorRed, true);
+								if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+								ImGui::SameLine();
+								ImGui::TextWrapped(
+									"Wrong tracking color set! "
+									"The target tracking color is set to BLUE but the target hue center is not BLUE. "
+									"This can cause collisions with other colors! "
+									"Adjust your tracking color settings!"
+								);
+								bHasIssues = true;
+							}
+
+							break;
+						}
+						case PSMTrackingColorType::PSMTrackingColorType_Magenta:
+						{
+							int targetHue = 150;
+							const int targetRange = 25;
+							const float hue_min = preset.hue_center - targetRange;
+							const float hue_max = preset.hue_center + targetRange;
+							bool invalidHue = false;
+							if (hue_min < 0)
+							{
+								invalidHue = (preset.hue_center < ((targetHue + (180 - targetRange)) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
+							}
+							else if (hue_max > 180)
+							{
+								invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
+							}
+							else
+							{
+								invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) || preset.hue_center >((targetHue + targetRange) % 180));
+							}
+
+							if (invalidHue)
+							{
+								ImGui::ColorButton(colorRed, true);
+								if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+								ImGui::SameLine();
+								ImGui::TextWrapped(
+									"Wrong tracking color set! "
+									"The target tracking color is set to MAGENTA but the target hue center is not MAGENTA. "
+									"This can cause collisions with other colors! "
+									"Adjust your tracking color settings!"
+								);
+								bHasIssues = true;
+							}
+
+							break;
+						}
+						case PSMTrackingColorType::PSMTrackingColorType_Cyan:
+						{
+							int targetHue = 90;
+							const int targetRange = 25;
+							const float hue_min = preset.hue_center - targetRange;
+							const float hue_max = preset.hue_center + targetRange;
+							bool invalidHue = false;
+							if (hue_min < 0)
+							{
+								invalidHue = (preset.hue_center < ((targetHue + (180 - targetRange)) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
+							}
+							else if (hue_max > 180)
+							{
+								invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
+							}
+							else
+							{
+								invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) || preset.hue_center >((targetHue + targetRange) % 180));
+							}
+
+							if (invalidHue)
+							{
+								ImGui::ColorButton(colorRed, true);
+								if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+								ImGui::SameLine();
+								ImGui::TextWrapped(
+									"Wrong tracking color set! "
+									"The target tracking color is set to CYAN but the target hue center is not CYAN. "
+									"This can cause collisions with other colors! "
+									"Adjust your tracking color settings!"
+								);
+								bHasIssues = true;
+							}
+
+							break;
+						}
+						case PSMTrackingColorType::PSMTrackingColorType_Yellow:
+						{
+							int targetHue = 30;
+							const int targetRange = 25;
+							const float hue_min = preset.hue_center - targetRange;
+							const float hue_max = preset.hue_center + targetRange;
+							bool invalidHue = false;
+							if (hue_min < 0)
+							{
+								invalidHue = (preset.hue_center < ((targetHue + (180 - targetRange)) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
+							}
+							else if (hue_max > 180)
+							{
+								invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) && preset.hue_center >((targetHue + targetRange) % 180));
+							}
+							else
+							{
+								invalidHue = (preset.hue_center < ((targetHue - targetRange) % 180) || preset.hue_center >((targetHue + targetRange) % 180));
+							}
+
+							if (invalidHue)
+							{
+								ImGui::ColorButton(colorRed, true);
+								if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+								ImGui::SameLine();
+								ImGui::TextWrapped(
+									"Wrong tracking color set! "
+									"The target tracking color is set to YELLOW but the target hue center is not YELLOW. "
+									"This can cause collisions with other colors! "
+									"Adjust your tracking color settings!"
+								);
+								bHasIssues = true;
+							}
+
+							break;
+						}
+						case PSMTrackingColorType::PSMTrackingColorType_Custom0:
+						case PSMTrackingColorType::PSMTrackingColorType_Custom1:
+						case PSMTrackingColorType::PSMTrackingColorType_Custom2:
+						case PSMTrackingColorType::PSMTrackingColorType_Custom3:
+						case PSMTrackingColorType::PSMTrackingColorType_Custom4:
+						case PSMTrackingColorType::PSMTrackingColorType_Custom5:
+						case PSMTrackingColorType::PSMTrackingColorType_Custom6:
+						case PSMTrackingColorType::PSMTrackingColorType_Custom7:
+						case PSMTrackingColorType::PSMTrackingColorType_Custom8:
+						case PSMTrackingColorType::PSMTrackingColorType_Custom9:
+						{
+							if (m_masterControllerView != nullptr && m_masterControllerView->ControllerType == PSMController_Move)
+							{
+								ImGui::ColorButton(colorBlue, true);
+								if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+								ImGui::SameLine();
+								ImGui::TextWrapped(
+									"Custom preset color set. PSmove bulb has been turned off."
+								);
+							}
+
+							break;
+						}
+						}
+					}
+
+					{
+						// Get the avg of detected contures to avoid frequent UI changes.
+						const int DETECTED_CONTURES_SMOOTH_SIZE = 32;
+						static int detectedContures = 0;
+						static int detectedConturesAvg = 0;
+						static int detectedConturesCount = 0;
+
+						detectedConturesAvg += static_cast<int>(m_mDetectedContures.size());
+						if (++detectedConturesCount > DETECTED_CONTURES_SMOOTH_SIZE)
+						{
+							detectedContures = static_cast<int>(floor(detectedConturesAvg / DETECTED_CONTURES_SMOOTH_SIZE));
+							detectedConturesAvg = 0;
+							detectedConturesCount = 0;
+						}
+
+						// Check for color noise and if the color can be found at all.
+						switch (detectedContures)
+						{
+						case 0:
+						{
+							ImGui::ColorButton(colorRed, true);
+							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::SameLine();
+							ImGui::TextWrapped(
+								"Could not detect tracking color! Place your controller in view of the tracker. "
+								"If it already is, then your color settings are not correctly set up."
+							);
+							bHasIssues = true;
+							break;
+						}
+						case 1:
+						case 2:
+						{
+							// Optimal
+							break;
+						}
+						default:
+						{
+							ImGui::ColorButton(colorRed, true);
+							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::SameLine();
+							ImGui::TextWrapped(
+								"Color noise/collisions detected! "
+								"The tracker could track different objects instead of the controller! "
+								"Enable 'Show color collisions' to show color collisions on screen. "
+								"Adjust your color settings to avoid color noise."
+							);
+							bHasIssues = true;
+							break;
+						}
+						}
+					}
+
+					if (!bHasIssues)
+					{
+						ImGui::ColorButton(colorGreen, true);
 						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
-						ImGui::SameLine();
-						ImGui::TextWrapped(
-							"Could not detect tracking color! Place your controller in view of the tracker. "
-							"If it already is, then your color settings are not correctly set up."
-						);
-						bHasIssues = true;
-						break;
-					}
-					case 1:
-					case 2:
-					{
-						// Optimal
-						break;
-					}
-					default:
-					{
-						ImGui::ColorButton(colorRed, true);
-						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
-						ImGui::SameLine();
-						ImGui::TextWrapped(
-							"Color noise/collisions detected! "
-							"The tracker could track different objects instead of the controller! "
-							"Enable 'Show color collisions' to show color collisions on screen. "
-							"Adjust your color settings to avoid color noise."
-						);
-						bHasIssues = true;
-						break;
-					}
-					}
-				}
 
-				if (!bHasIssues)
-				{
-					ImGui::ColorButton(colorGreen, true);
-					if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
-
-					ImGui::SameLine();
-					ImGui::TextWrapped("No issues detected.");
+						ImGui::SameLine();
+						ImGui::TextWrapped("No issues detected.");
+					}
 				}
 			}
+			ImGui::EndGroup();
+			if (ImGui::IsItemVisible())
+				lastWindowVec = ImGui::GetItemRectSize();
 
             ImGui::End();
         }
