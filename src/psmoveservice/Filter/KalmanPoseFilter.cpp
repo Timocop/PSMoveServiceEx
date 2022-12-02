@@ -1066,7 +1066,7 @@ void KalmanPoseFilter::recenterOrientation(const Eigen::Quaternionf& q_pose)
     m_filter->ukf.init(PoseStateVectord::Identity());
 }
 
-Eigen::Quaternionf KalmanPoseFilter::getOrientation(float time, float offset_x, float offset_y, float offset_z) const
+Eigen::Quaternionf KalmanPoseFilter::getOrientation(float time, float offset_x, float offset_y, float offset_z, float offset_world_x, float offset_world_y, float offset_world_z) const
 {
 	Eigen::Quaternionf result = Eigen::Quaternionf::Identity();
 

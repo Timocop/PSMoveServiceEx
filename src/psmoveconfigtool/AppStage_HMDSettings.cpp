@@ -566,10 +566,10 @@ void AppStage_HMDSettings::renderUI()
 
 					if (iOffsetView == 1)
 					{
-						ImGui::Text("Orientation X (Roll): ");
+						ImGui::Text("Local Orientation X (Roll): ");
 						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 						ImGui::PushItemWidth(120.f);
-						if (ImGui::InputFloat("##OffsetOrientationX", &hmdInfo.OffsetOrientation.x, 1.f, 5.f, 2))
+						if (ImGui::InputFloat("##LocalOffsetOrientationX", &hmdInfo.OffsetOrientation.x, 1.f, 5.f, 2))
 						{
 							while (hmdInfo.OffsetOrientation.x < 0.f)
 								hmdInfo.OffsetOrientation.x += 360.f;
@@ -579,17 +579,61 @@ void AppStage_HMDSettings::renderUI()
 							request_offset = true;
 						}
 						ImGui::PopItemWidth();
+
+						ImGui::Text("Local Orientation Y (Yaw): ");
+						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+						ImGui::PushItemWidth(120.f);
+						if (ImGui::InputFloat("##LocalOffsetOrientationY", &hmdInfo.OffsetOrientation.y, 1.f, 5.f, 2))
+						{
+							while (hmdInfo.OffsetOrientation.y < 0.f)
+								hmdInfo.OffsetOrientation.y += 360.f;
+							while (hmdInfo.OffsetOrientation.y >= 360.f)
+								hmdInfo.OffsetOrientation.y -= 360.f;
+
+							request_offset = true;
+						}
+						ImGui::PopItemWidth();
+
+						ImGui::Text("Local Orientation Z (Pitch): ");
+						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+						ImGui::PushItemWidth(120.f);
+						if (ImGui::InputFloat("##LocalOffsetOrientationZ", &hmdInfo.OffsetOrientation.z, 1.f, 5.f, 2))
+						{
+							while (hmdInfo.OffsetOrientation.z < 0.f)
+								hmdInfo.OffsetOrientation.z += 360.f;
+							while (hmdInfo.OffsetOrientation.z >= 360.f)
+								hmdInfo.OffsetOrientation.z -= 360.f;
+
+							request_offset = true;
+						}
+						ImGui::PopItemWidth();
+
+						ImGui::Separator();
+
+						ImGui::Text("World Orientation X (Roll): ");
+						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+						ImGui::PushItemWidth(120.f);
+						if (ImGui::InputFloat("##WorldOffsetOrientationX", &hmdInfo.OffsetWorldOrientation.x, 1.f, 5.f, 2))
+						{
+							while (hmdInfo.OffsetWorldOrientation.x < 0.f)
+								hmdInfo.OffsetWorldOrientation.x += 360.f;
+							while (hmdInfo.OffsetWorldOrientation.x >= 360.f)
+								hmdInfo.OffsetWorldOrientation.x -= 360.f;
+
+							request_offset = true;
+						}
+						ImGui::PopItemWidth();
 					}
 
-					ImGui::Text("Orientation Y (Yaw): ");
+					ImGui::Text("World Orientation Y (Yaw): ");
 					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 					ImGui::PushItemWidth(120.f);
-					if (ImGui::InputFloat("##OffsetOrientationY", &hmdInfo.OffsetOrientation.y, 1.f, 5.f, 2))
+					if (ImGui::InputFloat("##WorldOffsetOrientationY", &hmdInfo.OffsetWorldOrientation.y, 1.f, 5.f, 2))
 					{
-						while (hmdInfo.OffsetOrientation.y < 0.f)
-							hmdInfo.OffsetOrientation.y += 360.f;
-						while (hmdInfo.OffsetOrientation.y >= 360.f)
-							hmdInfo.OffsetOrientation.y -= 360.f;
+						while (hmdInfo.OffsetWorldOrientation.y < 0.f)
+							hmdInfo.OffsetWorldOrientation.y += 360.f;
+						while (hmdInfo.OffsetWorldOrientation.y >= 360.f)
+							hmdInfo.OffsetWorldOrientation.y -= 360.f;
 
 						request_offset = true;
 					}
@@ -597,15 +641,15 @@ void AppStage_HMDSettings::renderUI()
 
 					if (iOffsetView == 1)
 					{
-						ImGui::Text("Orientation Z (Pitch): ");
+						ImGui::Text("World Orientation Z (Pitch): ");
 						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 						ImGui::PushItemWidth(120.f);
-						if (ImGui::InputFloat("##OffsetOrientationZ", &hmdInfo.OffsetOrientation.z, 1.f, 5.f, 2))
+						if (ImGui::InputFloat("##WorldOffsetOrientationZ", &hmdInfo.OffsetWorldOrientation.z, 1.f, 5.f, 2))
 						{
-							while (hmdInfo.OffsetOrientation.z < 0.f)
-								hmdInfo.OffsetOrientation.z += 360.f;
-							while (hmdInfo.OffsetOrientation.z >= 360.f)
-								hmdInfo.OffsetOrientation.z -= 360.f;
+							while (hmdInfo.OffsetWorldOrientation.z < 0.f)
+								hmdInfo.OffsetWorldOrientation.z += 360.f;
+							while (hmdInfo.OffsetWorldOrientation.z >= 360.f)
+								hmdInfo.OffsetWorldOrientation.z -= 360.f;
 
 							request_offset = true;
 						}
@@ -689,6 +733,9 @@ void AppStage_HMDSettings::renderUI()
 						hmdInfo.OffsetOrientation.x = 0.f;
 						hmdInfo.OffsetOrientation.y = 0.f;
 						hmdInfo.OffsetOrientation.z = 0.f;
+						hmdInfo.OffsetWorldOrientation.x = 0.f;
+						hmdInfo.OffsetWorldOrientation.y = 0.f;
+						hmdInfo.OffsetWorldOrientation.z = 0.f;
 						hmdInfo.OffsetPosition.x = 0.f;
 						hmdInfo.OffsetPosition.y = 0.f;
 						hmdInfo.OffsetPosition.z = 0.f;
@@ -701,18 +748,13 @@ void AppStage_HMDSettings::renderUI()
 
 					if (request_offset)
 					{
-						request_set_hmd_offsets(
-							hmdInfo.HmdID,
-							hmdInfo.OffsetOrientation.x,
-							hmdInfo.OffsetOrientation.y,
-							hmdInfo.OffsetOrientation.z,
-							hmdInfo.OffsetPosition.x,
-							hmdInfo.OffsetPosition.y,
-							hmdInfo.OffsetPosition.z,
-							hmdInfo.OffsetScale.x,
-							hmdInfo.OffsetScale.y,
-							hmdInfo.OffsetScale.z
-						);
+						OffsetSettings offset;
+						offset.offset_orientation = hmdInfo.OffsetOrientation;
+						offset.offset_world_orientation = hmdInfo.OffsetWorldOrientation;
+						offset.offset_position = hmdInfo.OffsetPosition;
+						offset.offset_scale = hmdInfo.OffsetScale;
+
+						request_set_hmd_offsets(hmdInfo.HmdID, offset);
 					}
 				}
 				ImGui::EndGroup();
@@ -884,15 +926,7 @@ void AppStage_HMDSettings::request_set_hmd_filter_settings(
 
 void AppStage_HMDSettings::request_set_hmd_offsets(
 	int HmdID,
-	float offset_orientation_x,
-	float offset_orientation_y,
-	float offset_orientation_z,
-	float offset_position_x,
-	float offset_position_y,
-	float offset_position_z,
-	float offset_scale_x,
-	float offset_scale_y,
-	float offset_scale_z)
+	OffsetSettings offset_settings)
 {
 	if (HmdID != -1)
 	{
@@ -901,19 +935,23 @@ void AppStage_HMDSettings::request_set_hmd_offsets(
 
 		PSMoveProtocol::Request_RequestSetHMDOffsets *mutable_request_set_hmd_offsets = request->mutable_request_set_hmd_offsets();
 		PSMoveProtocol::Euler *mutable_offset_orientation = mutable_request_set_hmd_offsets->mutable_offset_orientation();
+		PSMoveProtocol::Euler *mutable_offset_world_orientation = mutable_request_set_hmd_offsets->mutable_offset_world_orientation();
 		PSMoveProtocol::Position *mutable_offset_position = mutable_request_set_hmd_offsets->mutable_offset_position();
 		PSMoveProtocol::Position *mutable_offset_scale = mutable_request_set_hmd_offsets->mutable_offset_scale();
 
 		request->mutable_request_set_hmd_offsets()->set_hmd_id(HmdID);
-		mutable_offset_orientation->set_x(offset_orientation_x);
-		mutable_offset_orientation->set_y(offset_orientation_y);
-		mutable_offset_orientation->set_z(offset_orientation_z);
-		mutable_offset_position->set_x(offset_position_x);
-		mutable_offset_position->set_y(offset_position_y);
-		mutable_offset_position->set_z(offset_position_z);
-		mutable_offset_scale->set_x(offset_scale_x);
-		mutable_offset_scale->set_y(offset_scale_y);
-		mutable_offset_scale->set_z(offset_scale_z);
+		mutable_offset_orientation->set_x(offset_settings.offset_orientation.x);
+		mutable_offset_orientation->set_y(offset_settings.offset_orientation.y);
+		mutable_offset_orientation->set_z(offset_settings.offset_orientation.z);
+		mutable_offset_world_orientation->set_x(offset_settings.offset_world_orientation.x);
+		mutable_offset_world_orientation->set_y(offset_settings.offset_world_orientation.y);
+		mutable_offset_world_orientation->set_z(offset_settings.offset_world_orientation.z);
+		mutable_offset_position->set_x(offset_settings.offset_position.x);
+		mutable_offset_position->set_y(offset_settings.offset_position.y);
+		mutable_offset_position->set_z(offset_settings.offset_position.z);
+		mutable_offset_scale->set_x(offset_settings.offset_scale.x);
+		mutable_offset_scale->set_y(offset_settings.offset_scale.y);
+		mutable_offset_scale->set_z(offset_settings.offset_scale.z);
 
 		PSMRequestID request_id;
 		PSM_SendOpaqueRequest(&request, &request_id);
@@ -964,6 +1002,9 @@ void AppStage_HMDSettings::handle_hmd_list_response(
 				HmdInfo.OffsetOrientation.x = HmdResponse.offset_orientation().x();
 				HmdInfo.OffsetOrientation.y = HmdResponse.offset_orientation().y();
 				HmdInfo.OffsetOrientation.z = HmdResponse.offset_orientation().z();
+				HmdInfo.OffsetWorldOrientation.x = HmdResponse.offset_world_orientation().x();
+				HmdInfo.OffsetWorldOrientation.y = HmdResponse.offset_world_orientation().y();
+				HmdInfo.OffsetWorldOrientation.z = HmdResponse.offset_world_orientation().z();
 				HmdInfo.OffsetPosition.x = HmdResponse.offset_position().x();
 				HmdInfo.OffsetPosition.y = HmdResponse.offset_position().y();
 				HmdInfo.OffsetPosition.z = HmdResponse.offset_position().z();

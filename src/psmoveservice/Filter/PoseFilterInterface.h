@@ -331,7 +331,7 @@ public:
 	virtual bool init(const OrientationFilterConstants &constant, const Eigen::Quaternionf &initial_orientation) = 0;
 
     /// Estimate the current orientation of the filter given a time offset into the future
-    virtual Eigen::Quaternionf getOrientation(float time = 0.f, float offset_x = 0.f, float offset_y = 0.f, float offset_z = 0.f) const = 0;
+    virtual Eigen::Quaternionf getOrientation(float time = 0.f, float offset_x = 0.f, float offset_y = 0.f, float offset_z = 0.f, float offset_world_x = 0.f, float offset_world_y = 0.f, float offset_world_z = 0.f) const = 0;
 
 	/// Get the current reset orientation of the filter.
 	virtual Eigen::Quaternionf getResetOrientation() const = 0;
@@ -371,7 +371,7 @@ public:
     virtual bool getIsOrientationStateValid() const = 0;
 
     /// Estimate the current orientation of the filter given a time offset into the future
-    virtual Eigen::Quaternionf getOrientation(float time = 0.f, float offset_x = 0.f, float offset_y = 0.f, float offset_z = 0.f) const = 0;
+    virtual Eigen::Quaternionf getOrientation(float time = 0.f, float offset_x = 0.f, float offset_y = 0.f, float offset_z = 0.f, float offset_world_x = 0.f, float offset_world_y = 0.f, float offset_world_z = 0.f) const = 0;
 
 	/// Get the current reset orientation of the filter.
 	virtual Eigen::Quaternionf getResetOrientation() const = 0;

@@ -69,6 +69,7 @@ public:
     {
 		offset_position.set(0.0, 0.0, 0.0);
 		offset_orientation.set(0.0, 0.0, 0.0);
+		offset_world_orientation.set(0.0, 0.0, 0.0);
 		offset_scale.set(1.0, 1.0, 1.0);
 
         // The DS4 uses the BMI055 IMU Chip: 
@@ -136,6 +137,7 @@ public:
 	// The offset added in post
 	CommonDevicePosition offset_position;
 	CommonDevicePosition offset_orientation;
+	CommonDevicePosition offset_world_orientation;
 	CommonDevicePosition offset_scale;
 
 	// The bounding radius of the accelerometer measurements 

@@ -601,8 +601,9 @@ message Request {
         int32 controller_id = 1;
         Position offset_position = 2;
         Euler offset_orientation = 3;
-        Position offset_scale = 4;
-		float offset_magnetometer = 5;
+        Euler offset_world_orientation = 4;
+        Position offset_scale = 5;
+		float offset_magnetometer = 6;
     }
     RequestSetControllerOffsets request_set_controller_offsets = 51;
 	
@@ -611,7 +612,8 @@ message Request {
         int32 hmd_id = 1;
         Position offset_position = 2;
         Euler offset_orientation = 3;
-        Position offset_scale = 4;
+        Euler offset_world_orientation = 4;
+        Position offset_scale = 5;
     }
     RequestSetHMDOffsets request_set_hmd_offsets = 52;
 	
@@ -739,17 +741,18 @@ message Response {
 			bool opticaltracking = 18;
 			bool psmove_emulation = 19;
 			
-			Euler offset_orientation = 20;
-			Position offset_position = 21;
-			Position offset_scale = 22;
-			float offset_magnetometer = 23;
+			Position offset_position = 20;
+			Euler offset_orientation = 21;
+			Euler offset_world_orientation = 22;
+			Position offset_scale = 23;
+			float offset_magnetometer = 24;
 			
-			float filter_prediction_distance = 24;
-			float filter_prediction_smoothing = 25;
-			float filter_lowpassoptical_smoothing = 26;
-			float filter_lowpassoptical_distance = 27;
-			bool filter_use_passive_drift_correction = 28;
-			int32 filter_opticaltarget_controller_id = 29;
+			float filter_prediction_distance = 25;
+			float filter_prediction_smoothing = 26;
+			float filter_lowpassoptical_smoothing = 27;
+			float filter_lowpassoptical_distance = 28;
+			bool filter_use_passive_drift_correction = 29;
+			int32 filter_opticaltarget_controller_id = 30;
         }
         repeated ControllerInfo controllers = 1;
         string host_serial = 2;
@@ -869,15 +872,16 @@ message Response {
             float prediction_time = 7;
 			
 			// PSMoveServiceEx
-
-			Euler offset_orientation = 8;
-			Position offset_position = 9;
-			Position offset_scale = 10;
 			
-			float filter_prediction_distance = 11;
-			float filter_prediction_smoothing = 12;
-			float filter_lowpassoptical_smoothing = 13;
-			float filter_lowpassoptical_distance = 14;
+			Euler offset_orientation = 8;
+			Euler offset_world_orientation = 9;
+			Position offset_position = 10;
+			Position offset_scale = 11;
+			
+			float filter_prediction_distance = 12;
+			float filter_prediction_smoothing = 13;
+			float filter_lowpassoptical_smoothing = 14;
+			float filter_lowpassoptical_distance = 15;
         }
         repeated HMDInfo hmd_entries = 1;
     }

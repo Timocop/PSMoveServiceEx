@@ -1097,13 +1097,17 @@ ServerControllerView::getFilteredPose(float time) const
 			const PSMoveController *psmove = this->castCheckedConst<PSMoveController>();
 			const CommonDevicePosition offset_position = psmove->getConfig()->offset_position;
 			const CommonDevicePosition offset_orientation = psmove->getConfig()->offset_orientation;
+			const CommonDevicePosition offset_world_orientation = psmove->getConfig()->offset_world_orientation;
 			const CommonDevicePosition offset_scale = psmove->getConfig()->offset_scale;
 
 			Eigen::Quaternionf orientation = m_pose_filter->getOrientation(
-				time, 
-				offset_orientation.x * k_degrees_to_radians, 
-				offset_orientation.y * k_degrees_to_radians,
-				offset_orientation.z * k_degrees_to_radians
+				time,
+				offset_orientation.x,
+				offset_orientation.y,
+				offset_orientation.z,
+				offset_world_orientation.x,
+				offset_world_orientation.y,
+				offset_world_orientation.z
 			);
 			Eigen::Vector3f position_cm = m_pose_filter->getPositionCm(time);
 
@@ -1133,13 +1137,17 @@ ServerControllerView::getFilteredPose(float time) const
 			const PSDualShock4Controller *ds4 = this->castCheckedConst<PSDualShock4Controller>();
 			const CommonDevicePosition offset_position = ds4->getConfig()->offset_position;
 			const CommonDevicePosition offset_orientation = ds4->getConfig()->offset_orientation;
+			const CommonDevicePosition offset_world_orientation = ds4->getConfig()->offset_world_orientation;
 			const CommonDevicePosition offset_scale = ds4->getConfig()->offset_scale;
 
 			const Eigen::Quaternionf orientation = m_pose_filter->getOrientation(
-				time, 
-				offset_orientation.x * k_degrees_to_radians, 
-				offset_orientation.y * k_degrees_to_radians, 
-				offset_orientation.z * k_degrees_to_radians
+				time,
+				offset_orientation.x,
+				offset_orientation.y,
+				offset_orientation.z,
+				offset_world_orientation.x,
+				offset_world_orientation.y,
+				offset_world_orientation.z
 			);
 			const Eigen::Vector3f position_cm = m_pose_filter->getPositionCm(time);
 
@@ -1169,13 +1177,17 @@ ServerControllerView::getFilteredPose(float time) const
 			const VirtualController *virt = this->castCheckedConst<VirtualController>();
 			const CommonDevicePosition offset_position = virt->getConfig()->offset_position;
 			const CommonDevicePosition offset_orientation = virt->getConfig()->offset_orientation;
+			const CommonDevicePosition offset_world_orientation = virt->getConfig()->offset_world_orientation;
 			const CommonDevicePosition offset_scale = virt->getConfig()->offset_scale;
 
 			const Eigen::Quaternionf orientation = m_pose_filter->getOrientation(
-				time, 
-				offset_orientation.x * k_degrees_to_radians, 
-				offset_orientation.y * k_degrees_to_radians, 
-				offset_orientation.z * k_degrees_to_radians
+				time,
+				offset_orientation.x,
+				offset_orientation.y,
+				offset_orientation.z,
+				offset_world_orientation.x,
+				offset_world_orientation.y,
+				offset_world_orientation.z
 			);
 			const Eigen::Vector3f position_cm = m_pose_filter->getPositionCm(time);
 

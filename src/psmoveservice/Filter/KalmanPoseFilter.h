@@ -29,7 +29,7 @@ public:
     bool getIsOrientationStateValid() const override;
 
     /// Estimate the current orientation of the filter given a time offset into the future
-    Eigen::Quaternionf getOrientation(float time = 0.f, float offset_x = 0.f, float offset_y = 0.f, float offset_z = 0.f) const override;
+    Eigen::Quaternionf getOrientation(float time = 0.f, float offset_x = 0.f, float offset_y = 0.f, float offset_z = 0.f, float offset_world_x = 0.f, float offset_world_y = 0.f, float offset_world_z = 0.f) const override;
 
 	/// Get the current reset orientation of the filter.
 	Eigen::Quaternionf getResetOrientation() const override;

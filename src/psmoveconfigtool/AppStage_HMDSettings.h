@@ -30,6 +30,14 @@ public:
 		float z;
 	};
 
+	struct OffsetSettings
+	{
+		DeviceOrientation offset_world_orientation;
+		DeviceOrientation offset_orientation;
+		DevicePosition offset_position;
+		DevicePosition offset_scale;
+	};
+
 	struct FilterSettings
 	{
 		float filter_prediction_distance;
@@ -51,6 +59,7 @@ public:
 		float PredictionTime;
 
 		DeviceOrientation OffsetOrientation;
+		DeviceOrientation OffsetWorldOrientation;
 		DevicePosition OffsetPosition;
 		DevicePosition OffsetScale;
 
@@ -100,16 +109,8 @@ protected:
 		const int HmdID,
 		FilterSettings filterSettings);
 	void request_set_hmd_offsets(
-		int ControllerID,
-		float offset_orientation_x,
-		float offset_orientation_y,
-		float offset_orientation_z,
-		float offset_position_x,
-		float offset_position_y,
-		float offset_position_z,
-		float offset_scale_x,
-		float offset_scale_y,
-		float offset_scale_z);
+		int HmdID,
+		OffsetSettings offset_settings);
 
 
 private:

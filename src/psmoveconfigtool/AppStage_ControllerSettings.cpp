@@ -963,10 +963,10 @@ void AppStage_ControllerSettings::renderUI()
 
 							if (iOffsetView == 1)
 							{
-								ImGui::Text("Orientation X (Roll): ");
+								ImGui::Text("Local Orientation X (Roll): ");
 								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 								ImGui::PushItemWidth(120.f);
-								if (ImGui::InputFloat("##OffsetOrientationX", &controllerInfo.OffsetOrientation.x, 1.f, 5.f, 2))
+								if (ImGui::InputFloat("##LocalOffsetOrientationX", &controllerInfo.OffsetOrientation.x, 1.f, 5.f, 2))
 								{
 									while (controllerInfo.OffsetOrientation.x < 0.f)
 										controllerInfo.OffsetOrientation.x += 360.f;
@@ -976,17 +976,61 @@ void AppStage_ControllerSettings::renderUI()
 									request_offset = true;
 								}
 								ImGui::PopItemWidth();
+
+								ImGui::Text("Local Orientation Y (Yaw): ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								if (ImGui::InputFloat("##LocalOffsetOrientationY", &controllerInfo.OffsetOrientation.y, 1.f, 5.f, 2))
+								{
+									while (controllerInfo.OffsetOrientation.y < 0.f)
+										controllerInfo.OffsetOrientation.y += 360.f;
+									while (controllerInfo.OffsetOrientation.y >= 360.f)
+										controllerInfo.OffsetOrientation.y -= 360.f;
+
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
+
+								ImGui::Text("Local Orientation Z (Pitch): ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								if (ImGui::InputFloat("##LocalOffsetOrientationZ", &controllerInfo.OffsetOrientation.z, 1.f, 5.f, 2))
+								{
+									while (controllerInfo.OffsetOrientation.z < 0.f)
+										controllerInfo.OffsetOrientation.z += 360.f;
+									while (controllerInfo.OffsetOrientation.z >= 360.f)
+										controllerInfo.OffsetOrientation.z -= 360.f;
+
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
+
+								ImGui::Separator();
+
+								ImGui::Text("World Orientation X (Roll): ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								if (ImGui::InputFloat("##WorldOffsetOrientationX", &controllerInfo.OffsetWorldOrientation.x, 1.f, 5.f, 2))
+								{
+									while (controllerInfo.OffsetWorldOrientation.x < 0.f)
+										controllerInfo.OffsetWorldOrientation.x += 360.f;
+									while (controllerInfo.OffsetWorldOrientation.x >= 360.f)
+										controllerInfo.OffsetWorldOrientation.x -= 360.f;
+
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
 							}
 
-							ImGui::Text("Orientation Y (Yaw): ");
+							ImGui::Text("World Orientation Y (Yaw): ");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##OffsetOrientationY", &controllerInfo.OffsetOrientation.y, 1.f, 5.f, 2))
+							if (ImGui::InputFloat("##WorldOffsetOrientationY", &controllerInfo.OffsetWorldOrientation.y, 1.f, 5.f, 2))
 							{
-								while (controllerInfo.OffsetOrientation.y < 0.f)
-									controllerInfo.OffsetOrientation.y += 360.f;
-								while (controllerInfo.OffsetOrientation.y >= 360.f)
-									controllerInfo.OffsetOrientation.y -= 360.f;
+								while (controllerInfo.OffsetWorldOrientation.y < 0.f)
+									controllerInfo.OffsetWorldOrientation.y += 360.f;
+								while (controllerInfo.OffsetWorldOrientation.y >= 360.f)
+									controllerInfo.OffsetWorldOrientation.y -= 360.f;
 
 								request_offset = true;
 							}
@@ -994,15 +1038,15 @@ void AppStage_ControllerSettings::renderUI()
 
 							if (iOffsetView == 1)
 							{
-								ImGui::Text("Orientation Z (Pitch): ");
+								ImGui::Text("World Orientation Z (Pitch): ");
 								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 								ImGui::PushItemWidth(120.f);
-								if (ImGui::InputFloat("##OffsetOrientationZ", &controllerInfo.OffsetOrientation.z, 1.f, 5.f, 2))
+								if (ImGui::InputFloat("##WorldOffsetOrientationZ", &controllerInfo.OffsetWorldOrientation.z, 1.f, 5.f, 2))
 								{
-									while (controllerInfo.OffsetOrientation.z < 0.f)
-										controllerInfo.OffsetOrientation.z += 360.f;
-									while (controllerInfo.OffsetOrientation.z >= 360.f)
-										controllerInfo.OffsetOrientation.z -= 360.f;
+									while (controllerInfo.OffsetWorldOrientation.z < 0.f)
+										controllerInfo.OffsetWorldOrientation.z += 360.f;
+									while (controllerInfo.OffsetWorldOrientation.z >= 360.f)
+										controllerInfo.OffsetWorldOrientation.z -= 360.f;
 
 									request_offset = true;
 								}
@@ -1104,6 +1148,9 @@ void AppStage_ControllerSettings::renderUI()
 								controllerInfo.OffsetOrientation.x = 0.f;
 								controllerInfo.OffsetOrientation.y = 0.f;
 								controllerInfo.OffsetOrientation.z = 0.f;
+								controllerInfo.OffsetWorldOrientation.x = 0.f;
+								controllerInfo.OffsetWorldOrientation.y = 0.f;
+								controllerInfo.OffsetWorldOrientation.z = 0.f;
 								controllerInfo.OffsetPosition.x = 0.f;
 								controllerInfo.OffsetPosition.y = 0.f;
 								controllerInfo.OffsetPosition.z = 0.f;
@@ -1117,19 +1164,14 @@ void AppStage_ControllerSettings::renderUI()
 
 							if (request_offset)
 							{
-								request_set_controller_offsets(
-									controllerInfo.ControllerID,
-									controllerInfo.OffsetOrientation.x,
-									controllerInfo.OffsetOrientation.y,
-									controllerInfo.OffsetOrientation.z,
-									controllerInfo.OffsetPosition.x,
-									controllerInfo.OffsetPosition.y,
-									controllerInfo.OffsetPosition.z,
-									controllerInfo.OffsetScale.x,
-									controllerInfo.OffsetScale.y,
-									controllerInfo.OffsetScale.z,
-									controllerInfo.OffsetMagnetometer
-								);
+								OffsetSettings offset;
+								offset.offset_orientation = controllerInfo.OffsetOrientation;
+								offset.offset_world_orientation = controllerInfo.OffsetWorldOrientation;
+								offset.offset_position = controllerInfo.OffsetPosition;
+								offset.offset_scale = controllerInfo.OffsetScale;
+								offset.offset_magnetometer = controllerInfo.OffsetMagnetometer;
+
+								request_set_controller_offsets(controllerInfo.ControllerID, offset);
 							}
 						}
 						ImGui::EndGroup();
@@ -1583,6 +1625,9 @@ void AppStage_ControllerSettings::handle_controller_list_response(
 				ControllerInfo.OffsetOrientation.x = ControllerResponse.offset_orientation().x();
 				ControllerInfo.OffsetOrientation.y = ControllerResponse.offset_orientation().y();
 				ControllerInfo.OffsetOrientation.z = ControllerResponse.offset_orientation().z();
+				ControllerInfo.OffsetWorldOrientation.x = ControllerResponse.offset_world_orientation().x();
+				ControllerInfo.OffsetWorldOrientation.y = ControllerResponse.offset_world_orientation().y();
+				ControllerInfo.OffsetWorldOrientation.z = ControllerResponse.offset_world_orientation().z();
 				ControllerInfo.OffsetPosition.x = ControllerResponse.offset_position().x();
 				ControllerInfo.OffsetPosition.y = ControllerResponse.offset_position().y();
 				ControllerInfo.OffsetPosition.z = ControllerResponse.offset_position().z();
@@ -1859,16 +1904,7 @@ void AppStage_ControllerSettings::request_set_parent_controller_id(
 
 void AppStage_ControllerSettings::request_set_controller_offsets(
 	int ControllerID,
-	float offset_orientation_x,
-	float offset_orientation_y,
-	float offset_orientation_z,
-	float offset_position_x,
-	float offset_position_y,
-	float offset_position_z,
-	float offset_scale_x,
-	float offset_scale_y,
-	float offset_scale_z,
-	float offset_magnetometer)
+	OffsetSettings offset_settings)
 {
 	if (ControllerID != -1)
 	{
@@ -1877,20 +1913,24 @@ void AppStage_ControllerSettings::request_set_controller_offsets(
 
 		PSMoveProtocol::Request_RequestSetControllerOffsets *mutable_request_set_controller_offsets = request->mutable_request_set_controller_offsets();
 		PSMoveProtocol::Euler *mutable_offset_orientation = mutable_request_set_controller_offsets->mutable_offset_orientation();
+		PSMoveProtocol::Euler *mutable_offset_world_orientation = mutable_request_set_controller_offsets->mutable_offset_world_orientation();
 		PSMoveProtocol::Position *mutable_offset_position = mutable_request_set_controller_offsets->mutable_offset_position();
 		PSMoveProtocol::Position *mutable_offset_scale = mutable_request_set_controller_offsets->mutable_offset_scale();
 
 		request->mutable_request_set_controller_offsets()->set_controller_id(ControllerID);
-		mutable_offset_orientation->set_x(offset_orientation_x);
-		mutable_offset_orientation->set_y(offset_orientation_y);
-		mutable_offset_orientation->set_z(offset_orientation_z);
-		mutable_offset_position->set_x(offset_position_x);
-		mutable_offset_position->set_y(offset_position_y);
-		mutable_offset_position->set_z(offset_position_z);
-		mutable_offset_scale->set_x(offset_scale_x);
-		mutable_offset_scale->set_y(offset_scale_y);
-		mutable_offset_scale->set_z(offset_scale_z);
-		request->mutable_request_set_controller_offsets()->set_offset_magnetometer(offset_magnetometer);
+		mutable_offset_orientation->set_x(offset_settings.offset_orientation.x);
+		mutable_offset_orientation->set_y(offset_settings.offset_orientation.y);
+		mutable_offset_orientation->set_z(offset_settings.offset_orientation.z);
+		mutable_offset_world_orientation->set_x(offset_settings.offset_world_orientation.x);
+		mutable_offset_world_orientation->set_y(offset_settings.offset_world_orientation.y);
+		mutable_offset_world_orientation->set_z(offset_settings.offset_world_orientation.z);
+		mutable_offset_position->set_x(offset_settings.offset_position.x);
+		mutable_offset_position->set_y(offset_settings.offset_position.y);
+		mutable_offset_position->set_z(offset_settings.offset_position.z);
+		mutable_offset_scale->set_x(offset_settings.offset_scale.x);
+		mutable_offset_scale->set_y(offset_settings.offset_scale.y);
+		mutable_offset_scale->set_z(offset_settings.offset_scale.z);
+		request->mutable_request_set_controller_offsets()->set_offset_magnetometer(offset_settings.offset_magnetometer);
 
 		PSMRequestID request_id;
 		PSM_SendOpaqueRequest(&request, &request_id);

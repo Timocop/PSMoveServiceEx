@@ -222,9 +222,9 @@ bool CompoundPoseFilter::getIsOrientationStateValid() const
 	return m_orientation_filter != nullptr && m_orientation_filter->getIsStateValid();
 }
 
-Eigen::Quaternionf CompoundPoseFilter::getOrientation(float time, float offset_x, float offset_y, float offset_z) const
+Eigen::Quaternionf CompoundPoseFilter::getOrientation(float time, float offset_x, float offset_y, float offset_z, float offset_world_x, float offset_world_y, float offset_world_z) const
 {
-	return (m_orientation_filter != nullptr) ? m_orientation_filter->getOrientation(time, offset_x, offset_y, offset_z) : Eigen::Quaternionf::Identity();
+	return (m_orientation_filter != nullptr) ? m_orientation_filter->getOrientation(time, offset_x, offset_y, offset_z, offset_world_x, offset_world_y, offset_world_z) : Eigen::Quaternionf::Identity();
 }
 
 Eigen::Quaternionf CompoundPoseFilter::getResetOrientation() const

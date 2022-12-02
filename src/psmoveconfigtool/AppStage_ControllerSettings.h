@@ -28,6 +28,15 @@ public:
 		float z;
 	};
 
+	struct OffsetSettings
+	{
+		DeviceOrientation offset_world_orientation;
+		DeviceOrientation offset_orientation;
+		DevicePosition offset_position;
+		DevicePosition offset_scale;
+		float offset_magnetometer;
+	};
+
 	struct FilterSettings
 	{
 		float filter_prediction_distance;
@@ -36,7 +45,7 @@ public:
 		float filter_lowpassoptical_smoothing;
 		bool filter_use_passive_drift_correction;
 	};
-	
+
 	struct ControllerInfo
     {
         int ControllerID;
@@ -65,6 +74,7 @@ public:
 		bool PSmoveEmulation;
 
 		DeviceOrientation OffsetOrientation;
+		DeviceOrientation OffsetWorldOrientation;
 		DevicePosition OffsetPosition;
 		DevicePosition OffsetScale;
 		float OffsetMagnetometer;
@@ -160,16 +170,7 @@ protected:
 		int ParentControllerID);
 	void request_set_controller_offsets(
 		int ControllerID,
-		float offset_orientation_x,
-		float offset_orientation_y,
-		float offset_orientation_z,
-		float offset_position_x,
-		float offset_position_y,
-		float offset_position_z,
-		float offset_scale_x,
-		float offset_scale_y,
-		float offset_scale_z,
-		float offset_magnetometer);
+		OffsetSettings offset_settings);
 
 	void show_position_filter_tooltip(const std::string name);
 	void show_orientation_filter_tooltip(const std::string name);

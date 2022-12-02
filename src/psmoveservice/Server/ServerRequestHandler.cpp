@@ -697,10 +697,12 @@ protected:
 				bool psmove_emulation = false;
 
 				CommonDevicePosition offset_orientation;
+				CommonDevicePosition offset_world_orientation;
 				CommonDevicePosition offset_position;
 				CommonDevicePosition offset_scale;
 				float offset_magnetometer = 0.f;
 				offset_orientation.clear();
+				offset_world_orientation.clear();
 				offset_position.clear();
 				offset_scale.clear();
 				offset_scale.set(1.f, 1.f, 1.f);
@@ -730,6 +732,7 @@ protected:
                         has_magnetometer = controller->getSupportsMagnetometer();
 
 						offset_orientation.set(config->offset_orientation.x, config->offset_orientation.y, config->offset_orientation.z);
+						offset_world_orientation.set(config->offset_world_orientation.x, config->offset_world_orientation.y, config->offset_world_orientation.z);
 						offset_position.set(config->offset_position.x, config->offset_position.y, config->offset_position.z);
 						offset_scale.set(config->offset_scale.x, config->offset_scale.y, config->offset_scale.z);
 						offset_magnetometer = config->offset_magnetometer_center;
@@ -789,6 +792,7 @@ protected:
                         }
 
 						offset_orientation.set(config->offset_orientation.x, config->offset_orientation.y, config->offset_orientation.z);
+						offset_world_orientation.set(config->offset_world_orientation.x, config->offset_world_orientation.y, config->offset_world_orientation.z);
 						offset_position.set(config->offset_position.x, config->offset_position.y, config->offset_position.z);
 						offset_scale.set(config->offset_scale.x, config->offset_scale.y, config->offset_scale.z);
 
@@ -816,6 +820,7 @@ protected:
 						psmove_emulation = config->psmove_emulation;
 
 						offset_orientation.set(config->offset_orientation.x, config->offset_orientation.y, config->offset_orientation.z);
+						offset_world_orientation.set(config->offset_world_orientation.x, config->offset_world_orientation.y, config->offset_world_orientation.z);
 						offset_position.set(config->offset_position.x, config->offset_position.y, config->offset_position.z);
 						offset_scale.set(config->offset_scale.x, config->offset_scale.y, config->offset_scale.z);
 
@@ -857,12 +862,16 @@ protected:
 				controller_info->set_psmove_emulation(psmove_emulation);
 
 				PSMoveProtocol::Euler *mutable_offset_orientation = controller_info->mutable_offset_orientation();
+				PSMoveProtocol::Euler *mutable_offset_world_orientation = controller_info->mutable_offset_world_orientation();
 				PSMoveProtocol::Position *mutable_offset_position = controller_info->mutable_offset_position();
 				PSMoveProtocol::Position *mutable_offset_scale = controller_info->mutable_offset_scale();
 
 				mutable_offset_orientation->set_x(offset_orientation.x);
 				mutable_offset_orientation->set_y(offset_orientation.y);
 				mutable_offset_orientation->set_z(offset_orientation.z);
+				mutable_offset_world_orientation->set_x(offset_world_orientation.x);
+				mutable_offset_world_orientation->set_y(offset_world_orientation.y);
+				mutable_offset_world_orientation->set_z(offset_world_orientation.z);
 				mutable_offset_position->set_x(offset_position.x);
 				mutable_offset_position->set_y(offset_position.y);
 				mutable_offset_position->set_z(offset_position.z);
@@ -2805,7 +2814,10 @@ protected:
 
 				if (config.offset_orientation.x != request.offset_orientation().x() ||
 					config.offset_orientation.y != request.offset_orientation().y() ||
-					config.offset_orientation.z != request.offset_orientation().z() ||
+					config.offset_orientation.z != request.offset_orientation().z() || 
+					config.offset_world_orientation.x != request.offset_world_orientation().x() ||
+					config.offset_world_orientation.y != request.offset_world_orientation().y() ||
+					config.offset_world_orientation.z != request.offset_world_orientation().z() ||
 					config.offset_position.x != request.offset_position().x() ||
 					config.offset_position.y != request.offset_position().y() ||
 					config.offset_position.z != request.offset_position().z() ||
@@ -2817,6 +2829,9 @@ protected:
 					config.offset_orientation.x = request.offset_orientation().x();
 					config.offset_orientation.y = request.offset_orientation().y();
 					config.offset_orientation.z = request.offset_orientation().z();
+					config.offset_world_orientation.x = request.offset_world_orientation().x();
+					config.offset_world_orientation.y = request.offset_world_orientation().y();
+					config.offset_world_orientation.z = request.offset_world_orientation().z();
 					config.offset_position.x = request.offset_position().x();
 					config.offset_position.y = request.offset_position().y();
 					config.offset_position.z = request.offset_position().z();
@@ -2838,6 +2853,9 @@ protected:
 				if (config.offset_orientation.x != request.offset_orientation().x() ||
 					config.offset_orientation.y != request.offset_orientation().y() ||
 					config.offset_orientation.z != request.offset_orientation().z() ||
+					config.offset_world_orientation.x != request.offset_world_orientation().x() ||
+					config.offset_world_orientation.y != request.offset_world_orientation().y() ||
+					config.offset_world_orientation.z != request.offset_world_orientation().z() ||
 					config.offset_position.x != request.offset_position().x() ||
 					config.offset_position.y != request.offset_position().y() ||
 					config.offset_position.z != request.offset_position().z() ||
@@ -2848,6 +2866,9 @@ protected:
 					config.offset_orientation.x = request.offset_orientation().x();
 					config.offset_orientation.y = request.offset_orientation().y();
 					config.offset_orientation.z = request.offset_orientation().z();
+					config.offset_world_orientation.x = request.offset_world_orientation().x();
+					config.offset_world_orientation.y = request.offset_world_orientation().y();
+					config.offset_world_orientation.z = request.offset_world_orientation().z();
 					config.offset_position.x = request.offset_position().x();
 					config.offset_position.y = request.offset_position().y();
 					config.offset_position.z = request.offset_position().z();
@@ -2868,6 +2889,9 @@ protected:
 				if (config->offset_orientation.x != request.offset_orientation().x() ||
 					config->offset_orientation.y != request.offset_orientation().y() ||
 					config->offset_orientation.z != request.offset_orientation().z() ||
+					config->offset_world_orientation.x != request.offset_world_orientation().x() ||
+					config->offset_world_orientation.y != request.offset_world_orientation().y() ||
+					config->offset_world_orientation.z != request.offset_world_orientation().z() ||
 					config->offset_position.x != request.offset_position().x() ||
 					config->offset_position.y != request.offset_position().y() ||
 					config->offset_position.z != request.offset_position().z() ||
@@ -2878,6 +2902,9 @@ protected:
 					config->offset_orientation.x = request.offset_orientation().x();
 					config->offset_orientation.y = request.offset_orientation().y();
 					config->offset_orientation.z = request.offset_orientation().z();
+					config->offset_world_orientation.x = request.offset_world_orientation().x();
+					config->offset_world_orientation.y = request.offset_world_orientation().y();
+					config->offset_world_orientation.z = request.offset_world_orientation().z();
 					config->offset_position.x = request.offset_position().x();
 					config->offset_position.y = request.offset_position().y();
 					config->offset_position.z = request.offset_position().z();
@@ -3012,6 +3039,9 @@ protected:
 				if (config->offset_orientation.x != request.offset_orientation().x() ||
 					config->offset_orientation.y != request.offset_orientation().y() ||
 					config->offset_orientation.z != request.offset_orientation().z() ||
+					config->offset_world_orientation.x != request.offset_world_orientation().x() ||
+					config->offset_world_orientation.y != request.offset_world_orientation().y() ||
+					config->offset_world_orientation.z != request.offset_world_orientation().z() ||
 					config->offset_position.x != request.offset_position().x() ||
 					config->offset_position.y != request.offset_position().y() ||
 					config->offset_position.z != request.offset_position().z() ||
@@ -3022,6 +3052,9 @@ protected:
 					config->offset_orientation.x = request.offset_orientation().x();
 					config->offset_orientation.y = request.offset_orientation().y();
 					config->offset_orientation.z = request.offset_orientation().z();
+					config->offset_world_orientation.x = request.offset_world_orientation().x();
+					config->offset_world_orientation.y = request.offset_world_orientation().y();
+					config->offset_world_orientation.z = request.offset_world_orientation().z();
 					config->offset_position.x = request.offset_position().x();
 					config->offset_position.y = request.offset_position().y();
 					config->offset_position.z = request.offset_position().z();
@@ -3042,6 +3075,9 @@ protected:
 				if (config->offset_orientation.x != request.offset_orientation().x() ||
 					config->offset_orientation.y != request.offset_orientation().y() ||
 					config->offset_orientation.z != request.offset_orientation().z() ||
+					config->offset_world_orientation.x != request.offset_world_orientation().x() ||
+					config->offset_world_orientation.y != request.offset_world_orientation().y() ||
+					config->offset_world_orientation.z != request.offset_world_orientation().z() ||
 					config->offset_position.x != request.offset_position().x() ||
 					config->offset_position.y != request.offset_position().y() ||
 					config->offset_position.z != request.offset_position().z() ||
@@ -3052,6 +3088,9 @@ protected:
 					config->offset_orientation.x = request.offset_orientation().x();
 					config->offset_orientation.y = request.offset_orientation().y();
 					config->offset_orientation.z = request.offset_orientation().z();
+					config->offset_world_orientation.x = request.offset_world_orientation().x();
+					config->offset_world_orientation.y = request.offset_world_orientation().y();
+					config->offset_world_orientation.z = request.offset_world_orientation().z();
 					config->offset_position.x = request.offset_position().x();
 					config->offset_position.y = request.offset_position().y();
 					config->offset_position.z = request.offset_position().z();
@@ -3410,9 +3449,11 @@ protected:
                 PSMoveProtocol::Response_ResultHMDList_HMDInfo *hmd_info = list->add_hmd_entries();
 
 				CommonDevicePosition offset_orientation;
+				CommonDevicePosition offset_world_orientation;
 				CommonDevicePosition offset_position;
 				CommonDevicePosition offset_scale;
 				offset_orientation.clear();
+				offset_world_orientation.clear();
 				offset_position.clear();
 				offset_scale.clear();
 				offset_scale.set(1.f, 1.f, 1.f);
@@ -3434,6 +3475,7 @@ protected:
                         hmd_info->set_position_filter(config->position_filter_type);
 
 						offset_orientation.set(config->offset_orientation.x, config->offset_orientation.y, config->offset_orientation.z);
+						offset_world_orientation.set(config->offset_world_orientation.x, config->offset_world_orientation.y, config->offset_world_orientation.z);
 						offset_position.set(config->offset_position.x, config->offset_position.y, config->offset_position.z);
 						offset_scale.set(config->offset_scale.x, config->offset_scale.y, config->offset_scale.z);
 
@@ -3455,6 +3497,7 @@ protected:
                         hmd_info->set_position_filter(config->position_filter_type);
 
 						offset_orientation.set(config->offset_orientation.x, config->offset_orientation.y, config->offset_orientation.z);
+						offset_world_orientation.set(config->offset_world_orientation.x, config->offset_world_orientation.y, config->offset_world_orientation.z);
 						offset_position.set(config->offset_position.x, config->offset_position.y, config->offset_position.z);
 						offset_scale.set(config->offset_scale.x, config->offset_scale.y, config->offset_scale.z);
 
@@ -3475,12 +3518,16 @@ protected:
                 hmd_info->set_tracking_color_type(static_cast<PSMoveProtocol::TrackingColorType>(hmd_view->getTrackingColorID()));
 
 				PSMoveProtocol::Euler *mutable_offset_orientation = hmd_info->mutable_offset_orientation();
+				PSMoveProtocol::Euler *mutable_offset_world_orientation = hmd_info->mutable_offset_world_orientation();
 				PSMoveProtocol::Position *mutable_offset_position = hmd_info->mutable_offset_position();
 				PSMoveProtocol::Position *mutable_offset_scale = hmd_info->mutable_offset_scale();
 
 				mutable_offset_orientation->set_x(offset_orientation.x);
 				mutable_offset_orientation->set_y(offset_orientation.y);
 				mutable_offset_orientation->set_z(offset_orientation.z);
+				mutable_offset_world_orientation->set_x(offset_world_orientation.x);
+				mutable_offset_world_orientation->set_y(offset_world_orientation.y);
+				mutable_offset_world_orientation->set_z(offset_world_orientation.z);
 				mutable_offset_position->set_x(offset_position.x);
 				mutable_offset_position->set_y(offset_position.y);
 				mutable_offset_position->set_z(offset_position.z);
