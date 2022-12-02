@@ -43,7 +43,10 @@ public:
 		float filter_prediction_smoothing;
 		float filter_lowpassoptical_distance;
 		float filter_lowpassoptical_smoothing;
+		bool filter_enable_magnetometer;
 		bool filter_use_passive_drift_correction;
+		float filter_passive_drift_correction_deadzone;
+		float filter_passive_drift_correction_delay;
 	};
 
 	struct ControllerInfo
@@ -83,7 +86,10 @@ public:
 		float FilterPredictionSmoothing;
 		float FilterLowPassOpticalDistance;
 		float FilterLowPassOpticalSmoothing;
+		bool FilterEnableMagnetometer;
 		bool FilterUsePassiveDriftCorrection;
+		float FilterPassiveDriftCorrectionDeazone;
+		float FilterPassiveDriftCorrectionDelay;
 
 		static bool ParentControllerComboItemGetter(void* userdata, int index, const char** out_string)
 		{

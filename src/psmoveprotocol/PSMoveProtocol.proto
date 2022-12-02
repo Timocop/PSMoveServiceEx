@@ -638,8 +638,11 @@ message Request {
 		float filter_prediction_smoothing = 3;
 		float filter_lowpassoptical_smoothing = 4;
 		float filter_lowpassoptical_distance = 5;
-		bool filter_use_passive_drift_correction = 6;
-		int32 filter_opticaltarget_controller_id = 7;
+		bool filter_enable_magnetometer = 6;
+		bool filter_use_passive_drift_correction = 7;
+		float filter_passive_drift_correction_deadzone = 8;
+		float filter_passive_drift_correction_delay = 9;
+		int32 filter_opticaltarget_controller_id = 10;
     }
     RequestSetControllerFilterSettings request_set_controller_filter_settings = 55;
 	
@@ -751,8 +754,11 @@ message Response {
 			float filter_prediction_smoothing = 26;
 			float filter_lowpassoptical_smoothing = 27;
 			float filter_lowpassoptical_distance = 28;
-			bool filter_use_passive_drift_correction = 29;
-			int32 filter_opticaltarget_controller_id = 30;
+			bool filter_enable_magnetometer = 29;
+			bool filter_use_passive_drift_correction = 30;
+			float filter_passive_drift_correction_deadzone = 31;
+			float filter_passive_drift_correction_delay = 32;
+			int32 filter_opticaltarget_controller_id = 33;
         }
         repeated ControllerInfo controllers = 1;
         string host_serial = 2;

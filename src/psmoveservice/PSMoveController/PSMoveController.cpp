@@ -608,7 +608,10 @@ PSMoveControllerConfig::config2ptree()
 	pt.put("FilterSettings.PredictionSmoothing", filter_prediction_smoothing);
 	pt.put("FilterSettings.LowPassOptical.Distance", filter_lowpassoptical_distance);
 	pt.put("FilterSettings.LowPassOptical.Smoothing", filter_lowpassoptical_smoothing);
-	pt.put("FilterSettings.OrientationFilterComplementaryMARG.UsePassiveDriftCorrection", filter_use_passive_drift_correction);
+	pt.put("FilterSettings.OrientationFilterComplementaryMARG.EnableMagnetometer", filter_enable_magnetometer);
+	pt.put("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.Enabled", filter_use_passive_drift_correction);
+	pt.put("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.Deadzone", filter_passive_drift_correction_deadzone);
+	pt.put("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.Delay", filter_passive_drift_correction_delay);
 
 	writeTrackingColor(pt, tracking_color_id);
 
@@ -720,8 +723,11 @@ PSMoveControllerConfig::ptree2config(const boost::property_tree::ptree &pt)
 		filter_prediction_smoothing = pt.get<float>("FilterSettings.PredictionSmoothing", 0.40f);
 		filter_lowpassoptical_distance = pt.get<float>("FilterSettings.LowPassOptical.Distance", 10.f);
 		filter_lowpassoptical_smoothing = pt.get<float>("FilterSettings.LowPassOptical.Smoothing", 0.40f);
-		filter_use_passive_drift_correction = pt.get<bool>("FilterSettings.OrientationFilterComplementaryMARG.UsePassiveDriftCorrection", true);
-    }
+		filter_enable_magnetometer = pt.get<bool>("FilterSettings.OrientationFilterComplementaryMARG.EnableMagnetometer", true);
+		filter_use_passive_drift_correction = pt.get<bool>("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.Enabled", true);
+		filter_passive_drift_correction_deadzone = pt.get<float>("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.Deadzone", 3.f);
+		filter_passive_drift_correction_delay = pt.get<float>("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.Delay", 100.f);
+}
     else
     {
         SERVER_LOG_WARNING("PSMoveControllerConfig") << 

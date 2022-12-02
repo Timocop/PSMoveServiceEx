@@ -898,6 +898,15 @@ void AppStage_ControllerSettings::renderUI()
 								{
 									settings_shown = true;
 
+									ImGui::Text("Enable Magnetometer: ");
+									ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+									ImGui::PushItemWidth(120.f);
+									if (ImGui::Checkbox("##EnableMagnetometer", &controllerInfo.FilterEnableMagnetometer))
+									{
+										request_offset = true;
+									}
+									ImGui::PopItemWidth();
+
 									ImGui::Text("Use Passive Drift Correction: ");
 									ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 									ImGui::PushItemWidth(120.f);
@@ -906,6 +915,34 @@ void AppStage_ControllerSettings::renderUI()
 										request_offset = true;
 									}
 									ImGui::PopItemWidth();
+
+									ImGui::Indent();
+									{
+										ImGui::Text("Drift Correction Deadzone: ");
+										ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+										ImGui::PushItemWidth(120.f);
+										float filter_passive_drift_correction_deadzone = controllerInfo.FilterPassiveDriftCorrectionDeazone;
+										if (ImGui::InputFloat("##PassiveDriftCorrectionDeadzone", &filter_passive_drift_correction_deadzone, 1.f, 5.f, 2))
+										{
+											controllerInfo.FilterPassiveDriftCorrectionDeazone = clampf(filter_passive_drift_correction_deadzone, 1.0f, 100.0f);
+
+											request_offset = true;
+										}
+										ImGui::PopItemWidth();
+
+										ImGui::Text("Drift Correction Delay (ms): ");
+										ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+										ImGui::PushItemWidth(120.f);
+										float filter_passive_drift_correction_delay = controllerInfo.FilterPassiveDriftCorrectionDelay;
+										if (ImGui::InputFloat("##PassiveDriftCorrectionDelay", &filter_passive_drift_correction_delay, 1.f, 5.f, 2))
+										{
+											controllerInfo.FilterPassiveDriftCorrectionDelay = clampf(filter_passive_drift_correction_delay, 1.0f, (1 << 16));
+
+											request_offset = true;
+										}
+										ImGui::PopItemWidth();
+									}
+									ImGui::Unindent();
 								}
 
 								if (!settings_shown)
@@ -921,7 +958,10 @@ void AppStage_ControllerSettings::renderUI()
 									controllerInfo.FilterPredictionSmoothing = 0.40f;
 									controllerInfo.FilterLowPassOpticalDistance = 10.f;
 									controllerInfo.FilterLowPassOpticalSmoothing = 0.40f;
+									controllerInfo.FilterEnableMagnetometer = true;
 									controllerInfo.FilterUsePassiveDriftCorrection = true;
+									controllerInfo.FilterPassiveDriftCorrectionDeazone = 3.f;
+									controllerInfo.FilterPassiveDriftCorrectionDelay = 100.f;
 
 									request_offset = true;
 
@@ -934,7 +974,10 @@ void AppStage_ControllerSettings::renderUI()
 									filterSettings.filter_prediction_smoothing = controllerInfo.FilterPredictionSmoothing;
 									filterSettings.filter_lowpassoptical_distance = controllerInfo.FilterLowPassOpticalDistance;
 									filterSettings.filter_lowpassoptical_smoothing = controllerInfo.FilterLowPassOpticalSmoothing;
+									filterSettings.filter_enable_magnetometer = controllerInfo.FilterEnableMagnetometer;
 									filterSettings.filter_use_passive_drift_correction = controllerInfo.FilterUsePassiveDriftCorrection;
+									filterSettings.filter_passive_drift_correction_deadzone = controllerInfo.FilterPassiveDriftCorrectionDeazone;
+									filterSettings.filter_passive_drift_correction_delay = controllerInfo.FilterPassiveDriftCorrectionDelay;
 
 									request_set_controller_filter_settings(controllerInfo.ControllerID, filterSettings);
 								}
@@ -1547,7 +1590,10 @@ void AppStage_ControllerSettings::request_set_controller_filter_settings(
 	filter_settings->set_filter_prediction_smoothing(filterSettings.filter_prediction_smoothing);
 	filter_settings->set_filter_lowpassoptical_distance(filterSettings.filter_lowpassoptical_distance);
 	filter_settings->set_filter_lowpassoptical_smoothing(filterSettings.filter_lowpassoptical_smoothing);
+	filter_settings->set_filter_enable_magnetometer(filterSettings.filter_enable_magnetometer);
 	filter_settings->set_filter_use_passive_drift_correction(filterSettings.filter_use_passive_drift_correction);
+	filter_settings->set_filter_passive_drift_correction_deadzone(filterSettings.filter_passive_drift_correction_deadzone);
+	filter_settings->set_filter_passive_drift_correction_delay(filterSettings.filter_passive_drift_correction_delay);
 
 	PSMRequestID request_id;
 	PSM_SendOpaqueRequest(&request, &request_id);
@@ -1640,7 +1686,10 @@ void AppStage_ControllerSettings::handle_controller_list_response(
 				ControllerInfo.FilterPredictionSmoothing = ControllerResponse.filter_prediction_smoothing();
 				ControllerInfo.FilterLowPassOpticalDistance = ControllerResponse.filter_lowpassoptical_distance();
 				ControllerInfo.FilterLowPassOpticalSmoothing = ControllerResponse.filter_lowpassoptical_smoothing();
+				ControllerInfo.FilterEnableMagnetometer = ControllerResponse.filter_enable_magnetometer();
 				ControllerInfo.FilterUsePassiveDriftCorrection = ControllerResponse.filter_use_passive_drift_correction();
+				ControllerInfo.FilterPassiveDriftCorrectionDeazone = ControllerResponse.filter_passive_drift_correction_deadzone();
+				ControllerInfo.FilterPassiveDriftCorrectionDelay = ControllerResponse.filter_passive_drift_correction_delay();
 
                 if (ControllerInfo.ControllerType == PSMController_Move)
                 {

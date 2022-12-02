@@ -26,9 +26,6 @@
 // Decay rate to apply to the velocity
 #define k_velocity_decay 0.8f
 
-#define k_mg_cap_m_per_sec_sqr 3.f
-
-
 // -- private definitions -----
 struct OrientationFilterState
 {
@@ -670,6 +667,36 @@ static Eigen::Vector3f lowpass_filter_vector3f(
 
 void OrientationFilterComplementaryMARG::update(const float delta_time, const PoseFilterPacket &packet)
 {
+	bool filter_enable_magnetometer = true;
+	bool filter_use_passive_drift_correction = false;
+	float filter_passive_drift_correction_deadzone;
+	float filter_passive_drift_correction_delay;
+
+#if !defined(IS_TESTING_KALMAN) 
+	if (packet.controllerDeviceId > -1)
+	{
+		ServerControllerViewPtr ControllerView = DeviceManager::getInstance()->getControllerViewPtr(packet.controllerDeviceId);
+		if (ControllerView != nullptr && ControllerView->getIsOpen())
+		{
+			switch (ControllerView->getControllerDeviceType())
+			{
+			case CommonDeviceState::PSMove:
+			{
+				PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
+				PSMoveControllerConfig config = *controller->getConfig();
+
+				filter_enable_magnetometer = config.filter_enable_magnetometer;
+				filter_use_passive_drift_correction = config.filter_use_passive_drift_correction;
+				filter_passive_drift_correction_deadzone = config.filter_passive_drift_correction_deadzone;
+				filter_passive_drift_correction_delay = config.filter_passive_drift_correction_delay;
+
+				break;
+			}
+			}
+		}
+	}
+#endif
+
 	if (packet.has_imu_measurements())
 	{
 		// Time delta used for filter update is time delta passed in
@@ -681,8 +708,13 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 		Eigen::Vector3f current_g = packet.imu_accelerometer_g_units;
 		eigen_vector3f_normalize_with_default(current_g, Eigen::Vector3f::Zero());
 
-		Eigen::Vector3f current_m = packet.imu_magnetometer_unit;
-		eigen_vector3f_normalize_with_default(current_m, Eigen::Vector3f::Zero());
+		Eigen::Vector3f current_m = Eigen::Vector3f::Zero();
+
+		if (filter_enable_magnetometer)
+		{
+			current_m = packet.imu_magnetometer_unit;
+			eigen_vector3f_normalize_with_default(current_m, Eigen::Vector3f::Zero());
+		}
 
 		// Get the direction of the magnetic fields in the identity pose.	
 		Eigen::Vector3f k_identity_m_direction = m_constants.magnetometer_calibration_direction;
@@ -733,30 +765,6 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 			m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, delta_time);
 		}
 
-		bool filter_use_passive_drift_correction = false;
-
-#if !defined(IS_TESTING_KALMAN) 
-		if (packet.controllerDeviceId > -1)
-		{
-			ServerControllerViewPtr ControllerView = DeviceManager::getInstance()->getControllerViewPtr(packet.controllerDeviceId);
-			if (ControllerView != nullptr && ControllerView->getIsOpen())
-			{
-				switch (ControllerView->getControllerDeviceType())
-				{
-				case CommonDeviceState::PSMove:
-				{
-					PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
-					PSMoveControllerConfig config = *controller->getConfig();
-
-					filter_use_passive_drift_correction = config.filter_use_passive_drift_correction;
-
-					break;
-				}
-				}
-			}
-		}
-#endif
-
 		if (filter_use_passive_drift_correction)
 		{
 			// Gather sensor state from the previous frame
@@ -804,18 +812,18 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 
 			std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
 
-			if (abs(new_acceleration.x()) < k_mg_cap_m_per_sec_sqr &&
-				abs(new_acceleration.y()) < k_mg_cap_m_per_sec_sqr &&
-				abs(new_acceleration.z()) < k_mg_cap_m_per_sec_sqr &&
-				current_omega.x() < k_mg_cap_m_per_sec_sqr &&
-				current_omega.y() < k_mg_cap_m_per_sec_sqr &&
-				current_omega.z() < k_mg_cap_m_per_sec_sqr)
+			if (abs(new_acceleration.x()) < filter_passive_drift_correction_deadzone &&
+				abs(new_acceleration.y()) < filter_passive_drift_correction_deadzone &&
+				abs(new_acceleration.z()) < filter_passive_drift_correction_deadzone &&
+				current_omega.x() < filter_passive_drift_correction_deadzone &&
+				current_omega.y() < filter_passive_drift_correction_deadzone &&
+				current_omega.z() < filter_passive_drift_correction_deadzone)
 			{
 				if (mg_ignored)
 				{
 					std::chrono::duration<double, std::milli> stableDuration = now - timeStableDelay;
 
-					if (stableDuration.count() > 5.f)
+					if (stableDuration.count() > filter_passive_drift_correction_delay)
 					{
 						mg_ignored = false;
 					}
