@@ -16,6 +16,7 @@
 #include "SharedTrackerState.h"
 #include "TrackerManager.h"
 #include "ControllerManager.h"
+#include "HMDManager.h"
 #include "PoseFilterInterface.h"
 
 #include <boost/interprocess/shared_memory_object.hpp>
@@ -812,7 +813,8 @@ static bool computeTrackerRelativePointCloudContourPose(
     const CommonDevicePose *tracker_relative_pose_guess,
     HMDOpticalPoseEstimation *out_pose_estimate);
 static cv::Rect2i computeTrackerROIForPoseProjection(
-	const int roi_index,
+	const int roi_index_controller,
+	const int roi_index_hmd,
 	const bool disabled_roi,
 	const int roi_edge_offset,
     const ServerTrackerView *tracker,
@@ -1381,6 +1383,7 @@ ServerTrackerView::computeProjectionForController(
 
     cv::Rect2i ROI= computeTrackerROIForPoseProjection(
 		(bRoiOptimized) ? tracked_controller->getDeviceID() : -1,
+		-1,
         bRoiDisabled,
 		iRoiEdgeOffset,
         this,		
@@ -1573,6 +1576,9 @@ bool ServerTrackerView::computeProjectionForHMD(
     // Compute a region of interest in the tracker buffer around where we expect to find the tracking shape
     const TrackerManagerConfig &trackerMgrConfig= DeviceManager::getInstance()->m_tracker_manager->getConfig();
     const bool bRoiDisabled = tracked_hmd->getIsROIDisabled() || trackerMgrConfig.disable_roi;
+
+	// Exclude Morpheus HMD because the pixel cloud needs bigger projection areas
+	const bool bRoiOptimized = (trackerMgrConfig.optimized_roi && tracked_hmd->getHMDDeviceType() != CommonDeviceState::eDeviceType::Morpheus);
 	const int iRoiEdgeOffset = static_cast<int>(std::fmax(0, std::fmin(64, trackerMgrConfig.roi_edge_offset)));
 
     const HMDOpticalPoseEstimation *priorPoseEst= 
@@ -1581,6 +1587,7 @@ bool ServerTrackerView::computeProjectionForHMD(
 
     cv::Rect2i ROI = computeTrackerROIForPoseProjection(
 		-1,
+		(bRoiOptimized) ? (tracked_hmd->getDeviceID()) : -1,
         bRoiDisabled,
 		iRoiEdgeOffset,
         this, 
@@ -2446,7 +2453,8 @@ static bool computeTrackerRelativePointCloudContourPose(
 }
 
 static cv::Rect2i computeTrackerROIForPoseProjection(
-	const int roi_index,
+	const int roi_index_controller,
+	const int roi_index_hmd,
     const bool roi_disabled,
 	const int roi_edge_offset,
     const ServerTrackerView *tracker,
@@ -2454,8 +2462,19 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
     const CommonDeviceTrackingProjection *prior_tracking_projection,
     const CommonDeviceTrackingShape *tracking_shape)
 {
-	static int roi_counter[TrackerManager::k_max_devices][ControllerManager::k_max_devices];
-	static int last_roi_center[TrackerManager::k_max_devices][ControllerManager::k_max_devices][2];
+	int roi_index = -1;
+	if (roi_index_controller > -1)
+	{
+		roi_index = roi_index_controller;
+	}
+	else if(roi_index_hmd > -1)
+	{
+		roi_index = (ControllerManager::k_max_devices + roi_index_hmd);
+	}
+
+	const int k_max_roi_number = (ControllerManager::k_max_devices + HMDManager::k_max_devices);
+	static int roi_counter[TrackerManager::k_max_devices][k_max_roi_number];
+	static int last_roi_center[TrackerManager::k_max_devices][k_max_roi_number][2];
 
     // Get expected ROI
     // Default to full screen.
@@ -2481,7 +2500,7 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
 	// Optimized ROI:
 	//		All visible:	Peak 15% CPU
 	//		None visible:	Peak 18% CPU
-	if (!roi_disabled && roi_index > -1)
+	if (!roi_disabled && roi_index > -1 && roi_index < k_max_roi_number)
 	{
 		int roi_size[2];
 		roi_size[0] = static_cast<int>(screenWidth) / 3;
