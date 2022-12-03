@@ -3546,7 +3546,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 				positionOffsetCaching *cache = &globalPositionOffsetCaching[orgCache.tracker_1_id][orgCache.tracker_2_id][orgCache.index];
 
 				// Only update when theres new pairs.
-				if (cache->total_pairs >= N)
+				if (cache->total_pairs >= pair_count)
 					continue;
 
 				cache->world_avg_position.x = unfiltered_average_world_position.x;
@@ -3555,7 +3555,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 				cache->local_position.x = cache->new_local_position.x;
 				cache->local_position.y = cache->new_local_position.y;
 				cache->local_position.z = cache->new_local_position.z;
-				cache->total_pairs = N;
+				cache->total_pairs = pair_count;
 				cache->isValid = true;
 			}
 		}
