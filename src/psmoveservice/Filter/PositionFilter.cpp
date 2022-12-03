@@ -226,7 +226,8 @@ static Eigen::Vector3f lowpass_prediction_vector3f(
 	const Eigen::Vector3f &old_filtered_vector,
 	const Eigen::Vector3f &new_vector,
 	const float smoothing_distance,
-	const float smoothing_power);
+	const float smoothing_power,
+	const float prediction_power);
 static Eigen::Vector3f lowpass_filter_optical_position_using_distance(
     const PoseFilterPacket *filter_packet,
     const PositionFilterState *fusion_state,
@@ -332,8 +333,6 @@ void PositionFilterPassThru::update(
 	const float delta_time, 
 	const PoseFilterPacket &packet)
 {
-	const int history_queue_length = 5;
-
 	float predict_smoothing_distance = k_max_lowpass_smoothing_distance;
 	float predict_smoothing_power = k_lowpass_smoothing_power; 
 
@@ -418,6 +417,27 @@ void PositionFilterPassThru::update(
 
 	if (packet.has_optical_measurement() && packet.isSynced)
 	{
+		const int queue_history_length = 200;
+		const float def_history_queue_hz = 30.f;
+		const int def_history_queue_length = 5;
+
+		std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<float, std::milli> timeSinceLast = now - lastOpticalFrame;
+		
+		historyQueueLenght.push_back((int)floorf(def_history_queue_length * (1000.f / def_history_queue_hz) / timeSinceLast.count()));
+		while (historyQueueLenght.size() > queue_history_length)
+		{
+			historyQueueLenght.pop_front();
+		}
+		lastOpticalFrame = now;
+
+		// Get the biggest from all the samples
+		int history_queue_length;
+		for (std::list<int>::iterator it = historyQueueLenght.begin(); it != historyQueueLenght.end(); it++)
+		{
+			history_queue_length = (int)clampf(fmax(history_queue_length, *it), 1.f, 100.f);
+		}
+
 		Eigen::Vector3f old_position_meters;
 		Eigen::Vector3f new_position_meters = packet.get_optical_position_in_meters();
 		Eigen::Vector3f new_position_meters_sec;
@@ -425,7 +445,7 @@ void PositionFilterPassThru::update(
 		// Apply basic optical prediction
 		// Add the new blend position to blend history
 		blendedPositionHistory.push_back(new_position_meters);
-		if (blendedPositionHistory.size() > history_queue_length)
+		while (blendedPositionHistory.size() > history_queue_length)
 		{
 			blendedPositionHistory.pop_front();
 		}
@@ -442,7 +462,13 @@ void PositionFilterPassThru::update(
 		if (sampleCount > 0)
 		{
 			new_position_meters_sec =
-				lowpass_prediction_vector3f(delta_time, (old_position_meters / sampleCount), new_position_meters, predict_smoothing_distance, predict_smoothing_power);
+				lowpass_prediction_vector3f(
+					delta_time, 
+					(old_position_meters / sampleCount), 
+					new_position_meters, 
+					predict_smoothing_distance, 
+					predict_smoothing_power, 
+					k_max_optical_prediction_power);
 		}
 		else
 		{
@@ -550,8 +576,6 @@ void PositionFilterLowPassOptical::update(
 	}
 #endif
 
-	const int history_queue_length = 5;
-
 	// If device isnt tracking, clear position history to remove over-prediction
 	if (!packet.isCurrentlyTracking)
 	{
@@ -560,6 +584,27 @@ void PositionFilterLowPassOptical::update(
 
 	if (packet.has_optical_measurement() && packet.isSynced)
 	{
+		const int queue_history_length = 200;
+		const float def_history_queue_hz = 30.f;
+		const int def_history_queue_length = 5;
+
+		std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<float, std::milli> timeSinceLast = now - lastOpticalFrame;
+
+		historyQueueLenght.push_back((int)floorf(def_history_queue_length * (1000.f / def_history_queue_hz) / timeSinceLast.count()));
+		while (historyQueueLenght.size() > queue_history_length)
+		{
+			historyQueueLenght.pop_front();
+		}
+		lastOpticalFrame = now;
+
+		// Get the biggest from all the samples
+		int history_queue_length;
+		for (std::list<int>::iterator it = historyQueueLenght.begin(); it != historyQueueLenght.end(); it++)
+		{
+			history_queue_length = (int)clampf(fmax(history_queue_length, *it), 1.f, 100.f);
+		}
+
 		Eigen::Vector3f old_position_meters;
 		Eigen::Vector3f new_position_meters;
 		Eigen::Vector3f new_position_meters_sec;
@@ -578,7 +623,7 @@ void PositionFilterLowPassOptical::update(
 		// Apply basic optical prediction
 		// Add the new blend position to blend history
 		blendedPositionHistory.push_back(new_position_meters);
-		if (blendedPositionHistory.size() > history_queue_length)
+		while (blendedPositionHistory.size() > history_queue_length)
 		{
 			blendedPositionHistory.pop_front();
 		}
@@ -595,7 +640,13 @@ void PositionFilterLowPassOptical::update(
 		if (sampleCount > 0)
 		{
 			new_position_meters_sec =
-				lowpass_prediction_vector3f(delta_time, (old_position_meters / sampleCount), new_position_meters, predict_smoothing_distance, predict_smoothing_power);
+				lowpass_prediction_vector3f(
+					delta_time, 
+					(old_position_meters / sampleCount), 
+					new_position_meters, 
+					predict_smoothing_distance, 
+					predict_smoothing_power, 
+					k_max_optical_prediction_power);
 		}
 		else
 		{
@@ -817,7 +868,7 @@ void PositionFilterLowPassExponential::update(const float delta_time, const Pose
 
 			// Add the new blend position to blend history
 			blendedPositionHistory.push_back(new_position_meters);
-			if (blendedPositionHistory.size() > history_queue_length)
+			while (blendedPositionHistory.size() > history_queue_length)
 			{
 				blendedPositionHistory.pop_front();
 			}
@@ -907,7 +958,8 @@ static Eigen::Vector3f lowpass_prediction_vector3f(
 	const Eigen::Vector3f &old_filtered_vector,
 	const Eigen::Vector3f &new_vector,
 	const float smoothing_distance,
-	const float smoothing_power)
+	const float smoothing_power,
+	const float prediction_power)
 {
 	Eigen::Vector3f new_position_meters_sec;
 
@@ -915,13 +967,13 @@ static Eigen::Vector3f lowpass_prediction_vector3f(
 	// We need to convert meters to centimeters otherwise it wont work. I assume value too small for decimal point precision.
 	Eigen::Vector3f diff = (new_vector - old_filtered_vector) * k_meters_to_centimeters;
 	float distance = diff.norm();
-	float new_position_weight = clampf01(lerpf(smoothing_distance, 1.00f, distance / (smoothing_distance * k_meters_to_centimeters)));
+	float new_position_weight = clampf01(lerpf(smoothing_power, 1.00f, distance / (smoothing_distance * k_meters_to_centimeters)));
 
 	static float g_cutoff_frequency = k_accelerometer_frequency_cutoff;
 	new_position_meters_sec =
 		lowpass_filter_vector3f(
 			delta_time, g_cutoff_frequency,
-			Eigen::Vector3f::Zero(), ((new_vector - old_filtered_vector) * new_position_weight) * k_max_optical_prediction_power);
+			Eigen::Vector3f::Zero(), ((new_vector - old_filtered_vector) * new_position_weight) * prediction_power);
 
 	return new_position_meters_sec;
 }
