@@ -11,6 +11,9 @@
 #include "ServerRequestHandler.h"
 #include "ServerTrackerView.h"
 #include "TrackerManager.h"
+#include "HMDManager.h"
+#include "ControllerManager.h"
+#include "ServerControllerView.h"
 
 //-- constants -----
 static const float k_min_time_delta_seconds = 1 / 120.f;
@@ -279,6 +282,8 @@ void ServerHMDView::resetPoseFilter()
 void ServerHMDView::updateOpticalPoseEstimation(TrackerManager* tracker_manager)
 {
     const std::chrono::time_point<std::chrono::high_resolution_clock> now= std::chrono::high_resolution_clock::now();
+	const TrackerManagerConfig &trackerMgrConfig = DeviceManager::getInstance()->m_tracker_manager->getConfig();
+	ControllerManager *m_controllerManager = DeviceManager::getInstance()->m_controller_manager;
 
     // TODO: Probably need to first update IMU state to get velocity.
     // If velocity is too high, don't bother getting a new position.
@@ -291,21 +296,61 @@ void ServerHMDView::updateOpticalPoseEstimation(TrackerManager* tracker_manager)
 
 		int available_trackers = 0;
 
+		static bool occluded_tracker_ids[TrackerManager::k_max_devices][HMDManager::k_max_devices];
+		static float occluded_projection_tracker_ids[TrackerManager::k_max_devices][HMDManager::k_max_devices][2];
+
         CommonDeviceTrackingShape trackingShape;
         m_device->getTrackingShape(trackingShape);
         assert(trackingShape.shape_type != eCommonTrackingShapeType::INVALID_SHAPE);
 
-        // Find the projection of the controller from the perspective of each tracker.
-        // In the case of sphere projections, go ahead and compute the tracker relative position as well.
-        for (int tracker_id = 0; tracker_id < tracker_manager->getMaxDevices(); ++tracker_id)
-        {
+		struct projectionInfo
+		{
+			int tracker_id;
+			float screen_area;
+		};
+		std::vector<projectionInfo> sorted_projections;
+
+		for (int tracker_id = 0; tracker_id < tracker_manager->getMaxDevices(); ++tracker_id)
+		{
+			const ServerTrackerViewPtr tracker = tracker_manager->getTrackerViewPtr(tracker_id);
+			if (tracker->getIsOpen())
+			{
+				HMDOpticalPoseEstimation &trackerPoseEstimateRef = m_tracker_pose_estimations[tracker_id];
+
+				projectionInfo info;
+				info.tracker_id = tracker_id;
+				info.screen_area = trackerPoseEstimateRef.projection.screen_area;
+				sorted_projections.push_back(info);
+			}
+		}
+
+		// Sort by biggest projector.
+		// Go through all trackers and sort them by biggest projector to make tracking quality better.
+		// The bigger projections should be closer to trackers and smaller far away.
+		std::sort(
+			sorted_projections.begin(), sorted_projections.end(),
+			[](const projectionInfo & a, const projectionInfo & b) -> bool
+		{
+			return a.screen_area > b.screen_area;
+		});
+
+
+		// Find the projection of the controller from the perspective of each tracker.
+		// In the case of sphere projections, go ahead and compute the tracker relative position as well.
+		for (int list_index = 0; list_index < sorted_projections.size(); ++list_index)
+		{
+			int tracker_id = sorted_projections[list_index].tracker_id;
+			int hmd_id = this->getDeviceID();
+
             ServerTrackerViewPtr tracker = tracker_manager->getTrackerViewPtr(tracker_id);
             HMDOpticalPoseEstimation &trackerPoseEstimateRef = m_tracker_pose_estimations[tracker_id];
 
             const bool bWasTracking= trackerPoseEstimateRef.bCurrentlyTracking;
 
             // Assume we're going to lose tracking this frame
-            bool bCurrentlyTracking = false;
+			bool bCurrentlyTracking = false;
+			bool bOccluded = false;
+			bool bBlacklisted = false;
 
             if (tracker->getIsOpen())
             {
@@ -317,7 +362,7 @@ void ServerHMDView::updateOpticalPoseEstimation(TrackerManager* tracker_manager)
                 const std::chrono::duration<float, std::milli> timeSinceNewDataMillis= 
                     now - tracker->getLastNewDataTimestamp();
                 const float timeoutMilli= 
-                    static_cast<float>(DeviceManager::getInstance()->m_tracker_manager->getConfig().optical_tracking_timeout);
+                    static_cast<float>(trackerMgrConfig.optical_tracking_timeout);
 
                 // Can't compute tracking on video data that's too old
                 if (timeSinceNewDataMillis.count() < timeoutMilli)
@@ -347,18 +392,181 @@ void ServerHMDView::updateOpticalPoseEstimation(TrackerManager* tracker_manager)
 						}
 					}
 
-                    // If the projection isn't too old (or updated this tick), 
-                    // say we have a valid tracked location
-					if ((bWasTracking && !tracker->getHasUnpublishedState()) || bIsVisibleThisUpdate)
-                    {
-                        // If this tracker has a valid projection for the controller
-                        // add it to the tracker id list
-                        valid_projection_tracker_ids[projections_found] = tracker_id;
-                        ++projections_found;
 
-                        // Flag this pose estimate as invalid
-                        bCurrentlyTracking = true;
-                    }
+					bool bIsOccluded = false;
+					bool bIsBlacklisted = false;
+
+					//Only available
+					if (trackerPoseEstimateRef.projection.shape_type == eCommonTrackingProjectionType::ProjectionType_Ellipse)
+					{
+						//Create an occlusion area at the last seen valid tracked projection.
+						//If the projection center is near the occluded area it will not mark the projection as valid.
+						//This will remove jitter when the shape of the controllers is partially visible to the trackers.
+						if (!getIsROIDisabled())
+						{
+							if (trackerMgrConfig.occluded_area_on_loss_size >= 0.01)
+							{
+								if (!occluded_tracker_ids[tracker_id][hmd_id])
+								{
+									if (bWasTracking || bIsVisibleThisUpdate)
+									{
+										occluded_tracker_ids[tracker_id][hmd_id] = false;
+										occluded_projection_tracker_ids[tracker_id][hmd_id][0] = trackerPoseEstimateRef.projection.shape.ellipse.center.x;
+										occluded_projection_tracker_ids[tracker_id][hmd_id][1] = trackerPoseEstimateRef.projection.shape.ellipse.center.y;
+									}
+									else
+									{
+										occluded_tracker_ids[tracker_id][hmd_id] = true;
+									}
+								}
+
+								if (occluded_tracker_ids[tracker_id][hmd_id])
+								{
+									if (bWasTracking || bIsVisibleThisUpdate)
+									{
+										bool bInArea = (abs(trackerPoseEstimateRef.projection.shape.ellipse.center.x - occluded_projection_tracker_ids[tracker_id][hmd_id][0])
+											< trackerMgrConfig.occluded_area_on_loss_size
+											&& abs(trackerPoseEstimateRef.projection.shape.ellipse.center.y - occluded_projection_tracker_ids[tracker_id][hmd_id][1])
+											< trackerMgrConfig.occluded_area_on_loss_size);
+
+										bool bRegain = (fmaxf(trackerPoseEstimateRef.projection.screen_area, trackerMgrConfig.min_valid_projection_area)
+											> trackerMgrConfig.occluded_area_regain_projection_size);
+
+										if (bInArea && !bRegain)
+										{
+											bIsOccluded = true;
+
+											trackerPoseEstimateRef.occlusionAreaSize = trackerMgrConfig.occluded_area_on_loss_size;
+											trackerPoseEstimateRef.occlusionAreaPos.x = occluded_projection_tracker_ids[tracker_id][hmd_id][0];
+											trackerPoseEstimateRef.occlusionAreaPos.y = occluded_projection_tracker_ids[tracker_id][hmd_id][1];
+										}
+										else
+										{
+											occluded_tracker_ids[tracker_id][hmd_id] = false;
+										}
+									}
+									else
+									{
+										// Recenter to last visible projection origin
+										occluded_projection_tracker_ids[tracker_id][hmd_id][0] = trackerPoseEstimateRef.projection.shape.ellipse.center.x;
+										occluded_projection_tracker_ids[tracker_id][hmd_id][1] = trackerPoseEstimateRef.projection.shape.ellipse.center.y;
+									}
+								}
+							}
+						}
+
+						if (bWasTracking || bIsVisibleThisUpdate)
+						{
+							// Blacklisted projections
+							for (int i = 0; i < eCommonBlacklistProjection::MAX_BLACKLIST_PROJECTIONS; ++i)
+							{
+								float x, y, w, h;
+								if (tracker->getBlacklistProjection(i, x, y, w, h))
+								{
+									const float tracker_x = trackerPoseEstimateRef.projection.shape.ellipse.center.x;
+									const float tracker_y = trackerPoseEstimateRef.projection.shape.ellipse.center.y;
+
+									bool bInArea = (tracker_x > x)
+										&& (tracker_y > y)
+										&& (tracker_x < x + w)
+										&& (tracker_y < y + h);
+
+									if (bInArea)
+									{
+										trackerPoseEstimateRef.blacklistedAreaRec.x = x;
+										trackerPoseEstimateRef.blacklistedAreaRec.y = y;
+										trackerPoseEstimateRef.blacklistedAreaRec.w = w;
+										trackerPoseEstimateRef.blacklistedAreaRec.h = h;
+
+										bIsBlacklisted = true;
+										break;
+									}
+								}
+							}
+
+							// Avoid other device projections
+							if (trackerMgrConfig.projection_collision_avoid)
+							{
+								for (int i = 0; i < ControllerManager::k_max_devices; ++i)
+								{
+									ServerControllerViewPtr controllerView = m_controllerManager->getControllerViewPtr(i);
+									if (!controllerView || !controllerView->getIsOpen())
+										continue;
+
+									const ControllerOpticalPoseEstimation *poseEst = controllerView->getTrackerPoseEstimate(tracker_id);
+									if (!poseEst)
+										continue;
+									
+									if (poseEst->projection.shape_type != eCommonTrackingProjectionType::ProjectionType_Ellipse)
+										continue;
+
+									float other_x = poseEst->projection.shape.ellipse.center.x;
+									float other_y = poseEst->projection.shape.ellipse.center.y;
+									float other_area = poseEst->projection.screen_area;
+
+									float x = trackerPoseEstimateRef.projection.shape.ellipse.center.x - trackerPoseEstimateRef.projection.shape.ellipse.half_x_extent - trackerMgrConfig.projection_collision_offset;
+									float y = trackerPoseEstimateRef.projection.shape.ellipse.center.y - trackerPoseEstimateRef.projection.shape.ellipse.half_y_extent - trackerMgrConfig.projection_collision_offset;
+									float w = (trackerPoseEstimateRef.projection.shape.ellipse.half_x_extent * 2) + (trackerMgrConfig.projection_collision_offset * 2);
+									float h = (trackerPoseEstimateRef.projection.shape.ellipse.half_y_extent * 2) + (trackerMgrConfig.projection_collision_offset * 2);
+									float area = trackerPoseEstimateRef.projection.screen_area;
+
+									// $TODO Should we just ignore both?
+									if (area > other_area)
+										continue;
+
+									bool bInArea = (other_x > x)
+										&& (other_y > y)
+										&& (other_x < x + w)
+										&& (other_y < y + h);
+
+									// Blacklist if the projection are is already used by another.
+									// Avoiding color collisions between controllers.
+									if (bInArea)
+									{
+										trackerPoseEstimateRef.blacklistedAreaRec.x = x;
+										trackerPoseEstimateRef.blacklistedAreaRec.y = y;
+										trackerPoseEstimateRef.blacklistedAreaRec.w = w;
+										trackerPoseEstimateRef.blacklistedAreaRec.h = h;
+
+										bIsBlacklisted = true;
+										break;
+									}
+								}
+							}
+						}
+					}
+
+					// Ignore projections that are occluded BUT always pass atleast 2 biggest projected trackers.
+					if (bIsBlacklisted)
+					{
+						bBlacklisted = true;
+					}
+					else
+					{
+						bBlacklisted = false;
+
+						if (!bIsOccluded || projections_found < trackerMgrConfig.occluded_area_ignore_num_trackers)
+						{
+							bOccluded = false;
+
+							// If the projection isn't too old (or updated this tick), 
+							// say we have a valid tracked location
+							if ((bWasTracking && !tracker->getHasUnpublishedState()) || bIsVisibleThisUpdate)
+							{
+								// If this tracker has a valid projection for the controller
+								// add it to the tracker id list
+								valid_projection_tracker_ids[projections_found] = tracker_id;
+								++projections_found;
+
+								// Flag this pose estimate as invalid
+								bCurrentlyTracking = true;
+							}
+						}
+						else
+						{
+							bOccluded = true;
+						}
+					}
                 }
             }
 
@@ -366,6 +574,8 @@ void ServerHMDView::updateOpticalPoseEstimation(TrackerManager* tracker_manager)
             trackerPoseEstimateRef.last_update_timestamp = now;
             trackerPoseEstimateRef.bValidTimestamps = true;
             trackerPoseEstimateRef.bCurrentlyTracking = bCurrentlyTracking;
+			trackerPoseEstimateRef.bIsOccluded = bOccluded;
+			trackerPoseEstimateRef.bIsBlacklisted = bBlacklisted;
         }
 
         // How we compute the final world pose estimate varies based on
@@ -399,7 +609,7 @@ void ServerHMDView::updateOpticalPoseEstimation(TrackerManager* tracker_manager)
                 assert(false && "unreachable");
             }
         }
-        else if (projections_found == 1 && (available_trackers == 1 || !DeviceManager::getInstance()->m_tracker_manager->getConfig().ignore_pose_from_one_tracker))
+        else if (projections_found == 1 && (available_trackers == 1 || !trackerMgrConfig.ignore_pose_from_one_tracker))
         {
             const int tracker_id = valid_projection_tracker_ids[0];
             const ServerTrackerViewPtr tracker = tracker_manager->getTrackerViewPtr(tracker_id);

@@ -24,6 +24,13 @@ struct HMDOpticalPoseEstimation
 	CommonDeviceQuaternion orientation;
 	bool bOrientationValid;
 
+	bool bEnforceNewROI;
+	bool bIsOccluded;
+	bool bIsBlacklisted;
+	CommonDeviceScreenLocation occlusionAreaPos;
+	float occlusionAreaSize;
+	CommonDeviceBlacklistProjection blacklistedAreaRec;
+
 	inline void clear()
 	{
 		last_update_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>();
@@ -35,6 +42,13 @@ struct HMDOpticalPoseEstimation
 
 		orientation.clear();
 		bOrientationValid = false;
+
+		bEnforceNewROI = false;
+		bIsOccluded = false;
+		bIsBlacklisted = false;
+		occlusionAreaPos.clear();
+		occlusionAreaSize = 0.f;
+		blacklistedAreaRec.clear();
 
 		memset(&projection, 0, sizeof(CommonDeviceTrackingProjection));
 		projection.shape_type = eCommonTrackingProjectionType::INVALID_PROJECTION;

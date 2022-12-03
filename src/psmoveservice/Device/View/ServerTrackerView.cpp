@@ -1584,15 +1584,21 @@ bool ServerTrackerView::computeProjectionForHMD(
     const HMDOpticalPoseEstimation *priorPoseEst= 
         tracked_hmd->getTrackerPoseEstimate(this->getDeviceID());
     const bool bIsTracking = priorPoseEst->bCurrentlyTracking;
+	const bool bEnforceNewROI = priorPoseEst->bEnforceNewROI;
+	const bool bIsOccluded = priorPoseEst->bIsOccluded;
+	const bool bIsBlacklisted = priorPoseEst->bIsBlacklisted;
+	const CommonDeviceScreenLocation mOcclusionAreaPos = priorPoseEst->occlusionAreaPos;
+	const float fOcclusionAreaSize = priorPoseEst->occlusionAreaSize;
+	const CommonDeviceBlacklistProjection mBlacklistedAreaRec = priorPoseEst->blacklistedAreaRec;
 
     cv::Rect2i ROI = computeTrackerROIForPoseProjection(
 		-1,
 		(bRoiOptimized) ? tracked_hmd->getDeviceID() : -1,
         bRoiDisabled,
 		iRoiEdgeOffset,
-        this, 
-        bIsTracking ? tracked_hmd->getPoseFilter() : nullptr,
-        bIsTracking ? &priorPoseEst->projection : nullptr,
+        this,
+		((bIsTracking || bIsOccluded) && !bIsBlacklisted && !bEnforceNewROI) ? (tracked_hmd->getPoseFilter()) : (nullptr),
+		((bIsTracking || bIsOccluded) && !bIsBlacklisted && !bEnforceNewROI) ? (&priorPoseEst->projection) : (nullptr),
         tracking_shape);
     m_opencv_buffer_state->applyROI(ROI);
 
@@ -1609,6 +1615,8 @@ bool ServerTrackerView::computeProjectionForHMD(
     // Compute the tracker relative 3d position of the controller from the contour
     if (bSuccess)
     {
+		out_pose_estimate->bEnforceNewROI = false;
+
         cv::Matx33f camera_matrix;
         cv::Matx<float, 5, 1> distortions;
         computeOpenCVCameraIntrinsicMatrix(m_device, camera_matrix, distortions);
@@ -1730,6 +1738,18 @@ bool ServerTrackerView::computeProjectionForHMD(
             break;
         }
     }
+
+	// Draw occlusion area
+	if (bIsOccluded)
+	{
+		m_opencv_buffer_state->draw_pose_occlusion(mOcclusionAreaPos, fOcclusionAreaSize);
+	}
+
+	if (bIsBlacklisted)
+	{
+		m_opencv_buffer_state->draw_pose_blacklist(mBlacklistedAreaRec);
+	}
+
 
     return bSuccess;
 }

@@ -18,6 +18,8 @@
 #include "PSMoveProtocol.pb.h"
 #include "ServerUtility.h"
 #include "ServerTrackerView.h"
+#include "HMDManager.h"
+#include "ServerHMDView.h"
 
 #include <glm/glm.hpp>
 
@@ -495,6 +497,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
     const std::chrono::time_point<std::chrono::high_resolution_clock> now= std::chrono::high_resolution_clock::now();
 	const TrackerManagerConfig &trackerMgrConfig = DeviceManager::getInstance()->m_tracker_manager->getConfig();
 	ControllerManager *m_controllerManager = DeviceManager::getInstance()->m_controller_manager;
+	HMDManager *m_hmdManager = DeviceManager::getInstance()->m_hmd_manager;
 	
     // TODO: Probably need to first update IMU state to get velocity.
     // If velocity is too high, don't bother getting a new position.
@@ -712,7 +715,55 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 							// Avoid other device projections
 							if (trackerMgrConfig.projection_collision_avoid)
 							{
-								for (int i = 0; i < ControllerManager::k_max_devices; ++i)
+								// Check if we collide with hmd projections
+								for (int i = 0; !bIsBlacklisted && i < HMDManager::k_max_devices; ++i)
+								{
+									ServerHMDViewPtr hmdView = m_hmdManager->getHMDViewPtr(i);
+									if (!hmdView || !hmdView->getIsOpen())
+										continue;
+									
+									const HMDOpticalPoseEstimation *poseEst = hmdView->getTrackerPoseEstimate(tracker_id);
+									if (!poseEst)
+										continue;
+
+									if (poseEst->projection.shape_type != eCommonTrackingProjectionType::ProjectionType_Ellipse)
+										continue;
+
+									float other_x = poseEst->projection.shape.ellipse.center.x;
+									float other_y = poseEst->projection.shape.ellipse.center.y;
+									float other_area = poseEst->projection.screen_area;
+
+									float x = trackerPoseEstimateRef.projection.shape.ellipse.center.x - trackerPoseEstimateRef.projection.shape.ellipse.half_x_extent - trackerMgrConfig.projection_collision_offset;
+									float y = trackerPoseEstimateRef.projection.shape.ellipse.center.y - trackerPoseEstimateRef.projection.shape.ellipse.half_y_extent - trackerMgrConfig.projection_collision_offset;
+									float w = (trackerPoseEstimateRef.projection.shape.ellipse.half_x_extent * 2) + (trackerMgrConfig.projection_collision_offset * 2);
+									float h = (trackerPoseEstimateRef.projection.shape.ellipse.half_y_extent * 2) + (trackerMgrConfig.projection_collision_offset * 2);
+									float area = trackerPoseEstimateRef.projection.screen_area;
+
+									// $TODO Should we just ignore both?
+									if (area > other_area)
+										continue;
+
+									bool bInArea = (other_x > x)
+										&& (other_y > y)
+										&& (other_x < x + w)
+										&& (other_y < y + h);
+
+									// Blacklist if the projection are is already used by another.
+									// Avoiding color collisions between controllers.
+									if (bInArea)
+									{
+										trackerPoseEstimateRef.blacklistedAreaRec.x = x;
+										trackerPoseEstimateRef.blacklistedAreaRec.y = y;
+										trackerPoseEstimateRef.blacklistedAreaRec.w = w;
+										trackerPoseEstimateRef.blacklistedAreaRec.h = h;
+
+										bIsBlacklisted = true;
+										break;
+									}
+								}
+
+								// Check if we collide with controller projections
+								for (int i = 0; !bIsBlacklisted && i < ControllerManager::k_max_devices; ++i)
 								{
 									if (i == controller_id)
 										continue;
