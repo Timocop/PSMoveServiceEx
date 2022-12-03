@@ -1039,7 +1039,7 @@ void AppStage_AdvancedSettings::renderUI()
 						if (ImGui::IsItemHovered())
 							ImGui::SetTooltip(
 								"Enable to use XInput API only. (e.g. Xbox controllers)\n"
-								"(The default value is FALSE)"
+								"(The default value is TRUE)"
 							);
 
 						ImGui::Unindent();

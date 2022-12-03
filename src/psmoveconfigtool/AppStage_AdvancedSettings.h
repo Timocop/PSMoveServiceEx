@@ -147,7 +147,7 @@ public:
 		hmd_reconnect_interval = 10000;
 		//hmd_poll_interval = 2;
 		gamepad_api_enabled = true;
-		gamepad_api_xinput_only = false;
+		gamepad_api_xinput_only = true;
 		platform_api_enabled = true;
 	};
 

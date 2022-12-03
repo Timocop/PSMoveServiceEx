@@ -44,7 +44,7 @@ public:
         , hmd_reconnect_interval(k_default_hmd_reconnect_interval)
         //, hmd_poll_interval(k_default_hmd_poll_interval)
 		, gamepad_api_enabled(true)
-		, gamepad_api_xinput_only(false)
+		, gamepad_api_xinput_only(true)
 		, platform_api_enabled(true)
     {};
 
