@@ -659,26 +659,6 @@ void AppStage_AdvancedSettings::renderUI()
 					}
 
 					{
-						ImGui::Text("Minimum valid projection area:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::PushItemWidth(100.f);
-						if (ImGui::InputFloat("##MinimumValidProjectionArea", &cfg_tracker.min_valid_projection_area, 1.f, 4.f, 2))
-						{
-							cfg_tracker.min_valid_projection_area = static_cast<float>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.min_valid_projection_area)));
-						}
-						ImGui::PopItemWidth();
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"Projection areas smaller than this will not be valid and will not be tracked.\n"
-								"Using smaller values can help track tracking lights better on further distances\n"
-								"but can also introduce more position jitter.\n"
-								"(The legacy value is 16)\n"
-								"(The default value is 6)"
-							);
-					}
-
-					{
 						ImGui::Text("Occluded area size on tracking loss:");
 						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 						ImGui::PushItemWidth(100.f);
@@ -741,8 +721,8 @@ void AppStage_AdvancedSettings::renderUI()
 
 						if (ImGui::IsItemHovered())
 							ImGui::SetTooltip(
-								"Avoids projection collisions between controllers if they are already near other projections.\n"
-								"Enabling this can fix some color collisions between controllers such as color bleeding on the bulb edges.\n"
+								"Avoid collisions between projections.\n"
+								"Enabling this can fix some color collisions such as color bleeding on the bulb edges.\n"
 								"(The default value is TRUE)"
 							);
 					}
@@ -775,7 +755,7 @@ void AppStage_AdvancedSettings::renderUI()
 
 						if (ImGui::IsItemHovered())
 							ImGui::SetTooltip(
-								"Gives each tracker a calculated offset from previous cached average controller positions.\n"
+								"Gives each tracker a calculated offset from previous cached average positions.\n"
 								"Makes transitions between trackers smoother and reduces jitter.\n"
 								"However, the detection of unwanted color noise could result in persistent bad tracking behavior!\n"
 								"(The default value is FALSE)"
@@ -822,6 +802,26 @@ void AppStage_AdvancedSettings::renderUI()
 							);
 					}
 					ImGui::Unindent();
+
+					{
+						ImGui::Text("Minimum valid projection area:");
+						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+						ImGui::PushItemWidth(100.f);
+						if (ImGui::InputFloat("##MinimumValidProjectionArea", &cfg_tracker.min_valid_projection_area, 1.f, 4.f, 2))
+						{
+							cfg_tracker.min_valid_projection_area = static_cast<float>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.min_valid_projection_area)));
+						}
+						ImGui::PopItemWidth();
+
+						if (ImGui::IsItemHovered())
+							ImGui::SetTooltip(
+								"Projection areas smaller than this will not be valid and will not be tracked.\n"
+								"Using smaller values can help track tracking lights better on further distances\n"
+								"but can also introduce more position jitter.\n"
+								"(The legacy value is 16)\n"
+								"(The default value is 6)"
+							);
+					}
 
 					{
 						ImGui::Text("Minimum points in contour:");
