@@ -815,7 +815,7 @@ static bool computeTrackerRelativePointCloudContourPose(
 static cv::Rect2i computeTrackerROIForPoseProjection(
 	const int roi_index_controller,
 	const int roi_index_hmd,
-	const bool disabled_roi,
+	const bool roi_disabled,
 	const int roi_edge_offset,
     const ServerTrackerView *tracker,
     const IPoseFilter* pose_filter,
@@ -1587,7 +1587,7 @@ bool ServerTrackerView::computeProjectionForHMD(
 
     cv::Rect2i ROI = computeTrackerROIForPoseProjection(
 		-1,
-		(bRoiOptimized) ? (tracked_hmd->getDeviceID()) : -1,
+		(bRoiOptimized) ? tracked_hmd->getDeviceID() : -1,
         bRoiDisabled,
 		iRoiEdgeOffset,
         this, 
