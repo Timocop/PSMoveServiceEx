@@ -15,7 +15,7 @@ VirtualHMDDeviceEnumerator::VirtualHMDDeviceEnumerator()
 	m_deviceType= CommonDeviceState::VirtualHMD;
     m_device_index= 0;
 
-    m_current_device_identifier= "VirtualHMD__0";
+    m_current_device_identifier= "VirtualHMD_0";
     m_device_count= virtual_hmd_count;
 }
 
@@ -47,7 +47,7 @@ bool VirtualHMDDeviceEnumerator::next()
     if (m_device_index < m_device_count)
     {
         char device_path[32];
-        ServerUtility::format_string(device_path, sizeof(device_path), "VirtualHMD__%s", m_device_index);
+        ServerUtility::format_string(device_path, sizeof(device_path), "VirtualHMD_%d", m_device_index);
 
         m_current_device_identifier= device_path;
     }
