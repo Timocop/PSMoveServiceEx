@@ -815,9 +815,9 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 			if (abs(new_acceleration.x()) < filter_passive_drift_correction_deadzone &&
 				abs(new_acceleration.y()) < filter_passive_drift_correction_deadzone &&
 				abs(new_acceleration.z()) < filter_passive_drift_correction_deadzone &&
-				current_omega.x() < filter_passive_drift_correction_deadzone &&
-				current_omega.y() < filter_passive_drift_correction_deadzone &&
-				current_omega.z() < filter_passive_drift_correction_deadzone)
+				abs(current_omega.x()) < filter_passive_drift_correction_deadzone &&
+				abs(current_omega.y()) < filter_passive_drift_correction_deadzone &&
+				abs(current_omega.z()) < filter_passive_drift_correction_deadzone)
 			{
 				if (mg_ignored)
 				{
