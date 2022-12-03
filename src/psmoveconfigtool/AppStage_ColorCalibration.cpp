@@ -1333,6 +1333,28 @@ void AppStage_ColorCalibration::renderUI()
 							m_bAlignDetectColor = true;
 						}
 
+						if (m_masterControllerView != nullptr)
+						{
+							ImGui::Checkbox("Automatically switch color", &m_bAutoChangeColor);
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"Cycles through all available colors automatically.\n"
+									"(This is always enabled when using 'Automatically detect colors')"
+								);
+
+							ImGui::Checkbox("Automatically switch controller", &m_bAutoChangeController);
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"Cycles through all available controllers automatically."
+								);
+						}
+
+						ImGui::Checkbox("Automatically switch tracker", &m_bAutoChangeTracker);
+						if (ImGui::IsItemHovered())
+							ImGui::SetTooltip(
+								"Cycles through all available trackers automatically."
+							);
+
 						if (ImGui::CollapsingHeader("Automatic Detection Settings", 0, true, true))
 						{
 							static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
@@ -1393,27 +1415,6 @@ void AppStage_ColorCalibration::renderUI()
 							ImGui::EndChild();
 						}
 
-						if (m_masterControllerView != nullptr)
-						{
-							ImGui::Checkbox("Automatically switch color", &m_bAutoChangeColor);
-							if (ImGui::IsItemHovered())
-								ImGui::SetTooltip(
-									"Cycles through all available colors automatically.\n"
-									"(This is always enabled when using 'Automatically detect colors')"
-								);
-
-							ImGui::Checkbox("Automatically switch controller", &m_bAutoChangeController);
-							if (ImGui::IsItemHovered())
-								ImGui::SetTooltip(
-									"Cycles through all available controllers automatically."
-								);
-						}
-
-						ImGui::Checkbox("Automatically switch tracker", &m_bAutoChangeTracker);
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"Cycles through all available trackers automatically."
-							);
 					}
 					ImGui::EndGroup();
 					if (ImGui::IsItemVisible())
