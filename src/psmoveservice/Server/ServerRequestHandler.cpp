@@ -2700,6 +2700,16 @@ protected:
 				tracker_view->setTrackerPose(&destPose);
 				tracker_view->saveSettings();
 
+				// Notify if the playspace has been changed
+				{
+					ResponsePtr response(new PSMoveProtocol::Response);
+					response->set_type(PSMoveProtocol::Response_ResponseType_PLAYSPACE_OFFSET_UPDATE);
+					response->set_request_id(-1);
+					response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+
+					ServerNetworkManager::get_instance()->send_notification_to_all_clients(response);
+				}
+
 				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
 			}
 			else
