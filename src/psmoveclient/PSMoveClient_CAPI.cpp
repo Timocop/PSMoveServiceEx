@@ -165,6 +165,11 @@ bool PSM_WasSystemButtonPressed()
 	return g_psm_client != nullptr && g_psm_client->pollWasSystemButtonPressed();
 }
 
+bool PSM_HasPlayspaceOffsetChanged()
+{
+	return g_psm_client != nullptr && g_psm_client->pollHasPlayspaceOffsetsChanged();
+}
+
 PSMResult PSM_Initialize(const char* host, const char* port, int timeout_ms)
 {
     PSMResult result = PSMResult_Error;
@@ -1700,10 +1705,38 @@ PSMResult PSM_SetControllerHand(PSMControllerID controller_id, PSMControllerHand
 /// Tracker Pool
 PSMTracker *PSM_GetTracker(PSMTrackerID tracker_id)
 {
-    if (g_psm_client != nullptr)
-        return g_psm_client->get_tracker_view(tracker_id);
-    else
-        return nullptr;
+	if (g_psm_client != nullptr)
+		return g_psm_client->get_tracker_view(tracker_id);
+	else
+		return nullptr;
+}
+
+PSMResult PSM_GetTrackerEx(PSMTrackerID tracker_id, PSMTracker *tracker_out)
+{
+	PSMResult result = PSMResult_Error;
+
+	if (g_psm_client != nullptr)
+	{
+		PSMTracker *state = g_psm_client->get_tracker_view(tracker_id);
+
+		PSMTracker out = {};
+		 
+		COPY_PROP(listener_count);
+		COPY_PROP(is_connected);
+		COPY_PROP(sequence_num);
+
+		COPY_PROP(data_frame_last_received_time);
+		COPY_PROP(data_frame_average_fps);
+
+		out.tracker_info = state->tracker_info;
+
+		*tracker_out = out;
+
+		result = PSMResult_Success;
+	} 
+	
+		
+	return result;
 }
 
 PSMResult PSM_AllocateTrackerListener(PSMTrackerID tracker_id, const PSMClientTrackerInfo *tracker_info)
@@ -1876,13 +1909,13 @@ PSMResult PSM_GetTrackerVideoFrameBuffer(PSMTrackerID tracker_id, const unsigned
 
 PSMResult PSM_GetTrackerFrustum(PSMTrackerID tracker_id, PSMFrustum *out_frustum)
 {
-    PSMResult result= PSMResult_Error;
+	PSMResult result = PSMResult_Error;
 	assert(out_frustum != nullptr);
 
-    if (g_psm_client != nullptr && IS_VALID_TRACKER_INDEX(tracker_id))
-    {
-		const PSMTracker *tracker= g_psm_client->get_tracker_view(tracker_id);
-		const PSMClientTrackerInfo *tracker_info= &tracker->tracker_info;
+	if (g_psm_client != nullptr && IS_VALID_TRACKER_INDEX(tracker_id))
+	{
+		const PSMTracker *tracker = g_psm_client->get_tracker_view(tracker_id);
+		const PSMClientTrackerInfo *tracker_info = &tracker->tracker_info;
 		PSM_FrustumSetPose(out_frustum, &tracker_info->tracker_pose);
 
 		// Convert the FOV angles to radians for rendering purposes
@@ -1891,10 +1924,26 @@ PSMResult PSM_GetTrackerFrustum(PSMTrackerID tracker_id, PSMFrustum *out_frustum
 		out_frustum->zNear = tracker_info->tracker_znear;
 		out_frustum->zFar = tracker_info->tracker_zfar;
 
-		result= PSMResult_Success;
+		result = PSMResult_Success;
 	}
 
-    return result;
+	return result;
+}
+
+PSMResult PSM_GetTrackerPose(PSMTrackerID tracker_id, PSMPosef *out_pose)
+{
+	PSMResult result = PSMResult_Error;
+
+	if (g_psm_client != nullptr && IS_VALID_TRACKER_INDEX(tracker_id))
+	{
+		const PSMTracker *tracker = g_psm_client->get_tracker_view(tracker_id);
+
+		*out_pose = tracker->tracker_info.tracker_pose;
+
+		result = PSMResult_Success;
+	}
+
+	return result;
 }
 
 /// Async Tracker Methods

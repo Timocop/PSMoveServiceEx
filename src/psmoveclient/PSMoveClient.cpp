@@ -279,11 +279,20 @@ bool PSMoveClient::pollHasHMDListChanged()
 
 bool PSMoveClient::pollWasSystemButtonPressed()
 {
-	bool bWasSystemButtonPressed= m_bWasSystemButtonPressed;
+	bool bWasSystemButtonPressed = m_bWasSystemButtonPressed;
 
-	m_bWasSystemButtonPressed= false;
+	m_bWasSystemButtonPressed = false;
 
-	return bWasSystemButtonPressed; 
+	return bWasSystemButtonPressed;
+}
+
+bool PSMoveClient::pollHasPlayspaceOffsetsChanged()
+{
+	bool bHasPlayspaceOffsetsChanged = m_bHasPlayspaceOffsetsChanged;
+
+	m_bHasPlayspaceOffsetsChanged = false;
+
+	return bHasPlayspaceOffsetsChanged;
 }
 
 // -- ClientPSMoveAPI System -----
@@ -300,6 +309,7 @@ bool PSMoveClient::startup(e_log_severity_level log_level)
 	m_bHasTrackerListChanged= false;
 	m_bHasHMDListChanged= false;
 	m_bWasSystemButtonPressed = false;
+	m_bHasPlayspaceOffsetsChanged = false;
 
     // Attempt to connect to the server
     if (success)
@@ -2158,6 +2168,9 @@ void PSMoveClient::handle_notification(ResponsePtr notification)
 	case PSMoveProtocol::Response_ResponseType_SYSTEM_BUTTON_PRESSED:
 		specificEventType = PSMEventMessage::PSMEvent_systemButtonPressed;
 		break;
+	case PSMoveProtocol::Response_ResponseType_PLAYSPACE_OFFSET_UPDATE:
+		specificEventType = PSMEventMessage::PSMEvent_playspaceChanged;
+		break;
     }
 
     enqueue_event_message(specificEventType, notification);
@@ -2253,6 +2266,11 @@ void PSMoveClient::process_event_message(
     case PSMEventMessage::PSMEvent_systemButtonPressed:
         m_bWasSystemButtonPressed= true;
         break;
+
+		//PSMoveServiceEx Events
+	case PSMEventMessage::PSMEvent_playspaceChanged:
+		m_bHasPlayspaceOffsetsChanged = true;
+		break;
     default:
         assert(0 && "unreachable");
         break;

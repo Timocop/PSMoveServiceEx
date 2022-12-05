@@ -686,6 +686,7 @@ message Response {
         TRACKER_FRAME_HEIGHT_UPDATED= 21;
         SYSTEM_BUTTON_PRESSED= 22;
 		GET_PLAYSPACE_OFFSETS= 23;
+		PLAYSPACE_OFFSET_UPDATE= 24;
     }
 
     enum ResultCode {

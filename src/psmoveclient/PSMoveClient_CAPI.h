@@ -796,7 +796,10 @@ typedef struct
         PSMEvent_controllerListUpdated,
         PSMEvent_trackerListUpdated,
         PSMEvent_hmdListUpdated,
-        PSMEvent_systemButtonPressed
+        PSMEvent_systemButtonPressed,
+
+		// PSMoveSerivceEx Events
+		PSMEvent_playspaceChanged
     } event_type;
 
     /// Opaque handle that can be converted to a <const PSMoveProtocol::Response *> pointer
@@ -1042,6 +1045,8 @@ PSM_PUBLIC_FUNCTION(bool) PSM_HasHMDListChanged();
 	\return true if the system button (i.e. the "PS" button) was pressed on any controller this update.
  */
 PSM_PUBLIC_FUNCTION(bool) PSM_WasSystemButtonPressed();
+
+PSM_PUBLIC_FUNCTION(bool) PSM_HasPlayspaceOffsetChanged();
 
 // System Blocking Queries
 /** \brief Get the client API version string from PSMoveService
@@ -1490,6 +1495,8 @@ PSM_PUBLIC_FUNCTION(PSMResult) PSM_SetControllerHandAsync(PSMControllerID contro
  */
 PSM_PUBLIC_FUNCTION(PSMTracker *) PSM_GetTracker(PSMTrackerID tracker_id);
 
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetTrackerEx(PSMTrackerID tracker_id, PSMTracker * tracker_out);
+
 /** \brief Allocate a reference to a tracker.
 	This function tells the client API to increment a reference count for a given tracker.
 	This function should be called before fetching the tracker data using \ref PSM_GetTracker.
@@ -1596,6 +1603,8 @@ PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetTrackerVideoFrameBuffer(PSMTrackerID track
 	\return PSMResult_Success if the tracker state is valid
  */
 PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetTrackerFrustum(PSMTrackerID tracker_id, PSMFrustum *out_frustum);
+
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetTrackerPose(PSMTrackerID tracker_id, PSMPosef * out_pose);
 
 // Async Tracker Methods
 /** \brief Sends a request for the tracker list.
