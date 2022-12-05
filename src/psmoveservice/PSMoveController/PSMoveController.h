@@ -69,7 +69,7 @@ public:
 		, filter_lowpassoptical_distance(10.f)
 		, filter_lowpassoptical_smoothing(0.40f)
 		, filter_enable_magnetometer(true)
-		, filter_use_passive_drift_correction(true)
+		, filter_use_passive_drift_correction(false)
 		, filter_passive_drift_correction_deadzone(3.f)
 		, filter_passive_drift_correction_delay(100.f)
     {

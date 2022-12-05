@@ -956,7 +956,7 @@ void AppStage_ControllerSettings::renderUI()
 												controllerInfo.FilterLowPassOpticalDistance = 10.f;
 												controllerInfo.FilterLowPassOpticalSmoothing = 0.40f;
 												controllerInfo.FilterEnableMagnetometer = true;
-												controllerInfo.FilterUsePassiveDriftCorrection = true;
+												controllerInfo.FilterUsePassiveDriftCorrection = false;
 												controllerInfo.FilterPassiveDriftCorrectionDeazone = 3.f;
 												controllerInfo.FilterPassiveDriftCorrectionDelay = 100.f;
 
