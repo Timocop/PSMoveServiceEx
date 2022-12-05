@@ -615,15 +615,20 @@ PSMResult PSM_GetControllerListAsync(PSMRequestID *out_request_id)
 
 PSMResult PSM_GetControllerList(PSMControllerList *out_controller_list, int timeout_ms)
 {
-	PSMBlockingRequest request(g_psm_client->get_controller_list());
-    PSMResult result_code= request.send(timeout_ms);
+	PSMResult result_code = PSMResult_Error;
 
-    if (g_psm_client != nullptr && result_code == PSMResult_Success)
+    if (g_psm_client != nullptr)
     {
-        assert(request.get_response_payload_type() == PSMResponseMessage::_responsePayloadType_ControllerList);
-        
-        *out_controller_list= request.get_response_message().payload.controller_list;
-        result_code= PSMResult_Success;
+		PSMBlockingRequest request(g_psm_client->get_controller_list());
+		result_code = request.send(timeout_ms);
+
+		if (result_code == PSMResult_Success)
+		{
+			assert(request.get_response_payload_type() == PSMResponseMessage::_responsePayloadType_ControllerList);
+
+			*out_controller_list = request.get_response_message().payload.controller_list;
+			result_code = PSMResult_Success;
+		}
     }
     
     return result_code;
@@ -1751,7 +1756,7 @@ PSMResult PSM_GetTrackerList(PSMTrackerList *out_tracker_list, int timeout_ms)
     if (g_psm_client != nullptr)
     {
         PSMBlockingRequest request(g_psm_client->get_tracker_list());
-        PSMResult result_code= request.send(timeout_ms);
+        result_code= request.send(timeout_ms);
 
         if (result_code == PSMResult_Success)
         {
@@ -1800,7 +1805,7 @@ PSMResult PSM_GetTrackingSpaceSettings(PSMTrackingSpace *out_tracking_space, int
     if (g_psm_client != nullptr)
     {
         PSMBlockingRequest request(g_psm_client->get_tracker_list());
-        PSMResult result_code= request.send(timeout_ms);
+        result_code= request.send(timeout_ms);
 
         if (result_code == PSMResult_Success)
         {
@@ -2688,7 +2693,7 @@ PSMResult PSM_GetHmdList(PSMHmdList *out_hmd_list, int timeout_ms)
     if (g_psm_client != nullptr)
     {
 	    PSMBlockingRequest request(g_psm_client->get_hmd_list());
-        PSMResult result_code= request.send(timeout_ms);
+        result_code= request.send(timeout_ms);
 
         if (result_code == PSMResult_Success)
         {
