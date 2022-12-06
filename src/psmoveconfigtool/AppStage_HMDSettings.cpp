@@ -323,19 +323,38 @@ void AppStage_HMDSettings::renderUI()
 								hmdInfo.OrientationFilterName = k_morpheus_orientation_filter_names[hmdInfo.OrientationFilterIndex];
 								request_set_orientation_filter(hmdInfo.HmdID, hmdInfo.OrientationFilterName);
 							}
-							if (ImGui::SliderFloat("Prediction Time", &hmdInfo.PredictionTime, 0.f, k_max_hmd_prediction_time))
+
+							if (ImGui::SliderFloat("##PredictionTime", &hmdInfo.PredictionTime, 0.f, k_max_hmd_prediction_time))
 							{
 								request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
 							}
+							ImGui::SameLine();
+							if (ImGui::Button(" - ##PredictionTimeInput"))
+							{
+								hmdInfo.PredictionTime = clampf(hmdInfo.PredictionTime - 0.025, 0.f, k_max_hmd_prediction_time);
+
+								request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
+							}
+							ImGui::SameLine();
+							if (ImGui::Button(" + ##PredictionTimeInput"))
+							{
+								hmdInfo.PredictionTime = clampf(hmdInfo.PredictionTime + 0.025, 0.f, k_max_hmd_prediction_time);
+
+								request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
+							}
+							ImGui::SameLine();
+							ImGui::Text("Prediction Time");
 
 							ImGui::Separator();
 
 							if (ImGui::Button("Reset Filter Defaults"))
 							{
+								hmdInfo.PredictionTime = 0.0f;
 								hmdInfo.PositionFilterIndex = k_default_hmd_position_filter_index;
 								hmdInfo.OrientationFilterIndex = k_default_morpheus_position_filter_index;
 								hmdInfo.PositionFilterName = k_hmd_position_filter_names[k_default_hmd_position_filter_index];
 								hmdInfo.OrientationFilterName = k_morpheus_orientation_filter_names[k_default_morpheus_position_filter_index];
+								request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
 								request_set_position_filter(hmdInfo.HmdID, hmdInfo.PositionFilterName);
 								request_set_orientation_filter(hmdInfo.HmdID, hmdInfo.OrientationFilterName);
 							}
@@ -361,14 +380,34 @@ void AppStage_HMDSettings::renderUI()
 								hmdInfo.PositionFilterName = k_hmd_position_filter_names[hmdInfo.PositionFilterIndex];
 								request_set_position_filter(hmdInfo.HmdID, hmdInfo.PositionFilterName);
 							}
-							if (ImGui::SliderFloat("Prediction Time", &hmdInfo.PredictionTime, 0.f, k_max_hmd_prediction_time))
+
+							if (ImGui::SliderFloat("##PredictionTime", &hmdInfo.PredictionTime, 0.f, k_max_hmd_prediction_time))
 							{
 								request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
 							}
+							ImGui::SameLine();
+							if (ImGui::Button(" - ##PredictionTimeInput"))
+							{
+								hmdInfo.PredictionTime = clampf(hmdInfo.PredictionTime - 0.025, 0.f, k_max_hmd_prediction_time);
+
+								request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
+							}
+							ImGui::SameLine();
+							if (ImGui::Button(" + ##PredictionTimeInput"))
+							{
+								hmdInfo.PredictionTime = clampf(hmdInfo.PredictionTime + 0.025, 0.f, k_max_hmd_prediction_time);
+
+								request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
+							}
+							ImGui::SameLine();
+							ImGui::Text("Prediction Time");
+
 							if (ImGui::Button("Reset Filter Defaults"))
 							{
+								hmdInfo.PredictionTime = 0.0f;
 								hmdInfo.PositionFilterIndex = k_default_hmd_position_filter_index;
 								hmdInfo.PositionFilterName = k_hmd_position_filter_names[k_default_hmd_position_filter_index];
+								request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
 								request_set_position_filter(hmdInfo.HmdID, hmdInfo.PositionFilterName);
 								request_set_orientation_filter(hmdInfo.HmdID, hmdInfo.OrientationFilterName);
 							}

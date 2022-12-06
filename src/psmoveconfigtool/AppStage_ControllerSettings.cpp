@@ -743,17 +743,36 @@ void AppStage_ControllerSettings::renderUI()
 													show_orientation_filter_tooltip(controllerInfo.OrientationFilterName);
 												}
 											}
-											if (ImGui::SliderFloat("Prediction Time", &controllerInfo.PredictionTime, 0.f, k_max_hmd_prediction_time))
+
+											if (ImGui::SliderFloat("##PredictionTime", &controllerInfo.PredictionTime, 0.f, k_max_hmd_prediction_time))
 											{
 												request_set_controller_prediction(controllerInfo.ControllerID, controllerInfo.PredictionTime);
 											}
+											ImGui::SameLine();
+											if (ImGui::Button(" - ##PredictionTimeInput"))
+											{
+												controllerInfo.PredictionTime = clampf(controllerInfo.PredictionTime - 0.025, 0.f, k_max_hmd_prediction_time);
+
+												request_set_controller_prediction(controllerInfo.ControllerID, controllerInfo.PredictionTime);
+											}
+											ImGui::SameLine();
+											if (ImGui::Button(" + ##PredictionTimeInput"))
+											{
+												controllerInfo.PredictionTime = clampf(controllerInfo.PredictionTime + 0.025, 0.f, k_max_hmd_prediction_time);
+
+												request_set_controller_prediction(controllerInfo.ControllerID, controllerInfo.PredictionTime);
+											}
+											ImGui::SameLine();
+											ImGui::Text("Prediction Time");
 
 											ImGui::Separator();
 
 											if (ImGui::Button("Reset Filter Defaults"))
 											{
+												controllerInfo.PredictionTime = 0.0f;
 												controllerInfo.PositionFilterIndex = k_default_position_filter_index;
 												controllerInfo.PositionFilterName = k_controller_position_filter_names[k_default_position_filter_index];
+												request_set_controller_prediction(controllerInfo.ControllerID, controllerInfo.PredictionTime);
 												request_set_position_filter(controllerInfo.ControllerID, controllerInfo.PositionFilterName);
 
 												if (controllerInfo.ControllerType == PSMController_Move)
@@ -793,21 +812,40 @@ void AppStage_ControllerSettings::renderUI()
 												controllerInfo.GyroGainSetting = k_ds4_gyro_gain_setting_labels[controllerInfo.GyroGainIndex];
 												request_set_gyroscope_gain_setting(controllerInfo.ControllerID, controllerInfo.GyroGainSetting);
 											}
-											if (ImGui::SliderFloat("Prediction Time", &controllerInfo.PredictionTime, 0.f, k_max_hmd_prediction_time))
+
+											if (ImGui::SliderFloat("##PredictionTime", &controllerInfo.PredictionTime, 0.f, k_max_hmd_prediction_time))
 											{
 												request_set_controller_prediction(controllerInfo.ControllerID, controllerInfo.PredictionTime);
 											}
+											ImGui::SameLine();
+											if (ImGui::Button(" - ##PredictionTimeInput"))
+											{
+												controllerInfo.PredictionTime = clampf(controllerInfo.PredictionTime - 0.025, 0.f, k_max_hmd_prediction_time);
+
+												request_set_controller_prediction(controllerInfo.ControllerID, controllerInfo.PredictionTime);
+											}
+											ImGui::SameLine();
+											if (ImGui::Button(" + ##PredictionTimeInput"))
+											{
+												controllerInfo.PredictionTime = clampf(controllerInfo.PredictionTime + 0.025, 0.f, k_max_hmd_prediction_time);
+
+												request_set_controller_prediction(controllerInfo.ControllerID, controllerInfo.PredictionTime);
+											}
+											ImGui::SameLine();
+											ImGui::Text("Prediction Time");
 
 											ImGui::Separator();
 
 											if (ImGui::Button("Reset Filter Defaults"))
 											{
+												controllerInfo.PredictionTime = 0.0f;
 												controllerInfo.PositionFilterIndex = k_default_ds4_position_filter_index;
 												controllerInfo.OrientationFilterIndex = k_default_ds4_orientation_filter_index;
 												controllerInfo.GyroGainIndex = k_default_ds4_gyro_gain_index;
 												controllerInfo.PositionFilterName = k_controller_position_filter_names[k_default_ds4_position_filter_index];
 												controllerInfo.OrientationFilterName = k_ds4_orientation_filter_names[k_default_ds4_orientation_filter_index];
 												controllerInfo.GyroGainSetting = k_ds4_gyro_gain_setting_labels[k_default_ds4_gyro_gain_index];
+												request_set_controller_prediction(controllerInfo.ControllerID, controllerInfo.PredictionTime);
 												request_set_position_filter(controllerInfo.ControllerID, controllerInfo.PositionFilterName);
 												request_set_orientation_filter(controllerInfo.ControllerID, controllerInfo.OrientationFilterName);
 												request_set_gyroscope_gain_setting(controllerInfo.ControllerID, controllerInfo.GyroGainSetting);
