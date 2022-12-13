@@ -549,15 +549,16 @@ void AppStage_ComputeTrackerPoses::render()
 						const int trackerOther_id = trackerOtherView->tracker_info.tracker_id;
 						const PSMPosef trackerOtherPose = trackerOtherView->tracker_info.tracker_pose;
 						const glm::mat4 trackerOtherMat4 = psm_posef_to_glm_mat4(trackerOtherPose);
-						const PSMClientTrackerInfo trackerOtherInfo = trackerView->tracker_info;
+						const PSMClientTrackerInfo trackerOtherInfo = trackerOtherView->tracker_info;
 
 						if (tracker_id == trackerOther_id)
 							continue;
 
-						if((processedTrackers[trackerOther_id] & (1 << tracker_id)) > 0)
+						if((processedTrackers[tracker_id] & (1 << trackerOther_id)) > 0)
 							continue;
 
 						processedTrackers[tracker_id] |= (1 << trackerOther_id);
+						processedTrackers[trackerOther_id] |= (1 << tracker_id);
 
 						cv::Matx33f trackerOther_inst;
 						{
