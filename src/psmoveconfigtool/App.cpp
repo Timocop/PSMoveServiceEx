@@ -12,6 +12,55 @@
 #if defined(WIN32)
 #include <Windows.h>
 #include <mmsystem.h>
+#include <VersionHelpers.h>
+
+#ifndef CREATE_WAITABLE_TIMER_HIGH_RESOLUTION
+#define CREATE_WAITABLE_TIMER_HIGH_RESOLUTION  0x00000002
+#endif // ! CREATE_WAITABLE_TIMER_HIGH_RESOLUTION
+
+static void usleep(LONGLONG duration_us) {
+	static bool isSupported = true;
+
+	if (!isSupported)
+	{
+		return;
+	}
+
+	HANDLE timer = CreateWaitableTimerEx(NULL, NULL, CREATE_WAITABLE_TIMER_HIGH_RESOLUTION, TIMER_ALL_ACCESS);
+	if (timer != NULL)
+	{
+		LARGE_INTEGER liDueTime;
+		// Convert from microseconds to 100 of ns, and negative for relative time.
+		liDueTime.QuadPart = -(duration_us * 10);
+
+		if (!SetWaitableTimer(timer, &liDueTime, 0, NULL, NULL, 0))
+		{
+			printf("SetWaitableTimer failed: errno=%duration_us\n", GetLastError());
+		}
+
+		DWORD ret = WaitForSingleObject(timer, INFINITE);
+		if (ret != WAIT_OBJECT_0)
+		{
+			printf("WaitForSingleObject failed: ret=%duration_us errno=%duration_us\n",
+				ret, GetLastError());
+		}
+
+		CloseHandle(timer);
+	}
+	else
+	{
+		switch (GetLastError())
+		{
+		case ERROR_INVALID_PARAMETER:
+		{
+			// CREATE_WAITABLE_TIMER_HIGH_RESOLUTION is not supported
+			isSupported = false;
+			break;
+		}
+		}
+	}
+}
+
 #endif
 
 class InputParser {
@@ -114,12 +163,6 @@ int App::exec(int argc, char** argv)
 
         while (!m_bShutdownRequested) 
         {
-#if defined(WIN32)
-			//###Externet Change the minimum resolution for periodic timers on Windows to 1ms.
-			// On some windows systems the default minimum resolution is ~15ms which can have undesiered effects for tracking.
-			// This is needed for Windows 10 2004 and prior versions since any app can change the minimum resolution globaly.
-			timeBeginPeriod(1);
-#endif
             if (SDL_PollEvent(&e)) 
             {
                 if (e.type == SDL_QUIT || 
@@ -147,9 +190,12 @@ int App::exec(int argc, char** argv)
 				m_lastSync = now;
 			}
 
-			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 #if defined(WIN32)
-			timeEndPeriod(1);
+			// $TODO timeBeginPeriod()/timeEndPeriod() seems to reset when going "Calibrate Tracking Color" and "Test Tracking Color"
+			// Use this instead until we figure out why that is.
+			usleep(1000LL);
+#else
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 #endif
         }
     }
