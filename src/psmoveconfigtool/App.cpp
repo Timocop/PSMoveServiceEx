@@ -12,18 +12,17 @@
 #if defined(WIN32)
 #include <Windows.h>
 #include <mmsystem.h>
-#include <VersionHelpers.h>
 
 #ifndef CREATE_WAITABLE_TIMER_HIGH_RESOLUTION
 #define CREATE_WAITABLE_TIMER_HIGH_RESOLUTION  0x00000002
 #endif // ! CREATE_WAITABLE_TIMER_HIGH_RESOLUTION
 
-static void usleep(LONGLONG duration_us) {
+static bool usleep(LONGLONG duration_us) {
 	static bool isSupported = true;
 
 	if (!isSupported)
 	{
-		return;
+		return false;
 	}
 
 	HANDLE timer = CreateWaitableTimerEx(NULL, NULL, CREATE_WAITABLE_TIMER_HIGH_RESOLUTION, TIMER_ALL_ACCESS);
@@ -35,17 +34,12 @@ static void usleep(LONGLONG duration_us) {
 
 		if (!SetWaitableTimer(timer, &liDueTime, 0, NULL, NULL, 0))
 		{
-			printf("SetWaitableTimer failed: errno=%duration_us\n", GetLastError());
+			return false;
 		}
 
-		DWORD ret = WaitForSingleObject(timer, INFINITE);
-		if (ret != WAIT_OBJECT_0)
-		{
-			printf("WaitForSingleObject failed: ret=%duration_us errno=%duration_us\n",
-				ret, GetLastError());
-		}
-
+		WaitForSingleObject(timer, INFINITE);
 		CloseHandle(timer);
+		return true;
 	}
 	else
 	{
@@ -58,6 +52,8 @@ static void usleep(LONGLONG duration_us) {
 			break;
 		}
 		}
+
+		return false;
 	}
 }
 
@@ -191,9 +187,15 @@ int App::exec(int argc, char** argv)
 			}
 
 #if defined(WIN32)
-			// $TODO timeBeginPeriod()/timeEndPeriod() seems to reset when going "Calibrate Tracking Color" and "Test Tracking Color"
+			// $TODO timeBeginPeriod()/timeEndPeriod() seems to reset on PSM_PollTrackerVideoStream()?
 			// Use this instead until we figure out why that is.
-			usleep(1000LL);
+			if (!usleep(1000LL))
+			{
+				timeBeginPeriod(1);
+				std::this_thread::sleep_for(std::chrono::milliseconds(1));
+				timeEndPeriod(1);
+			}
+
 #else
 			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 #endif
