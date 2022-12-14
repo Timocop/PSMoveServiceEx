@@ -528,6 +528,10 @@ void AppStage_TrackerSettings::renderUI()
 													m_app->setAppStage(AppStage_OpticalCalibration::APP_STAGE_NAME);
 												}
 											}
+											else
+											{
+												ImGui::Button("Calibrate Optical Noise (Unavailable)##Controller");
+											}
 
 											if (ImGui::IsItemHovered())
 												ImGui::SetTooltip(
@@ -599,6 +603,10 @@ void AppStage_TrackerSettings::renderUI()
 												m_app->getAppStage<AppStage_OpticalCalibration>()->setTargetControllerId(controller->ControllerID);
 												m_app->setAppStage(AppStage_OpticalCalibration::APP_STAGE_NAME);
 											}
+										}
+										else
+										{
+											ImGui::Button("Test Optical Noise (Unavailable)##Controller");
 										}
 									}
 									ImGui::EndGroup();
