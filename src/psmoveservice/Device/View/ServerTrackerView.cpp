@@ -2482,6 +2482,8 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
     const CommonDeviceTrackingProjection *prior_tracking_projection,
     const CommonDeviceTrackingShape *tracking_shape)
 {
+	const TrackerManagerConfig &cfg = DeviceManager::getInstance()->m_tracker_manager->getConfig();
+
 	int roi_index = -1;
 	if (roi_index_controller > -1)
 	{
@@ -2501,10 +2503,10 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
     float screenWidth, screenHeight;
     tracker->getPixelDimensions(screenWidth, screenHeight);
     cv::Rect2i ROI(
-		roi_edge_offset, 
-		roi_edge_offset, 
-		static_cast<int>(screenWidth) - (roi_edge_offset * 2), 
-		static_cast<int>(screenHeight) - (roi_edge_offset * 2)
+		0, 
+		0, 
+		static_cast<int>(screenWidth), 
+		static_cast<int>(screenHeight)
 	);
 
 	int trackerId = tracker->getDeviceID();
@@ -2512,78 +2514,90 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
 	//Instead of applying ROI to the whole screen we only use parts of the screen.
 	//This will save alot of CPU cycles and also the tracking quality should stay the same.
 	//As for now, this is disabled for HMDs since there are more blind spots between ROI edges (untested).
-	//
-	//Benchmark tested on AMD Ryzen 5 3600 @ 4.5Ghz with 3 Controllers and 6 Trackers:
-	// Fullscreen ROI:
-	//		All visible:	Peak 15% CPU
-	//		None visible:	Peak 50% CPU
-	// Optimized ROI:
-	//		All visible:	Peak 15% CPU
-	//		None visible:	Peak 18% CPU
 	if (!roi_disabled && roi_index > -1 && roi_index < k_max_roi_number)
 	{
-		int roi_size[2];
-		roi_size[0] = static_cast<int>(screenWidth) / 3;
-		roi_size[1] = static_cast<int>(screenHeight) / 3;
+		while (true)
+		{
+			bool roi_found = false;
+			int count = 0;
+			int cfg_roi_search_size = static_cast<int>(fmax(cfg.roi_search_size, 4));
 
-		switch (roi_counter[trackerId][roi_index]++ % 9) {
-		case 0:
-			ROI = cv::Rect2i(
-				roi_edge_offset, roi_edge_offset,
-				roi_size[0] - roi_edge_offset, roi_size[1] - roi_edge_offset
-			);
-			break;
-		case 1:
-			ROI = cv::Rect2i(
-				roi_size[0], roi_edge_offset,
-				roi_size[0], roi_size[1] - roi_edge_offset
-			);
-			break;
-		case 2:
-			ROI = cv::Rect2i(
-				roi_size[0] * 2, roi_edge_offset,
-				roi_size[0] - roi_edge_offset, roi_size[1] - roi_edge_offset
-			);
-			break;
-		case 3:
-			ROI = cv::Rect2i(
-				roi_edge_offset, roi_size[1],
-				roi_size[0] - roi_edge_offset, roi_size[1]
-			);
-			break;
-		case 4:
-			ROI = cv::Rect2i(
-				roi_size[0], roi_size[1],
-				roi_size[0], roi_size[1]
-			);
-			break;
-		case 5:
-			ROI = cv::Rect2i(
-				roi_size[0] * 2, roi_size[1],
-				roi_size[0] - roi_edge_offset, roi_size[1]
-			);
-			break;
-		case 6:
-			ROI = cv::Rect2i(
-				roi_edge_offset, roi_size[1] * 2,
-				roi_size[0] - roi_edge_offset, roi_size[1] - roi_edge_offset
-			);
-			break;
-		case 7:
-			ROI = cv::Rect2i(
-				roi_size[0], roi_size[1] * 2, 
-				roi_size[0], roi_size[1] - roi_edge_offset
-			);
-			break;
-		case 8:
-			ROI = cv::Rect2i(
-				roi_size[0] * 2, roi_size[1] * 2,
-				roi_size[0] - roi_edge_offset, roi_size[1] - roi_edge_offset
-			);
+			for (int x = 0; !roi_found && (x * cfg_roi_search_size) < static_cast<int>(screenWidth); x++)
+			{
+				for (int y = 0; !roi_found && (y * cfg_roi_search_size) < static_cast<int>(screenHeight); y++)
+				{
+					if (count == roi_counter[trackerId][roi_index])
+					{
+						ROI = cv::Rect2i(
+							cfg_roi_search_size * x,
+							cfg_roi_search_size * y,
+							cfg_roi_search_size,
+							cfg_roi_search_size
+						);
+
+						roi_found = true;
+						break;
+					}
+
+					count++;
+				}
+			}
+
+			if (!roi_found)
+			{
+				roi_counter[trackerId][roi_index] = 0;
+				continue;
+			}
+
+			roi_counter[trackerId][roi_index]++;
 			break;
 		}
 	}
-	
+
+	// Apply edge offsets
+	{
+		int s_w = static_cast<int>(screenWidth);
+		int s_h = static_cast<int>(screenHeight);
+
+		int roi_x = ROI.x;
+		int roi_y = ROI.y;
+		int roi_w = ROI.width;
+		int roi_h = ROI.height;
+
+		if (roi_x < roi_edge_offset)
+		{
+			int i = roi_edge_offset - roi_x;
+			roi_x += i;
+			roi_w -= i;
+		}
+
+		if (roi_y < roi_edge_offset)
+		{
+			int i = roi_edge_offset - roi_y;
+			roi_y += i;
+			roi_h -= i;
+		}
+
+		if (roi_x + roi_w > s_w - roi_edge_offset)
+		{
+			int i = (roi_x + roi_w) - (s_w - roi_edge_offset);
+			roi_w -= i;
+		}
+
+		if (roi_y + roi_h > s_h - roi_edge_offset)
+		{
+			int i = (roi_y + roi_h) - (s_h - roi_edge_offset);
+			roi_h -= i;
+		}
+
+		ROI = cv::Rect2i(
+			roi_x,
+			roi_y,
+			roi_w,
+			roi_h
+		);
+	}
+
     //Calculate a more refined ROI.
     //Based on the physical limits of the object's bounding box
     //projected onto the image.
@@ -2716,8 +2730,10 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
 
             const cv::Point2i roi_center(static_cast<int>(projection_pixel_center.x), static_cast<int>(projection_pixel_center.y));
 
-            const int safe_proj_width = std::max(proj_width, k_min_roi_size);
-            const int safe_proj_height = std::max(proj_height, k_min_roi_size);
+			const int cfg_roi_size = static_cast<int>(fmax(cfg.roi_size, 4));
+
+            const int safe_proj_width = std::max(proj_width, cfg_roi_size);
+            const int safe_proj_height = std::max(proj_height, cfg_roi_size);
 
 
 			// Increase ROI size if the projection is moving
@@ -2726,8 +2742,8 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
 
 			if (roi_index > -1)
 			{
-				const float scale_x = static_cast<float>(fmax(0, abs(roi_center.x - last_roi_center[trackerId][roi_index][0]) - (k_min_roi_size / 3)) / fmax(1, fmax(safe_proj_width, safe_proj_height) / 2));
-				const float scale_y = static_cast<float>(fmax(0, abs(roi_center.y - last_roi_center[trackerId][roi_index][1]) - (k_min_roi_size / 3)) / fmax(1, fmax(safe_proj_width, safe_proj_height) / 2));
+				const float scale_x = static_cast<float>(fmax(0, abs(roi_center.x - last_roi_center[trackerId][roi_index][0]) - (cfg_roi_size / 3)) / fmax(1, fmax(safe_proj_width, safe_proj_height) / 2));
+				const float scale_y = static_cast<float>(fmax(0, abs(roi_center.y - last_roi_center[trackerId][roi_index][1]) - (cfg_roi_size / 3)) / fmax(1, fmax(safe_proj_width, safe_proj_height) / 2));
 
 				scale_axis = fmin(2.f, fmax(0.f, fmax(scale_x, scale_y)));
 			}
