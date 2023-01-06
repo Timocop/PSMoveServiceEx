@@ -2729,7 +2729,7 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
 				const float scale_x = static_cast<float>(fmax(0, abs(roi_center.x - last_roi_center[trackerId][roi_index][0]) - (k_min_roi_size / 3)) / fmax(1, fmax(safe_proj_width, safe_proj_height) / 2));
 				const float scale_y = static_cast<float>(fmax(0, abs(roi_center.y - last_roi_center[trackerId][roi_index][1]) - (k_min_roi_size / 3)) / fmax(1, fmax(safe_proj_width, safe_proj_height) / 2));
 
-				scale_axis = fmin(1.f, fmax(0.f, fmax(scale_x, scale_y)));
+				scale_axis = fmin(2.f, fmax(0.f, fmax(scale_x, scale_y)));
 			}
 
             const cv::Point2i roi_top_left = roi_center + (cv::Point2i(-safe_proj_width, -safe_proj_height) * (1 + scale_axis));
