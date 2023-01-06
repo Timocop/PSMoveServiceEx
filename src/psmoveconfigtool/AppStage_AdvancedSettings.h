@@ -59,6 +59,8 @@ public:
 		max_tracker_position_deviation = 15.0f;
 		disable_roi = false;
 		optimized_roi = true;
+		roi_size = 32;
+		roi_search_size = 164;
 		roi_edge_offset = 4;
 		global_forward_degrees = 270.f; // Down -Z by default
 	};
@@ -90,6 +92,8 @@ public:
 	float max_tracker_position_deviation;
 	bool disable_roi;
 	bool optimized_roi;
+	int roi_size;
+	int roi_search_size;
 	int roi_edge_offset;
 	float global_forward_degrees;
 };

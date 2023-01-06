@@ -505,7 +505,7 @@ void AppStage_AdvancedSettings::renderUI()
 			ImGui::BeginGroup();
 			{
 				// Tracker Manager Config
-				if (ImGui::CollapsingHeader("Tracker Manager Config", 0, true, false))
+				if (ImGui::CollapsingHeader("Tracker Manager Config", 0, true, true))
 				{
 					{
 						ImGui::Text("Virtual Trackers:");
@@ -881,16 +881,56 @@ void AppStage_AdvancedSettings::renderUI()
 
 					ImGui::Indent();
 					{
-						ImGui::Text("Optimized ROI (region of interest):");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::Checkbox("##OptimizedROI", &cfg_tracker.optimized_roi);
+						{
+							ImGui::Text("ROI (region of interest) size:");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(100.f);
+							if (ImGui::InputInt("##ROISize", &cfg_tracker.roi_size, 1, 4))
+							{
+								cfg_tracker.roi_size = static_cast<int>(std::fmax(4, std::fmin(99999, cfg_tracker.roi_size)));
+							}
+							ImGui::PopItemWidth();
 
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"Optimizes ROI (region of interest) for controllers that are not visible to the tracker\n"
-								"to reduce CPU usage even more.\n"
-								"(The default value is TRUE)"
-							);
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"Size of the ROI (region of interest).\n"
+									"Small sizes can reduce CPU usage but can result in tracking loss on quick movement.\n"
+									"(The default value is 32)"
+								);
+						}
+
+						{
+							ImGui::Text("Optimized ROI (region of interest):");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::Checkbox("##OptimizedROI", &cfg_tracker.optimized_roi);
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"Optimizes ROI (region of interest) for controllers that are not visible to the tracker\n"
+									"to reduce CPU usage even more.\n"
+									"(The default value is TRUE)"
+								);
+						}
+
+						ImGui::Indent();
+						{
+							ImGui::Text("ROI (region of interest) search size:");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(100.f);
+							if (ImGui::InputInt("##ROISearchSize", &cfg_tracker.roi_search_size, 1, 4))
+							{
+								cfg_tracker.roi_search_size = static_cast<int>(std::fmax(4, std::fmin(99999, cfg_tracker.roi_search_size)));
+							}
+							ImGui::PopItemWidth();
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"Size of the ROI (region of interest) that searches for a new projection if it has been previously lost.\n"
+									"Small sizes can reduce CPU usage but can increase search time.\n"
+									"(The default value is 164)"
+								);
+						}
+						ImGui::Unindent();
 					}
 					ImGui::Unindent();
 
@@ -930,7 +970,7 @@ void AppStage_AdvancedSettings::renderUI()
 				}
 
 				// Controller Manager Config
-				if (ImGui::CollapsingHeader("Controller Manager Config", 0, true, false))
+				if (ImGui::CollapsingHeader("Controller Manager Config", 0, true, true))
 				{
 					ImGui::Text("Virtual Controllers:");
 					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
@@ -949,7 +989,7 @@ void AppStage_AdvancedSettings::renderUI()
 				}
 
 				// HMD Manager Config
-				if (ImGui::CollapsingHeader("HMD Manager Config", 0, true, false))
+				if (ImGui::CollapsingHeader("HMD Manager Config", 0, true, true))
 				{
 					ImGui::Text("Virtual HMDs:");
 					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
