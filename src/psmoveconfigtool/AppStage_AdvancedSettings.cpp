@@ -244,6 +244,8 @@ TrackerConfig::config2ptree()
 
 	pt.put("disable_roi", disable_roi);
 	pt.put("optimized_roi", optimized_roi);
+	pt.put("roi_size", roi_size);
+	pt.put("roi_search_size", roi_search_size);
 	pt.put("roi_edge_offset", roi_edge_offset);
 
 	pt.put("global_forward_degrees", global_forward_degrees);
@@ -281,6 +283,8 @@ TrackerConfig::ptree2config(const boost::property_tree::ptree &pt)
 
 	disable_roi = pt.get<bool>("disable_roi", disable_roi);
 	optimized_roi = pt.get<bool>("optimized_roi", optimized_roi);
+	roi_size = pt.get<int>("roi_size", roi_size);
+	roi_search_size = pt.get<int>("roi_search_size", roi_search_size);
 	roi_edge_offset = pt.get<int>("roi_edge_offset", roi_edge_offset);
 
 	global_forward_degrees = pt.get<float>("global_forward_degrees", global_forward_degrees);
