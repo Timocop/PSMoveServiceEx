@@ -174,14 +174,17 @@ public:
                     }
 
 #if defined(WIN32)
-					if (!usleep(1000LL))
+					if (cfg.thread_sleep_ms > 0)
 					{
-						//###Externet Change the minimum resolution for periodic timers on Windows to 1ms.
-						// On some windows systems the default minimum resolution is ~15ms which can have undesiered effects for tracking.
-						// This is needed for Windows 10 2004 and prior versions since any app can change the minimum resolution globaly.
-						timeBeginPeriod(1);
-						std::this_thread::sleep_for(std::chrono::milliseconds(1));
-						timeEndPeriod(1);
+						if (!usleep(cfg.thread_sleep_ms * 1000LL))
+						{
+							//###Externet Change the minimum resolution for periodic timers on Windows to 1ms.
+							// On some windows systems the default minimum resolution is ~15ms which can have undesiered effects for tracking.
+							// This is needed for Windows 10 2004 and prior versions since any app can change the minimum resolution globaly.
+							timeBeginPeriod(1);
+							std::this_thread::sleep_for(std::chrono::milliseconds(cfg.thread_sleep_ms));
+							timeEndPeriod(1);
+						}
 					}
 #else
 					std::this_thread::sleep_for(std::chrono::milliseconds(1));
