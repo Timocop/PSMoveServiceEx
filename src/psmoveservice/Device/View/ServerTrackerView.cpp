@@ -31,9 +31,6 @@
 
 #define USE_OPEN_CV_ELLIPSE_FIT
 
-//-- constants ----
-static const int k_min_roi_size= 32;
-
 //-- typedefs ----
 typedef std::vector<cv::Point> t_opencv_int_contour;
 typedef std::vector<t_opencv_int_contour> t_opencv_int_contour_list;
