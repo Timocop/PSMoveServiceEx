@@ -25,6 +25,51 @@
 #if defined(WIN32)
 #include <Windows.h>
 #include <mmsystem.h>
+
+#ifndef CREATE_WAITABLE_TIMER_HIGH_RESOLUTION
+#define CREATE_WAITABLE_TIMER_HIGH_RESOLUTION  0x00000002
+#endif // ! CREATE_WAITABLE_TIMER_HIGH_RESOLUTION
+
+static bool usleep(LONGLONG duration_us) {
+	static bool isSupported = true;
+
+	if (!isSupported)
+	{
+		return false;
+	}
+
+	HANDLE timer = CreateWaitableTimerEx(NULL, NULL, CREATE_WAITABLE_TIMER_HIGH_RESOLUTION, TIMER_ALL_ACCESS);
+	if (timer != NULL)
+	{
+		LARGE_INTEGER liDueTime;
+		// Convert from microseconds to 100 of ns, and negative for relative time.
+		liDueTime.QuadPart = -(duration_us * 10);
+
+		if (!SetWaitableTimer(timer, &liDueTime, 0, NULL, NULL, 0))
+		{
+			return false;
+		}
+
+		WaitForSingleObject(timer, INFINITE);
+		CloseHandle(timer);
+		return true;
+	}
+	else
+	{
+		switch (GetLastError())
+		{
+		case ERROR_INVALID_PARAMETER:
+		{
+			// CREATE_WAITABLE_TIMER_HIGH_RESOLUTION is not supported
+			isSupported = false;
+			break;
+		}
+		}
+
+		return false;
+	}
+}
+
 #endif
 
 // provide setup example for windows service   
@@ -129,14 +174,17 @@ public:
                     }
 
 #if defined(WIN32)
-					//###Externet Change the minimum resolution for periodic timers on Windows to 1ms.
-					// On some windows systems the default minimum resolution is ~15ms which can have undesiered effects for tracking.
-					// This is needed for Windows 10 2004 and prior versions since any app can change the minimum resolution globaly.
-					timeBeginPeriod(1);
-					std::this_thread::sleep_for(std::chrono::milliseconds(cfg.thread_sleep_ms));
-					timeEndPeriod(1);
+					if (!usleep(1000LL))
+					{
+						//###Externet Change the minimum resolution for periodic timers on Windows to 1ms.
+						// On some windows systems the default minimum resolution is ~15ms which can have undesiered effects for tracking.
+						// This is needed for Windows 10 2004 and prior versions since any app can change the minimum resolution globaly.
+						timeBeginPeriod(1);
+						std::this_thread::sleep_for(std::chrono::milliseconds(1));
+						timeEndPeriod(1);
+					}
 #else
-					std::this_thread::sleep_for(std::chrono::milliseconds(cfg.thread_sleep_ms));
+					std::this_thread::sleep_for(std::chrono::milliseconds(1));
 #endif
                 }
             }
