@@ -513,15 +513,15 @@ TrackerManager::applyPlayspaceOffsets(Eigen::Vector3f &poseVec, Eigen::Quaternio
 {
 	const TrackerManagerConfig &cfg = DeviceManager::getInstance()->m_tracker_manager->getConfig();
 
-	// Move by Axis
-	if (move_pos)
-		poseVec += Eigen::Vector3f(cfg.playspace_position_x, cfg.playspace_position_y, cfg.playspace_position_z);
-
 	// Rotate by Axis
 	const Eigen::Quaternionf offset_yaw = eigen_quaternion_angle_axis(cfg.playspace_orientation_yaw * k_degrees_to_radians, Eigen::Vector3f::UnitY());
 
 	if (rotate_pos)
 		poseVec = eigen_vector3f_clockwise_rotate(offset_yaw, poseVec);
+
+	// Move by Axis
+	if (move_pos)
+		poseVec += Eigen::Vector3f(cfg.playspace_position_x, cfg.playspace_position_y, cfg.playspace_position_z);
 
 	// Rotate Orientation
 	if (rotate_ang)
