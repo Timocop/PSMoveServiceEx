@@ -168,7 +168,20 @@ void AppStage_ComputeTrackerPoses::update()
 
             if (m_pCalibrateWithMat->getMenuState() == AppSubStage_CalibrateWithMat::calibrateStepSuccess)
             {
-                setState(AppStage_ComputeTrackerPoses::eMenuState::testTracking);
+                //setState(AppStage_ComputeTrackerPoses::eMenuState::testTracking);
+
+				// Refresh controller/hmd list for changed offsets due to mat calibration
+				if (m_overrideControllerId != -1)
+				{
+					m_app->getAppStage<AppStage_TrackerSettings>()->gotoTestControllerTracking(true);
+					request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
+				}
+
+				if (m_overrideHmdId != -1)
+				{
+					m_app->getAppStage<AppStage_TrackerSettings>()->gotoTestHMDTracking(true);
+					request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
+				}
             }
             else if (m_pCalibrateWithMat->getMenuState() == AppSubStage_CalibrateWithMat::calibrateStepFailed)
             {
@@ -949,7 +962,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
 
             if (ImGui::Button("Return to Tracker Settings"))
             {
-                m_app->setAppStage(AppStage_TrackerSettings::APP_STAGE_NAME);
+				request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
             }
 
             ImGui::End();
@@ -1028,7 +1041,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
 
 			if (ImGui::Button("Cancel"))
 			{
-				m_app->setAppStage(AppStage_TrackerSettings::APP_STAGE_NAME);
+				request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
 			}
 
 			ImGui::End();
