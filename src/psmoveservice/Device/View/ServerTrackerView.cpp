@@ -2508,91 +2508,118 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
 
 	int trackerId = tracker->getDeviceID();
 
-	//Instead of applying ROI to the whole screen we only use parts of the screen.
-	//This will save alot of CPU cycles and also the tracking quality should stay the same.
-	//As for now, this is disabled for HMDs since there are more blind spots between ROI edges (untested).
-	if (!roi_disabled && roi_index > -1 && roi_index < k_max_roi_number)
+	while (true)
 	{
-		while (true)
+		bool isOptimized = false;
+
+		//Instead of applying ROI to the whole screen we only use parts of the screen.
+		//This will save alot of CPU cycles and also the tracking quality should stay the same.
+		//As for now, this is disabled for HMDs since there are more blind spots between ROI edges (untested).
+		if (!roi_disabled && roi_index > -1 && roi_index < k_max_roi_number)
 		{
-			bool roi_found = false;
-			int count = 0;
-			int cfg_roi_search_size = static_cast<int>(fmax(cfg.roi_search_size, 4));
+			isOptimized = true;
 
-			for (int x = 0; !roi_found && (x * cfg_roi_search_size) < static_cast<int>(screenWidth); x++)
+			while (true)
 			{
-				for (int y = 0; !roi_found && (y * cfg_roi_search_size) < static_cast<int>(screenHeight); y++)
+				bool roi_found = false;
+				int count = 0;
+				int cfg_roi_search_size = static_cast<int>(fmax(cfg.roi_search_size, 4));
+
+				for (int x = 0; !roi_found && (x * cfg_roi_search_size) < static_cast<int>(screenWidth); x++)
 				{
-					if (count == roi_counter[trackerId][roi_index])
+					for (int y = 0; !roi_found && (y * cfg_roi_search_size) < static_cast<int>(screenHeight); y++)
 					{
-						ROI = cv::Rect2i(
-							cfg_roi_search_size * x,
-							cfg_roi_search_size * y,
-							cfg_roi_search_size,
-							cfg_roi_search_size
-						);
+						if (count == roi_counter[trackerId][roi_index])
+						{
+							ROI = cv::Rect2i(
+								cfg_roi_search_size * x,
+								cfg_roi_search_size * y,
+								cfg_roi_search_size,
+								cfg_roi_search_size
+							);
 
-						roi_found = true;
-						break;
+							roi_found = true;
+							break;
+						}
+
+						count++;
 					}
+				}
 
-					count++;
+				if (!roi_found)
+				{
+					roi_counter[trackerId][roi_index] = 0;
+					continue;
+				}
+
+				roi_counter[trackerId][roi_index]++;
+				break;
+			}
+		}
+
+		// Apply edge offsets
+		{
+			int s_w = static_cast<int>(screenWidth);
+			int s_h = static_cast<int>(screenHeight);
+
+			int roi_x = ROI.x;
+			int roi_y = ROI.y;
+			int roi_w = ROI.width;
+			int roi_h = ROI.height;
+
+			if (roi_x < roi_edge_offset)
+			{
+				int i = roi_edge_offset - roi_x;
+				roi_x += i;
+				roi_w -= i;
+			}
+
+			if (roi_y < roi_edge_offset)
+			{
+				int i = roi_edge_offset - roi_y;
+				roi_y += i;
+				roi_h -= i;
+			}
+
+			if (roi_x + roi_w > s_w - roi_edge_offset)
+			{
+				int i = (roi_x + roi_w) - (s_w - roi_edge_offset);
+				roi_w -= i;
+			}
+
+			if (roi_y + roi_h > s_h - roi_edge_offset)
+			{
+				int i = (roi_y + roi_h) - (s_h - roi_edge_offset);
+				roi_h -= i;
+			}
+
+			ROI = cv::Rect2i(
+				roi_x,
+				roi_y,
+				roi_w,
+				roi_h
+			);
+
+			if (isOptimized)
+			{
+				// Make sure the ROI box is always clamped in bounds of the frame buffer
+				int x0 = std::min(std::max(ROI.tl().x, 0), s_w - 1);
+				int y0 = std::min(std::max(ROI.tl().y, 0), s_h - 1);
+				int x1 = std::min(std::max(ROI.br().x, 0), s_w - 1);
+				int y1 = std::min(std::max(ROI.br().y, 0), s_h - 1);
+				int clamped_width = std::max(x1 - x0, 0);
+				int clamped_height = std::max(y1 - y0, 0);
+
+				// If the clamped ROI ends up being zero-width or zero-height, redo
+				if (clamped_width < 1 || clamped_height < 1)
+				{
+					// Invalid ROI, redo
+					continue;
 				}
 			}
-
-			if (!roi_found)
-			{
-				roi_counter[trackerId][roi_index] = 0;
-				continue;
-			}
-
-			roi_counter[trackerId][roi_index]++;
-			break;
-		}
-	}
-
-	// Apply edge offsets
-	{
-		int s_w = static_cast<int>(screenWidth);
-		int s_h = static_cast<int>(screenHeight);
-
-		int roi_x = ROI.x;
-		int roi_y = ROI.y;
-		int roi_w = ROI.width;
-		int roi_h = ROI.height;
-
-		if (roi_x < roi_edge_offset)
-		{
-			int i = roi_edge_offset - roi_x;
-			roi_x += i;
-			roi_w -= i;
 		}
 
-		if (roi_y < roi_edge_offset)
-		{
-			int i = roi_edge_offset - roi_y;
-			roi_y += i;
-			roi_h -= i;
-		}
-
-		if (roi_x + roi_w > s_w - roi_edge_offset)
-		{
-			int i = (roi_x + roi_w) - (s_w - roi_edge_offset);
-			roi_w -= i;
-		}
-
-		if (roi_y + roi_h > s_h - roi_edge_offset)
-		{
-			int i = (roi_y + roi_h) - (s_h - roi_edge_offset);
-			roi_h -= i;
-		}
-
-		ROI = cv::Rect2i(
-			roi_x,
-			roi_y,
-			roi_w,
-			roi_h
-		);
+		break;
 	}
 
     //Calculate a more refined ROI.
