@@ -743,27 +743,16 @@ void AppStage_ControllerSettings::renderUI()
 													show_orientation_filter_tooltip(controllerInfo.OrientationFilterName);
 												}
 											}
-
-											if (ImGui::SliderFloat("##PredictionTime", &controllerInfo.PredictionTime, 0.f, k_max_hmd_prediction_time))
+											
+											ImGui::ProgressBar(controllerInfo.PredictionTime / k_max_hmd_prediction_time, ImVec2(195.f - 55.f, 0.f), " ");
+											ImGui::SameLine();
+											ImGui::PushItemWidth(96);
+											if (ImGui::InputFloat("Prediction Time (ms)##PredictionTime", &controllerInfo.PredictionTime, 0.005f, 0.025f, 3))
 											{
+												controllerInfo.PredictionTime = clampf(controllerInfo.PredictionTime, 0.f, k_max_hmd_prediction_time);
 												request_set_controller_prediction(controllerInfo.ControllerID, controllerInfo.PredictionTime);
 											}
-											ImGui::SameLine();
-											if (ImGui::Button(" - ##PredictionTimeInput"))
-											{
-												controllerInfo.PredictionTime = clampf(controllerInfo.PredictionTime - 0.025, 0.f, k_max_hmd_prediction_time);
-
-												request_set_controller_prediction(controllerInfo.ControllerID, controllerInfo.PredictionTime);
-											}
-											ImGui::SameLine();
-											if (ImGui::Button(" + ##PredictionTimeInput"))
-											{
-												controllerInfo.PredictionTime = clampf(controllerInfo.PredictionTime + 0.025, 0.f, k_max_hmd_prediction_time);
-
-												request_set_controller_prediction(controllerInfo.ControllerID, controllerInfo.PredictionTime);
-											}
-											ImGui::SameLine();
-											ImGui::Text("Prediction Time");
+											ImGui::PopItemWidth();
 
 											ImGui::Separator();
 
@@ -813,26 +802,15 @@ void AppStage_ControllerSettings::renderUI()
 												request_set_gyroscope_gain_setting(controllerInfo.ControllerID, controllerInfo.GyroGainSetting);
 											}
 
-											if (ImGui::SliderFloat("##PredictionTime", &controllerInfo.PredictionTime, 0.f, k_max_hmd_prediction_time))
+											ImGui::ProgressBar(controllerInfo.PredictionTime / k_max_hmd_prediction_time, ImVec2(195.f - 55.f, 0.f), " ");
+											ImGui::SameLine();
+											ImGui::PushItemWidth(96);
+											if (ImGui::InputFloat("Prediction Time (ms)##PredictionTime", &controllerInfo.PredictionTime, 0.005f, 0.025f, 3))
 											{
+												controllerInfo.PredictionTime = clampf(controllerInfo.PredictionTime, 0.f, k_max_hmd_prediction_time);
 												request_set_controller_prediction(controllerInfo.ControllerID, controllerInfo.PredictionTime);
 											}
-											ImGui::SameLine();
-											if (ImGui::Button(" - ##PredictionTimeInput"))
-											{
-												controllerInfo.PredictionTime = clampf(controllerInfo.PredictionTime - 0.025, 0.f, k_max_hmd_prediction_time);
-
-												request_set_controller_prediction(controllerInfo.ControllerID, controllerInfo.PredictionTime);
-											}
-											ImGui::SameLine();
-											if (ImGui::Button(" + ##PredictionTimeInput"))
-											{
-												controllerInfo.PredictionTime = clampf(controllerInfo.PredictionTime + 0.025, 0.f, k_max_hmd_prediction_time);
-
-												request_set_controller_prediction(controllerInfo.ControllerID, controllerInfo.PredictionTime);
-											}
-											ImGui::SameLine();
-											ImGui::Text("Prediction Time");
+											ImGui::PopItemWidth();
 
 											ImGui::Separator();
 

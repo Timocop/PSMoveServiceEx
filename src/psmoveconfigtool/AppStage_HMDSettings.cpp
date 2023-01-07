@@ -324,26 +324,15 @@ void AppStage_HMDSettings::renderUI()
 								request_set_orientation_filter(hmdInfo.HmdID, hmdInfo.OrientationFilterName);
 							}
 
-							if (ImGui::SliderFloat("##PredictionTime", &hmdInfo.PredictionTime, 0.f, k_max_hmd_prediction_time))
+							ImGui::ProgressBar(hmdInfo.PredictionTime / k_max_hmd_prediction_time, ImVec2(195.f - 55.f, 0.f), " ");
+							ImGui::SameLine();
+							ImGui::PushItemWidth(96);
+							if (ImGui::InputFloat("Prediction Time (ms)##PredictionTime", &hmdInfo.PredictionTime, 0.005f, 0.025f, 3))
 							{
+								hmdInfo.PredictionTime = clampf(hmdInfo.PredictionTime, 0.f, k_max_hmd_prediction_time);
 								request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
 							}
-							ImGui::SameLine();
-							if (ImGui::Button(" - ##PredictionTimeInput"))
-							{
-								hmdInfo.PredictionTime = clampf(hmdInfo.PredictionTime - 0.025, 0.f, k_max_hmd_prediction_time);
-
-								request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
-							}
-							ImGui::SameLine();
-							if (ImGui::Button(" + ##PredictionTimeInput"))
-							{
-								hmdInfo.PredictionTime = clampf(hmdInfo.PredictionTime + 0.025, 0.f, k_max_hmd_prediction_time);
-
-								request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
-							}
-							ImGui::SameLine();
-							ImGui::Text("Prediction Time");
+							ImGui::PopItemWidth();
 
 							ImGui::Separator();
 
@@ -381,26 +370,15 @@ void AppStage_HMDSettings::renderUI()
 								request_set_position_filter(hmdInfo.HmdID, hmdInfo.PositionFilterName);
 							}
 
-							if (ImGui::SliderFloat("##PredictionTime", &hmdInfo.PredictionTime, 0.f, k_max_hmd_prediction_time))
+							ImGui::ProgressBar(hmdInfo.PredictionTime / k_max_hmd_prediction_time, ImVec2(195.f - 55.f, 0.f), " ");
+							ImGui::SameLine();
+							ImGui::PushItemWidth(96);
+							if (ImGui::InputFloat("Prediction Time (ms)##PredictionTime", &hmdInfo.PredictionTime, 0.005f, 0.025f, 3))
 							{
+								hmdInfo.PredictionTime = clampf(hmdInfo.PredictionTime, 0.f, k_max_hmd_prediction_time);
 								request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
 							}
-							ImGui::SameLine();
-							if (ImGui::Button(" - ##PredictionTimeInput"))
-							{
-								hmdInfo.PredictionTime = clampf(hmdInfo.PredictionTime - 0.025, 0.f, k_max_hmd_prediction_time);
-
-								request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
-							}
-							ImGui::SameLine();
-							if (ImGui::Button(" + ##PredictionTimeInput"))
-							{
-								hmdInfo.PredictionTime = clampf(hmdInfo.PredictionTime + 0.025, 0.f, k_max_hmd_prediction_time);
-
-								request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
-							}
-							ImGui::SameLine();
-							ImGui::Text("Prediction Time");
+							ImGui::PopItemWidth();
 
 							if (ImGui::Button("Reset Filter Defaults"))
 							{
