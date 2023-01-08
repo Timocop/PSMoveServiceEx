@@ -6,6 +6,8 @@
 #include "MathAlignment.h"
 #include "MathEigen.h"
 #include "ServerLog.h"
+#include "PSMoveController.h"
+#include "VirtualController.h"
 
 #include <chrono>
 #include <numeric>
@@ -485,36 +487,103 @@ void PositionFilterExternalAttachment::update(
 		eigen_quaternion_is_valid(joint_yaw_offset) &&
 		eigen_quaternion_is_valid(tracker_yaw_offset))
 	{
-		ServerControllerViewPtr controller_view = controllerManager->getControllerViewPtr(targetId);
-		if (!controller_view ||
-			!controller_view->getIsOpen())
+		ServerControllerViewPtr parent_controller_view = controllerManager->getControllerViewPtr(targetId);
+
+		if (!parent_controller_view ||
+			!parent_controller_view->getIsOpen())
 		{
 			return;
 		}
 
+		IControllerInterface *target_controller = parent_controller_view->castChecked<IControllerInterface>();
+		switch (target_controller->getDeviceType())
+		{
+		case CommonDeviceState::eDeviceType::PSMove:
+		{
+			PSMoveController *current_psmove = parent_controller_view->castChecked<PSMoveController>();
+			const PSMoveControllerConfig &cfg = *current_psmove->getConfig();
+			const CommonDevicePosition offset_world_orientation = cfg.offset_world_orientation;
+
+			const Eigen::Quaternionf offset_x_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_world_orientation.x * k_degrees_to_radians, Eigen::Vector3f::UnitX()));
+			const Eigen::Quaternionf offset_y_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_world_orientation.y * k_degrees_to_radians, Eigen::Vector3f::UnitY()));
+			const Eigen::Quaternionf offset_z_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_world_orientation.z * k_degrees_to_radians, Eigen::Vector3f::UnitZ()));
+			const Eigen::Quaternionf offset_quat = offset_y_quat * offset_x_quat * offset_z_quat;
+
+			joint_yaw_offset = offset_quat * joint_yaw_offset;
+			break;
+		}
+		case CommonDeviceState::eDeviceType::VirtualController:
+		{
+			VirtualController *current_virt = parent_controller_view->castChecked<VirtualController>();
+			const VirtualControllerConfig &cfg = *current_virt->getConfig();
+			const CommonDevicePosition offset_world_orientation = cfg.offset_world_orientation;
+
+			const Eigen::Quaternionf offset_x_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_world_orientation.x * k_degrees_to_radians, Eigen::Vector3f::UnitX()));
+			const Eigen::Quaternionf offset_y_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_world_orientation.y * k_degrees_to_radians, Eigen::Vector3f::UnitY()));
+			const Eigen::Quaternionf offset_z_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_world_orientation.z * k_degrees_to_radians, Eigen::Vector3f::UnitZ()));
+			const Eigen::Quaternionf offset_quat = offset_y_quat * offset_x_quat * offset_z_quat;
+
+			joint_yaw_offset = offset_quat * joint_yaw_offset;
+			break;
+		}
+		case CommonDeviceState::eDeviceType::PSDualShock4:
+		{
+			break;
+		}
+		}
+
 		IControllerInterface *current_controller = current_controller_view->castChecked<IControllerInterface>();
+		switch (current_controller->getDeviceType())
+		{
+		case CommonDeviceState::eDeviceType::PSMove:
+		{
+			PSMoveController *current_psmove = current_controller_view->castChecked<PSMoveController>();
+			const PSMoveControllerConfig &cfg = *current_psmove->getConfig();
+			const CommonDevicePosition offset_world_orientation = cfg.offset_world_orientation;
 
-		Eigen::Vector3f new_position_meters = Eigen::Vector3f::Zero();
+			const Eigen::Quaternionf offset_x_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_world_orientation.x * k_degrees_to_radians, Eigen::Vector3f::UnitX()));
+			const Eigen::Quaternionf offset_y_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_world_orientation.y * k_degrees_to_radians, Eigen::Vector3f::UnitY()));
+			const Eigen::Quaternionf offset_z_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_world_orientation.z * k_degrees_to_radians, Eigen::Vector3f::UnitZ()));
+			const Eigen::Quaternionf offset_quat = offset_y_quat * offset_x_quat * offset_z_quat;
 
-		Eigen::Vector3f joint_position = controller_view->getPoseFilter()->getPositionCm(current_controller->getPredictionTime());
-		Eigen::Quaternionf joint_orientation = controller_view->getPoseFilter()->getOrientation();
+			tracker_yaw_offset = offset_quat * tracker_yaw_offset;
+			break;
+		}
+		case CommonDeviceState::eDeviceType::VirtualController:
+		{
+			VirtualController *current_virt = current_controller_view->castChecked<VirtualController>();
+			const VirtualControllerConfig &cfg = *current_virt->getConfig();
+			const CommonDevicePosition offset_world_orientation = cfg.offset_world_orientation;
 
-		Eigen::Vector3f prime;
+			const Eigen::Quaternionf offset_x_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_world_orientation.x * k_degrees_to_radians, Eigen::Vector3f::UnitX()));
+			const Eigen::Quaternionf offset_y_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_world_orientation.y * k_degrees_to_radians, Eigen::Vector3f::UnitY()));
+			const Eigen::Quaternionf offset_z_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_world_orientation.z * k_degrees_to_radians, Eigen::Vector3f::UnitZ()));
+			const Eigen::Quaternionf offset_quat = offset_y_quat * offset_x_quat * offset_z_quat;
+
+			tracker_yaw_offset = offset_quat * tracker_yaw_offset;
+			break;
+		}
+		case CommonDeviceState::eDeviceType::PSDualShock4:
+		{
+			break;
+		}
+		}
+
+		Eigen::Vector3f joint_position = parent_controller_view->getPoseFilter()->getPositionCm(current_controller->getPredictionTime());
+		Eigen::Quaternionf joint_orientation = parent_controller_view->getPoseFilter()->getOrientation();
+
+		Eigen::Vector3f prime = Eigen::Vector3f::Zero();
 
 		rotate_vector_by_quaternion(joint_offset, joint_orientation, prime);
 		rotate_vector_by_quaternion(prime, joint_yaw_offset, prime);
 
-		Eigen::Vector3f tracker_position = Eigen::Vector3f::Zero(); // = current_controller_view->getPoseFilter()->getPositionCm(current_controller->getPredictionTime());
+		Eigen::Vector3f tracker_position = joint_position + prime;
 		Eigen::Quaternionf tracker_orientation = current_controller_view->getPoseFilter()->getOrientation();
-
-		tracker_position += joint_position + prime;
 
 		rotate_vector_by_quaternion(tracker_offset, tracker_orientation, prime);
 		rotate_vector_by_quaternion(prime, tracker_yaw_offset, prime);
 
-
-		new_position_meters = tracker_position + prime;
-		new_position_meters *= k_centimeters_to_meters;
+		Eigen::Vector3f new_position_meters = (tracker_position + prime) * k_centimeters_to_meters;
 
 		Eigen::Vector3f new_position_meters_sec = Eigen::Vector3f::Zero();
 		m_state->apply_optical_state(new_position_meters, new_position_meters_sec, delta_time);

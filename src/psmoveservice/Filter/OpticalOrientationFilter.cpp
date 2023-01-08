@@ -222,26 +222,17 @@ Eigen::Quaternionf OpticalOrientationFilter::getOrientation(float time, float of
 		}
 
 		// Apply offsets to reset orientation
-		const Eigen::EulerAnglesf local_offset_x_euler(offset_x * k_degrees_to_radians, 0.f, 0.f);
-		const Eigen::EulerAnglesf local_offset_y_euler(0.f, offset_y * k_degrees_to_radians, 0.f);
-		Eigen::EulerAnglesf local_offset_z_euler(0.f, 0.f, 0.f);
-		local_offset_z_euler += Eigen::Vector3f(0.f, 0.f, offset_z * k_degrees_to_radians);
+		const Eigen::Quaternionf local_offset_x_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_x * k_degrees_to_radians, Eigen::Vector3f::UnitX()));
+		const Eigen::Quaternionf local_offset_y_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_y * k_degrees_to_radians, Eigen::Vector3f::UnitY()));
+		const Eigen::Quaternionf local_offset_z_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_z * k_degrees_to_radians, Eigen::Vector3f::UnitZ()));
+		const Eigen::Quaternionf local_offset_quat = local_offset_y_quat * local_offset_x_quat * local_offset_z_quat;
 
-		const Eigen::Quaternionf local_offset_x_quat = eigen_euler_angles_to_quaternionf(local_offset_x_euler);
-		const Eigen::Quaternionf local_offset_y_quat = eigen_euler_angles_to_quaternionf(local_offset_y_euler);
-		const Eigen::Quaternionf local_offset_z_quat = eigen_euler_angles_to_quaternionf(local_offset_z_euler);
+		const Eigen::Quaternionf world_offset_x_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_world_x * k_degrees_to_radians, Eigen::Vector3f::UnitX()));
+		const Eigen::Quaternionf world_offset_y_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_world_y * k_degrees_to_radians, Eigen::Vector3f::UnitY()));
+		const Eigen::Quaternionf world_offset_z_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_world_z * k_degrees_to_radians, Eigen::Vector3f::UnitZ()));
+		const Eigen::Quaternionf world_offset_quat = world_offset_y_quat * world_offset_x_quat * world_offset_z_quat;
 
-		const Eigen::EulerAnglesf world_offset_x_euler(offset_world_x * k_degrees_to_radians, 0.f, 0.f);
-		const Eigen::EulerAnglesf world_offset_y_euler(0.f, offset_world_y * k_degrees_to_radians, 0.f);
-		Eigen::EulerAnglesf world_offset_z_euler(0.f, 0.f, 0.f);
-		world_offset_z_euler += Eigen::Vector3f(0.f, 0.f, offset_world_z * k_degrees_to_radians);
-
-		const Eigen::Quaternionf world_offset_x_quat = eigen_euler_angles_to_quaternionf(world_offset_x_euler);
-		const Eigen::Quaternionf world_offset_y_quat = eigen_euler_angles_to_quaternionf(world_offset_y_euler);
-		const Eigen::Quaternionf world_offset_z_quat = eigen_euler_angles_to_quaternionf(world_offset_z_euler);
-
-		result = (m_state->reset_orientation * world_offset_y_quat * world_offset_z_quat * world_offset_x_quat) *
-			(predicted_orientation * local_offset_y_quat * local_offset_z_quat * local_offset_x_quat);
+		result = (world_offset_quat * m_state->reset_orientation) * (predicted_orientation * local_offset_quat);
 	}
 
 	return result;
