@@ -187,7 +187,7 @@ public:
 						}
 					}
 #else
-					std::this_thread::sleep_for(std::chrono::milliseconds(1));
+					std::this_thread::sleep_for(std::chrono::milliseconds(cfg.thread_sleep_ms));
 #endif
                 }
             }
