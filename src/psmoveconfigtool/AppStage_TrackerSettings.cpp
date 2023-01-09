@@ -301,6 +301,55 @@ void AppStage_TrackerSettings::renderUI()
 						ImGui::SameLine();
 						ImGui::TextWrapped("%s", trackerInfo.device_path);
 
+						const ImColor k_colorGreen = ImColor(0.f, 1.f, 0.f);
+						const ImColor k_colorOrange = ImColor(1.f, .5f, 0.f);
+						const ImColor k_colorRed = ImColor(1.f, 0.f, 0.f);
+						const ImColor k_colorBlue = ImColor(0.f, 0.25f, 1.f);
+
+						bool bWarningAndIssuesShown = false;
+
+						if (m_trackerInfos.size() == 1)
+						{
+							if (!bWarningAndIssuesShown)
+							{
+								ImGui::Separator();
+								ImGui::Text("Warnings and Issues:");
+								ImGui::Separator();
+								bWarningAndIssuesShown = true;
+							}
+
+							ImGui::ColorButton(k_colorOrange, true);
+							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::SameLine();
+							ImGui::PushTextWrapPos();
+							ImGui::TextDisabled(
+								"Only one tracker detected!\n"
+								"Tracking quality and range will be very limited due to triangulations being unavailable!\n"
+								"A minimum of 2 trackers are required for decent tracking qulity and range."
+							);
+							ImGui::PopTextWrapPos();
+						}
+						else if (m_trackerInfos.size() < 4)
+						{
+							if (!bWarningAndIssuesShown)
+							{
+								ImGui::Separator();
+								ImGui::Text("Warnings and Issues:");
+								ImGui::Separator();
+								bWarningAndIssuesShown = true;
+							}
+
+							ImGui::ColorButton(k_colorBlue, true);
+							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::SameLine();
+							ImGui::PushTextWrapPos();
+							ImGui::TextDisabled(
+								"Limited 180 degree front facing setup.\n"
+								"A minimum of 4 trackers are required for a full 360 degree tracking setup."
+							);
+							ImGui::PopTextWrapPos();
+						}
+
 						// Warn user if bus could be overloaded by the amount of cameras.
 						for (int i = m_trackerBusInfo.size() - 1; i >= 0; --i)
 						{
@@ -329,15 +378,10 @@ void AppStage_TrackerSettings::renderUI()
 									ImGui::Text("Tracker #%d", sameDevices[j]);
 								}
 
-								const ImColor colorGreen = ImColor(0.f, 1.f, 0.f);
-								const ImColor colorOrange = ImColor(1.f, .5f, 0.f);
-								const ImColor colorRed = ImColor(1.f, 0.f, 0.f);
-								const ImColor colorBlue = ImColor(0.f, 0.25f, 1.f);
-
 								// Warn if theres too many PSeyes on one USB controller causing possible bandwidth issues.
 								if (sameDevices.size() >= 4)
 								{
-									ImGui::ColorButton(colorBlue, true);
+									ImGui::ColorButton(k_colorBlue, true);
 									if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
 									ImGui::SameLine();
 									ImGui::PushTextWrapPos();
@@ -350,7 +394,7 @@ void AppStage_TrackerSettings::renderUI()
 								}
 								else if (sameDevices.size() >= 3)
 								{
-									ImGui::ColorButton(colorBlue, true);
+									ImGui::ColorButton(k_colorBlue, true);
 									if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
 									ImGui::SameLine();
 									ImGui::PushTextWrapPos();
@@ -363,7 +407,7 @@ void AppStage_TrackerSettings::renderUI()
 								}
 								else if (sameDevices.size() >= 2)
 								{
-									ImGui::ColorButton(colorBlue, true);
+									ImGui::ColorButton(k_colorBlue, true);
 									if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
 									ImGui::SameLine();
 									ImGui::PushTextWrapPos();
