@@ -325,7 +325,7 @@ void AppStage_TrackerSettings::renderUI()
 							ImGui::TextDisabled(
 								"Only one tracker detected!\n"
 								"Tracking quality and range will be very limited due to triangulations being unavailable!\n"
-								"A minimum of 2 trackers are required for decent tracking qulity and range."
+								"A minimum of 2 trackers are required for decent tracking quality and range."
 							);
 							ImGui::PopTextWrapPos();
 						}
