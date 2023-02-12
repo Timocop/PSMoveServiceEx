@@ -10,6 +10,8 @@
 
 // Complementary MARG Filter constants
 #define k_base_earth_frame_align_weight 0.02f
+#define k_min_stable_base_earth_frame_align_weight 0.002f
+#define k_max_stable_base_earth_frame_align_weight 0.02f
 
 // Max length of the orientation history we keep
 #define k_orientation_history_max 16
@@ -663,6 +665,8 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 	float filter_passive_drift_correction_deadzone;
 	float filter_passive_drift_correction_delay;
 
+	bool filter_use_stabilization = true;
+
 #if !defined(IS_TESTING_KALMAN) 
 	if (packet.controllerDeviceId > -1)
 	{
@@ -756,6 +760,8 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 			m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, delta_time);
 		}
 
+		bool doStabilize = false;
+
 		if (filter_use_passive_drift_correction)
 		{
 			// Gather sensor state from the previous frame
@@ -821,9 +827,7 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 				}
 				else
 				{
-					// Update the blend weight
-					// -- Exponential blend the MG weight from 1 down to k_base_earth_frame_align_weight
-					mg_weight = lerp_clampf(mg_weight, k_base_earth_frame_align_weight, 0.9f);
+					doStabilize = true;
 				}
 			}
 			else
@@ -835,9 +839,32 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 		}
 		else
 		{
-			// Update the blend weight
-			// -- Exponential blend the MG weight from 1 down to k_base_earth_frame_align_weight
-			mg_weight = lerp_clampf(mg_weight, k_base_earth_frame_align_weight, 0.9f);
+			doStabilize = true;
+		}
+
+		if (doStabilize)
+		{
+			if (filter_use_stabilization)
+			{
+				const float k_gyro_cutoff = 0.01f;
+				const float k_gyro_multi = 1.f;
+
+				float gyro_max = fmaxf(abs(current_omega.x()), fmaxf(abs(current_omega.y()), abs(current_omega.z()))) * k_gyro_multi;
+				if (gyro_max < k_gyro_cutoff)
+					gyro_max = 0.f;
+
+				float align_weight = lerp_clampf(k_min_stable_base_earth_frame_align_weight, k_max_stable_base_earth_frame_align_weight, clampf(gyro_max, 0.f, 1.f));
+
+				// Update the blend weight
+				// -- Exponential blend the MG weight from 1 down to k_base_earth_frame_align_weight
+				mg_weight = lerp_clampf(mg_weight, align_weight, 0.9f);
+			}
+			else
+			{
+				// Update the blend weight
+				// -- Exponential blend the MG weight from 1 down to k_base_earth_frame_align_weight
+				mg_weight = lerp_clampf(mg_weight, k_base_earth_frame_align_weight, 0.9f);
+			}
 		}
 	}
 	else
