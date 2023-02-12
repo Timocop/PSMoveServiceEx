@@ -1043,17 +1043,21 @@ void AppStage_TrackerSettings::handle_tracker_list_response(
 				if (devicePath.find("USB") == 0)
 				{
 					int bus_start = devicePath.rfind("\\");
-					int bus_end = devicePath.find(".");
+					int bus_end = devicePath.rfind("_");
 					if (bus_start != std::string::npos && bus_end != std::string::npos)
 					{
-						std::string bus = devicePath.substr(bus_start + 1, bus_end - bus_start - 1);
+						int bus_size = (bus_end - bus_start - 1);
+						if (bus_size > 0)
+						{
+							std::string bus = devicePath.substr(bus_start + 1, bus_size);
 
-						TrackerBusInfo info;
-						info.TrackerID = TrackerInfo.tracker_id;
-						size_t len = bus.copy(info.port_path, sizeof(info.port_path));
-						info.port_path[len] = 0;
+							TrackerBusInfo info;
+							info.TrackerID = TrackerInfo.tracker_id;
+							size_t len = bus.copy(info.port_path, sizeof(info.port_path));
+							info.port_path[len] = 0;
 
-						thisPtr->m_trackerBusInfo.push_back(info);
+							thisPtr->m_trackerBusInfo.push_back(info);
+						}
 					}
 				}
             }
