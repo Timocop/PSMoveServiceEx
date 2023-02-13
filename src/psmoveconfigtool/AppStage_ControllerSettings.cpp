@@ -1001,7 +1001,7 @@ void AppStage_ControllerSettings::renderUI()
 												controllerInfo.FilterPassiveDriftCorrectionDeazone = 3.f;
 												controllerInfo.FilterPassiveDriftCorrectionDelay = 100.f;
 												controllerInfo.FilterUseStabilization = false;
-												controllerInfo.FilterStabilizationMinScale = 0.05f;
+												controllerInfo.FilterStabilizationMinScale = 0.1f;
 
 												request_offset = true;
 

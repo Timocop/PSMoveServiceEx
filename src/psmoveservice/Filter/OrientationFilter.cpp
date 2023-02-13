@@ -665,7 +665,7 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 	float filter_passive_drift_correction_delay = 100.f;
 
 	bool filter_use_stabilization = false;
-	float filter_stabilization_min_scale = 0.05f;
+	float filter_stabilization_min_scale = 0.1f;
 
 #if !defined(IS_TESTING_KALMAN) 
 	if (packet.controllerDeviceId > -1)

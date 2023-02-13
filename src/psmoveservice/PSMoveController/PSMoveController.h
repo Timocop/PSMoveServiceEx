@@ -73,7 +73,7 @@ public:
 		, filter_passive_drift_correction_deadzone(3.f)
 		, filter_passive_drift_correction_delay(100.f)
 		, filter_use_stabilization(false)
-		, filter_stabilization_min_scale(0.05f)
+		, filter_stabilization_min_scale(0.1f)
     {
         magnetometer_identity.clear();
         magnetometer_center.clear();

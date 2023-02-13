@@ -733,7 +733,7 @@ PSMoveControllerConfig::ptree2config(const boost::property_tree::ptree &pt)
 		filter_passive_drift_correction_delay = pt.get<float>("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.Delay", 100.f);
 
 		filter_use_stabilization = pt.get<bool>("FilterSettings.OrientationFilterComplementaryMARG.Stabilization.Enabled", false);
-		filter_stabilization_min_scale = pt.get<float>("FilterSettings.OrientationFilterComplementaryMARG.Stabilization.MinScale", 0.05f);
+		filter_stabilization_min_scale = pt.get<float>("FilterSettings.OrientationFilterComplementaryMARG.Stabilization.MinScale", 0.1f);
 }
     else
     {
