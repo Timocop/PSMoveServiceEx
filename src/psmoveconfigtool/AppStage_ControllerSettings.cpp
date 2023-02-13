@@ -931,13 +931,37 @@ void AppStage_ControllerSettings::renderUI()
 
 												ImGui::Indent();
 												{
-													ImGui::Text("Drift Correction Deadzone: ");
+													ImGui::Text("Passive Drift Correction Method: ");
+													ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+													ImGui::PushItemWidth(120.f);
+													int filter_passive_drift_correction_method = controllerInfo.FilterPassiveDriftCorrectionMethod;
+													if (ImGui::Combo("##PassiveDriftCorrectionMethod", &filter_passive_drift_correction_method, "Stable Gravity\0Stable Gyro/Accel\0Both\0\0"))
+													{
+														controllerInfo.FilterPassiveDriftCorrectionMethod = static_cast<PassiveDriftCorrectionMethod>(filter_passive_drift_correction_method);
+
+														request_offset = true;
+													}
+													ImGui::PopItemWidth();
+
+													ImGui::Text("Drift Correction Deadzone [Gyro/Accel]: ");
 													ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 													ImGui::PushItemWidth(120.f);
 													float filter_passive_drift_correction_deadzone = controllerInfo.FilterPassiveDriftCorrectionDeazone;
 													if (ImGui::InputFloat("##PassiveDriftCorrectionDeadzone", &filter_passive_drift_correction_deadzone, 1.f, 5.f, 2))
 													{
 														controllerInfo.FilterPassiveDriftCorrectionDeazone = clampf(filter_passive_drift_correction_deadzone, 1.0f, 100.0f);
+
+														request_offset = true;
+													}
+													ImGui::PopItemWidth();
+
+													ImGui::Text("Drift Correction Deadzone [Gravity]: ");
+													ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+													ImGui::PushItemWidth(120.f);
+													float filter_passive_drift_correction_gravity_deadzone = controllerInfo.FilterPassiveDriftCorrectionGravityDeazone;
+													if (ImGui::InputFloat("##PassiveDriftCorrectionGravityDeadzone", &filter_passive_drift_correction_gravity_deadzone, 0.01f, 0.05f, 2))
+													{
+														controllerInfo.FilterPassiveDriftCorrectionGravityDeazone = clampf(filter_passive_drift_correction_gravity_deadzone, 0.0f, 1.0f);
 
 														request_offset = true;
 													}
@@ -998,7 +1022,9 @@ void AppStage_ControllerSettings::renderUI()
 												controllerInfo.FilterLowPassOpticalSmoothing = 0.40f;
 												controllerInfo.FilterEnableMagnetometer = true;
 												controllerInfo.FilterUsePassiveDriftCorrection = false;
+												controllerInfo.FilterPassiveDriftCorrectionMethod = PassiveDriftCorrectionMethod::StableGravity;
 												controllerInfo.FilterPassiveDriftCorrectionDeazone = 3.f;
+												controllerInfo.FilterPassiveDriftCorrectionGravityDeazone = 0.8f;
 												controllerInfo.FilterPassiveDriftCorrectionDelay = 100.f;
 												controllerInfo.FilterUseStabilization = false;
 												controllerInfo.FilterStabilizationMinScale = 0.1f;
@@ -1016,7 +1042,9 @@ void AppStage_ControllerSettings::renderUI()
 												filterSettings.filter_lowpassoptical_smoothing = controllerInfo.FilterLowPassOpticalSmoothing;
 												filterSettings.filter_enable_magnetometer = controllerInfo.FilterEnableMagnetometer;
 												filterSettings.filter_use_passive_drift_correction = controllerInfo.FilterUsePassiveDriftCorrection;
+												filterSettings.filter_passive_drift_correction_method = controllerInfo.FilterPassiveDriftCorrectionMethod;
 												filterSettings.filter_passive_drift_correction_deadzone = controllerInfo.FilterPassiveDriftCorrectionDeazone;
+												filterSettings.filter_passive_drift_correction_gravity_deadzone = controllerInfo.FilterPassiveDriftCorrectionGravityDeazone;
 												filterSettings.filter_passive_drift_correction_delay = controllerInfo.FilterPassiveDriftCorrectionDelay;
 												filterSettings.filter_use_stabilization = controllerInfo.FilterUseStabilization;
 												filterSettings.filter_stabilization_min_scale = controllerInfo.FilterStabilizationMinScale;
@@ -1644,7 +1672,9 @@ void AppStage_ControllerSettings::request_set_controller_filter_settings(
 	filter_settings->set_filter_lowpassoptical_smoothing(filterSettings.filter_lowpassoptical_smoothing);
 	filter_settings->set_filter_enable_magnetometer(filterSettings.filter_enable_magnetometer);
 	filter_settings->set_filter_use_passive_drift_correction(filterSettings.filter_use_passive_drift_correction);
+	filter_settings->set_filter_passive_drift_correction_method(filterSettings.filter_passive_drift_correction_method);
 	filter_settings->set_filter_passive_drift_correction_deadzone(filterSettings.filter_passive_drift_correction_deadzone);
+	filter_settings->set_filter_passive_drift_correction_gravity_deadzone(filterSettings.filter_passive_drift_correction_gravity_deadzone);
 	filter_settings->set_filter_passive_drift_correction_delay(filterSettings.filter_passive_drift_correction_delay);
 	filter_settings->set_filter_use_stabilization(filterSettings.filter_use_stabilization);
 	filter_settings->set_filter_stabilization_min_scale(filterSettings.filter_stabilization_min_scale);
@@ -1742,7 +1772,9 @@ void AppStage_ControllerSettings::handle_controller_list_response(
 				ControllerInfo.FilterLowPassOpticalSmoothing = ControllerResponse.filter_lowpassoptical_smoothing();
 				ControllerInfo.FilterEnableMagnetometer = ControllerResponse.filter_enable_magnetometer();
 				ControllerInfo.FilterUsePassiveDriftCorrection = ControllerResponse.filter_use_passive_drift_correction();
+				ControllerInfo.FilterPassiveDriftCorrectionMethod = static_cast<PassiveDriftCorrectionMethod>(ControllerResponse.filter_passive_drift_correction_method());
 				ControllerInfo.FilterPassiveDriftCorrectionDeazone = ControllerResponse.filter_passive_drift_correction_deadzone();
+				ControllerInfo.FilterPassiveDriftCorrectionGravityDeazone = ControllerResponse.filter_passive_drift_correction_gravity_deadzone();
 				ControllerInfo.FilterPassiveDriftCorrectionDelay = ControllerResponse.filter_passive_drift_correction_delay();
 				ControllerInfo.FilterUseStabilization = ControllerResponse.filter_use_stabilization();
 				ControllerInfo.FilterStabilizationMinScale = ControllerResponse.filter_stabilization_min_scale();

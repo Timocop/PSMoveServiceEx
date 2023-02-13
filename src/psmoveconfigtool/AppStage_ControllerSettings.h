@@ -14,6 +14,13 @@
 class AppStage_ControllerSettings : public AppStage
 {
 public:
+	enum PassiveDriftCorrectionMethod
+	{
+		StableGravity = 0,
+		StableGyroAccel,
+		Both,
+	};
+
 	struct DevicePosition
 	{
 		float x;
@@ -45,7 +52,9 @@ public:
 		float filter_lowpassoptical_smoothing;
 		bool filter_enable_magnetometer;
 		bool filter_use_passive_drift_correction;
+		PassiveDriftCorrectionMethod filter_passive_drift_correction_method;
 		float filter_passive_drift_correction_deadzone;
+		float filter_passive_drift_correction_gravity_deadzone;
 		float filter_passive_drift_correction_delay;
 		bool filter_use_stabilization;
 		float filter_stabilization_min_scale;
@@ -90,7 +99,9 @@ public:
 		float FilterLowPassOpticalSmoothing;
 		bool FilterEnableMagnetometer;
 		bool FilterUsePassiveDriftCorrection;
+		PassiveDriftCorrectionMethod FilterPassiveDriftCorrectionMethod;
 		float FilterPassiveDriftCorrectionDeazone;
+		float FilterPassiveDriftCorrectionGravityDeazone;
 		float FilterPassiveDriftCorrectionDelay;
 		bool FilterUseStabilization;
 		float FilterStabilizationMinScale;

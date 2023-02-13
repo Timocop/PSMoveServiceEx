@@ -70,7 +70,9 @@ public:
 		, filter_lowpassoptical_smoothing(0.40f)
 		, filter_enable_magnetometer(true)
 		, filter_use_passive_drift_correction(false)
+		, filter_passive_drift_correction_method(0)
 		, filter_passive_drift_correction_deadzone(3.f)
+		, filter_passive_drift_correction_gravity_deadzone(0.8f)
 		, filter_passive_drift_correction_delay(100.f)
 		, filter_use_stabilization(false)
 		, filter_stabilization_min_scale(0.1f)
@@ -210,8 +212,11 @@ public:
 	float filter_lowpassoptical_smoothing;
 
 	bool filter_enable_magnetometer;
+
 	bool filter_use_passive_drift_correction;
+	int filter_passive_drift_correction_method;
 	float filter_passive_drift_correction_deadzone;
+	float filter_passive_drift_correction_gravity_deadzone;
 	float filter_passive_drift_correction_delay;
 
 	bool filter_use_stabilization;

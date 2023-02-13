@@ -661,10 +661,10 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 	bool filter_enable_magnetometer = true;
 
 	bool filter_use_passive_drift_correction = false;
+	PassiveDriftCorrectionMethod filter_passive_drift_correction_method = PassiveDriftCorrectionMethod::StableGravity;
 	float filter_passive_drift_correction_deadzone = 3.f;
+	float filter_passive_drift_correction_gravity_deadzone = 0.8f;
 	float filter_passive_drift_correction_delay = 100.f;
-	bool filter_passive_drift_correction_gravity_stable = true;
-
 
 	bool filter_use_stabilization = false;
 	float filter_stabilization_min_scale = 0.1f;
@@ -764,16 +764,6 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 
 			m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, delta_time);
 		}
-		const Eigen::Vector3f &world_g = -packet.world_accelerometer;
-		const float accel_g = sqrtf(world_g.x() * world_g.x() + world_g.y() * world_g.y() + world_g.z() * world_g.z());
-
-		const float world_g_stable_min = 0.8f;
-
-		bool world_g_stable = false;
-		if (accel_g > world_g_stable_min && accel_g < 1.f + (1.f - world_g_stable_min))
-		{
-			world_g_stable = true;
-		}
 
 		bool doStabilize = false;
 
@@ -824,13 +814,48 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 
 			std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
 
+			const Eigen::Vector3f &world_g = -packet.world_accelerometer;
+			const float accel_g = sqrtf(world_g.x() * world_g.x() + world_g.y() * world_g.y() + world_g.z() * world_g.z());
+
+			bool gravity_stable = false;
+			bool gyro_stable = false;
+			bool accel_stable = false;
+			if (accel_g > filter_passive_drift_correction_gravity_deadzone && 
+				accel_g < 1.f + (1.f - filter_passive_drift_correction_gravity_deadzone))
+			{
+				gravity_stable = true;
+			}
+
+			if (abs(current_omega.x()) < filter_passive_drift_correction_deadzone &&
+				abs(current_omega.y()) < filter_passive_drift_correction_deadzone &&
+				abs(current_omega.z()) < filter_passive_drift_correction_deadzone)
+			{
+				gyro_stable = true;
+			}
+
 			if (abs(new_acceleration.x()) < filter_passive_drift_correction_deadzone &&
 				abs(new_acceleration.y()) < filter_passive_drift_correction_deadzone &&
-				abs(new_acceleration.z()) < filter_passive_drift_correction_deadzone &&
-				abs(current_omega.x()) < filter_passive_drift_correction_deadzone &&
-				abs(current_omega.y()) < filter_passive_drift_correction_deadzone &&
-				abs(current_omega.z()) < filter_passive_drift_correction_deadzone &&
-				world_g_stable)
+				abs(new_acceleration.z()) < filter_passive_drift_correction_deadzone)
+			{
+				accel_stable = true;
+			}
+
+			switch (filter_passive_drift_correction_method)
+			{
+			case PassiveDriftCorrectionMethod::StableGravity:
+			{
+				gyro_stable = true;
+				accel_stable = true;
+				break;
+			}
+			case PassiveDriftCorrectionMethod::StableGyroAccel:
+			{
+				gravity_stable = true;
+				break;
+			}
+			}
+
+			if (gyro_stable && accel_stable && gravity_stable)
 			{
 				if (mg_ignored)
 				{

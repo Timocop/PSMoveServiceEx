@@ -715,7 +715,9 @@ protected:
 				float filter_lowpassoptical_smoothing;
 				bool filter_enable_magnetometer;
 				bool filter_use_passive_drift_correction;
+				int filter_passive_drift_correction_method;
 				float filter_passive_drift_correction_deadzone;
+				float filter_passive_drift_correction_gravity_deadzone;
 				float filter_passive_drift_correction_delay;
 				bool filter_use_stabilization;
 				float filter_stabilization_min_scale;
@@ -748,7 +750,9 @@ protected:
 						filter_lowpassoptical_smoothing = config->filter_lowpassoptical_smoothing;
 						filter_enable_magnetometer = config->filter_enable_magnetometer;
 						filter_use_passive_drift_correction = config->filter_use_passive_drift_correction;
+						filter_passive_drift_correction_method = config->filter_passive_drift_correction_method;
 						filter_passive_drift_correction_deadzone = config->filter_passive_drift_correction_deadzone;
+						filter_passive_drift_correction_gravity_deadzone = config->filter_passive_drift_correction_gravity_deadzone;
 						filter_passive_drift_correction_delay = config->filter_passive_drift_correction_delay;
 						filter_use_stabilization = config->filter_use_stabilization;
 						filter_stabilization_min_scale = config->filter_stabilization_min_scale;
@@ -904,7 +908,9 @@ protected:
 				controller_info->set_filter_lowpassoptical_smoothing(filter_lowpassoptical_smoothing);
 				controller_info->set_filter_enable_magnetometer(filter_enable_magnetometer);
 				controller_info->set_filter_use_passive_drift_correction(filter_use_passive_drift_correction);
+				controller_info->set_filter_passive_drift_correction_method(filter_passive_drift_correction_method);
 				controller_info->set_filter_passive_drift_correction_deadzone(filter_passive_drift_correction_deadzone);
+				controller_info->set_filter_passive_drift_correction_gravity_deadzone(filter_passive_drift_correction_gravity_deadzone);
 				controller_info->set_filter_passive_drift_correction_delay(filter_passive_drift_correction_delay);
 				controller_info->set_filter_use_stabilization(filter_use_stabilization);
 				controller_info->set_filter_stabilization_min_scale(filter_stabilization_min_scale);
@@ -2979,7 +2985,9 @@ protected:
 					config.filter_lowpassoptical_smoothing != request.filter_lowpassoptical_smoothing() ||
 					config.filter_enable_magnetometer != request.filter_enable_magnetometer() ||
 					config.filter_use_passive_drift_correction != request.filter_use_passive_drift_correction() ||
+					config.filter_passive_drift_correction_method != request.filter_passive_drift_correction_method() ||
 					config.filter_passive_drift_correction_deadzone != request.filter_passive_drift_correction_deadzone() ||
+					config.filter_passive_drift_correction_gravity_deadzone != request.filter_passive_drift_correction_gravity_deadzone() ||
 					config.filter_passive_drift_correction_delay != request.filter_passive_drift_correction_delay() ||
 					config.filter_use_stabilization != request.filter_use_stabilization() ||
 					config.filter_stabilization_min_scale != request.filter_stabilization_min_scale())
@@ -2990,7 +2998,9 @@ protected:
 					config.filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
 					config.filter_enable_magnetometer = request.filter_enable_magnetometer();
 					config.filter_use_passive_drift_correction = request.filter_use_passive_drift_correction();
+					config.filter_passive_drift_correction_method = request.filter_passive_drift_correction_method();
 					config.filter_passive_drift_correction_deadzone = request.filter_passive_drift_correction_deadzone();
+					config.filter_passive_drift_correction_gravity_deadzone = request.filter_passive_drift_correction_gravity_deadzone();
 					config.filter_passive_drift_correction_delay = request.filter_passive_drift_correction_delay();
 					config.filter_use_stabilization = request.filter_use_stabilization();
 					config.filter_stabilization_min_scale = request.filter_stabilization_min_scale();

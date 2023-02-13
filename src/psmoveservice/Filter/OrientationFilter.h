@@ -108,6 +108,13 @@ public:
     void update(const float delta_time, const PoseFilterPacket &packet) override;
 
 protected:
+	enum PassiveDriftCorrectionMethod
+	{
+		StableGravity = 0,
+		StableGyroAccel,
+		Both,
+	};
+
     float mg_weight;
 	bool mg_ignored;
 	std::chrono::time_point<std::chrono::high_resolution_clock> timeStableDelay;

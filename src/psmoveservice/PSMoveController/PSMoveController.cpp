@@ -611,7 +611,9 @@ PSMoveControllerConfig::config2ptree()
 	pt.put("FilterSettings.OrientationFilterComplementaryMARG.EnableMagnetometer", filter_enable_magnetometer);
 
 	pt.put("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.IsEnabled", filter_use_passive_drift_correction);
+	pt.put("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.Method", filter_passive_drift_correction_method);
 	pt.put("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.Deadzone", filter_passive_drift_correction_deadzone);
+	pt.put("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.GravityDeadzone", filter_passive_drift_correction_gravity_deadzone);
 	pt.put("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.Delay", filter_passive_drift_correction_delay);
 
 	pt.put("FilterSettings.OrientationFilterComplementaryMARG.Stabilization.Enabled", filter_use_stabilization);
@@ -727,9 +729,13 @@ PSMoveControllerConfig::ptree2config(const boost::property_tree::ptree &pt)
 		filter_prediction_smoothing = pt.get<float>("FilterSettings.PredictionSmoothing", 0.40f);
 		filter_lowpassoptical_distance = pt.get<float>("FilterSettings.LowPassOptical.Distance", 10.f);
 		filter_lowpassoptical_smoothing = pt.get<float>("FilterSettings.LowPassOptical.Smoothing", 0.40f);
+
 		filter_enable_magnetometer = pt.get<bool>("FilterSettings.OrientationFilterComplementaryMARG.EnableMagnetometer", true);
+
 		filter_use_passive_drift_correction = pt.get<bool>("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.IsEnabled", false);
+		filter_passive_drift_correction_method = pt.get<int>("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.Method", 0);
 		filter_passive_drift_correction_deadzone = pt.get<float>("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.Deadzone", 3.f);
+		filter_passive_drift_correction_gravity_deadzone = pt.get<float>("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.GravityDeadzone", 0.8f);
 		filter_passive_drift_correction_delay = pt.get<float>("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.Delay", 100.f);
 
 		filter_use_stabilization = pt.get<bool>("FilterSettings.OrientationFilterComplementaryMARG.Stabilization.Enabled", false);
