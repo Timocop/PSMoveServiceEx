@@ -10,8 +10,6 @@
 
 // Complementary MARG Filter constants
 #define k_base_earth_frame_align_weight 0.02f
-#define k_min_stable_base_earth_frame_align_weight 0.002f
-#define k_max_stable_base_earth_frame_align_weight 0.02f
 
 // Max length of the orientation history we keep
 #define k_orientation_history_max 16
@@ -846,14 +844,12 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 		{
 			if (filter_use_stabilization)
 			{
-				const float k_gyro_cutoff = 0.01f;
 				const float k_gyro_multi = 1.f;
+				const float k_weight_min = 0.1f;
 
 				float gyro_max = fmaxf(abs(current_omega.x()), fmaxf(abs(current_omega.y()), abs(current_omega.z()))) * k_gyro_multi;
-				if (gyro_max < k_gyro_cutoff)
-					gyro_max = 0.f;
 
-				float align_weight = lerp_clampf(k_min_stable_base_earth_frame_align_weight, k_max_stable_base_earth_frame_align_weight, clampf(gyro_max, 0.f, 1.f));
+				float align_weight = lerp_clampf(0.f, k_base_earth_frame_align_weight, clampf(gyro_max, k_weight_min, 1.f));
 
 				// Update the blend weight
 				// -- Exponential blend the MG weight from 1 down to k_base_earth_frame_align_weight
