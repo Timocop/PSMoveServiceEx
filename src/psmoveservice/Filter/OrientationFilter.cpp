@@ -663,6 +663,8 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 	bool filter_use_passive_drift_correction = false;
 	float filter_passive_drift_correction_deadzone = 3.f;
 	float filter_passive_drift_correction_delay = 100.f;
+	bool filter_passive_drift_correction_gravity_stable = true;
+
 
 	bool filter_use_stabilization = false;
 	float filter_stabilization_min_scale = 0.1f;
@@ -762,6 +764,16 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 
 			m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, delta_time);
 		}
+		const Eigen::Vector3f &world_g = -packet.world_accelerometer;
+		const float accel_g = sqrtf(world_g.x() * world_g.x() + world_g.y() * world_g.y() + world_g.z() * world_g.z());
+
+		const float world_g_stable_min = 0.8f;
+
+		bool world_g_stable = false;
+		if (accel_g > world_g_stable_min && accel_g < 1.f + (1.f - world_g_stable_min))
+		{
+			world_g_stable = true;
+		}
 
 		bool doStabilize = false;
 
@@ -817,7 +829,8 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 				abs(new_acceleration.z()) < filter_passive_drift_correction_deadzone &&
 				abs(current_omega.x()) < filter_passive_drift_correction_deadzone &&
 				abs(current_omega.y()) < filter_passive_drift_correction_deadzone &&
-				abs(current_omega.z()) < filter_passive_drift_correction_deadzone)
+				abs(current_omega.z()) < filter_passive_drift_correction_deadzone &&
+				world_g_stable)
 			{
 				if (mg_ignored)
 				{
