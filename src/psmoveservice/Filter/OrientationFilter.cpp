@@ -659,11 +659,12 @@ static Eigen::Vector3f lowpass_filter_vector3f(
 void OrientationFilterComplementaryMARG::update(const float delta_time, const PoseFilterPacket &packet)
 {
 	bool filter_enable_magnetometer = true;
-	bool filter_use_passive_drift_correction = false;
-	float filter_passive_drift_correction_deadzone;
-	float filter_passive_drift_correction_delay;
 
-	bool filter_use_stabilization = true;
+	bool filter_use_passive_drift_correction = false;
+	float filter_passive_drift_correction_deadzone = 3.f;
+	float filter_passive_drift_correction_delay = 100.f;
+
+	bool filter_use_stabilization = false;
 	float filter_stabilization_min_scale = 0.05f;
 
 #if !defined(IS_TESTING_KALMAN) 
@@ -683,6 +684,9 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 				filter_use_passive_drift_correction = config.filter_use_passive_drift_correction;
 				filter_passive_drift_correction_deadzone = config.filter_passive_drift_correction_deadzone;
 				filter_passive_drift_correction_delay = config.filter_passive_drift_correction_delay;
+
+				filter_use_stabilization = config.filter_use_stabilization;
+				filter_stabilization_min_scale = config.filter_stabilization_min_scale;
 
 				break;
 			}
@@ -843,13 +847,15 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 
 		if (doStabilize)
 		{
+			// Do stabilization to reduce shaking and quick magnetometer/accelerometer motion
+			// Scale by gyro amount
 			if (filter_use_stabilization)
 			{
 				const float k_gyro_multi = 1.f;
 
 				float gyro_max = fmaxf(abs(current_omega.x()), fmaxf(abs(current_omega.y()), abs(current_omega.z()))) * k_gyro_multi;
 
-				float align_weight = lerp_clampf(0.f, k_base_earth_frame_align_weight, clampf(gyro_max, filter_stabilization_min_scale, 1.f));
+				float align_weight = lerp_clampf(0.f, k_base_earth_frame_align_weight, clampf(gyro_max, clampf01(filter_stabilization_min_scale), 1.f));
 
 				// Update the blend weight
 				// -- Exponential blend the MG weight from 1 down to k_base_earth_frame_align_weight

@@ -72,6 +72,8 @@ public:
 		, filter_use_passive_drift_correction(false)
 		, filter_passive_drift_correction_deadzone(3.f)
 		, filter_passive_drift_correction_delay(100.f)
+		, filter_use_stabilization(false)
+		, filter_stabilization_min_scale(0.05f)
     {
         magnetometer_identity.clear();
         magnetometer_center.clear();
@@ -206,11 +208,14 @@ public:
 	float filter_prediction_smoothing;
 	float filter_lowpassoptical_distance;
 	float filter_lowpassoptical_smoothing;
+
 	bool filter_enable_magnetometer;
 	bool filter_use_passive_drift_correction;
 	float filter_passive_drift_correction_deadzone;
 	float filter_passive_drift_correction_delay;
 
+	bool filter_use_stabilization;
+	float filter_stabilization_min_scale;
 };
 
 struct PSMoveControllerInputState : public CommonControllerState

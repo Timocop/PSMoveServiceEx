@@ -609,9 +609,13 @@ PSMoveControllerConfig::config2ptree()
 	pt.put("FilterSettings.LowPassOptical.Distance", filter_lowpassoptical_distance);
 	pt.put("FilterSettings.LowPassOptical.Smoothing", filter_lowpassoptical_smoothing);
 	pt.put("FilterSettings.OrientationFilterComplementaryMARG.EnableMagnetometer", filter_enable_magnetometer);
+
 	pt.put("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.IsEnabled", filter_use_passive_drift_correction);
 	pt.put("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.Deadzone", filter_passive_drift_correction_deadzone);
 	pt.put("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.Delay", filter_passive_drift_correction_delay);
+
+	pt.put("FilterSettings.OrientationFilterComplementaryMARG.Stabilization.Enabled", filter_use_stabilization);
+	pt.put("FilterSettings.OrientationFilterComplementaryMARG.Stabilization.MinScale", filter_stabilization_min_scale);
 
 	writeTrackingColor(pt, tracking_color_id);
 
@@ -727,6 +731,9 @@ PSMoveControllerConfig::ptree2config(const boost::property_tree::ptree &pt)
 		filter_use_passive_drift_correction = pt.get<bool>("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.IsEnabled", false);
 		filter_passive_drift_correction_deadzone = pt.get<float>("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.Deadzone", 3.f);
 		filter_passive_drift_correction_delay = pt.get<float>("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.Delay", 100.f);
+
+		filter_use_stabilization = pt.get<bool>("FilterSettings.OrientationFilterComplementaryMARG.Stabilization.Enabled", false);
+		filter_stabilization_min_scale = pt.get<float>("FilterSettings.OrientationFilterComplementaryMARG.Stabilization.MinScale", 0.05f);
 }
     else
     {
