@@ -717,6 +717,8 @@ protected:
 				bool filter_use_passive_drift_correction;
 				float filter_passive_drift_correction_deadzone;
 				float filter_passive_drift_correction_delay;
+				bool filter_use_stabilization;
+				float filter_stabilization_min_scale;
 
                 switch(controller_view->getControllerDeviceType())
                 {
@@ -748,6 +750,8 @@ protected:
 						filter_use_passive_drift_correction = config->filter_use_passive_drift_correction;
 						filter_passive_drift_correction_deadzone = config->filter_passive_drift_correction_deadzone;
 						filter_passive_drift_correction_delay = config->filter_passive_drift_correction_delay;
+						filter_use_stabilization = config->filter_use_stabilization;
+						filter_stabilization_min_scale = config->filter_stabilization_min_scale;
 
                         controller_info->set_controller_type(PSMoveProtocol::PSMOVE);
                     }
@@ -902,6 +906,8 @@ protected:
 				controller_info->set_filter_use_passive_drift_correction(filter_use_passive_drift_correction);
 				controller_info->set_filter_passive_drift_correction_deadzone(filter_passive_drift_correction_deadzone);
 				controller_info->set_filter_passive_drift_correction_delay(filter_passive_drift_correction_delay);
+				controller_info->set_filter_use_stabilization(filter_use_stabilization);
+				controller_info->set_filter_stabilization_min_scale(filter_stabilization_min_scale);
             }
         }
 
@@ -2974,7 +2980,9 @@ protected:
 					config.filter_enable_magnetometer != request.filter_enable_magnetometer() ||
 					config.filter_use_passive_drift_correction != request.filter_use_passive_drift_correction() ||
 					config.filter_passive_drift_correction_deadzone != request.filter_passive_drift_correction_deadzone() ||
-					config.filter_passive_drift_correction_delay != request.filter_passive_drift_correction_delay())
+					config.filter_passive_drift_correction_delay != request.filter_passive_drift_correction_delay() ||
+					config.filter_use_stabilization != request.filter_use_stabilization() ||
+					config.filter_stabilization_min_scale != request.filter_stabilization_min_scale())
 				{
 					config.filter_prediction_distance = request.filter_prediction_distance();
 					config.filter_prediction_smoothing = request.filter_prediction_smoothing();
@@ -2984,6 +2992,8 @@ protected:
 					config.filter_use_passive_drift_correction = request.filter_use_passive_drift_correction();
 					config.filter_passive_drift_correction_deadzone = request.filter_passive_drift_correction_deadzone();
 					config.filter_passive_drift_correction_delay = request.filter_passive_drift_correction_delay();
+					config.filter_use_stabilization = request.filter_use_stabilization();
+					config.filter_stabilization_min_scale = request.filter_stabilization_min_scale();
 
 					controller->setConfig(&config);
 				}

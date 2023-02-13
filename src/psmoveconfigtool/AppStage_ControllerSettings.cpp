@@ -956,6 +956,31 @@ void AppStage_ControllerSettings::renderUI()
 													ImGui::PopItemWidth();
 												}
 												ImGui::Unindent();
+
+												ImGui::Text("Use Stabilization: ");
+												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+												ImGui::PushItemWidth(120.f);
+												if (ImGui::Checkbox("##UseStabilization", &controllerInfo.FilterUseStabilization))
+												{
+													request_offset = true;
+												}
+												ImGui::PopItemWidth();
+
+												ImGui::Indent();
+												{
+													ImGui::Text("Stabilization Minimum Scale: ");
+													ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+													ImGui::PushItemWidth(120.f);
+													float filter_stabilization_min_scale = controllerInfo.FilterStabilizationMinScale;
+													if (ImGui::InputFloat("##StabilizationMinimumScale", &filter_stabilization_min_scale, 0.01f, 0.05f, 2))
+													{
+														controllerInfo.FilterStabilizationMinScale = clampf(filter_stabilization_min_scale, 0.f, 1.f);
+
+														request_offset = true;
+													}
+													ImGui::PopItemWidth();
+												}
+												ImGui::Unindent();
 											}
 
 											if (!settings_shown)
@@ -975,6 +1000,8 @@ void AppStage_ControllerSettings::renderUI()
 												controllerInfo.FilterUsePassiveDriftCorrection = false;
 												controllerInfo.FilterPassiveDriftCorrectionDeazone = 3.f;
 												controllerInfo.FilterPassiveDriftCorrectionDelay = 100.f;
+												controllerInfo.FilterUseStabilization = false;
+												controllerInfo.FilterStabilizationMinScale = 0.05f;
 
 												request_offset = true;
 
@@ -991,6 +1018,8 @@ void AppStage_ControllerSettings::renderUI()
 												filterSettings.filter_use_passive_drift_correction = controllerInfo.FilterUsePassiveDriftCorrection;
 												filterSettings.filter_passive_drift_correction_deadzone = controllerInfo.FilterPassiveDriftCorrectionDeazone;
 												filterSettings.filter_passive_drift_correction_delay = controllerInfo.FilterPassiveDriftCorrectionDelay;
+												filterSettings.filter_use_stabilization = controllerInfo.FilterUseStabilization;
+												filterSettings.filter_stabilization_min_scale = controllerInfo.FilterStabilizationMinScale;
 
 												request_set_controller_filter_settings(controllerInfo.ControllerID, filterSettings);
 											}
@@ -1617,6 +1646,8 @@ void AppStage_ControllerSettings::request_set_controller_filter_settings(
 	filter_settings->set_filter_use_passive_drift_correction(filterSettings.filter_use_passive_drift_correction);
 	filter_settings->set_filter_passive_drift_correction_deadzone(filterSettings.filter_passive_drift_correction_deadzone);
 	filter_settings->set_filter_passive_drift_correction_delay(filterSettings.filter_passive_drift_correction_delay);
+	filter_settings->set_filter_use_stabilization(filterSettings.filter_use_stabilization);
+	filter_settings->set_filter_stabilization_min_scale(filterSettings.filter_stabilization_min_scale);
 
 	PSMRequestID request_id;
 	PSM_SendOpaqueRequest(&request, &request_id);
@@ -1713,6 +1744,8 @@ void AppStage_ControllerSettings::handle_controller_list_response(
 				ControllerInfo.FilterUsePassiveDriftCorrection = ControllerResponse.filter_use_passive_drift_correction();
 				ControllerInfo.FilterPassiveDriftCorrectionDeazone = ControllerResponse.filter_passive_drift_correction_deadzone();
 				ControllerInfo.FilterPassiveDriftCorrectionDelay = ControllerResponse.filter_passive_drift_correction_delay();
+				ControllerInfo.FilterUseStabilization = ControllerResponse.filter_use_stabilization();
+				ControllerInfo.FilterStabilizationMinScale = ControllerResponse.filter_stabilization_min_scale();
 
                 if (ControllerInfo.ControllerType == PSMController_Move)
                 {

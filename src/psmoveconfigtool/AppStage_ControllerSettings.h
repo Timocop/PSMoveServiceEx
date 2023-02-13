@@ -47,6 +47,8 @@ public:
 		bool filter_use_passive_drift_correction;
 		float filter_passive_drift_correction_deadzone;
 		float filter_passive_drift_correction_delay;
+		bool filter_use_stabilization;
+		float filter_stabilization_min_scale;
 	};
 
 	struct ControllerInfo
@@ -90,6 +92,8 @@ public:
 		bool FilterUsePassiveDriftCorrection;
 		float FilterPassiveDriftCorrectionDeazone;
 		float FilterPassiveDriftCorrectionDelay;
+		bool FilterUseStabilization;
+		float FilterStabilizationMinScale;
 
 		static bool ParentControllerComboItemGetter(void* userdata, int index, const char** out_string)
 		{

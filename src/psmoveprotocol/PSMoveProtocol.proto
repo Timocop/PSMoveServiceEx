@@ -643,6 +643,8 @@ message Request {
 		float filter_passive_drift_correction_deadzone = 8;
 		float filter_passive_drift_correction_delay = 9;
 		int32 filter_opticaltarget_controller_id = 10;
+		bool filter_use_stabilization = 11;
+		float filter_stabilization_min_scale = 12;
     }
     RequestSetControllerFilterSettings request_set_controller_filter_settings = 55;
 	
@@ -760,6 +762,8 @@ message Response {
 			float filter_passive_drift_correction_deadzone = 31;
 			float filter_passive_drift_correction_delay = 32;
 			int32 filter_opticaltarget_controller_id = 33;
+			bool filter_use_stabilization = 34;
+			float filter_stabilization_min_scale = 35;
         }
         repeated ControllerInfo controllers = 1;
         string host_serial = 2;
