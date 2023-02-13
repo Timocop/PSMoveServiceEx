@@ -664,6 +664,7 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 	float filter_passive_drift_correction_delay;
 
 	bool filter_use_stabilization = true;
+	float filter_stabilization_min_scale = 0.05f;
 
 #if !defined(IS_TESTING_KALMAN) 
 	if (packet.controllerDeviceId > -1)
@@ -845,11 +846,10 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 			if (filter_use_stabilization)
 			{
 				const float k_gyro_multi = 1.f;
-				const float k_weight_min = 0.1f;
 
 				float gyro_max = fmaxf(abs(current_omega.x()), fmaxf(abs(current_omega.y()), abs(current_omega.z()))) * k_gyro_multi;
 
-				float align_weight = lerp_clampf(0.f, k_base_earth_frame_align_weight, clampf(gyro_max, k_weight_min, 1.f));
+				float align_weight = lerp_clampf(0.f, k_base_earth_frame_align_weight, clampf(gyro_max, filter_stabilization_min_scale, 1.f));
 
 				// Update the blend weight
 				// -- Exponential blend the MG weight from 1 down to k_base_earth_frame_align_weight
