@@ -683,8 +683,11 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 				PSMoveControllerConfig config = *controller->getConfig();
 
 				filter_enable_magnetometer = config.filter_enable_magnetometer;
+
 				filter_use_passive_drift_correction = config.filter_use_passive_drift_correction;
+				filter_passive_drift_correction_method = config.filter_passive_drift_correction_method;
 				filter_passive_drift_correction_deadzone = config.filter_passive_drift_correction_deadzone;
+				filter_passive_drift_correction_gravity_deadzone = config.filter_passive_drift_correction_gravity_deadzone;
 				filter_passive_drift_correction_delay = config.filter_passive_drift_correction_delay;
 
 				filter_use_stabilization = config.filter_use_stabilization;
