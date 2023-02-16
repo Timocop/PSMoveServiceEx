@@ -751,20 +751,6 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 		eigen_alignment_quaternion_between_vector_frames(
 			mg_from, mg_to, 0.1f, q_current, mg_orientation);
 
-		// Blending Update
-		//----------------
-		// Save the new quaternion and first derivative back into the orientation state
-		// Derive the second derivative
-		{
-			// The final rotation is a blend between the integrated orientation and absolute rotation from the earth-frame
-			const Eigen::Quaternionf new_orientation =
-				eigen_quaternion_normalized_lerp(ar_orientation, mg_orientation, mg_weight);
-			const Eigen::Vector3f new_angular_velocity = Eigen::Vector3f::Zero(); // current_omega;
-			const Eigen::Vector3f new_angular_acceleration = Eigen::Vector3f::Zero(); // (current_omega - m_state->angular_velocity) / delta_time;
-
-			m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, delta_time);
-		}
-
 		bool doStabilize = false;
 
 		if (filter_use_passive_drift_correction)
@@ -906,6 +892,21 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 				mg_weight = lerp_clampf(mg_weight, k_base_earth_frame_align_weight, 0.9f);
 			}
 		}
+
+		// Blending Update
+		//----------------
+		// Save the new quaternion and first derivative back into the orientation state
+		// Derive the second derivative
+		{
+			// The final rotation is a blend between the integrated orientation and absolute rotation from the earth-frame
+			const Eigen::Quaternionf new_orientation =
+				eigen_quaternion_normalized_lerp(ar_orientation, mg_orientation, mg_weight);
+			const Eigen::Vector3f new_angular_velocity = Eigen::Vector3f::Zero(); // current_omega;
+			const Eigen::Vector3f new_angular_acceleration = Eigen::Vector3f::Zero(); // (current_omega - m_state->angular_velocity) / delta_time;
+
+			m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, delta_time);
+		}
+
 	}
 	else
 	{
