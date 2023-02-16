@@ -943,11 +943,11 @@ void AppStage_ControllerSettings::renderUI()
 													}
 													ImGui::PopItemWidth();
 
-													ImGui::Text("Drift Correction Deadzone [Gyro/Accel]: ");
+													ImGui::Text("Stable Gyroscope/Accelerometer Range: ");
 													ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 													ImGui::PushItemWidth(120.f);
 													float filter_passive_drift_correction_deadzone = controllerInfo.FilterPassiveDriftCorrectionDeazone;
-													if (ImGui::InputFloat("##PassiveDriftCorrectionDeadzone", &filter_passive_drift_correction_deadzone, 1.f, 5.f, 2))
+													if (ImGui::InputFloat("##PassiveDriftCorrectionStableGyroscopeAccelerometerRange", &filter_passive_drift_correction_deadzone, 1.f, 5.f, 2))
 													{
 														controllerInfo.FilterPassiveDriftCorrectionDeazone = clampf(filter_passive_drift_correction_deadzone, 1.0f, 100.0f);
 
@@ -955,11 +955,11 @@ void AppStage_ControllerSettings::renderUI()
 													}
 													ImGui::PopItemWidth();
 
-													ImGui::Text("Drift Correction Deadzone [Gravity]: ");
+													ImGui::Text("Stable Gravity Range: ");
 													ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 													ImGui::PushItemWidth(120.f);
 													float filter_passive_drift_correction_gravity_deadzone = controllerInfo.FilterPassiveDriftCorrectionGravityDeazone;
-													if (ImGui::InputFloat("##PassiveDriftCorrectionGravityDeadzone", &filter_passive_drift_correction_gravity_deadzone, 0.01f, 0.05f, 2))
+													if (ImGui::InputFloat("##PassiveDriftCorrectionStableGravityRange", &filter_passive_drift_correction_gravity_deadzone, 0.01f, 0.05f, 2))
 													{
 														controllerInfo.FilterPassiveDriftCorrectionGravityDeazone = clampf(filter_passive_drift_correction_gravity_deadzone, 0.0f, 1.0f);
 
@@ -967,11 +967,11 @@ void AppStage_ControllerSettings::renderUI()
 													}
 													ImGui::PopItemWidth();
 
-													ImGui::Text("Drift Correction Delay (ms): ");
+													ImGui::Text("Minimum Stable Time (ms): ");
 													ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 													ImGui::PushItemWidth(120.f);
 													float filter_passive_drift_correction_delay = controllerInfo.FilterPassiveDriftCorrectionDelay;
-													if (ImGui::InputFloat("##PassiveDriftCorrectionDelay", &filter_passive_drift_correction_delay, 1.f, 5.f, 2))
+													if (ImGui::InputFloat("##PassiveDriftCorrectionMinimumStableTime", &filter_passive_drift_correction_delay, 1.f, 5.f, 2))
 													{
 														controllerInfo.FilterPassiveDriftCorrectionDelay = clampf(filter_passive_drift_correction_delay, 1.0f, (1 << 16));
 
@@ -992,11 +992,11 @@ void AppStage_ControllerSettings::renderUI()
 
 												ImGui::Indent();
 												{
-													ImGui::Text("Stabilization Minimum Scale: ");
+													ImGui::Text("Magnetometer/Gravity Minimum Blend Scale: ");
 													ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 													ImGui::PushItemWidth(120.f);
 													float filter_stabilization_min_scale = controllerInfo.FilterStabilizationMinScale;
-													if (ImGui::InputFloat("##StabilizationMinimumScale", &filter_stabilization_min_scale, 0.01f, 0.05f, 2))
+													if (ImGui::InputFloat("##MagnetometerGravityMinimumBlendScale", &filter_stabilization_min_scale, 0.01f, 0.05f, 2))
 													{
 														controllerInfo.FilterStabilizationMinScale = clampf(filter_stabilization_min_scale, 0.f, 1.f);
 
