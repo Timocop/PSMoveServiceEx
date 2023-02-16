@@ -608,16 +608,16 @@ PSMoveControllerConfig::config2ptree()
 	pt.put("FilterSettings.PredictionSmoothing", filter_prediction_smoothing);
 	pt.put("FilterSettings.LowPassOptical.Distance", filter_lowpassoptical_distance);
 	pt.put("FilterSettings.LowPassOptical.Smoothing", filter_lowpassoptical_smoothing);
-	pt.put("FilterSettings.OrientationFilterComplementaryMARG.EnableMagnetometer", filter_enable_magnetometer);
+	pt.put("FilterSettings.EnableMagnetometer", filter_enable_magnetometer);
 
-	pt.put("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.IsEnabled", filter_use_passive_drift_correction);
-	pt.put("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.Method", filter_passive_drift_correction_method);
-	pt.put("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.Deadzone", filter_passive_drift_correction_deadzone);
-	pt.put("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.GravityDeadzone", filter_passive_drift_correction_gravity_deadzone);
-	pt.put("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.Delay", filter_passive_drift_correction_delay);
+	pt.put("FilterSettings.PassiveDriftCorrection.IsEnabled", filter_use_passive_drift_correction);
+	pt.put("FilterSettings.PassiveDriftCorrection.Method", filter_passive_drift_correction_method);
+	pt.put("FilterSettings.PassiveDriftCorrection.Deadzone", filter_passive_drift_correction_deadzone);
+	pt.put("FilterSettings.PassiveDriftCorrection.GravityDeadzone", filter_passive_drift_correction_gravity_deadzone);
+	pt.put("FilterSettings.PassiveDriftCorrection.Delay", filter_passive_drift_correction_delay);
 
-	pt.put("FilterSettings.OrientationFilterComplementaryMARG.Stabilization.Enabled", filter_use_stabilization);
-	pt.put("FilterSettings.OrientationFilterComplementaryMARG.Stabilization.MinScale", filter_stabilization_min_scale);
+	pt.put("FilterSettings.Stabilization.Enabled", filter_use_stabilization);
+	pt.put("FilterSettings.Stabilization.MinScale", filter_stabilization_min_scale);
 
 	writeTrackingColor(pt, tracking_color_id);
 
@@ -725,21 +725,21 @@ PSMoveControllerConfig::ptree2config(const boost::property_tree::ptree &pt)
 
 		hand= pt.get<std::string>("hand", hand);
 
-		filter_prediction_distance = pt.get<float>("FilterSettings.PredictionDistance", 10.f);
-		filter_prediction_smoothing = pt.get<float>("FilterSettings.PredictionSmoothing", 0.40f);
-		filter_lowpassoptical_distance = pt.get<float>("FilterSettings.LowPassOptical.Distance", 10.f);
-		filter_lowpassoptical_smoothing = pt.get<float>("FilterSettings.LowPassOptical.Smoothing", 0.40f);
+		filter_prediction_distance = pt.get<float>("FilterSettings.PredictionDistance", filter_prediction_distance);
+		filter_prediction_smoothing = pt.get<float>("FilterSettings.PredictionSmoothing", filter_prediction_smoothing);
+		filter_lowpassoptical_distance = pt.get<float>("FilterSettings.LowPassOptical.Distance", filter_lowpassoptical_distance);
+		filter_lowpassoptical_smoothing = pt.get<float>("FilterSettings.LowPassOptical.Smoothing", filter_lowpassoptical_smoothing);
 
-		filter_enable_magnetometer = pt.get<bool>("FilterSettings.OrientationFilterComplementaryMARG.EnableMagnetometer", true);
+		filter_enable_magnetometer = pt.get<bool>("FilterSettings.EnableMagnetometer", filter_enable_magnetometer);
 
-		filter_use_passive_drift_correction = pt.get<bool>("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.IsEnabled", false);
-		filter_passive_drift_correction_method = pt.get<int>("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.Method", 0);
-		filter_passive_drift_correction_deadzone = pt.get<float>("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.Deadzone", 3.f);
-		filter_passive_drift_correction_gravity_deadzone = pt.get<float>("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.GravityDeadzone", 0.8f);
-		filter_passive_drift_correction_delay = pt.get<float>("FilterSettings.OrientationFilterComplementaryMARG.PassiveDriftCorrection.Delay", 100.f);
+		filter_use_passive_drift_correction = pt.get<bool>("FilterSettings.PassiveDriftCorrection.IsEnabled", filter_use_passive_drift_correction);
+		filter_passive_drift_correction_method = pt.get<int>("FilterSettings.PassiveDriftCorrection.Method", filter_passive_drift_correction_method);
+		filter_passive_drift_correction_deadzone = pt.get<float>("FilterSettings.PassiveDriftCorrection.Deadzone", filter_passive_drift_correction_deadzone);
+		filter_passive_drift_correction_gravity_deadzone = pt.get<float>("FilterSettings.PassiveDriftCorrection.GravityDeadzone", filter_passive_drift_correction_gravity_deadzone);
+		filter_passive_drift_correction_delay = pt.get<float>("FilterSettings.PassiveDriftCorrection.Delay", filter_passive_drift_correction_delay);
 
-		filter_use_stabilization = pt.get<bool>("FilterSettings.OrientationFilterComplementaryMARG.Stabilization.Enabled", false);
-		filter_stabilization_min_scale = pt.get<float>("FilterSettings.OrientationFilterComplementaryMARG.Stabilization.MinScale", 0.1f);
+		filter_use_stabilization = pt.get<bool>("FilterSettings.Stabilization.Enabled", filter_use_stabilization);
+		filter_stabilization_min_scale = pt.get<float>("FilterSettings.Stabilization.MinScale", filter_stabilization_min_scale);
 }
     else
     {
