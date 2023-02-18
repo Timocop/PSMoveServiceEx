@@ -422,6 +422,7 @@ void AppStage_MagnetometerCalibration::update()
 
             if ((bCanBeStable && bIsStable) || m_bForceControllerStable)
             {
+				// Add sample when there is new data
                 if (bControllerDataUpdatedThisFrame)
                 {
                     // Project the magnetometer sample into the space of the ellipsoid

@@ -276,38 +276,42 @@ void AppStage_GyroscopeCalibration::update()
 
             if ((bCanBeStabilized && bIsStable) || m_bForceControllerStable)
             {
-                const std::chrono::duration<float, std::milli> sampleDurationMilli = now - m_gyroNoiseSamples->sampleStartTime;
-                const float deltaTimeSeconds= sampleTimeDeltaMilli.count()/1000.f;
+				// Add sample when there is new data
+				if (bControllerDataUpdatedThisFrame)
+				{
+					const std::chrono::duration<float, std::milli> sampleDurationMilli = now - m_gyroNoiseSamples->sampleStartTime;
+					const float deltaTimeSeconds = sampleTimeDeltaMilli.count() / 1000.f;
 
-                // Accumulate the drift total
-                if (deltaTimeSeconds > 0.f)
-                {
-					m_gyroNoiseSamples->drift_rotation= 
-						PSM_Vector3fScaleAndAdd(&m_lastCalibratedGyroscope, deltaTimeSeconds, &m_gyroNoiseSamples->drift_rotation);
-                }
+					// Accumulate the drift total
+					if (deltaTimeSeconds > 0.f)
+					{
+						m_gyroNoiseSamples->drift_rotation =
+							PSM_Vector3fScaleAndAdd(&m_lastCalibratedGyroscope, deltaTimeSeconds, &m_gyroNoiseSamples->drift_rotation);
+					}
 
-                // Record the next noise sample
-                if (m_gyroNoiseSamples->sample_count < k_desired_noise_sample_count)
-                {
-					m_gyroNoiseSamples->raw_gyro_samples[m_gyroNoiseSamples->sample_count]= m_lastRawGyroscope;
-                    m_gyroNoiseSamples->calibrated_omega_samples[m_gyroNoiseSamples->sample_count]= m_lastCalibratedGyroscope;
-                    ++m_gyroNoiseSamples->sample_count;
-                }
+					// Record the next noise sample
+					if (m_gyroNoiseSamples->sample_count < k_desired_noise_sample_count)
+					{
+						m_gyroNoiseSamples->raw_gyro_samples[m_gyroNoiseSamples->sample_count] = m_lastRawGyroscope;
+						m_gyroNoiseSamples->calibrated_omega_samples[m_gyroNoiseSamples->sample_count] = m_lastCalibratedGyroscope;
+						++m_gyroNoiseSamples->sample_count;
+					}
 
-                // See if we have completed the sampling period
-                if (sampleDurationMilli.count() >= k_desired_drift_sampling_time)
-                {
-                    // Compute bias and drift statistics
-                    m_gyroNoiseSamples->computeStatistics(sampleDurationMilli);
+					// See if we have completed the sampling period
+					if (sampleDurationMilli.count() >= k_desired_drift_sampling_time)
+					{
+						// Compute bias and drift statistics
+						m_gyroNoiseSamples->computeStatistics(sampleDurationMilli);
 
-                    // Update the gyro config on the service
-                    request_set_gyroscope_calibration(
-						m_gyroNoiseSamples->raw_bias,
-                        m_gyroNoiseSamples->angular_drift_rate, 
-                        m_gyroNoiseSamples->angular_drift_variance);
+						// Update the gyro config on the service
+						request_set_gyroscope_calibration(
+							m_gyroNoiseSamples->raw_bias,
+							m_gyroNoiseSamples->angular_drift_rate,
+							m_gyroNoiseSamples->angular_drift_variance);
 
-                    setState(eCalibrationMenuState::measureComplete);
-                }
+						setState(eCalibrationMenuState::measureComplete);
+					}
+				}
             }
             else
             {
