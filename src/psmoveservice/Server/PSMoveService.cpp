@@ -123,12 +123,15 @@ public:
 
 				const TrackerManagerConfig &cfg = DeviceManager::getInstance()->m_tracker_manager->getConfig();
 				std::chrono::time_point<std::chrono::high_resolution_clock> m_lastSync = std::chrono::high_resolution_clock::now();
+				std::chrono::time_point<std::chrono::high_resolution_clock> m_lastFrame = std::chrono::high_resolution_clock::now();
 
 				bool framesReport = true;
 				int frames = 0;
+				int frame_count = 0;
+				int min_frames = -1;
 				bool firstUpdate = true;
 
-				const float k_maxSamplingTime = 10000.f;
+				const float k_maxSamplingTime = (10.f * 1000.f);
 
                 while (m_status->state() != boost::application::status::stoped)
                 {
@@ -138,23 +141,37 @@ public:
 
 						if (firstUpdate)
 						{
-							firstUpdate = false;
-
 							SERVER_LOG_INFO("PSMoveServiceEx") << "------------------------------------------";
 							SERVER_LOG_INFO("PSMoveServiceEx") << "Successfully Initialized!";
 							SERVER_LOG_INFO("PSMoveServiceEx") << "------------------------------------------";
 							SERVER_LOG_INFO("PSMoveServiceEx") << "Calculating average main thread FPS...";
 
 							m_lastSync = std::chrono::high_resolution_clock::now();
+							m_lastFrame = std::chrono::high_resolution_clock::now();
 						}
 
 						//Write avg FPS to log
-						if (framesReport)
+						if (!firstUpdate && framesReport)
 						{
 							const std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
 							const std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastSync;
+							const std::chrono::duration<float, std::milli> timeFrameLast = now - m_lastFrame;
 
 							frames++;
+							frame_count++;
+
+							// Get smallest frame
+							if (timeFrameLast.count() > 1000.f)
+							{
+								m_lastFrame = std::chrono::high_resolution_clock::now();
+
+								if (min_frames == -1 || frame_count < min_frames)
+								{
+									min_frames = frame_count;
+								}
+
+								frame_count = 0;
+							}
 
 							if (timeSinceLast.count() > k_maxSamplingTime)
 							{
@@ -162,7 +179,7 @@ public:
 
 								int avgFps = (int)ceilf(frames / (k_maxSamplingTime / 1000.f));
 
-								SERVER_LOG_INFO("PSMoveServiceEx") << "Main thread running at " << avgFps << " FPS.";
+								SERVER_LOG_INFO("PSMoveServiceEx") << "Main thread running at " << avgFps << " FPS average. Lowest FPS was " << min_frames << ".";
 
 								if (avgFps < 100)
 								{
@@ -170,6 +187,11 @@ public:
 									SERVER_LOG_WARNING("PSMoveServiceEx") << "Reduce the 'Processing thread sleep' in 'Advanced Settings' to speed up the main thread.";
 								}
 							}
+						}
+
+						if (firstUpdate)
+						{
+							firstUpdate = false;
 						}
                     }
 
