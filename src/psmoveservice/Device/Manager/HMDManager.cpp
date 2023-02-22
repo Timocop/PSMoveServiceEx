@@ -49,7 +49,7 @@ HMDManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
 
 //-- HMD Manager -----
 HMDManager::HMDManager()
-    : DeviceTypeManager(1000, 2)
+    : DeviceTypeManager(1000)
 {
 }
 

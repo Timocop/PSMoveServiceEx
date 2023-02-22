@@ -215,7 +215,7 @@ TrackerManagerConfig::get_global_down_axis() const
 
 //-- Tracker Manager -----
 TrackerManager::TrackerManager()
-    : DeviceTypeManager(10000, 13)
+    : DeviceTypeManager(10000)
     , m_tracker_list_dirty(false)
 {
 }

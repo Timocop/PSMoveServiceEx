@@ -56,7 +56,7 @@ ControllerManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
 
 //-- Controller Manager ----
 ControllerManager::ControllerManager()
-    : DeviceTypeManager(1000, 2)
+    : DeviceTypeManager(1000)
 {
 }
 
