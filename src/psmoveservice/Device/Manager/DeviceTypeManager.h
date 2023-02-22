@@ -17,7 +17,7 @@ typedef std::shared_ptr<ServerDeviceView> ServerDeviceViewPtr;
 class DeviceTypeManager : public IDeviceHotplugListener
 {
 public:
-    DeviceTypeManager(const int recon_int = 1000, const int poll_int = 2);
+    DeviceTypeManager(const int recon_int = 1000);
     virtual ~DeviceTypeManager();
 
     virtual bool startup();
@@ -42,7 +42,6 @@ public:
 	void handle_device_disconnected(enum DeviceClass device_class, const std::string &device_path) override;
 
     int reconnect_interval;
-    int poll_interval;
 
 protected:
     virtual void poll_devices();

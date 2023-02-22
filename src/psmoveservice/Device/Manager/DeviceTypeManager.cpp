@@ -10,9 +10,8 @@
 
 //-- methods -----
 /// Constructor and set intervals (ms) for reconnect and polling
-DeviceTypeManager::DeviceTypeManager(const int recon_int, const int poll_int)
+DeviceTypeManager::DeviceTypeManager(const int recon_int)
     : reconnect_interval(recon_int)
-    , poll_interval(poll_int)
     , m_deviceViews(nullptr)
 	, m_bIsDeviceListDirty(false)
 {
@@ -77,14 +76,7 @@ DeviceTypeManager::poll()
 {
     std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
 
-    // See if it's time to poll controllers for data
-    std::chrono::duration<double, std::milli> update_diff = now - m_last_poll_time;
-
-    if (update_diff.count() >= poll_interval)
-    {
-        poll_devices();
-        m_last_poll_time = now;
-    }
+	poll_devices();
 
     // See if it's time to try update the list of connected devices
 	if (reconnect_interval > 0)
