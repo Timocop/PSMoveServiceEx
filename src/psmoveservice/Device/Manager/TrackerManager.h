@@ -45,6 +45,12 @@ struct TrackerProfile
 class TrackerManagerConfig : public PSMoveConfig
 {
 public:
+	enum TrackerSyncMode
+	{
+		WaitAll = 0,
+		FastestAvailable
+	};
+
     static const int CONFIG_VERSION;
 
     TrackerManagerConfig(const std::string &fnamebase = "TrackerManagerConfig");
@@ -57,6 +63,7 @@ public:
 	float controller_position_prediction;
 	int controller_position_prediction_history;
 	bool ignore_pose_from_one_tracker;
+	TrackerSyncMode tracker_sync_mode;
     long version;
     int optical_tracking_timeout;
 	int thread_sleep_ms;

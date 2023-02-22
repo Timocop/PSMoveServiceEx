@@ -26,6 +26,7 @@ TrackerManagerConfig::TrackerManagerConfig(const std::string &fnamebase)
 	controller_position_prediction = 0.0f;
 	controller_position_prediction_history = 5;
 	ignore_pose_from_one_tracker = true;
+	tracker_sync_mode = TrackerSyncMode::WaitAll;
 	optical_tracking_timeout= 100;
 	thread_sleep_ms = 1;
 	use_bgr_to_hsv_lookup_table = true;
@@ -76,6 +77,7 @@ TrackerManagerConfig::config2ptree()
 	pt.put("controller_position_prediction", controller_position_prediction);
 	pt.put("controller_position_prediction_history", controller_position_prediction_history);
 	pt.put("ignore_pose_from_one_tracker", ignore_pose_from_one_tracker);
+	pt.put("tracker_sync_mode", tracker_sync_mode);
     pt.put("optical_tracking_timeout", optical_tracking_timeout);
 	pt.put("use_bgr_to_hsv_lookup_table", use_bgr_to_hsv_lookup_table);
 	pt.put("thread_sleep_ms", thread_sleep_ms);
@@ -130,6 +132,7 @@ TrackerManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
 		controller_position_prediction = pt.get<float>("controller_position_prediction", controller_position_prediction);
 		controller_position_prediction_history = pt.get<int>("controller_position_prediction_history", controller_position_prediction_history);
 		ignore_pose_from_one_tracker = pt.get<bool>("ignore_pose_from_one_tracker", ignore_pose_from_one_tracker);
+		tracker_sync_mode = static_cast<TrackerSyncMode>(pt.get<int>("tracker_sync_mode", tracker_sync_mode));
         optical_tracking_timeout= pt.get<int>("optical_tracking_timeout", optical_tracking_timeout);
 		use_bgr_to_hsv_lookup_table = pt.get<bool>("use_bgr_to_hsv_lookup_table", use_bgr_to_hsv_lookup_table);
 		thread_sleep_ms = pt.get<int>("thread_sleep_ms", thread_sleep_ms);
@@ -252,19 +255,49 @@ TrackerManager::startup()
 
 void TrackerManager::poll_devices()
 {
+	//static std::chrono::time_point<std::chrono::high_resolution_clock> lastTimeFps = std::chrono::high_resolution_clock::now();
+	//std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+
+	int tracker_ready_count = 0;
+	bool tracker_ready_all = true;
+
 	m_trackersSynced = false;
 	m_isTrackerPollAllowed = true;
+
 	for (int i = 0; i < getMaxDevices(); i++)
 	{
 		const ServerTrackerViewPtr tracker = getTrackerViewPtr(i);
 		if (tracker->getIsOpen())
 		{
-			if (!m_isTrackerReady[tracker->getDeviceID()])
+			if (m_isTrackerReady[tracker->getDeviceID()])
 			{
-				m_isTrackerPollAllowed = false;
-				break;
+				tracker_ready_count++;
+			}
+			else
+			{
+				tracker_ready_all = false;
 			}
 		}
+	}
+
+	switch (cfg.tracker_sync_mode)
+	{
+	case TrackerManagerConfig::TrackerSyncMode::WaitAll:
+	{
+		if (!tracker_ready_all)
+		{
+			m_isTrackerPollAllowed = false;
+		}
+		break;
+	}
+	default:
+	{
+		if (tracker_ready_count < 2)
+		{
+			m_isTrackerPollAllowed = false;
+		}
+		break;
+	}
 	}
 
 	DeviceTypeManager::poll_devices();
@@ -277,6 +310,12 @@ void TrackerManager::poll_devices()
 		}
 		m_isTrackerPollAllowed = false;
 		m_trackersSynced = true;
+
+
+		//std::chrono::duration<float, std::milli> lastFrame = now - lastTimeFps;
+		//printf("FRAME TIME: %f\n", lastFrame.count());
+
+		//lastTimeFps = now;
 	}
 }
 

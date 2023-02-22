@@ -42,6 +42,7 @@ public:
 		controller_position_prediction = 0.f;
 		controller_position_prediction_history = 5;
 		ignore_pose_from_one_tracker = true;
+		tracker_sync_mode = 0;
 		optical_tracking_timeout = 100;
 		thread_sleep_ms = 1;
 		use_bgr_to_hsv_lookup_table = true;
@@ -75,6 +76,7 @@ public:
 	float controller_position_prediction;
 	int controller_position_prediction_history;
 	bool ignore_pose_from_one_tracker;
+	int tracker_sync_mode;
 	int optical_tracking_timeout;
 	int thread_sleep_ms;
 	bool use_bgr_to_hsv_lookup_table;
@@ -145,11 +147,8 @@ public:
 		isLoaded = false;
 
 		controller_reconnect_interval = 1000;
-		//controller_poll_interval = 2;
 		tracker_reconnect_interval = 10000;
-		//tracker_poll_interval = 13;
 		hmd_reconnect_interval = 10000;
-		//hmd_poll_interval = 2;
 		gamepad_api_enabled = true;
 		gamepad_api_xinput_only = true;
 		platform_api_enabled = true;
@@ -161,11 +160,8 @@ public:
 	bool isLoaded;
 
 	int controller_reconnect_interval;
-	//int controller_poll_interval;
 	int tracker_reconnect_interval;
-	//int tracker_poll_interval;
 	int hmd_reconnect_interval;
-	//int hmd_poll_interval;
 	bool gamepad_api_enabled;
 	bool gamepad_api_xinput_only;
 	bool platform_api_enabled;

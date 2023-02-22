@@ -224,6 +224,7 @@ TrackerConfig::config2ptree()
 	pt.put("controller_position_prediction", controller_position_prediction);
 	pt.put("controller_position_prediction_history", controller_position_prediction_history);
 	pt.put("ignore_pose_from_one_tracker", ignore_pose_from_one_tracker);
+	pt.put("tracker_sync_mode", tracker_sync_mode);
 	pt.put("optical_tracking_timeout", optical_tracking_timeout);
 	pt.put("use_bgr_to_hsv_lookup_table", use_bgr_to_hsv_lookup_table);
 	pt.put("thread_sleep_ms", thread_sleep_ms);
@@ -263,6 +264,7 @@ TrackerConfig::ptree2config(const boost::property_tree::ptree &pt)
 	controller_position_prediction = pt.get<float>("controller_position_prediction", controller_position_prediction);
 	controller_position_prediction_history = pt.get<int>("controller_position_prediction_history", controller_position_prediction_history);
 	ignore_pose_from_one_tracker = pt.get<bool>("ignore_pose_from_one_tracker", ignore_pose_from_one_tracker);
+	tracker_sync_mode = pt.get<int>("tracker_sync_mode", tracker_sync_mode);
 	optical_tracking_timeout = pt.get<int>("optical_tracking_timeout", optical_tracking_timeout);
 	use_bgr_to_hsv_lookup_table = pt.get<bool>("use_bgr_to_hsv_lookup_table", use_bgr_to_hsv_lookup_table);
 	thread_sleep_ms = pt.get<int>("thread_sleep_ms", thread_sleep_ms);
@@ -598,6 +600,33 @@ void AppStage_AdvancedSettings::renderUI()
 								"This will greatly improve training quality and should always be enabled.\n"
 								"This setting will be ignored if only one tracker is available.\n"
 								"(The default value is TRUE)"
+							);
+					}
+
+					{
+						ImGui::Text("Tracker synchronization mode:");
+						ImGui::SameLine(ImGui::GetWindowWidth() - 200.f);
+						int tracker_sync_mode = cfg_tracker.tracker_sync_mode;
+						ImGui::PushItemWidth(150.f);
+						if (ImGui::Combo("##TrackerSyncMode", &tracker_sync_mode, "Wait All\0Fastest Available\0\0"))
+						{
+							cfg_tracker.tracker_sync_mode = tracker_sync_mode;
+						}
+						ImGui::PopItemWidth();
+
+						if (ImGui::IsItemHovered())
+							ImGui::SetTooltip(
+								"Wait All:\n"
+								"	Will do triangulation whenever all trackers are ready.\n"
+								"	This synchronization mode allows the smoothest tracking possible.\n"
+								"	Trackers running on different Hz are not supported in this mode\n"
+								"	and fast trackers will wait for slow trackers.\n"
+								"Fastest Available:\n"
+								"	Will do triangulation whenever the fastest two or more trackers are ready.\n"
+								"	This synchronization mode allows for fastest tracking possible but\n"
+								"	reduces tracking quality and can cause jittering.\n"
+								"	Trackers running on different Hz are supported in this mode.\n"
+								"(The default value is 'WAIT ALL')"
 							);
 					}
 
