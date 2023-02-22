@@ -1350,7 +1350,7 @@ update_filters_for_morpheus_hmd(
 
 				filterPacket.hmdDeviceId = hmd->getDeviceID();
 				filterPacket.isCurrentlyTracking = hmd->getIsCurrentlyTracking();
-				filterPacket.isSynced = TrackerManager::trackersSynced();
+				filterPacket.isSynced = DeviceManager::getInstance()->m_tracker_manager->trackersSynced();
 
 				// Create a filter input packet from the sensor data 
 				// and the filter's previous orientation and position
@@ -1410,7 +1410,7 @@ update_filters_for_virtual_hmd(
 
 			filterPacket.hmdDeviceId = hmd->getDeviceID();
 			filterPacket.isCurrentlyTracking = hmd->getIsCurrentlyTracking();
-			filterPacket.isSynced = TrackerManager::trackersSynced();
+			filterPacket.isSynced = DeviceManager::getInstance()->m_tracker_manager->trackersSynced();
 
 			// Create a filter input packet from the sensor data 
 			// and the filter's previous orientation and position

@@ -132,17 +132,17 @@ public:
 		return &cfg;
 	}
 
-	inline static bool trackersSynced()
+	inline bool trackersSynced()
 	{
 		return m_trackersSynced;
 	}
 
-	inline static void setTrackerReady(int deviceId)
+	inline void setTrackerReady(int deviceId)
 	{
 		m_isTrackerReady[deviceId] = true;
 	}
 
-	inline static bool isTrackerPollAllowed()
+	inline bool isTrackerPollAllowed()
 	{
 		return m_isTrackerPollAllowed;
 	}
@@ -168,9 +168,9 @@ private:
     TrackerManagerConfig cfg;
     bool m_tracker_list_dirty;
 
-	static bool m_trackersSynced;
-	static bool m_isTrackerReady[TrackerManager::k_max_devices];
-	static bool m_isTrackerPollAllowed;
+	bool m_trackersSynced;
+	bool m_isTrackerReady[TrackerManager::k_max_devices];
+	bool m_isTrackerPollAllowed;
 };
 
 #endif // TRACKER_MANAGER_H

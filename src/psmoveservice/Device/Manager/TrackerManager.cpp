@@ -214,10 +214,6 @@ TrackerManagerConfig::get_global_down_axis() const
 }
 
 //-- Tracker Manager -----
-bool TrackerManager::m_trackersSynced = true;
-bool TrackerManager::m_isTrackerReady[TrackerManager::k_max_devices];
-bool TrackerManager::m_isTrackerPollAllowed = false;
-
 TrackerManager::TrackerManager()
     : DeviceTypeManager(10000, 13)
     , m_tracker_list_dirty(false)

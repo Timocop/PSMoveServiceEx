@@ -4,6 +4,7 @@
 #include "ServerUtility.h"
 #include "PSEyeVideoCapture.h"
 #include "PSMoveProtocol.pb.h"
+#include "DeviceManager.h"
 #include "TrackerDeviceEnumerator.h"
 #include "TrackerManager.h"
 #include "opencv2/opencv.hpp"
@@ -436,11 +437,11 @@ IDeviceInterface::ePollResult PS3EyeTracker::poll()
 		{
 			if ((bool)VideoCapture->get(CV_CAP_PROP_FRAMEAVAILABLE))
 			{
-				TrackerManager::setTrackerReady(VideoCapture->getIndex());
+				DeviceManager::getInstance()->m_tracker_manager->setTrackerReady(VideoCapture->getIndex());
 			}
 
 			// Only poll frames when every tracker is ready to sync freams.
-			if (!TrackerManager::isTrackerPollAllowed())
+			if (!DeviceManager::getInstance()->m_tracker_manager->isTrackerPollAllowed())
 			{
 				// Keep iterating. Still has old data.
 				result = IControllerInterface::_PollResultSuccessIgnore;
