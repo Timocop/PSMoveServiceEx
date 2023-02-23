@@ -103,8 +103,8 @@ struct ExternalOrientationFilterState
 
 		if (is_valid_float(delta_time))
 		{
-			time = accumulated_imu_time_delta + (double)delta_time;
-			accumulated_imu_time_delta = 0.0;
+			time = accumulated_optical_time_delta + (double)delta_time;
+			accumulated_optical_time_delta = 0.0;
 		}
 		else
 		{
