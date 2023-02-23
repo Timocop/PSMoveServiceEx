@@ -797,12 +797,12 @@ void AppStage_MagnetometerCalibration::renderUI()
                 }
                 else
                 {
-					if (ImGui::Button(" Calibrate Default Orientation "))
+					if (ImGui::Button("Calibrate Default Orientation"))
 					{
 						PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
 						m_menuState = waitForGravityAlignment;
 					}
-					if (ImGui::Button(" Done "))
+					if (ImGui::Button("Done"))
 					{
 						PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
 						m_menuState = skipBDirection;
