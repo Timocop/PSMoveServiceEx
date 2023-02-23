@@ -461,13 +461,10 @@ void AppStage_OpticalCalibration::render()
 
 		if (bCanBeTracked && bIsTracking)
 		{
-			PSMPosef psmove_space_pose = {m_lastMulticamPositionCm, m_lastMulticamOrientation};
+			PSMPosef psmove_space_pose;
 
-			if (m_controllerView->ControllerType == PSMController_Move ||
-                m_controllerView->ControllerType == PSMController_Virtual)
-			{
-				psmove_space_pose.Orientation = m_lastControllerPose.Orientation;
-			}
+			psmove_space_pose.Position = m_lastControllerPose.Position;
+			psmove_space_pose.Orientation = m_lastControllerPose.Orientation;
 
 			controllerWorldTransform = psm_posef_to_glm_mat4(psmove_space_pose);
 		}
