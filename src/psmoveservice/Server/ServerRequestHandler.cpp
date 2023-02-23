@@ -418,6 +418,10 @@ public:
 				response = new PSMoveProtocol::Response;
 				handle_request__set_hmd_filter_settings(context, response);
 				break;
+			case PSMoveProtocol::Request_RequestType_SET_CONTROLLER_MAGNETOMETER_CALIBRATION_BASIC:
+				response = new PSMoveProtocol::Response;
+				handle_request__set_controller_magnetometer_basic_calibration(context, response);
+				break;
 
             default:
                 assert(0 && "Whoops, bad request!");
@@ -1269,51 +1273,95 @@ protected:
         target_vector.k = source_vector.k();
     }
 
-    void handle_request__set_controller_magnetometer_calibration(
-        const RequestContext &context, 
-        PSMoveProtocol::Response *response)
-    {
-        const int controller_id= context.request->set_controller_magnetometer_calibration_request().controller_id();
+	void handle_request__set_controller_magnetometer_calibration(
+		const RequestContext &context,
+		PSMoveProtocol::Response *response)
+	{
+		const int controller_id = context.request->set_controller_magnetometer_calibration_request().controller_id();
 
-        ServerControllerViewPtr ControllerView= m_device_manager.getControllerViewPtr(controller_id);
+		ServerControllerViewPtr ControllerView = m_device_manager.getControllerViewPtr(controller_id);
 
-        if (ControllerView && ControllerView->getIsOpen() && ControllerView->getControllerDeviceType() == CommonDeviceState::PSMove)
-        {
-            PSMoveController *controller= ControllerView->castChecked<PSMoveController>();
-            PSMoveControllerConfig config= *controller->getConfig();
+		if (ControllerView && ControllerView->getIsOpen() && ControllerView->getControllerDeviceType() == CommonDeviceState::PSMove)
+		{
+			PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
+			PSMoveControllerConfig config = *controller->getConfig();
 
-            const auto &request= context.request->set_controller_magnetometer_calibration_request();
+			const auto &request = context.request->set_controller_magnetometer_calibration_request();
 
-            set_config_vector(request.ellipse_center(), config.magnetometer_center);
-            set_config_vector(request.ellipse_extents(), config.magnetometer_extents);
-            set_config_vector(request.magnetometer_identity(), config.magnetometer_identity);
-            config.magnetometer_fit_error = request.ellipse_fit_error();
-            config.magnetometer_variance= request.magnetometer_variance();
+			set_config_vector(request.ellipse_center(), config.magnetometer_center);
+			set_config_vector(request.ellipse_extents(), config.magnetometer_extents);
+			set_config_vector(request.magnetometer_identity(), config.magnetometer_identity);
+			config.magnetometer_fit_error = request.ellipse_fit_error();
+			config.magnetometer_variance = request.magnetometer_variance();
 
-            {
-                CommonDeviceVector basis_x, basis_y, basis_z;
+			{
+				CommonDeviceVector basis_x, basis_y, basis_z;
 
-                set_config_vector(request.ellipse_basis_x(), basis_x);
-                set_config_vector(request.ellipse_basis_y(), basis_y);
-                set_config_vector(request.ellipse_basis_z(), basis_z);
+				set_config_vector(request.ellipse_basis_x(), basis_x);
+				set_config_vector(request.ellipse_basis_y(), basis_y);
+				set_config_vector(request.ellipse_basis_z(), basis_z);
 
-                config.magnetometer_basis_x = basis_x;
-                config.magnetometer_basis_y = basis_y;
-                config.magnetometer_basis_z = basis_z;
-            }
+				config.magnetometer_basis_x = basis_x;
+				config.magnetometer_basis_y = basis_y;
+				config.magnetometer_basis_z = basis_z;
+			}
 
-            controller->setConfig(&config);
+			controller->setConfig(&config);
 
-            // Reset the orientation filter state the calibration changed
-            ControllerView->resetPoseFilter();
+			// Reset the orientation filter state the calibration changed
+			ControllerView->resetPoseFilter();
 
-            response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
-        }
-        else
-        {
-            response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
-        }
-    }
+			response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+		}
+		else
+		{
+			response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+		}
+	}
+
+	void handle_request__set_controller_magnetometer_basic_calibration(
+		const RequestContext &context,
+		PSMoveProtocol::Response *response)
+	{
+		const int controller_id = context.request->set_controller_magnetometer_calibration_basic_request().controller_id();
+
+		ServerControllerViewPtr ControllerView = m_device_manager.getControllerViewPtr(controller_id);
+
+		if (ControllerView && ControllerView->getIsOpen() && ControllerView->getControllerDeviceType() == CommonDeviceState::PSMove)
+		{
+			PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
+			PSMoveControllerConfig config = *controller->getConfig();
+
+			const auto &request = context.request->set_controller_magnetometer_calibration_basic_request();
+
+			set_config_vector(request.ellipse_center(), config.magnetometer_center);
+			set_config_vector(request.ellipse_extents(), config.magnetometer_extents);
+			config.magnetometer_fit_error = request.ellipse_fit_error();
+
+			{
+				CommonDeviceVector basis_x, basis_y, basis_z;
+
+				set_config_vector(request.ellipse_basis_x(), basis_x);
+				set_config_vector(request.ellipse_basis_y(), basis_y);
+				set_config_vector(request.ellipse_basis_z(), basis_z);
+
+				config.magnetometer_basis_x = basis_x;
+				config.magnetometer_basis_y = basis_y;
+				config.magnetometer_basis_z = basis_z;
+			}
+
+			controller->setConfig(&config);
+
+			// Reset the orientation filter state the calibration changed
+			ControllerView->resetPoseFilter();
+
+			response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+		}
+		else
+		{
+			response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+		}
+	}
 
     void handle_request__set_controller_accelerometer_calibration(
         const RequestContext &context,

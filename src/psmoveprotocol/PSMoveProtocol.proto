@@ -213,6 +213,7 @@ message Request {
 		SET_PLAYSPACE_OFFSETS = 54;
 		SET_CONTROLLER_FILTER_SETTINGS = 55;
 		SET_HMD_FILTER_SETTINGS = 56;
+        SET_CONTROLLER_MAGNETOMETER_CALIBRATION_BASIC= 57;
     }
     RequestType type = 2;
 
@@ -660,6 +661,17 @@ message Request {
     }
     RequestSetHmdFilterSettings request_set_hmd_filter_settings = 56;
 	
+    // Parameters for SET_CONTROLLER_MAGNETOMETER_CALIBRATION_BASIC
+    message RequestSetControllerMagnetometerCalibrationBasic {
+        int32 controller_id = 1;
+        FloatVector ellipse_center= 2;
+        FloatVector ellipse_extents= 3;
+        FloatVector ellipse_basis_x= 4;
+        FloatVector ellipse_basis_y= 5;
+        FloatVector ellipse_basis_z= 6;
+        float ellipse_fit_error= 7;
+    }
+    RequestSetControllerMagnetometerCalibrationBasic set_controller_magnetometer_calibration_basic_request = 57;
 }
 
 // Reliable (TCP) responses to requests

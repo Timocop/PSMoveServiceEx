@@ -56,6 +56,7 @@ private:
         measureBExtents,
         waitForGravityAlignment,
         measureBDirection,
+		skipBDirection,
         waitForSetCalibrationResponse,
         failedSetCalibration,
         complete,

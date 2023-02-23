@@ -262,7 +262,7 @@ void AppStage_MagnetometerCalibration::enter()
         m_app->getAppStage<AppStage_ControllerSettings>();
     const AppStage_ControllerSettings::ControllerInfo *controllerInfo=
         controllerSettings->getSelectedControllerInfo();
-
+	
     m_app->setCameraType(_cameraOrbit);
     m_app->getOrbitCamera()->resetOrientation();
     m_app->getOrbitCamera()->setCameraOrbitRadius(1000.f); // zoom out to see the magnetometer data at scale
@@ -271,7 +271,7 @@ void AppStage_MagnetometerCalibration::enter()
     assert(m_controllerView == nullptr);
 	PSM_AllocateControllerListener(controllerInfo->ControllerID);
 	m_controllerView= PSM_GetController(controllerInfo->ControllerID);
-
+	
 
     m_lastRawMagnetometer= *k_psm_int_vector3_zero;
     m_lastCalibratedAccelerometer= *k_psm_float_vector3_zero;
@@ -474,9 +474,36 @@ void AppStage_MagnetometerCalibration::update()
                 m_menuState= AppStage_MagnetometerCalibration::waitForGravityAlignment;
             }
         } break;
-    case eCalibrationMenuState::waitForSetCalibrationResponse:
-        {
-        } break;
+	case eCalibrationMenuState::skipBDirection:
+	{
+		const EigenFitEllipsoid &ellipsoid = m_boundsStatistics->sampleFitEllipsoid;
+
+		// Tell the psmove service about the new magnetometer settings
+		RequestPtr request(new PSMoveProtocol::Request());
+		request->set_type(PSMoveProtocol::Request_RequestType_SET_CONTROLLER_MAGNETOMETER_CALIBRATION_BASIC);
+
+		PSMoveProtocol::Request_RequestSetControllerMagnetometerCalibrationBasic *calibration =
+			request->mutable_set_controller_magnetometer_calibration_basic_request();
+
+		calibration->set_controller_id(m_controllerView->ControllerID);
+
+		write_calibration_parameter(ellipsoid.center, calibration->mutable_ellipse_center());
+		write_calibration_parameter(ellipsoid.extents, calibration->mutable_ellipse_extents());
+		write_calibration_parameter(ellipsoid.basis.col(0), calibration->mutable_ellipse_basis_x());
+		write_calibration_parameter(ellipsoid.basis.col(1), calibration->mutable_ellipse_basis_y());
+		write_calibration_parameter(ellipsoid.basis.col(2), calibration->mutable_ellipse_basis_z());
+		calibration->set_ellipse_fit_error(ellipsoid.error);
+
+		PSMRequestID request_id;
+		PSM_SendOpaqueRequest(&request, &request_id);
+		PSM_RegisterCallback(request_id, AppStage_MagnetometerCalibration::handle_set_magnetometer_calibration, this);
+
+		// Wait for the response
+		m_menuState = AppStage_MagnetometerCalibration::waitForSetCalibrationResponse;
+	} break;
+	case eCalibrationMenuState::waitForSetCalibrationResponse:
+	{
+	} break;
     case eCalibrationMenuState::failedSetCalibration:
         {
         } break;
@@ -613,6 +640,9 @@ void AppStage_MagnetometerCalibration::render()
             }
 
         } break;
+	case eCalibrationMenuState::skipBDirection:
+		{
+		} break;
     case eCalibrationMenuState::waitForSetCalibrationResponse:
         {
         } break;
@@ -767,12 +797,17 @@ void AppStage_MagnetometerCalibration::renderUI()
                 }
                 else
                 {
-                    if (ImGui::Button(" OK "))
-                    {
+					if (ImGui::Button(" Calibrate Default Orientation "))
+					{
 						PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
-                        m_menuState = waitForGravityAlignment;
-                    }
-                    ImGui::SameLine();
+						m_menuState = waitForGravityAlignment;
+					}
+					if (ImGui::Button(" Done "))
+					{
+						PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
+						m_menuState = skipBDirection;
+					}
+					ImGui::SameLine();
                 }
 
                 if (ImGui::Button("Cancel"))
@@ -871,7 +906,10 @@ void AppStage_MagnetometerCalibration::renderUI()
 
             ImGui::End();
         } break;
-    case eCalibrationMenuState::waitForSetCalibrationResponse:
+	case eCalibrationMenuState::skipBDirection:
+		{
+		} break;
+	case eCalibrationMenuState::waitForSetCalibrationResponse:
         {
             ImGui::SetNextWindowPosCenter();
             ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
