@@ -837,7 +837,9 @@ void AppStage_ControllerSettings::renderUI()
 									ImGui::EndChild();
 								}
 
-								if (controllerInfo.ControllerType != PSMController_Navi)
+								if ((controllerInfo.ControllerType == PSMController_Move && controllerInfo.IsBluetooth) ||
+									(controllerInfo.ControllerType == PSMController_DualShock4 && controllerInfo.IsBluetooth) ||
+									controllerInfo.ControllerType == PSMController_Virtual)
 								{
 									if (ImGui::CollapsingHeader("Filter Settings", 0, true, false))
 									{
@@ -911,14 +913,17 @@ void AppStage_ControllerSettings::renderUI()
 											{
 												settings_shown = true;
 
-												ImGui::Text("Enable Magnetometer: ");
-												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-												ImGui::PushItemWidth(120.f);
-												if (ImGui::Checkbox("##EnableMagnetometer", &controllerInfo.FilterEnableMagnetometer))
+												if (controllerInfo.HasMagnetometer)
 												{
-													request_offset = true;
+													ImGui::Text("Enable Magnetometer: ");
+													ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+													ImGui::PushItemWidth(120.f);
+													if (ImGui::Checkbox("##EnableMagnetometer", &controllerInfo.FilterEnableMagnetometer))
+													{
+														request_offset = true;
+													}
+													ImGui::PopItemWidth();
 												}
-												ImGui::PopItemWidth();
 
 												ImGui::Text("Use Passive Drift Correction: ");
 												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
@@ -929,57 +934,76 @@ void AppStage_ControllerSettings::renderUI()
 												}
 												ImGui::PopItemWidth();
 
-												ImGui::Indent();
+												if (ImGui::IsItemHovered())
 												{
-													ImGui::Text("Passive Drift Correction Method: ");
-													ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-													ImGui::PushItemWidth(120.f);
-													int filter_passive_drift_correction_method = controllerInfo.FilterPassiveDriftCorrectionMethod;
-													if (ImGui::Combo("##PassiveDriftCorrectionMethod", &filter_passive_drift_correction_method, "Stable Gravity\0Stable Gyro/Accel\0Both\0\0"))
-													{
-														controllerInfo.FilterPassiveDriftCorrectionMethod = static_cast<PassiveDriftCorrectionMethod>(filter_passive_drift_correction_method);
-
-														request_offset = true;
-													}
-													ImGui::PopItemWidth();
-
-													ImGui::Text("Stable Gyroscope/Accelerometer Range: ");
-													ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-													ImGui::PushItemWidth(120.f);
-													float filter_passive_drift_correction_deadzone = controllerInfo.FilterPassiveDriftCorrectionDeazone;
-													if (ImGui::InputFloat("##PassiveDriftCorrectionStableGyroscopeAccelerometerRange", &filter_passive_drift_correction_deadzone, 1.f, 5.f, 2))
-													{
-														controllerInfo.FilterPassiveDriftCorrectionDeazone = clampf(filter_passive_drift_correction_deadzone, 1.0f, 100.0f);
-
-														request_offset = true;
-													}
-													ImGui::PopItemWidth();
-
-													ImGui::Text("Stable Gravity Range: ");
-													ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-													ImGui::PushItemWidth(120.f);
-													float filter_passive_drift_correction_gravity_deadzone = controllerInfo.FilterPassiveDriftCorrectionGravityDeazone;
-													if (ImGui::InputFloat("##PassiveDriftCorrectionStableGravityRange", &filter_passive_drift_correction_gravity_deadzone, 0.01f, 0.05f, 2))
-													{
-														controllerInfo.FilterPassiveDriftCorrectionGravityDeazone = clampf(filter_passive_drift_correction_gravity_deadzone, 0.0f, 1.0f);
-
-														request_offset = true;
-													}
-													ImGui::PopItemWidth();
-
-													ImGui::Text("Minimum Stable Time (ms): ");
-													ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-													ImGui::PushItemWidth(120.f);
-													float filter_passive_drift_correction_delay = controllerInfo.FilterPassiveDriftCorrectionDelay;
-													if (ImGui::InputFloat("##PassiveDriftCorrectionMinimumStableTime", &filter_passive_drift_correction_delay, 1.f, 5.f, 2))
-													{
-														controllerInfo.FilterPassiveDriftCorrectionDelay = clampf(filter_passive_drift_correction_delay, 1.0f, (1 << 16));
-
-														request_offset = true;
-													}
-													ImGui::PopItemWidth();
+													ImGui::SetTooltip(
+														"Passive drift correction will disable the magnetometer and accelerometer\n"
+														"which reduces drifting when the controller is in motion."
+													);
 												}
-												ImGui::Unindent();
+
+												if (controllerInfo.FilterUsePassiveDriftCorrection)
+												{
+													ImGui::Indent();
+													{
+														ImGui::Text("Passive Drift Correction Method: ");
+														ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+														ImGui::PushItemWidth(120.f);
+														int filter_passive_drift_correction_method = controllerInfo.FilterPassiveDriftCorrectionMethod;
+														if (ImGui::Combo("##PassiveDriftCorrectionMethod", &filter_passive_drift_correction_method, "Stable Gravity\0Stable Gyro/Accel\0Both\0\0"))
+														{
+															controllerInfo.FilterPassiveDriftCorrectionMethod = static_cast<PassiveDriftCorrectionMethod>(filter_passive_drift_correction_method);
+
+															request_offset = true;
+														}
+														ImGui::PopItemWidth();
+
+														if (controllerInfo.FilterPassiveDriftCorrectionMethod == PassiveDriftCorrectionMethod::StableGyroAccel ||
+															controllerInfo.FilterPassiveDriftCorrectionMethod == PassiveDriftCorrectionMethod::Both)
+														{
+															ImGui::Text("Stable Gyroscope/Accelerometer Range: ");
+															ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+															ImGui::PushItemWidth(120.f);
+															float filter_passive_drift_correction_deadzone = controllerInfo.FilterPassiveDriftCorrectionDeazone;
+															if (ImGui::InputFloat("##PassiveDriftCorrectionStableGyroscopeAccelerometerRange", &filter_passive_drift_correction_deadzone, 1.f, 5.f, 2))
+															{
+																controllerInfo.FilterPassiveDriftCorrectionDeazone = clampf(filter_passive_drift_correction_deadzone, 1.0f, 100.0f);
+
+																request_offset = true;
+															}
+															ImGui::PopItemWidth();
+														}
+
+														if (controllerInfo.FilterPassiveDriftCorrectionMethod == PassiveDriftCorrectionMethod::StableGravity ||
+															controllerInfo.FilterPassiveDriftCorrectionMethod == PassiveDriftCorrectionMethod::Both)
+														{
+															ImGui::Text("Stable Gravity Range: ");
+															ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+															ImGui::PushItemWidth(120.f);
+															float filter_passive_drift_correction_gravity_deadzone = controllerInfo.FilterPassiveDriftCorrectionGravityDeazone;
+															if (ImGui::InputFloat("##PassiveDriftCorrectionStableGravityRange", &filter_passive_drift_correction_gravity_deadzone, 0.01f, 0.05f, 2))
+															{
+																controllerInfo.FilterPassiveDriftCorrectionGravityDeazone = clampf(filter_passive_drift_correction_gravity_deadzone, 0.0f, 1.0f);
+
+																request_offset = true;
+															}
+															ImGui::PopItemWidth();
+														}
+
+														ImGui::Text("Minimum Stable Time (ms): ");
+														ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+														ImGui::PushItemWidth(120.f);
+														float filter_passive_drift_correction_delay = controllerInfo.FilterPassiveDriftCorrectionDelay;
+														if (ImGui::InputFloat("##PassiveDriftCorrectionMinimumStableTime", &filter_passive_drift_correction_delay, 1.f, 5.f, 2))
+														{
+															controllerInfo.FilterPassiveDriftCorrectionDelay = clampf(filter_passive_drift_correction_delay, 1.0f, (1 << 16));
+
+															request_offset = true;
+														}
+														ImGui::PopItemWidth();
+													}
+													ImGui::Unindent();
+												}
 
 												ImGui::Text("Use Stabilization: ");
 												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
@@ -990,21 +1014,32 @@ void AppStage_ControllerSettings::renderUI()
 												}
 												ImGui::PopItemWidth();
 
-												ImGui::Indent();
+												if (ImGui::IsItemHovered())
 												{
-													ImGui::Text("Magnetometer/Gravity Minimum Blend Scale: ");
-													ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-													ImGui::PushItemWidth(120.f);
-													float filter_stabilization_min_scale = controllerInfo.FilterStabilizationMinScale;
-													if (ImGui::InputFloat("##MagnetometerGravityMinimumBlendScale", &filter_stabilization_min_scale, 0.01f, 0.05f, 2))
-													{
-														controllerInfo.FilterStabilizationMinScale = clampf(filter_stabilization_min_scale, 0.f, 1.f);
-
-														request_offset = true;
-													}
-													ImGui::PopItemWidth();
+													ImGui::SetTooltip(
+														"Stabilization will reduce magnetometer and accelerometer jittering\n"
+														"when the controller is stable."
+													);
 												}
-												ImGui::Unindent();
+
+												if (controllerInfo.FilterUseStabilization)
+												{
+													ImGui::Indent();
+													{
+														ImGui::Text("Magnetometer/Gravity Minimum Blend Scale: ");
+														ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+														ImGui::PushItemWidth(120.f);
+														float filter_stabilization_min_scale = controllerInfo.FilterStabilizationMinScale;
+														if (ImGui::InputFloat("##MagnetometerGravityMinimumBlendScale", &filter_stabilization_min_scale, 0.01f, 0.05f, 2))
+														{
+															controllerInfo.FilterStabilizationMinScale = clampf(filter_stabilization_min_scale, 0.f, 1.f);
+
+															request_offset = true;
+														}
+														ImGui::PopItemWidth();
+													}
+													ImGui::Unindent();
+												}
 											}
 
 											if (!settings_shown)
