@@ -92,6 +92,13 @@ public:
 class OrientationFilterComplementaryMARG : public OrientationFilter
 {
 public:
+	enum PassiveDriftCorrectionMethod
+	{
+		StableGravity = 0,
+		StableGyroAccel,
+		Both,
+	};
+
     OrientationFilterComplementaryMARG()
         : OrientationFilter()
         , mg_weight(1.f)
@@ -107,15 +114,23 @@ public:
     void resetState() override;
     void update(const float delta_time, const PoseFilterPacket &packet) override;
 
-protected:
-	enum PassiveDriftCorrectionMethod
-	{
-		StableGravity = 0,
-		StableGyroAccel,
-		Both,
-	};
+	bool filter_process_passive_drift_correction(
+		const float delta_time, 
+		const PoseFilterPacket & packet, 
+		bool filter_use_passive_drift_correction, 
+		PassiveDriftCorrectionMethod filter_passive_drift_correction_method, 
+		float filter_passive_drift_correction_deadzone, 
+		float filter_passive_drift_correction_gravity_deadzone, 
+		float filter_passive_drift_correction_delay);
 
+	void filter_process_stabilization(
+		const float delta_time, 
+		const PoseFilterPacket & packet, 
+		float filter_stabilization_min_scale);
+
+protected:
     float mg_weight;
+	bool mg_reset;
 	bool mg_ignored;
 	std::chrono::time_point<std::chrono::high_resolution_clock> timeStableDelay;
 	Eigen::Vector3f last_accelerometer_g_units;

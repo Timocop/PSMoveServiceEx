@@ -621,7 +621,7 @@ void OrientationFilterComplementaryOpticalARG::update(const float delta_time, co
 void OrientationFilterComplementaryMARG::resetState()
 {
     OrientationFilter::resetState();
-    mg_weight= 1.f;
+	mg_reset = true;
 }
 
 static Eigen::Vector3f threshold_vector3f(const Eigen::Vector3f &vector, const float min_length)
@@ -758,114 +758,15 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 
 		if (filter_use_passive_drift_correction)
 		{
-			// Gather sensor state from the previous frame
-			const Eigen::Vector3f &old_accelerometer = last_accelerometer_g_units;
-			const Eigen::Vector3f &old_accelerometer_derivative = last_accelerometer_derivative_g_per_sec;
-			const Eigen::Vector3f &old_acceleration = last_acceleration_m_per_sec_sqr;
-
-			// Gather new sensor readings
-			// Need to negate the accelerometer reading since it points the opposite direction of gravity)
-			const Eigen::Vector3f &new_accelerometer = -packet.world_accelerometer;
-
-			// Compute the filtered derivative of the accelerometer (a.k.a. the "jerk")
-			Eigen::Vector3f new_accelerometer_derivative = Eigen::Vector3f::Zero();
-			{
-				const Eigen::Vector3f accelerometer_derivative =
-					(new_accelerometer - old_accelerometer) / total_delta_time;
-
-				// Apply a decay filter to the jerk
-				static float g_jerk_decay = k_jerk_decay;
-				new_accelerometer_derivative = accelerometer_derivative*g_jerk_decay;
-			}
-
-			// The accelerometer is in "g-units", where 1 g-unit = 9.8m/s^2
-			const Eigen::Vector3f old_jerk = old_accelerometer_derivative * k_g_units_to_ms2;
-			const Eigen::Vector3f new_jerk = new_accelerometer_derivative * k_g_units_to_ms2;
-
-			// Convert the new acceleration by integrating the jerk
-			Eigen::Vector3f new_acceleration =
-				0.5f*(old_jerk + new_jerk)*total_delta_time
-				+ old_acceleration;
-
-			// Apply a lowpass filter to the acceleration
-			static float g_cutoff_frequency = k_accelerometer_frequency_cutoff;
-			new_acceleration =
-				lowpass_filter_vector3f(total_delta_time, g_cutoff_frequency, old_acceleration, new_acceleration);
-
-			// Apply a decay filter to the acceleration
-			static float g_acceleration_decay = k_acceleration_decay;
-			new_acceleration *= g_acceleration_decay;
-
-			// Save out the updated sensor state
-			last_accelerometer_g_units = new_accelerometer;
-			last_accelerometer_derivative_g_per_sec = new_accelerometer_derivative;
-			last_acceleration_m_per_sec_sqr = new_acceleration;
-
-			std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
-
-			const Eigen::Vector3f &world_g = -packet.world_accelerometer;
-			const float accel_g = sqrtf(world_g.x() * world_g.x() + world_g.y() * world_g.y() + world_g.z() * world_g.z());
-
-			bool gravity_stable = false;
-			bool gyro_stable = false;
-			bool accel_stable = false;
-			if (accel_g > filter_passive_drift_correction_gravity_deadzone && 
-				accel_g < 1.f + (1.f - filter_passive_drift_correction_gravity_deadzone))
-			{
-				gravity_stable = true;
-			}
-
-			if (abs(current_omega.x()) < filter_passive_drift_correction_deadzone &&
-				abs(current_omega.y()) < filter_passive_drift_correction_deadzone &&
-				abs(current_omega.z()) < filter_passive_drift_correction_deadzone)
-			{
-				gyro_stable = true;
-			}
-
-			if (abs(new_acceleration.x()) < filter_passive_drift_correction_deadzone &&
-				abs(new_acceleration.y()) < filter_passive_drift_correction_deadzone &&
-				abs(new_acceleration.z()) < filter_passive_drift_correction_deadzone)
-			{
-				accel_stable = true;
-			}
-
-			switch (filter_passive_drift_correction_method)
-			{
-			case PassiveDriftCorrectionMethod::StableGravity:
-			{
-				gyro_stable = true;
-				accel_stable = true;
-				break;
-			}
-			case PassiveDriftCorrectionMethod::StableGyroAccel:
-			{
-				gravity_stable = true;
-				break;
-			}
-			}
-
-			if (gyro_stable && accel_stable && gravity_stable)
-			{
-				if (mg_ignored)
-				{
-					std::chrono::duration<double, std::milli> stableDuration = now - timeStableDelay;
-
-					if (stableDuration.count() > filter_passive_drift_correction_delay)
-					{
-						mg_ignored = false;
-					}
-				}
-				else
-				{
-					doStabilize = true;
-				}
-			}
-			else
-			{
-				timeStableDelay = now;
-				mg_ignored = true;
-				mg_weight = 0.f;
-			}
+			doStabilize = 
+				filter_process_passive_drift_correction(
+					delta_time,
+					packet,
+					filter_use_passive_drift_correction,
+					filter_passive_drift_correction_method,
+					filter_passive_drift_correction_deadzone,
+					filter_passive_drift_correction_gravity_deadzone,
+					filter_passive_drift_correction_delay);
 		}
 		else
 		{
@@ -878,15 +779,7 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 			// Scale by gyro amount
 			if (filter_use_stabilization)
 			{
-				const float k_gyro_multi = 1.f;
-
-				float gyro_max = fmaxf(abs(current_omega.x()), fmaxf(abs(current_omega.y()), abs(current_omega.z()))) * k_gyro_multi;
-
-				float align_weight = lerp_clampf(0.f, k_base_earth_frame_align_weight, clampf(gyro_max, clampf01(filter_stabilization_min_scale), 1.f));
-
-				// Update the blend weight
-				// -- Exponential blend the MG weight from 1 down to k_base_earth_frame_align_weight
-				mg_weight = lerp_clampf(mg_weight, align_weight, 0.9f);
+				filter_process_stabilization(delta_time, packet, filter_stabilization_min_scale);
 			}
 			else
 			{
@@ -894,6 +787,13 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 				// -- Exponential blend the MG weight from 1 down to k_base_earth_frame_align_weight
 				mg_weight = lerp_clampf(mg_weight, k_base_earth_frame_align_weight, 0.9f);
 			}
+		}
+
+		if (mg_reset)
+		{
+			mg_reset = false;
+
+			mg_weight = 1.f;
 		}
 
 		// Blending Update
@@ -915,4 +815,153 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 	{
 		m_state->accumulate_imu_delta_time(delta_time);
 	}
+}
+
+bool OrientationFilterComplementaryMARG::filter_process_passive_drift_correction(
+	const float delta_time, 
+	const PoseFilterPacket &packet,
+	bool filter_use_passive_drift_correction,
+	PassiveDriftCorrectionMethod filter_passive_drift_correction_method,
+	float filter_passive_drift_correction_deadzone,
+	float filter_passive_drift_correction_gravity_deadzone,
+	float filter_passive_drift_correction_delay)
+{
+	// Time delta used for filter update is time delta passed in
+	// plus the accumulated time since the packet hasn't has an IMU measurement
+	const float total_delta_time = (float)m_state->accumulated_imu_time_delta + delta_time;
+
+	const Eigen::Vector3f &current_omega = packet.imu_gyroscope_rad_per_sec;
+
+	// Gather sensor state from the previous frame
+	const Eigen::Vector3f &old_accelerometer = last_accelerometer_g_units;
+	const Eigen::Vector3f &old_accelerometer_derivative = last_accelerometer_derivative_g_per_sec;
+	const Eigen::Vector3f &old_acceleration = last_acceleration_m_per_sec_sqr;
+
+	// Gather new sensor readings
+	// Need to negate the accelerometer reading since it points the opposite direction of gravity)
+	const Eigen::Vector3f &new_accelerometer = -packet.world_accelerometer;
+
+	// Compute the filtered derivative of the accelerometer (a.k.a. the "jerk")
+	Eigen::Vector3f new_accelerometer_derivative = Eigen::Vector3f::Zero();
+	{
+		const Eigen::Vector3f accelerometer_derivative =
+			(new_accelerometer - old_accelerometer) / total_delta_time;
+
+		// Apply a decay filter to the jerk
+		static float g_jerk_decay = k_jerk_decay;
+		new_accelerometer_derivative = accelerometer_derivative*g_jerk_decay;
+	}
+
+	// The accelerometer is in "g-units", where 1 g-unit = 9.8m/s^2
+	const Eigen::Vector3f old_jerk = old_accelerometer_derivative * k_g_units_to_ms2;
+	const Eigen::Vector3f new_jerk = new_accelerometer_derivative * k_g_units_to_ms2;
+
+	// Convert the new acceleration by integrating the jerk
+	Eigen::Vector3f new_acceleration =
+		0.5f*(old_jerk + new_jerk)*total_delta_time
+		+ old_acceleration;
+
+	// Apply a lowpass filter to the acceleration
+	static float g_cutoff_frequency = k_accelerometer_frequency_cutoff;
+	new_acceleration =
+		lowpass_filter_vector3f(total_delta_time, g_cutoff_frequency, old_acceleration, new_acceleration);
+
+	// Apply a decay filter to the acceleration
+	static float g_acceleration_decay = k_acceleration_decay;
+	new_acceleration *= g_acceleration_decay;
+
+	// Save out the updated sensor state
+	last_accelerometer_g_units = new_accelerometer;
+	last_accelerometer_derivative_g_per_sec = new_accelerometer_derivative;
+	last_acceleration_m_per_sec_sqr = new_acceleration;
+
+	std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+
+	const Eigen::Vector3f &world_g = -packet.world_accelerometer;
+	const float accel_g = sqrtf(world_g.x() * world_g.x() + world_g.y() * world_g.y() + world_g.z() * world_g.z());
+
+	bool gravity_stable = false;
+	bool gyro_stable = false;
+	bool accel_stable = false;
+	if (accel_g > filter_passive_drift_correction_gravity_deadzone &&
+		accel_g < 1.f + (1.f - filter_passive_drift_correction_gravity_deadzone))
+	{
+		gravity_stable = true;
+	}
+
+	if (abs(current_omega.x()) < filter_passive_drift_correction_deadzone &&
+		abs(current_omega.y()) < filter_passive_drift_correction_deadzone &&
+		abs(current_omega.z()) < filter_passive_drift_correction_deadzone)
+	{
+		gyro_stable = true;
+	}
+
+	if (abs(new_acceleration.x()) < filter_passive_drift_correction_deadzone &&
+		abs(new_acceleration.y()) < filter_passive_drift_correction_deadzone &&
+		abs(new_acceleration.z()) < filter_passive_drift_correction_deadzone)
+	{
+		accel_stable = true;
+	}
+
+	switch (filter_passive_drift_correction_method)
+	{
+	case PassiveDriftCorrectionMethod::StableGravity:
+	{
+		gyro_stable = true;
+		accel_stable = true;
+		break;
+	}
+	case PassiveDriftCorrectionMethod::StableGyroAccel:
+	{
+		gravity_stable = true;
+		break;
+	}
+	}
+
+	if (gyro_stable && accel_stable && gravity_stable)
+	{
+		if (mg_ignored)
+		{
+			std::chrono::duration<double, std::milli> stableDuration = now - timeStableDelay;
+
+			if (stableDuration.count() > filter_passive_drift_correction_delay)
+			{
+				mg_ignored = false;
+			}
+		}
+		else
+		{
+			return true;
+		}
+	}
+	else
+	{
+		timeStableDelay = now;
+		mg_ignored = true;
+		mg_weight = 0.f;
+	}
+
+	return false;
+}
+
+void OrientationFilterComplementaryMARG::filter_process_stabilization(
+	const float delta_time,
+	const PoseFilterPacket &packet,
+	float filter_stabilization_min_scale)
+{
+	// Time delta used for filter update is time delta passed in
+	// plus the accumulated time since the packet hasn't has an IMU measurement
+	const float total_delta_time = (float)m_state->accumulated_imu_time_delta + delta_time;
+
+	const Eigen::Vector3f &current_omega = packet.imu_gyroscope_rad_per_sec;
+
+	const float k_gyro_multi = 1.f;
+
+	float gyro_max = fmaxf(abs(current_omega.x()), fmaxf(abs(current_omega.y()), abs(current_omega.z()))) * k_gyro_multi;
+
+	float align_weight = lerp_clampf(0.f, k_base_earth_frame_align_weight, clampf(gyro_max, clampf01(filter_stabilization_min_scale), 1.f));
+
+	// Update the blend weight
+	// -- Exponential blend the MG weight from 1 down to k_base_earth_frame_align_weight
+	mg_weight = lerp_clampf(mg_weight, align_weight, 0.9f);
 }
