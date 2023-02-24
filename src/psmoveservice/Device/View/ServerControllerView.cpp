@@ -140,55 +140,13 @@ ServerControllerView::ServerControllerView(const int device_id)
     , m_lastPollSeqNumProcessed(-1)
     , m_last_filter_update_timestamp()
     , m_last_filter_update_timestamp_valid(false)
-	, showMessage(true)
 {
     m_tracking_color = std::make_tuple(0x00, 0x00, 0x00);
     m_LED_override_color = std::make_tuple(0x00, 0x00, 0x00);
-
-#ifdef WIN32
-	SERVER_LOG_INFO("ServerControllerView::ServerControllerView()") <<
-		"Creating controller data pipe: " << device_id << ".";
-
-	std::string pipeName = "\\\\.\\pipe\\PSMoveSerivceEx\\ControllerDataStream_";
-
-	char indexStr[20];
-	pipeName.append(itoa(device_id, indexStr, 10));
-
-	controllerDataPipe = CreateNamedPipe(
-		pipeName.c_str(),
-		PIPE_ACCESS_OUTBOUND,
-		PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_NOWAIT,
-		1,
-		VRIT_BUFF_SIZE,
-		VRIT_BUFF_SIZE,
-		NMPWAIT_USE_DEFAULT_WAIT,
-		NULL
-	);
-
-	if (controllerDataPipe != INVALID_HANDLE_VALUE)
-	{
-		SERVER_LOG_INFO("ServerControllerView::ServerControllerView()") <<
-			pipeName.c_str() << " pipe created.";
-	}
-	else
-	{
-		SERVER_LOG_INFO("ServerControllerView::ServerControllerView()") <<
-			pipeName.c_str() << " pipe failed!, GLE=" << GetLastError();
-	}
-#endif
 }
 
 ServerControllerView::~ServerControllerView()
 {
-#ifdef WIN32
-	if (controllerDataPipe != INVALID_HANDLE_VALUE)
-	{
-		DisconnectNamedPipe(controllerDataPipe);
-		CloseHandle(controllerDataPipe);
-
-		controllerDataPipe = INVALID_HANDLE_VALUE;
-	}
-#endif
 }
 
 bool ServerControllerView::allocate_device_interface(
