@@ -222,7 +222,7 @@ void AppStage_ComputeTrackerPoses::update()
 					{
 						if(m_areAllControllerStreamsActive && controllerView->OutputSequenceNum != m_lastControllerSeqNum)
 						{
-							controllerView->OutputSequenceNum = m_lastControllerSeqNum;
+							m_lastControllerSeqNum = controllerView->OutputSequenceNum;
 							
 							int currentTrackerId = -1;
 							bool isTracked = false;
