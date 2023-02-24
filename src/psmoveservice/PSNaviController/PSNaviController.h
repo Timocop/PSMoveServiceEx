@@ -12,14 +12,14 @@ class PSNaviControllerConfig : public PSMoveConfig
 public:
     PSNaviControllerConfig(const std::string &fnamebase = "PSNaviControllerConfig")
         : PSMoveConfig(fnamebase)
-        , max_poll_failure_count_ex(1000) // ms
+        , max_poll_failure_timeout_ms(1000) // ms
 		, attached_to_controller("")
     {};
 
     virtual const boost::property_tree::ptree config2ptree();
     virtual void ptree2config(const boost::property_tree::ptree &pt);
 
-    long max_poll_failure_count_ex;
+    long max_poll_failure_timeout_ms;
 	std::string attached_to_controller;
 };
 

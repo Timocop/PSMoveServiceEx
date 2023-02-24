@@ -519,7 +519,7 @@ PSDualShock4ControllerConfig::config2ptree()
 	pt.put("Offsets.Scale.Z", offset_scale.z);
 
     pt.put("prediction_time", prediction_time);
-    pt.put("max_poll_failure_count_ex", max_poll_failure_count_ex);
+    pt.put("max_poll_failure_timeout_ms", max_poll_failure_timeout_ms);
 
 	pt.put("hand", hand);
 
@@ -542,7 +542,7 @@ PSDualShock4ControllerConfig::ptree2config(const boost::property_tree::ptree &pt
     {
         is_valid = pt.get<bool>("is_valid", false);
         prediction_time = pt.get<float>("prediction_time", 0.f);
-		max_poll_failure_count_ex = pt.get<long>("max_poll_failure_count_ex", 1000);
+		max_poll_failure_timeout_ms = pt.get<long>("max_poll_failure_timeout_ms", 1000);
 
         // Use the current accelerometer values (constructor defaults) as the default values
         accelerometer_gain.i = pt.get<float>("Calibration.Accel.X.k", accelerometer_gain.i);
@@ -1132,7 +1132,7 @@ PSDualShock4Controller::getIsReadyToPoll() const
 long 
 PSDualShock4Controller::getMaxPollFailureCount() const
 {
-	return cfg.max_poll_failure_count_ex;
+	return cfg.max_poll_failure_timeout_ms;
 }
 
 IDeviceInterface::ePollResult 

@@ -10,10 +10,10 @@
 ServerDeviceView::ServerDeviceView(
     const int device_id)
     : m_bHasUnpublishedState(false)
-    , m_pollNoDataCount(0)
     , m_sequence_number(0)
     , m_deviceID(device_id)
 {
+	m_lastPollDataTimestamp = std::chrono::high_resolution_clock::now();
 }
 
 ServerDeviceView::~ServerDeviceView()
@@ -35,7 +35,7 @@ ServerDeviceView::open(const DeviceEnumerator *enumerator)
     if (bSuccess)
     {
         // Consider a successful opening as an update
-        m_pollNoDataCount= 0;
+		m_lastPollDataTimestamp = std::chrono::high_resolution_clock::now();
     }
 
     return bSuccess;
@@ -64,14 +64,15 @@ bool ServerDeviceView::poll()
 		{
 			long max_failure = device->getMaxPollFailureCount();
 
-			++m_pollNoDataCount;
+			std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+			std::chrono::duration<float, std::milli> timeSinceLastPoll = now - m_lastPollDataTimestamp;
 
-			if (m_pollNoDataCount > max_failure)
+			if (timeSinceLastPoll.count() > max_failure)
 			{
 				SERVER_LOG_INFO("ServerDeviceView::poll") <<
 					"Device id " << getDeviceID() <<
-					" closing due to no data (" << max_failure <<
-					" failed poll attempts)";
+					" closing due to no data (timeout " << max_failure <<
+					" ms)";
 				close();
 
 				bSuccessfullyUpdated = false;
@@ -81,7 +82,7 @@ bool ServerDeviceView::poll()
 
         case IDeviceInterface::_PollResultSuccessNewData:
         {
-            m_pollNoDataCount= 0;
+			m_lastPollDataTimestamp = std::chrono::high_resolution_clock::now();
             m_lastNewDataTimestamp= std::chrono::high_resolution_clock::now();
 
             // If we got new sensor data, then we have new state to publish
@@ -93,7 +94,7 @@ bool ServerDeviceView::poll()
 
 		case IDeviceInterface::_PollResultSuccessIgnore:
 		{
-			m_pollNoDataCount = 0;
+			m_lastPollDataTimestamp = std::chrono::high_resolution_clock::now();
 			bSuccessfullyUpdated = true;
 			break;
 		}

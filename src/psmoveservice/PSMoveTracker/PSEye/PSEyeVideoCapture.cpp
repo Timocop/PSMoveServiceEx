@@ -273,9 +273,11 @@ class PSEYECaptureCAM_PS3EYE : public cv::IVideoCapture
 public:
     PSEYECaptureCAM_PS3EYE(int _index)
     : m_index(-1), m_width(-1), m_height(-1), m_widthStep(-1),
-		m_frameAvailable(false), m_waitFrame(false), m_maxFailPoll(0), m_currentPollFailCount(0),
+		m_frameAvailable(false), m_waitFrame(false), m_maxFailPoll(0),
 		m_size(-1), m_MatBayer(0, 0, CV_8UC1)
     {
+		m_lastPollDataTimestamp = std::chrono::high_resolution_clock::now();
+
         //CoInitialize(NULL);
         open(_index);
     }
@@ -400,11 +402,12 @@ public:
 
     bool grabFrame()
     {
+		std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<float, std::milli> timeSinceLastPoll = now - m_lastPollDataTimestamp;
+
 		if (!eye->isStreaming())
 		{
-			++m_currentPollFailCount;
-
-			if (m_maxFailPoll > 0 && m_currentPollFailCount > m_maxFailPoll)
+			if (m_maxFailPoll > 0 && timeSinceLastPoll.count() > m_maxFailPoll)
 			{
 				capFrame.setTo(cv::Scalar(0, 0, 0));
 				cv::putText(
@@ -431,9 +434,7 @@ public:
 		bool success = eye->getFrame(m_MatBayer.data, m_waitFrame);
 		if (!success)
 		{
-			++m_currentPollFailCount;
-
-			if (m_maxFailPoll > 0 && m_currentPollFailCount > m_maxFailPoll)
+			if (m_maxFailPoll > 0 && timeSinceLastPoll.count() > m_maxFailPoll)
 			{
 				capFrame.setTo(cv::Scalar(0, 0, 0));
 				cv::putText(
@@ -456,7 +457,7 @@ public:
 
 		cv::cvtColor(m_MatBayer, capFrame, CV_BayerGB2BGR);
 		m_frameAvailable = true;
-		m_currentPollFailCount = 0;
+		m_lastPollDataTimestamp = now;
 		return true;
     }
 
@@ -545,12 +546,13 @@ protected:
 
     int m_index, m_width, m_height, m_widthStep;
 	bool m_frameAvailable, m_waitFrame;
-	int m_maxFailPoll, m_currentPollFailCount;
+	int m_maxFailPoll;
 
     size_t m_size;
     cv::Mat m_MatBayer;
 	cv::Mat capFrame;
     ps3eye::PS3EYECam::PS3EYERef eye;
+	std::chrono::time_point<std::chrono::high_resolution_clock> m_lastPollDataTimestamp;
 };
 
 #endif

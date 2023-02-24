@@ -35,7 +35,7 @@ public:
 		, position_variance_exp_fit_a(0.0994158462f)
 		, position_variance_exp_fit_b(-0.000567041978f)
 		, orientation_variance(0.005f)
-        , max_poll_failure_count_ex(1000)
+        , max_poll_failure_timeout_ms(1000)
         , prediction_time(0.f)
 		, tracking_color_id(eCommonTrackingColorID::Blue)
 		, filter_prediction_distance(10.f)
@@ -171,7 +171,7 @@ public:
 		return position_variance_exp_fit_a*exp(position_variance_exp_fit_b*projection_area);
 	}
 
-    long max_poll_failure_count_ex;
+    long max_poll_failure_timeout_ms;
 	float prediction_time;
 
 	eCommonTrackingColorID tracking_color_id;

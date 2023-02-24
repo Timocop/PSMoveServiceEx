@@ -66,9 +66,9 @@ protected:
     virtual void publish_device_data_frame() = 0;
 
     bool m_bHasUnpublishedState;
-    int m_pollNoDataCount;
     int m_sequence_number;
-    std::chrono::time_point<std::chrono::high_resolution_clock> m_lastNewDataTimestamp;
+	std::chrono::time_point<std::chrono::high_resolution_clock> m_lastNewDataTimestamp;
+	std::chrono::time_point<std::chrono::high_resolution_clock> m_lastPollDataTimestamp;
     
 private:
     int m_deviceID;

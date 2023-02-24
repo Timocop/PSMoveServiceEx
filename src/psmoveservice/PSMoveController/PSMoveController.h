@@ -40,7 +40,7 @@ public:
 		, firmware_version(0)
 		, bt_firmware_version(0)
 		, firmware_revision(0)
-		, max_poll_failure_count_ex(1000)
+		, max_poll_failure_timeout_ms(1000)
         , poll_timeout_ms(1000) 
         , prediction_time(0.f)
 		, enable_optical_tracking(true)
@@ -109,7 +109,7 @@ public:
 	unsigned short firmware_revision;
 
 	// The max number of polling failures before we consider the controller disconnected
-    long max_poll_failure_count_ex;
+    long max_poll_failure_timeout_ms;
 
 	long poll_timeout_ms;
 

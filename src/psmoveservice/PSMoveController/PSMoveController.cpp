@@ -524,7 +524,7 @@ PSMoveControllerConfig::config2ptree()
 	pt.put("firmware_revision", firmware_revision);
 
     pt.put("prediction_time", prediction_time);
-	pt.put("max_poll_failure_count_ex", max_poll_failure_count_ex);
+	pt.put("max_poll_failure_timeout_ms", max_poll_failure_timeout_ms);
 	pt.put("poll_timeout_ms", poll_timeout_ms);
 	pt.put("enable_optical_tracking", enable_optical_tracking);
     
@@ -638,7 +638,7 @@ PSMoveControllerConfig::ptree2config(const boost::property_tree::ptree &pt)
 		firmware_revision = pt.get<unsigned short>("firmware_revision", 0);
 
         prediction_time = pt.get<float>("prediction_time", 0.f);
-		max_poll_failure_count_ex = pt.get<long>("max_poll_failure_count_ex", 1000);
+		max_poll_failure_timeout_ms = pt.get<long>("max_poll_failure_timeout_ms", 1000);
 		poll_timeout_ms = pt.get<long>("poll_timeout_ms", 1000);
 		enable_optical_tracking = pt.get<bool>("enable_optical_tracking", true);
 
@@ -1358,7 +1358,7 @@ PSMoveController::getIsReadyToPoll() const
 long 
 PSMoveController::getMaxPollFailureCount() const
 {
-	return cfg.max_poll_failure_count_ex;
+	return cfg.max_poll_failure_timeout_ms;
 }
 
 IDeviceInterface::ePollResult 

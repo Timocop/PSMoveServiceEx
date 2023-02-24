@@ -250,7 +250,7 @@ MorpheusHMDConfig::config2ptree()
 	pt.put("Offsets.Scale.Z", offset_scale.z);
 
 	pt.put("prediction_time", prediction_time);
-	pt.put("max_poll_failure_count_ex", max_poll_failure_count_ex);
+	pt.put("max_poll_failure_timeout_ms", max_poll_failure_timeout_ms);
 
 	pt.put("FilterSettings.PredictcionDistance", filter_prediction_distance);
 	pt.put("FilterSettings.PredictionSmoothing", filter_prediction_smoothing);
@@ -274,7 +274,7 @@ MorpheusHMDConfig::ptree2config(const boost::property_tree::ptree &pt)
 		disable_command_interface= pt.get<bool>("disable_command_interface", disable_command_interface);
 
 		prediction_time = pt.get<float>("prediction_time", 0.f);
-		max_poll_failure_count_ex = pt.get<long>("max_poll_failure_count_ex", 1000);
+		max_poll_failure_timeout_ms = pt.get<long>("max_poll_failure_timeout_ms", 1000);
 
 		// Use the current accelerometer values (constructor defaults) as the default values
 		accelerometer_gain.i = pt.get<float>("Calibration.Accel.X.k", accelerometer_gain.i);
@@ -696,7 +696,7 @@ MorpheusHMD::getState(
 
 long MorpheusHMD::getMaxPollFailureCount() const
 {
-    return cfg.max_poll_failure_count_ex;
+    return cfg.max_poll_failure_timeout_ms;
 }
 
 void MorpheusHMD::setTrackingEnabled(bool bEnable)

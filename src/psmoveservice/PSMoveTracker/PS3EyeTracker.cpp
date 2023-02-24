@@ -37,7 +37,7 @@ const int PS3EyeTrackerConfig::LENS_CALIBRATION_VERSION= 1;
 PS3EyeTrackerConfig::PS3EyeTrackerConfig(const std::string &fnamebase)
     : PSMoveConfig(fnamebase)
     , is_valid(false)
-    , max_poll_failure_count_ex(1000)
+    , max_poll_failure_timeout_ms(1000)
 	, frame_width(640)
 	, frame_height(480)
 	, frame_rate(30)
@@ -77,7 +77,7 @@ PS3EyeTrackerConfig::config2ptree()
     pt.put("is_valid", is_valid);
     pt.put("version", PS3EyeTrackerConfig::CONFIG_VERSION);
 	pt.put("lens_calibration_version", PS3EyeTrackerConfig::LENS_CALIBRATION_VERSION);
-    pt.put("max_poll_failure_count_ex", max_poll_failure_count_ex);
+    pt.put("max_poll_failure_timeout_ms", max_poll_failure_timeout_ms);
 	pt.put("frame_width", frame_width);
 	pt.put("frame_height", frame_height);
 	pt.put("frame_rate", frame_rate);
@@ -133,7 +133,7 @@ PS3EyeTrackerConfig::ptree2config(const boost::property_tree::ptree &pt)
     if (config_version == PS3EyeTrackerConfig::CONFIG_VERSION)
     {
         is_valid = pt.get<bool>("is_valid", false);
-		max_poll_failure_count_ex = pt.get<long>("max_poll_failure_count_ex", 1000);
+		max_poll_failure_timeout_ms = pt.get<long>("max_poll_failure_timeout_ms", 1000);
 		frame_width = pt.get<double>("frame_width", 640);
 		frame_height = pt.get<double>("frame_height", 480);
 		frame_rate = pt.get<double>("frame_rate", 30);
@@ -410,7 +410,7 @@ bool PS3EyeTracker::open(const DeviceEnumerator *enumerator)
 		VideoCapture->set(cv::CAP_PROP_GAIN, cfg.gain);
 		VideoCapture->set(cv::CAP_PROP_FPS, cfg.frame_rate);
 
-		VideoCapture->set(CV_CAP_PROP_MAXFAILPOLL, cfg.max_poll_failure_count_ex);
+		VideoCapture->set(CV_CAP_PROP_MAXFAILPOLL, cfg.max_poll_failure_timeout_ms);
     }
 
     return bSuccess;
@@ -509,7 +509,7 @@ void PS3EyeTracker::close()
 
 long PS3EyeTracker::getMaxPollFailureCount() const
 {
-    return cfg.max_poll_failure_count_ex;
+    return cfg.max_poll_failure_timeout_ms;
 }
 
 CommonDeviceState::eDeviceType PS3EyeTracker::getDeviceType() const
