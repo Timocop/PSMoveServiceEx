@@ -252,7 +252,7 @@ MorpheusHMDConfig::config2ptree()
 	pt.put("prediction_time", prediction_time);
 	pt.put("max_poll_failure_timeout_ms", max_poll_failure_timeout_ms);
 
-	pt.put("FilterSettings.PredictcionDistance", filter_prediction_distance);
+	pt.put("FilterSettings.PredictionDistance", filter_prediction_distance);
 	pt.put("FilterSettings.PredictionSmoothing", filter_prediction_smoothing);
 	pt.put("FilterSettings.LowPassOptical.Distance", filter_lowpassoptical_distance);
 	pt.put("FilterSettings.LowPassOptical.Smoothing", filter_lowpassoptical_smoothing);
@@ -328,7 +328,7 @@ MorpheusHMDConfig::ptree2config(const boost::property_tree::ptree &pt)
 		// Read the tracking color
 		tracking_color_id = static_cast<eCommonTrackingColorID>(readTrackingColor(pt));
 
-		filter_prediction_distance = pt.get<float>("FilterSettings.PredictcionDistance", filter_prediction_distance);
+		filter_prediction_distance = pt.get<float>("FilterSettings.PredictionDistance", filter_prediction_distance);
 		filter_prediction_smoothing = pt.get<float>("FilterSettings.PredictionSmoothing", filter_prediction_smoothing);
 		filter_lowpassoptical_distance = pt.get<float>("FilterSettings.LowPassOptical.Distance", filter_lowpassoptical_distance);
 		filter_lowpassoptical_smoothing = pt.get<float>("FilterSettings.LowPassOptical.Smoothing", filter_lowpassoptical_smoothing);
