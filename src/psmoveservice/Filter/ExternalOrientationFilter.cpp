@@ -114,30 +114,6 @@ struct ExternalOrientationFilterState
 		// state is valid now that we have had an update
 		bIsValid = true;
 	}
-
-	void accumulate_optical_delta_time(const float delta_time)
-	{
-		if (is_valid_float(delta_time))
-		{
-			accumulated_optical_time_delta += (double)delta_time;
-		}
-		else
-		{
-			SERVER_LOG_WARNING("PositionFilter") << "optical time delta is NaN!";
-		}
-	}
-
-	void accumulate_imu_delta_time(const float delta_time)
-	{
-		if (is_valid_float(delta_time))
-		{
-			accumulated_imu_time_delta += (double)delta_time;
-		}
-		else
-		{
-			SERVER_LOG_WARNING("PositionFilter") << "imu time delta is NaN!";
-		}
-	}
 };
 
 // -- public interface -----

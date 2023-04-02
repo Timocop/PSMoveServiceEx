@@ -349,7 +349,10 @@ void OrientationTargetOpticalARG::UpdateComplementaryMARG(const float delta_time
 	}
 	else
 	{
-		m_state->accumulate_imu_delta_time(delta_time);
+		if (packet.doDeltaAccumulation)
+		{
+			m_state->accumulate_imu_delta_time(delta_time);
+		}
 	}
 }
 

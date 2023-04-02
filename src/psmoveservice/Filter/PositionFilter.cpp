@@ -479,7 +479,10 @@ void PositionFilterPassThru::update(
 	}
 	else
 	{
-		m_state->accumulate_optical_delta_time(delta_time);
+		if (packet.doDeltaAccumulation)
+		{
+			m_state->accumulate_optical_delta_time(delta_time);
+		}
 	}
 }
 
@@ -657,7 +660,10 @@ void PositionFilterLowPassOptical::update(
     }
 	else
 	{
-		m_state->accumulate_optical_delta_time(delta_time);
+		if (packet.doDeltaAccumulation)
+		{
+			m_state->accumulate_optical_delta_time(delta_time);
+		}
 	}
 }
 
@@ -675,7 +681,10 @@ void PositionFilterLowPassIMU::update(
     }
 	else
 	{
-		m_state->accumulate_optical_delta_time(delta_time);
+		if (packet.doDeltaAccumulation)
+		{
+			m_state->accumulate_optical_delta_time(delta_time);
+		}
 	}
 
     if (packet.has_imu_measurements() && m_state->bIsValid)
@@ -699,7 +708,10 @@ void PositionFilterLowPassIMU::update(
     }
 	else
 	{
-		m_state->accumulate_imu_delta_time(delta_time);
+		if (packet.doDeltaAccumulation)
+		{
+			m_state->accumulate_imu_delta_time(delta_time);
+		}
 	}
 }
 
@@ -729,7 +741,10 @@ void PositionFilterComplimentaryOpticalIMU::update(const float delta_time, const
     }
 	else
 	{
-		m_state->accumulate_optical_delta_time(delta_time);
+		if (packet.doDeltaAccumulation)
+		{
+			m_state->accumulate_optical_delta_time(delta_time);
+		}
 	}
 
 	// Don't bother with IMU state updates until the we've gotten one valid optical update
@@ -758,7 +773,10 @@ void PositionFilterComplimentaryOpticalIMU::update(const float delta_time, const
 		}
 		else
 		{
-			m_state->accumulate_imu_delta_time(delta_time);
+			if (packet.doDeltaAccumulation)
+			{
+				m_state->accumulate_imu_delta_time(delta_time);
+			}
 		}
 	}
 }
@@ -907,7 +925,10 @@ void PositionFilterLowPassExponential::update(const float delta_time, const Pose
     }
 	else
 	{
-		m_state->accumulate_optical_delta_time(delta_time);
+		if (packet.doDeltaAccumulation)
+		{
+			m_state->accumulate_optical_delta_time(delta_time);
+		}
 	}
 }
 

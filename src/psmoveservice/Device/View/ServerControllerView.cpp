@@ -138,8 +138,10 @@ ServerControllerView::ServerControllerView(const int device_id)
     , m_pose_filter(nullptr)
     , m_pose_filter_space(nullptr)
     , m_lastPollSeqNumProcessed(-1)
-    , m_last_filter_update_timestamp()
-    , m_last_filter_update_timestamp_valid(false)
+	, m_last_imu_filter_update_timestamp()
+	, m_last_optical_filter_update_timestamp()
+	, m_last_imu_filter_update_timestamp_valid(false)
+	, m_last_optical_filter_update_timestamp_valid(false)
 {
     m_tracking_color = std::make_tuple(0x00, 0x00, 0x00);
     m_LED_override_color = std::make_tuple(0x00, 0x00, 0x00);
@@ -337,8 +339,10 @@ bool ServerControllerView::open(const class DeviceEnumerator *enumerator)
     }
 
     // Clear the filter update timestamp
-    m_last_filter_update_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>();
-    m_last_filter_update_timestamp_valid= false;
+	m_last_imu_filter_update_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>();
+	m_last_optical_filter_update_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>();
+	m_last_imu_filter_update_timestamp_valid = false;
+	m_last_optical_filter_update_timestamp_valid = false;
 
     return bSuccess;
 }
@@ -1041,46 +1045,95 @@ void ServerControllerView::updateStateAndPredict()
 	// Process the sensor packets from oldest to newest
 	for (const PoseSensorPacket &sensorPacket : timeSortedPackets)
     {
-		// Compute the time since the last packet
-		float time_delta_seconds;
-		if (m_last_filter_update_timestamp_valid)
+		if (sensorPacket.has_imu_measurements())
 		{
-			const std::chrono::duration<float, std::milli> time_delta = sensorPacket.timestamp - m_last_filter_update_timestamp;
-			const float time_delta_milli = time_delta.count();
+			// Compute the time since the last packet
+			float time_delta_seconds;
+			if (m_last_imu_filter_update_timestamp_valid)
+			{
+				const std::chrono::duration<float, std::milli> time_delta = sensorPacket.timestamp - m_last_imu_filter_update_timestamp;
+				const float time_delta_milli = time_delta.count();
 
-			// convert delta to seconds clamp time delta between 2500hz and 30hz
-			time_delta_seconds = clampf(time_delta_milli / 1000.f, k_min_time_delta_seconds, k_max_time_delta_seconds);
+				// convert delta to seconds clamp time delta between 2500hz and 30hz
+				time_delta_seconds = clampf(time_delta_milli / 1000.f, k_min_time_delta_seconds, k_max_time_delta_seconds);
+			}
+			else
+			{
+				time_delta_seconds = k_max_time_delta_seconds;
+			}
+
+			m_last_imu_filter_update_timestamp = sensorPacket.timestamp;
+			m_last_imu_filter_update_timestamp_valid = true;
+
+			{
+				PoseFilterPacket filter_packet;
+				filter_packet.clear();
+
+				// Ship device id with the packet. We ned it for "OrientationExternal" filter.
+				filter_packet.controllerDeviceId = this->getDeviceID();
+				filter_packet.isCurrentlyTracking = this->getIsCurrentlyTracking();
+				filter_packet.isSynced = DeviceManager::getInstance()->m_tracker_manager->trackersSynced();
+				filter_packet.doDeltaAccumulation = false;
+
+				// Create a filter input packet from the sensor data 
+				// and the filter's previous orientation and position
+				m_pose_filter_space->createFilterPacket(
+					sensorPacket,
+					m_pose_filter,
+					filter_packet);
+
+				// Process the filter packet
+				m_pose_filter->update(time_delta_seconds, filter_packet);
+			}
+
+			// Flag the state as unpublished, which will trigger an update to the client
+			markStateAsUnpublished();
 		}
-		else
+
+		if (sensorPacket.has_optical_measurement())
 		{
-			time_delta_seconds = k_max_time_delta_seconds;
+			// Compute the time since the last packet
+			float time_delta_seconds;
+			if (m_last_optical_filter_update_timestamp_valid)
+			{
+				const std::chrono::duration<float, std::milli> time_delta = sensorPacket.timestamp - m_last_optical_filter_update_timestamp;
+				const float time_delta_milli = time_delta.count();
+
+				// convert delta to seconds clamp time delta between 2500hz and 30hz
+				time_delta_seconds = clampf(time_delta_milli / 1000.f, k_min_time_delta_seconds, k_max_time_delta_seconds);
+			}
+			else
+			{
+				time_delta_seconds = k_max_time_delta_seconds;
+			}
+
+			m_last_optical_filter_update_timestamp = sensorPacket.timestamp;
+			m_last_optical_filter_update_timestamp_valid = true;
+
+			{
+				PoseFilterPacket filter_packet;
+				filter_packet.clear();
+
+				// Ship device id with the packet. We ned it for "OrientationExternal" filter.
+				filter_packet.controllerDeviceId = this->getDeviceID();
+				filter_packet.isCurrentlyTracking = this->getIsCurrentlyTracking();
+				filter_packet.isSynced = DeviceManager::getInstance()->m_tracker_manager->trackersSynced();
+				filter_packet.doDeltaAccumulation = false;
+
+				// Create a filter input packet from the sensor data 
+				// and the filter's previous orientation and position
+				m_pose_filter_space->createFilterPacket(
+					sensorPacket,
+					m_pose_filter,
+					filter_packet);
+
+				// Process the filter packet
+				m_pose_filter->update(time_delta_seconds, filter_packet);
+			}
+
+			// Flag the state as unpublished, which will trigger an update to the client
+			markStateAsUnpublished();
 		}
-
-		m_last_filter_update_timestamp = sensorPacket.timestamp;
-		m_last_filter_update_timestamp_valid = true;
-
-		{
-			PoseFilterPacket filter_packet;
-			filter_packet.clear();
-
-			// Ship device id with the packet. We ned it for "OrientationExternal" filter.
-			filter_packet.controllerDeviceId = this->getDeviceID();
-			filter_packet.isCurrentlyTracking = this->getIsCurrentlyTracking();
-			filter_packet.isSynced = DeviceManager::getInstance()->m_tracker_manager->trackersSynced();
-
-			// Create a filter input packet from the sensor data 
-			// and the filter's previous orientation and position
-			m_pose_filter_space->createFilterPacket(
-				sensorPacket,
-				m_pose_filter,
-				filter_packet);
-
-			// Process the filter packet
-			m_pose_filter->update(time_delta_seconds, filter_packet);
-		}
-		
-		// Flag the state as unpublished, which will trigger an update to the client
-		markStateAsUnpublished();
 	}
 }
 

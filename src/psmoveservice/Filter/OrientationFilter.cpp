@@ -276,7 +276,10 @@ void OrientationFilterPassThru::update(const float delta_time, const PoseFilterP
 	}
 	else
 	{
-		m_state->accumulate_optical_delta_time(delta_time);
+		if (packet.doDeltaAccumulation)
+		{
+			m_state->accumulate_optical_delta_time(delta_time);
+		}
 	}
 }
 
@@ -359,7 +362,10 @@ void OrientationFilterMadgwickARG::update(const float delta_time, const PoseFilt
 	}
 	else
 	{
-		m_state->accumulate_imu_delta_time(delta_time);
+		if (packet.doDeltaAccumulation)
+		{
+			m_state->accumulate_imu_delta_time(delta_time);
+		}
 	}
 }
 
@@ -487,7 +493,10 @@ void OrientationFilterMadgwickMARG::update(const float delta_time, const PoseFil
 	}
 	else
 	{
-		m_state->accumulate_imu_delta_time(delta_time);
+		if (packet.doDeltaAccumulation)
+		{
+			m_state->accumulate_imu_delta_time(delta_time);
+		}
 	}
 }
 
@@ -611,7 +620,10 @@ void OrientationFilterComplementaryOpticalARG::update(const float delta_time, co
     }
 	else
 	{
-		m_state->accumulate_optical_delta_time(delta_time);
+		if (packet.doDeltaAccumulation)
+		{
+			m_state->accumulate_optical_delta_time(delta_time);
+		}
 	}
 
     OrientationFilterMadgwickARG::update(delta_time, packet);
@@ -813,7 +825,10 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 	}
 	else
 	{
-		m_state->accumulate_imu_delta_time(delta_time);
+		if (packet.doDeltaAccumulation)
+		{
+			m_state->accumulate_imu_delta_time(delta_time);
+		}
 	}
 }
 
