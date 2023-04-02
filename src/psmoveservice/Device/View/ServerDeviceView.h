@@ -72,6 +72,7 @@ protected:
     
 private:
     int m_deviceID;
+	bool firstPoll;
 };
 
 #endif // SERVER_DEVICE_VIEW_H

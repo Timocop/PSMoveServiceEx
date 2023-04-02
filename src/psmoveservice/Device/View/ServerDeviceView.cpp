@@ -12,6 +12,7 @@ ServerDeviceView::ServerDeviceView(
     : m_bHasUnpublishedState(false)
     , m_sequence_number(0)
     , m_deviceID(device_id)
+	, firstPoll(false)
 {
 	m_lastPollDataTimestamp = std::chrono::high_resolution_clock::now();
 }
@@ -36,6 +37,7 @@ ServerDeviceView::open(const DeviceEnumerator *enumerator)
     {
         // Consider a successful opening as an update
 		m_lastPollDataTimestamp = std::chrono::high_resolution_clock::now();
+		firstPoll = false;
     }
 
     return bSuccess;
@@ -58,6 +60,12 @@ bool ServerDeviceView::poll()
     // Only poll data from open, bluetooth controllers
     if (device != nullptr && device->getIsReadyToPoll())
     {
+		if (!firstPoll)
+		{
+			firstPoll = true;
+			m_lastPollDataTimestamp = std::chrono::high_resolution_clock::now();
+		}
+
         switch (device->poll())
         {
 		case IDeviceInterface::_PollResultSuccessNoData:
