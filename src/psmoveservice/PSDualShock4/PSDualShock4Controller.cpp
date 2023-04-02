@@ -541,8 +541,8 @@ PSDualShock4ControllerConfig::ptree2config(const boost::property_tree::ptree &pt
     if (version == PSDualShock4ControllerConfig::CONFIG_VERSION)
     {
         is_valid = pt.get<bool>("is_valid", false);
-        prediction_time = pt.get<float>("prediction_time", 0.f);
-		max_poll_failure_timeout_ms = pt.get<long>("max_poll_failure_timeout_ms", 1000);
+        prediction_time = pt.get<float>("prediction_time", prediction_time);
+		max_poll_failure_timeout_ms = pt.get<long>("max_poll_failure_timeout_ms", max_poll_failure_timeout_ms);
 
         // Use the current accelerometer values (constructor defaults) as the default values
         accelerometer_gain.i = pt.get<float>("Calibration.Accel.X.k", accelerometer_gain.i);
@@ -600,10 +600,10 @@ PSDualShock4ControllerConfig::ptree2config(const boost::property_tree::ptree &pt
 		// Read the assigned hand
 		hand = pt.get<std::string>("hand", hand);
 
-		filter_prediction_distance = pt.get<float>("FilterSettings.PredictionDistance", 10.f);
-		filter_prediction_smoothing = pt.get<float>("FilterSettings.PredictionSmoothing", 0.40f);
-		filter_lowpassoptical_distance = pt.get<float>("FilterSettings.LowPassOptical.Distance", 10.f);
-		filter_lowpassoptical_smoothing = pt.get<float>("FilterSettings.LowPassOptical.Smoothing", 0.40f);
+		filter_prediction_distance = pt.get<float>("FilterSettings.PredictionDistance", filter_prediction_distance);
+		filter_prediction_smoothing = pt.get<float>("FilterSettings.PredictionSmoothing", filter_prediction_smoothing);
+		filter_lowpassoptical_distance = pt.get<float>("FilterSettings.LowPassOptical.Distance", filter_lowpassoptical_distance);
+		filter_lowpassoptical_smoothing = pt.get<float>("FilterSettings.LowPassOptical.Smoothing", filter_lowpassoptical_smoothing);
     }
     else
     {

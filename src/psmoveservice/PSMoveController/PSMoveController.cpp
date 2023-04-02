@@ -369,12 +369,12 @@ protected:
 		if (m_model == _psmove_controller_ZCM2)
 		{
 			memcpy(&m_previousHIDInputPacket.data.zcm2, &m_currentHIDInputPacket.data.zcm2, sizeof(PSMoveDataInputZCM2));
-			res= hid_read_timeout(m_hidDevice, (unsigned char*)&m_currentHIDInputPacket.data.zcm2, sizeof(PSMoveDataInputZCM2), cfg.poll_timeout_ms);
+			res= hid_read_timeout(m_hidDevice, (unsigned char*)&m_currentHIDInputPacket.data.zcm2, sizeof(PSMoveDataInputZCM2), cfg.max_hid_poll_timeout_ms);
 		}
 		else
 		{
 			memcpy(&m_previousHIDInputPacket.data.zcm1, &m_currentHIDInputPacket.data.zcm1, sizeof(PSMoveDataInputZCM1));
-			res= hid_read_timeout(m_hidDevice, (unsigned char*)&m_currentHIDInputPacket.data.zcm1, sizeof(PSMoveDataInputZCM1), cfg.poll_timeout_ms);
+			res= hid_read_timeout(m_hidDevice, (unsigned char*)&m_currentHIDInputPacket.data.zcm1, sizeof(PSMoveDataInputZCM1), cfg.max_hid_poll_timeout_ms);
 		}
 
 		if (res > 0)
@@ -525,7 +525,7 @@ PSMoveControllerConfig::config2ptree()
 
     pt.put("prediction_time", prediction_time);
 	pt.put("max_poll_failure_timeout_ms", max_poll_failure_timeout_ms);
-	pt.put("poll_timeout_ms", poll_timeout_ms);
+	pt.put("max_hid_poll_timeout_ms", max_hid_poll_timeout_ms);
 	pt.put("enable_optical_tracking", enable_optical_tracking);
     
     pt.put("Calibration.Accel.X.k", cal_ag_xyz_kbd[0][0][0]);
@@ -637,10 +637,10 @@ PSMoveControllerConfig::ptree2config(const boost::property_tree::ptree &pt)
 		bt_firmware_version = pt.get<unsigned short>("bt_firmware_version", 0);
 		firmware_revision = pt.get<unsigned short>("firmware_revision", 0);
 
-        prediction_time = pt.get<float>("prediction_time", 0.f);
-		max_poll_failure_timeout_ms = pt.get<long>("max_poll_failure_timeout_ms", 1000);
-		poll_timeout_ms = pt.get<long>("poll_timeout_ms", 1000);
-		enable_optical_tracking = pt.get<bool>("enable_optical_tracking", true);
+        prediction_time = pt.get<float>("prediction_time", prediction_time);
+		max_poll_failure_timeout_ms = pt.get<long>("max_poll_failure_timeout_ms", max_poll_failure_timeout_ms);
+		max_hid_poll_timeout_ms = pt.get<long>("max_hid_poll_timeout_ms", max_hid_poll_timeout_ms);
+		enable_optical_tracking = pt.get<bool>("enable_optical_tracking", enable_optical_tracking);
 
         cal_ag_xyz_kbd[0][0][0] = pt.get<float>("Calibration.Accel.X.k", 1.0f);
         cal_ag_xyz_kbd[0][0][1] = pt.get<float>("Calibration.Accel.X.b", 0.0f);

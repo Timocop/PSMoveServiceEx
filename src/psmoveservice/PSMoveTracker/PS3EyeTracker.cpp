@@ -133,16 +133,16 @@ PS3EyeTrackerConfig::ptree2config(const boost::property_tree::ptree &pt)
     if (config_version == PS3EyeTrackerConfig::CONFIG_VERSION)
     {
         is_valid = pt.get<bool>("is_valid", false);
-		max_poll_failure_timeout_ms = pt.get<long>("max_poll_failure_timeout_ms", 1000);
-		frame_width = pt.get<double>("frame_width", 640);
-		frame_height = pt.get<double>("frame_height", 480);
-		frame_rate = pt.get<double>("frame_rate", 30);
-        exposure = pt.get<double>("exposure", 32);
-		gain = pt.get<double>("gain", 32);
-        hfov = pt.get<double>("hfov", 60.0);
-        vfov = pt.get<double>("vfov", 45.0);
-        zNear = pt.get<double>("zNear", 10.0);
-        zFar = pt.get<double>("zFar", 200.0);
+		max_poll_failure_timeout_ms = pt.get<long>("max_poll_failure_timeout_ms", max_poll_failure_timeout_ms);
+		frame_width = pt.get<double>("frame_width", frame_width);
+		frame_height = pt.get<double>("frame_height", frame_height);
+		frame_rate = pt.get<double>("frame_rate", frame_rate);
+        exposure = pt.get<double>("exposure", exposure);
+		gain = pt.get<double>("gain", gain);
+        hfov = pt.get<double>("hfov", hfov);
+        vfov = pt.get<double>("vfov", vfov);
+        zNear = pt.get<double>("zNear", zNear);
+        zFar = pt.get<double>("zFar", zFar);
 
 		int lens_calibration_version = pt.get<int>("lens_calibration_version", 0);
 		if (lens_calibration_version == PS3EyeTrackerConfig::LENS_CALIBRATION_VERSION)

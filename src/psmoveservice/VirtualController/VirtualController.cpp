@@ -71,11 +71,11 @@ VirtualControllerConfig::ptree2config(const boost::property_tree::ptree &pt)
     {
         is_valid = pt.get<bool>("is_valid", false);
 
-		gamepad_index = pt.get<int>("gamepad_index", -1);
-		psmove_emulation = pt.get<bool>("psmove_emulation", false);
-		enable_optical_tracking = pt.get<bool>("enable_optical_tracking", true);
+		gamepad_index = pt.get<int>("gamepad_index", gamepad_index);
+		psmove_emulation = pt.get<bool>("psmove_emulation", psmove_emulation);
+		enable_optical_tracking = pt.get<bool>("enable_optical_tracking", enable_optical_tracking);
 
-        prediction_time = pt.get<float>("prediction_time", 0.f);
+        prediction_time = pt.get<float>("prediction_time", prediction_time);
 
         position_variance_exp_fit_a = pt.get<float>("Calibration.Position.VarianceExpFitA", position_variance_exp_fit_a);
         position_variance_exp_fit_b = pt.get<float>("Calibration.Position.VarianceExpFitB", position_variance_exp_fit_b);
@@ -104,10 +104,10 @@ VirtualControllerConfig::ptree2config(const boost::property_tree::ptree &pt)
 
 		hand = pt.get<std::string>("hand", hand);
 
-		filter_prediction_distance = pt.get<float>("FilterSettings.PredictcionDistance", 10.f);
-		filter_prediction_smoothing = pt.get<float>("FilterSettings.PredictionSmoothing", 0.40f);
-		filter_lowpassoptical_distance = pt.get<float>("FilterSettings.LowPassOptical.Distance", 10.f);
-		filter_lowpassoptical_smoothing = pt.get<float>("FilterSettings.LowPassOptical.Smoothing", 0.40f);
+		filter_prediction_distance = pt.get<float>("FilterSettings.PredictcionDistance", filter_prediction_distance);
+		filter_prediction_smoothing = pt.get<float>("FilterSettings.PredictionSmoothing", filter_prediction_smoothing);
+		filter_lowpassoptical_distance = pt.get<float>("FilterSettings.LowPassOptical.Distance", filter_lowpassoptical_distance);
+		filter_lowpassoptical_smoothing = pt.get<float>("FilterSettings.LowPassOptical.Smoothing", filter_lowpassoptical_smoothing);
     }
     else
     {
