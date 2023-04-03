@@ -57,6 +57,7 @@ public:
 		int OrientationFilterIndex;
 		std::string OrientationFilterName;
 		float PredictionTime;
+		float AngPredictionTime;
 
 		DeviceOrientation OffsetOrientation;
 		DeviceOrientation OffsetWorldOrientation;
@@ -102,6 +103,7 @@ protected:
 	void request_set_orientation_filter(const int hmd_id, const std::string &filter_name);
 	void request_set_position_filter(const int hmd_id, const std::string &filter_name);
 	void request_set_hmd_prediction(const int hmd_id, float prediction_time);
+	void request_set_hmd_angular_prediction(const int hmd_id, float prediction_time);
 	void request_set_hmd_tracking_color_id(
 		const int hmd_id,
 		PSMTrackingColorType tracking_color_type);

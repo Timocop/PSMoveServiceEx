@@ -214,6 +214,8 @@ message Request {
 		SET_CONTROLLER_FILTER_SETTINGS = 55;
 		SET_HMD_FILTER_SETTINGS = 56;
         SET_CONTROLLER_MAGNETOMETER_CALIBRATION_BASIC= 57;
+        SET_CONTROLLER_ANG_PREDICTION_TIME= 58;
+        SET_HMD_ANG_PREDICTION_TIME= 59;
     }
     RequestType type = 2;
 
@@ -672,6 +674,21 @@ message Request {
         float ellipse_fit_error= 7;
     }
     RequestSetControllerMagnetometerCalibrationBasic set_controller_magnetometer_calibration_basic_request = 57;
+	
+    // Parameters for SET_CONTROLLER_ANG_PREDICTION_TIME
+    message RequestSetControllerOrientationPredictionTime {
+        int32 controller_id = 1;
+        float ang_prediction_time = 2;
+    }
+    RequestSetControllerOrientationPredictionTime request_set_controller_orientation_prediction_time = 58;
+	
+    // Parameters for SET_HMD_ANG_PREDICTION_TIME
+    message RequestSetHmdOrientationPredictionTime {
+        int32 hmd_id = 1;
+        float ang_prediction_time = 2;
+    }
+    RequestSetHmdOrientationPredictionTime request_set_hmd_orientation_prediction_time = 59;
+
 }
 
 // Reliable (TCP) responses to requests
@@ -780,6 +797,7 @@ message Response {
 			int32 filter_opticaltarget_controller_id = 35;
 			bool filter_use_stabilization = 36;
 			float filter_stabilization_min_scale = 37;
+            float ang_prediction_time = 38;
         }
         repeated ControllerInfo controllers = 1;
         string host_serial = 2;
@@ -895,7 +913,7 @@ message Response {
             TrackingColorType tracking_color_type = 3;
             string device_path = 4;
             string orientation_filter = 5;
-            string position_filter = 6;            
+            string position_filter = 6;
             float prediction_time = 7;
 			
 			// PSMoveServiceEx
@@ -909,6 +927,7 @@ message Response {
 			float filter_prediction_smoothing = 13;
 			float filter_lowpassoptical_smoothing = 14;
 			float filter_lowpassoptical_distance = 15;
+            float ang_prediction_time = 16;
         }
         repeated HMDInfo hmd_entries = 1;
     }

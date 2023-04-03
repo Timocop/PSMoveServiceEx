@@ -83,6 +83,7 @@ public:
 		int GyroGainIndex;
 		std::string GyroGainSetting;
 		float PredictionTime;
+		float AngPredictionTime;
         int GamepadIndex;
 		bool OpticalTracking;
 		bool PSmoveEmulation;
@@ -172,6 +173,7 @@ protected:
 	void request_set_position_filter(const int controller_id, const std::string &filter_name);
 	void request_set_gyroscope_gain_setting(const int controller_id, const std::string& gain_setting);
 	void request_set_controller_prediction(const int controller_id, float prediction_time);
+	void request_set_controller_angular_prediction(const int controller_id, const float prediction_time);
 	void request_set_controller_opticaltracking(const int controller_id, bool enabled);
 	void request_set_controller_psmove_emulation(const int controller_id, bool enabled);
     void request_set_controller_gamepad_index(const int controller_id, const int gamepad_index);

@@ -334,16 +334,28 @@ void AppStage_HMDSettings::renderUI()
 							}
 							ImGui::PopItemWidth();
 
+							ImGui::ProgressBar(hmdInfo.AngPredictionTime / k_max_hmd_prediction_time, ImVec2(195.f - 55.f, 0.f), " ");
+							ImGui::SameLine();
+							ImGui::PushItemWidth(96);
+							if (ImGui::InputFloat("Angular Prediction Time (ms)##AngPredictionTime", &hmdInfo.AngPredictionTime, 0.005f, 0.025f, 3))
+							{
+								hmdInfo.AngPredictionTime = clampf(hmdInfo.AngPredictionTime, 0.f, k_max_hmd_prediction_time);
+								request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.AngPredictionTime);
+							}
+							ImGui::PopItemWidth();
+
 							ImGui::Separator();
 
 							if (ImGui::Button("Reset Filter Defaults"))
 							{
 								hmdInfo.PredictionTime = 0.0f;
+								hmdInfo.AngPredictionTime = 0.0f;
 								hmdInfo.PositionFilterIndex = k_default_hmd_position_filter_index;
 								hmdInfo.OrientationFilterIndex = k_default_morpheus_position_filter_index;
 								hmdInfo.PositionFilterName = k_hmd_position_filter_names[k_default_hmd_position_filter_index];
 								hmdInfo.OrientationFilterName = k_morpheus_orientation_filter_names[k_default_morpheus_position_filter_index];
 								request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
+								request_set_hmd_angular_prediction(hmdInfo.HmdID, hmdInfo.AngPredictionTime);
 								request_set_position_filter(hmdInfo.HmdID, hmdInfo.PositionFilterName);
 								request_set_orientation_filter(hmdInfo.HmdID, hmdInfo.OrientationFilterName);
 							}
@@ -383,9 +395,11 @@ void AppStage_HMDSettings::renderUI()
 							if (ImGui::Button("Reset Filter Defaults"))
 							{
 								hmdInfo.PredictionTime = 0.0f;
+								hmdInfo.AngPredictionTime = 0.0f;
 								hmdInfo.PositionFilterIndex = k_default_hmd_position_filter_index;
 								hmdInfo.PositionFilterName = k_hmd_position_filter_names[k_default_hmd_position_filter_index];
 								request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
+								request_set_hmd_angular_prediction(hmdInfo.HmdID, hmdInfo.AngPredictionTime);
 								request_set_position_filter(hmdInfo.HmdID, hmdInfo.PositionFilterName);
 								request_set_orientation_filter(hmdInfo.HmdID, hmdInfo.OrientationFilterName);
 							}
@@ -901,16 +915,30 @@ void AppStage_HMDSettings::request_set_position_filter(
 
 void AppStage_HMDSettings::request_set_hmd_prediction(const int hmd_id, float prediction_time)
 {
-    RequestPtr request(new PSMoveProtocol::Request());
-    request->set_type(PSMoveProtocol::Request_RequestType_SET_HMD_PREDICTION_TIME);
+	RequestPtr request(new PSMoveProtocol::Request());
+	request->set_type(PSMoveProtocol::Request_RequestType_SET_HMD_PREDICTION_TIME);
 
-    PSMoveProtocol::Request_RequestSetHMDPredictionTime *calibration =
-        request->mutable_request_set_hmd_prediction_time();
+	PSMoveProtocol::Request_RequestSetHMDPredictionTime *calibration =
+		request->mutable_request_set_hmd_prediction_time();
 
-    calibration->set_hmd_id(hmd_id);
-    calibration->set_prediction_time(prediction_time);
+	calibration->set_hmd_id(hmd_id);
+	calibration->set_prediction_time(prediction_time);
 
-    PSM_SendOpaqueRequest(&request, nullptr);
+	PSM_SendOpaqueRequest(&request, nullptr);
+}
+
+void AppStage_HMDSettings::request_set_hmd_angular_prediction(const int hmd_id, float prediction_time)
+{
+	RequestPtr request(new PSMoveProtocol::Request());
+	request->set_type(PSMoveProtocol::Request_RequestType_SET_HMD_ANG_PREDICTION_TIME);
+
+	PSMoveProtocol::Request_RequestSetHmdOrientationPredictionTime *calibration =
+		request->mutable_request_set_hmd_orientation_prediction_time();
+
+	calibration->set_hmd_id(hmd_id);
+	calibration->set_ang_prediction_time(prediction_time);
+
+	PSM_SendOpaqueRequest(&request, nullptr);
 }
 
 void AppStage_HMDSettings::request_set_hmd_tracking_color_id(
@@ -1019,7 +1047,8 @@ void AppStage_HMDSettings::handle_hmd_list_response(
 
                 HmdInfo.TrackingColorType = static_cast<PSMTrackingColorType>(HmdResponse.tracking_color_type());
                 HmdInfo.DevicePath = HmdResponse.device_path();
-                HmdInfo.PredictionTime = HmdResponse.prediction_time();
+				HmdInfo.PredictionTime = HmdResponse.prediction_time();
+				HmdInfo.AngPredictionTime = HmdResponse.ang_prediction_time();
                 HmdInfo.OrientationFilterName= HmdResponse.orientation_filter();
                 HmdInfo.PositionFilterName = HmdResponse.position_filter();
 

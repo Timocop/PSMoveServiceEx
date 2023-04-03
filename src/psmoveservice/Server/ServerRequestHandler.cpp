@@ -422,6 +422,14 @@ public:
 				response = new PSMoveProtocol::Response;
 				handle_request__set_controller_magnetometer_basic_calibration(context, response);
 				break;
+			case PSMoveProtocol::Request_RequestType_SET_CONTROLLER_ANG_PREDICTION_TIME:
+				response = new PSMoveProtocol::Response;
+				handle_request__set_controller_orientation_prediction_time(context, response);
+				break;
+			case PSMoveProtocol::Request_RequestType_SET_HMD_ANG_PREDICTION_TIME:
+				response = new PSMoveProtocol::Response;
+				handle_request__set_hmd_orientation_prediction_time(context, response);
+				break;
 
             default:
                 assert(0 && "Whoops, bad request!");
@@ -696,7 +704,8 @@ protected:
                 std::string gyro_gain_setting = "";
 				std::string controller_hand= "";
 
-                float prediction_time = 0.f;
+				float prediction_time = 0.f;
+				float ang_prediction_time = 0.f;
 				bool enable_optical_tracking = true;
 				bool psmove_emulation = false;
 
@@ -738,6 +747,7 @@ protected:
                         firmware_version = config->firmware_version;
                         firmware_revision = config->firmware_revision;
 						prediction_time = config->prediction_time;
+						ang_prediction_time = config->ang_prediction_time;
 						enable_optical_tracking = config->enable_optical_tracking;
 						controller_hand= config->hand;
                         has_magnetometer = controller->getSupportsMagnetometer();
@@ -816,7 +826,8 @@ protected:
 
                         orientation_filter = config->orientation_filter_type;
                         position_filter = config->position_filter_type;
-                        prediction_time = config->prediction_time;
+						prediction_time = config->prediction_time;
+						ang_prediction_time = config->ang_prediction_time;
 						controller_hand= config->hand;
 
 						filter_prediction_distance = config->filter_prediction_distance;
@@ -833,7 +844,8 @@ protected:
                         const VirtualControllerConfig *config = controller->getConfig();
 
                         position_filter = config->position_filter_type;
-                        prediction_time = config->prediction_time;
+						prediction_time = config->prediction_time;
+						ang_prediction_time = config->ang_prediction_time;
 						enable_optical_tracking = config->enable_optical_tracking;
 						psmove_emulation = config->psmove_emulation;
 
@@ -874,7 +886,8 @@ protected:
                 controller_info->set_orientation_filter(orientation_filter);
                 controller_info->set_position_filter(position_filter);
                 controller_info->set_gyro_gain_setting(gyro_gain_setting);
-                controller_info->set_prediction_time(prediction_time);
+				controller_info->set_prediction_time(prediction_time);
+				controller_info->set_ang_prediction_time(ang_prediction_time);
                 controller_info->set_gamepad_index(gamepad_index);
 				controller_info->set_opticaltracking(enable_optical_tracking);
 				controller_info->set_psmove_emulation(psmove_emulation);
@@ -1777,6 +1790,70 @@ protected:
 				if (config->prediction_time != request.prediction_time())
 				{
 					config->prediction_time = request.prediction_time();
+					config->save();
+				}
+
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+			}
+			else
+			{
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+			}
+		}
+		else
+		{
+			response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+		}
+	}
+
+	void handle_request__set_controller_orientation_prediction_time(
+		const RequestContext &context,
+		PSMoveProtocol::Response *response)
+	{
+		const int controller_id = context.request->request_set_controller_orientation_prediction_time().controller_id();
+
+		ServerControllerViewPtr ControllerView = m_device_manager.getControllerViewPtr(controller_id);
+		const PSMoveProtocol::Request_RequestSetControllerOrientationPredictionTime &request =
+			context.request->request_set_controller_orientation_prediction_time();
+
+		if (ControllerView && ControllerView->getIsOpen())
+		{
+			if (ControllerView->getControllerDeviceType() == CommonDeviceState::PSDualShock4)
+			{
+				PSDualShock4Controller *controller = ControllerView->castChecked<PSDualShock4Controller>();
+				PSDualShock4ControllerConfig config = *controller->getConfig();
+
+				if (config.ang_prediction_time != request.ang_prediction_time())
+				{
+					config.ang_prediction_time = request.ang_prediction_time();
+
+					controller->setConfig(&config);
+				}
+
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+			}
+			else if (ControllerView->getControllerDeviceType() == CommonDeviceState::PSMove)
+			{
+				PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
+				PSMoveControllerConfig config = *controller->getConfig();
+
+				if (config.ang_prediction_time != request.ang_prediction_time())
+				{
+					config.ang_prediction_time = request.ang_prediction_time();
+
+					controller->setConfig(&config);
+				}
+
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+			}
+			else if (ControllerView->getControllerDeviceType() == CommonDeviceState::VirtualController)
+			{
+				VirtualController *controller = ControllerView->castChecked<VirtualController>();
+				VirtualControllerConfig *config = controller->getConfigMutable();
+
+				if (config->ang_prediction_time != request.ang_prediction_time())
+				{
+					config->ang_prediction_time = request.ang_prediction_time();
 					config->save();
 				}
 
@@ -3573,7 +3650,8 @@ protected:
                         const MorpheusHMD *morpheusHMD= hmd_view->castCheckedConst<MorpheusHMD>();
                         const MorpheusHMDConfig *config= morpheusHMD->getConfig();
 
-                        hmd_info->set_prediction_time(config->prediction_time);
+						hmd_info->set_prediction_time(config->prediction_time);
+						hmd_info->set_ang_prediction_time(config->ang_prediction_time);
                         hmd_info->set_orientation_filter(config->orientation_filter_type);
                         hmd_info->set_position_filter(config->position_filter_type);
 
@@ -3596,7 +3674,8 @@ protected:
                         const VirtualHMD *virtualHMD= hmd_view->castCheckedConst<VirtualHMD>();
                         const VirtualHMDConfig *config= virtualHMD->getConfig();
 
-                        hmd_info->set_prediction_time(config->prediction_time);
+						hmd_info->set_prediction_time(config->prediction_time);
+						hmd_info->set_ang_prediction_time(config->ang_prediction_time);
                         hmd_info->set_position_filter(config->position_filter_type);
 
 						offset_orientation.set(config->offset_orientation.x, config->offset_orientation.y, config->offset_orientation.z);
@@ -3973,54 +4052,103 @@ protected:
         }
     }
 
-    void handle_request__set_hmd_prediction_time(
-        const RequestContext &context,
-        PSMoveProtocol::Response *response)
-    {
-        const int hmd_id = context.request->request_set_hmd_prediction_time().hmd_id();
+	void handle_request__set_hmd_prediction_time(
+		const RequestContext &context,
+		PSMoveProtocol::Response *response)
+	{
+		const int hmd_id = context.request->request_set_hmd_prediction_time().hmd_id();
 
-        ServerHMDViewPtr HmdView = m_device_manager.getHMDViewPtr(hmd_id);
-        const PSMoveProtocol::Request_RequestSetHMDPredictionTime &request =
-            context.request->request_set_hmd_prediction_time();
+		ServerHMDViewPtr HmdView = m_device_manager.getHMDViewPtr(hmd_id);
+		const PSMoveProtocol::Request_RequestSetHMDPredictionTime &request =
+			context.request->request_set_hmd_prediction_time();
 
-        if (HmdView && HmdView->getIsOpen())
-        {
-            if (HmdView->getHMDDeviceType() == CommonDeviceState::Morpheus)
-            {
-                MorpheusHMD *hmd = HmdView->castChecked<MorpheusHMD>();
-                MorpheusHMDConfig *config = hmd->getConfigMutable();
+		if (HmdView && HmdView->getIsOpen())
+		{
+			if (HmdView->getHMDDeviceType() == CommonDeviceState::Morpheus)
+			{
+				MorpheusHMD *hmd = HmdView->castChecked<MorpheusHMD>();
+				MorpheusHMDConfig *config = hmd->getConfigMutable();
 
-                if (config->prediction_time != request.prediction_time())
-                {
-                    config->prediction_time = request.prediction_time();
-                    config->save();
-                }
+				if (config->prediction_time != request.prediction_time())
+				{
+					config->prediction_time = request.prediction_time();
+					config->save();
+				}
 
-                response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
-            }
-            else if (HmdView->getHMDDeviceType() == CommonDeviceState::VirtualHMD)
-            {
-                VirtualHMD *hmd = HmdView->castChecked<VirtualHMD>();
-                VirtualHMDConfig *config = hmd->getConfigMutable();
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+			}
+			else if (HmdView->getHMDDeviceType() == CommonDeviceState::VirtualHMD)
+			{
+				VirtualHMD *hmd = HmdView->castChecked<VirtualHMD>();
+				VirtualHMDConfig *config = hmd->getConfigMutable();
 
-                if (config->prediction_time != request.prediction_time())
-                {
-                    config->prediction_time = request.prediction_time();
-                    config->save();
-                }
+				if (config->prediction_time != request.prediction_time())
+				{
+					config->prediction_time = request.prediction_time();
+					config->save();
+				}
 
-                response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
-            }
-            else
-            {
-                response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
-            }
-        }
-        else
-        {
-            response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
-        }
-    }
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+			}
+			else
+			{
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+			}
+		}
+		else
+		{
+			response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+		}
+	}
+
+	void handle_request__set_hmd_orientation_prediction_time(
+		const RequestContext &context,
+		PSMoveProtocol::Response *response)
+	{
+		const int hmd_id = context.request->request_set_hmd_orientation_prediction_time().hmd_id();
+
+		ServerHMDViewPtr HmdView = m_device_manager.getHMDViewPtr(hmd_id);
+		const PSMoveProtocol::Request_RequestSetHmdOrientationPredictionTime &request =
+			context.request->request_set_hmd_orientation_prediction_time();
+
+		if (HmdView && HmdView->getIsOpen())
+		{
+			if (HmdView->getHMDDeviceType() == CommonDeviceState::Morpheus)
+			{
+				MorpheusHMD *hmd = HmdView->castChecked<MorpheusHMD>();
+				MorpheusHMDConfig *config = hmd->getConfigMutable();
+
+				if (config->ang_prediction_time != request.ang_prediction_time())
+				{
+					config->ang_prediction_time = request.ang_prediction_time();
+					config->save();
+				}
+
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+			}
+			else if (HmdView->getHMDDeviceType() == CommonDeviceState::VirtualHMD)
+			{
+				VirtualHMD *hmd = HmdView->castChecked<VirtualHMD>();
+				VirtualHMDConfig *config = hmd->getConfigMutable();
+
+				if (config->ang_prediction_time != request.ang_prediction_time())
+				{
+					config->ang_prediction_time = request.ang_prediction_time();
+					config->save();
+				}
+
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+			}
+			else
+			{
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+			}
+		}
+		else
+		{
+			response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+		}
+	}
 
     void handle_request__set_hmd_data_stream_tracker_index(
         const RequestContext &context,

@@ -743,7 +743,7 @@ void AppStage_ControllerSettings::renderUI()
 													show_orientation_filter_tooltip(controllerInfo.OrientationFilterName);
 												}
 											}
-											
+
 											ImGui::ProgressBar(controllerInfo.PredictionTime / k_max_hmd_prediction_time, ImVec2(195.f - 55.f, 0.f), " ");
 											ImGui::SameLine();
 											ImGui::PushItemWidth(96);
@@ -754,14 +754,29 @@ void AppStage_ControllerSettings::renderUI()
 											}
 											ImGui::PopItemWidth();
 
+											if (controllerInfo.ControllerType == PSMController_Move)
+											{
+												ImGui::ProgressBar(controllerInfo.AngPredictionTime / k_max_hmd_prediction_time, ImVec2(195.f - 55.f, 0.f), " ");
+												ImGui::SameLine();
+												ImGui::PushItemWidth(96);
+												if (ImGui::InputFloat("Angular Prediction Time (ms)##AngPredictionTime", &controllerInfo.AngPredictionTime, 0.005f, 0.025f, 3))
+												{
+													controllerInfo.AngPredictionTime = clampf(controllerInfo.AngPredictionTime, 0.f, k_max_hmd_prediction_time);
+													request_set_controller_angular_prediction(controllerInfo.ControllerID, controllerInfo.AngPredictionTime);
+												}
+												ImGui::PopItemWidth();
+											}
+
 											ImGui::Separator();
 
 											if (ImGui::Button("Reset Filter Defaults"))
 											{
 												controllerInfo.PredictionTime = 0.0f;
+												controllerInfo.AngPredictionTime = 0.0f;
 												controllerInfo.PositionFilterIndex = k_default_position_filter_index;
 												controllerInfo.PositionFilterName = k_controller_position_filter_names[k_default_position_filter_index];
 												request_set_controller_prediction(controllerInfo.ControllerID, controllerInfo.PredictionTime);
+												request_set_controller_angular_prediction(controllerInfo.ControllerID, controllerInfo.AngPredictionTime);
 												request_set_position_filter(controllerInfo.ControllerID, controllerInfo.PositionFilterName);
 
 												if (controllerInfo.ControllerType == PSMController_Move)
@@ -812,11 +827,22 @@ void AppStage_ControllerSettings::renderUI()
 											}
 											ImGui::PopItemWidth();
 
+											ImGui::ProgressBar(controllerInfo.AngPredictionTime / k_max_hmd_prediction_time, ImVec2(195.f - 55.f, 0.f), " ");
+											ImGui::SameLine();
+											ImGui::PushItemWidth(96);
+											if (ImGui::InputFloat("Angular Prediction Time (ms)##AngPredictionTime", &controllerInfo.AngPredictionTime, 0.005f, 0.025f, 3))
+											{
+												controllerInfo.AngPredictionTime = clampf(controllerInfo.AngPredictionTime, 0.f, k_max_hmd_prediction_time);
+												request_set_controller_angular_prediction(controllerInfo.ControllerID, controllerInfo.AngPredictionTime);
+											}
+											ImGui::PopItemWidth();
+
 											ImGui::Separator();
 
 											if (ImGui::Button("Reset Filter Defaults"))
 											{
 												controllerInfo.PredictionTime = 0.0f;
+												controllerInfo.AngPredictionTime = 0.0f;
 												controllerInfo.PositionFilterIndex = k_default_ds4_position_filter_index;
 												controllerInfo.OrientationFilterIndex = k_default_ds4_orientation_filter_index;
 												controllerInfo.GyroGainIndex = k_default_ds4_gyro_gain_index;
@@ -824,6 +850,7 @@ void AppStage_ControllerSettings::renderUI()
 												controllerInfo.OrientationFilterName = k_ds4_orientation_filter_names[k_default_ds4_orientation_filter_index];
 												controllerInfo.GyroGainSetting = k_ds4_gyro_gain_setting_labels[k_default_ds4_gyro_gain_index];
 												request_set_controller_prediction(controllerInfo.ControllerID, controllerInfo.PredictionTime);
+												request_set_controller_angular_prediction(controllerInfo.ControllerID, controllerInfo.AngPredictionTime);
 												request_set_position_filter(controllerInfo.ControllerID, controllerInfo.PositionFilterName);
 												request_set_orientation_filter(controllerInfo.ControllerID, controllerInfo.OrientationFilterName);
 												request_set_gyroscope_gain_setting(controllerInfo.ControllerID, controllerInfo.GyroGainSetting);
@@ -1618,6 +1645,24 @@ void AppStage_ControllerSettings::request_set_controller_prediction(
 	PSM_EatResponse(request_id);
 }
 
+void AppStage_ControllerSettings::request_set_controller_angular_prediction(
+	const int controller_id,
+	const float prediction_time)
+{
+	RequestPtr request(new PSMoveProtocol::Request());
+	request->set_type(PSMoveProtocol::Request_RequestType_SET_CONTROLLER_ANG_PREDICTION_TIME);
+
+	PSMoveProtocol::Request_RequestSetControllerOrientationPredictionTime *calibration =
+		request->mutable_request_set_controller_orientation_prediction_time();
+
+	calibration->set_controller_id(controller_id);
+	calibration->set_ang_prediction_time(prediction_time); // keep existing drift
+
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_EatResponse(request_id);
+}
+
 void AppStage_ControllerSettings::request_set_controller_opticaltracking(
 	const int controller_id,
 	const bool enabled)
@@ -1782,6 +1827,7 @@ void AppStage_ControllerSettings::handle_controller_list_response(
                 ControllerInfo.PositionFilterName = ControllerResponse.position_filter();
                 ControllerInfo.GyroGainSetting = ControllerResponse.gyro_gain_setting();
 				ControllerInfo.PredictionTime = ControllerResponse.prediction_time();
+				ControllerInfo.AngPredictionTime = ControllerResponse.ang_prediction_time();
                 ControllerInfo.GamepadIndex = ControllerResponse.gamepad_index();
 				ControllerInfo.ControllerHand = static_cast<PSMControllerHand>(ControllerResponse.controller_hand());
 				ControllerInfo.OpticalTracking = ControllerResponse.opticaltracking();
