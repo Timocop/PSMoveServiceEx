@@ -523,7 +523,8 @@ PSMoveControllerConfig::config2ptree()
 	pt.put("bt_firmware_version", bt_firmware_version);
 	pt.put("firmware_revision", firmware_revision);
 
-    pt.put("prediction_time", prediction_time);
+	pt.put("prediction_time", prediction_time);
+	pt.put("ang_prediction_time", ang_prediction_time);
 	pt.put("max_poll_failure_timeout_ms", max_poll_failure_timeout_ms);
 	pt.put("max_hid_poll_timeout_ms", max_hid_poll_timeout_ms);
 	pt.put("enable_optical_tracking", enable_optical_tracking);
@@ -637,7 +638,8 @@ PSMoveControllerConfig::ptree2config(const boost::property_tree::ptree &pt)
 		bt_firmware_version = pt.get<unsigned short>("bt_firmware_version", 0);
 		firmware_revision = pt.get<unsigned short>("firmware_revision", 0);
 
-        prediction_time = pt.get<float>("prediction_time", prediction_time);
+		prediction_time = pt.get<float>("prediction_time", prediction_time);
+		ang_prediction_time = pt.get<float>("ang_prediction_time", ang_prediction_time);
 		max_poll_failure_timeout_ms = pt.get<long>("max_poll_failure_timeout_ms", max_poll_failure_timeout_ms);
 		max_hid_poll_timeout_ms = pt.get<long>("max_hid_poll_timeout_ms", max_hid_poll_timeout_ms);
 		enable_optical_tracking = pt.get<bool>("enable_optical_tracking", enable_optical_tracking);
@@ -1912,6 +1914,11 @@ float PSMoveController::getIdentityForwardDegrees() const
 float PSMoveController::getPredictionTime() const
 {
 	return getConfig()->prediction_time;
+}
+
+float PSMoveController::getOrientationPredictionTime() const
+{
+	return getConfig()->ang_prediction_time;
 }
 
 bool PSMoveController::getWasSystemButtonPressed() const

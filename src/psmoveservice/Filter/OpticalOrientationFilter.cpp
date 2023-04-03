@@ -337,8 +337,8 @@ void OrientationTargetOpticalARG::UpdateComplementaryMARG(const float delta_time
 			const Eigen::Quaternionf new_orientation =
 				eigen_quaternion_normalized_lerp(ar_orientation, mg_orientation, mg_weight);
 
-			const Eigen::Vector3f new_angular_velocity = Eigen::Vector3f::Zero(); // current_omega;
-			const Eigen::Vector3f new_angular_acceleration = Eigen::Vector3f::Zero(); // (current_omega - m_state->angular_velocity) / delta_time;
+			const Eigen::Vector3f new_angular_velocity = current_omega;
+			const Eigen::Vector3f new_angular_acceleration = (current_omega - m_state->angular_velocity) / delta_time;
 
 			m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, delta_time);
 		}
@@ -371,8 +371,8 @@ void OrientationTargetOpticalARG::UpdateOpticalTarget(const float delta_time, co
 				IControllerInterface *current_controller = ControllerView->castChecked<IControllerInterface>();
 				IControllerInterface *other_controller = OtherControllerView->castChecked<IControllerInterface>();
 
-				CommonDevicePosition dev_pos = ControllerView->getFilteredPose(current_controller->getPredictionTime()).PositionCm;
-				CommonDevicePosition dev_other_pos = OtherControllerView->getFilteredPose(other_controller->getPredictionTime()).PositionCm;
+				CommonDevicePosition dev_pos = ControllerView->getFilteredPose(current_controller->getPredictionTime(), current_controller->getOrientationPredictionTime()).PositionCm;
+				CommonDevicePosition dev_other_pos = OtherControllerView->getFilteredPose(other_controller->getPredictionTime(), other_controller->getOrientationPredictionTime()).PositionCm;
 				Eigen::Vector3f pos = Eigen::Vector3f(dev_pos.x, dev_pos.y, dev_pos.z);
 				Eigen::Vector3f other_pos = Eigen::Vector3f(dev_other_pos.x, dev_other_pos.y, dev_other_pos.z);
 

@@ -546,7 +546,7 @@ void PositionFilterExternalAttachment::update(
 		}
 
 		Eigen::Vector3f joint_position = parent_controller_view->getPoseFilter()->getPositionCm(current_controller->getPredictionTime());
-		Eigen::Quaternionf joint_orientation = parent_controller_view->getPoseFilter()->getOrientation();
+		Eigen::Quaternionf joint_orientation = parent_controller_view->getPoseFilter()->getOrientation(current_controller->getOrientationPredictionTime());
 
 		Eigen::Vector3f prime = Eigen::Vector3f::Zero();
 
@@ -554,7 +554,7 @@ void PositionFilterExternalAttachment::update(
 		rotate_vector_by_quaternion(prime, joint_yaw_offset, prime);
 
 		Eigen::Vector3f tracker_position = joint_position + prime;
-		Eigen::Quaternionf tracker_orientation = current_controller_view->getPoseFilter()->getOrientation();
+		Eigen::Quaternionf tracker_orientation = current_controller_view->getPoseFilter()->getOrientation(current_controller->getOrientationPredictionTime());
 
 		rotate_vector_by_quaternion(tracker_offset, tracker_orientation, prime);
 		rotate_vector_by_quaternion(prime, tracker_yaw_offset, prime);

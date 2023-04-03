@@ -36,7 +36,8 @@ public:
 		, position_variance_exp_fit_b(-0.000567041978f)
 		, orientation_variance(0.005f)
         , max_poll_failure_timeout_ms(1000)
-        , prediction_time(0.f)
+		, prediction_time(0.f)
+		, ang_prediction_time(0.f)
 		, tracking_color_id(eCommonTrackingColorID::Blue)
 		, filter_prediction_distance(10.f)
 		, filter_prediction_smoothing(0.40f)
@@ -173,6 +174,7 @@ public:
 
     long max_poll_failure_timeout_ms;
 	float prediction_time;
+	float ang_prediction_time;
 
 	eCommonTrackingColorID tracking_color_id;
 
@@ -259,6 +261,7 @@ public:
 	bool setTrackingColorID(const eCommonTrackingColorID tracking_color_id) override;
 	bool getTrackingColorID(eCommonTrackingColorID &out_tracking_color_id) const override;
 	float getPredictionTime() const override;
+	float getOrientationPredictionTime() const override;
 
     // -- Getters
     inline const MorpheusHMDConfig *getConfig() const

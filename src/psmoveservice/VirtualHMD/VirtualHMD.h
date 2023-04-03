@@ -25,7 +25,8 @@ public:
 		, mean_update_time_delta(0.008333f)
 		, position_variance_exp_fit_a(0.0994158462f)
 		, position_variance_exp_fit_b(-0.000567041978f)
-        , prediction_time(0.f)
+		, prediction_time(0.f)
+		, ang_prediction_time(0.f)
 		, tracking_color_id(eCommonTrackingColorID::Blue)
         , bulb_radius(2.25f) // The radius of the psmove tracking bulb in cm
 		, filter_prediction_distance(10.f)
@@ -69,6 +70,7 @@ public:
 	}
 
 	float prediction_time;
+	float ang_prediction_time;
 
 	eCommonTrackingColorID tracking_color_id;
     float bulb_radius;
@@ -127,6 +129,7 @@ public:
 	bool setTrackingColorID(const eCommonTrackingColorID tracking_color_id) override;
 	bool getTrackingColorID(eCommonTrackingColorID &out_tracking_color_id) const override;
 	float getPredictionTime() const override;
+	float getOrientationPredictionTime() const override;
 
     // -- Getters
     inline const VirtualHMDConfig *getConfig() const

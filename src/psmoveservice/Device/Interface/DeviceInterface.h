@@ -549,6 +549,9 @@ public:
 	// Get the state prediction time specified in the controller config
 	virtual float getPredictionTime() const = 0;
 
+	// Get the state orientation prediction time specified in the controller config
+	virtual float getOrientationPredictionTime() const = 0;
+
     // See if the system button was pressed this frame
     virtual bool getWasSystemButtonPressed() const = 0;
 };
@@ -670,6 +673,9 @@ public:
 
 	// Get the state prediction time from the HMD config
 	virtual float getPredictionTime() const = 0;
+
+	// Get the state orientation prediction time from the HMD config
+	virtual float getOrientationPredictionTime() const = 0;
 };
 
 #endif // DEVICE_INTERFACE_H

@@ -47,7 +47,8 @@ VirtualControllerConfig::config2ptree()
 	pt.put("Offsets.Scale.Y", offset_scale.y);
 	pt.put("Offsets.Scale.Z", offset_scale.z);
 
-    pt.put("prediction_time", prediction_time);
+	pt.put("prediction_time", prediction_time);
+	pt.put("ang_prediction_time", ang_prediction_time);
     pt.put("bulb_radius", bulb_radius);
 
 	pt.put("hand", hand);
@@ -75,7 +76,8 @@ VirtualControllerConfig::ptree2config(const boost::property_tree::ptree &pt)
 		psmove_emulation = pt.get<bool>("psmove_emulation", psmove_emulation);
 		enable_optical_tracking = pt.get<bool>("enable_optical_tracking", enable_optical_tracking);
 
-        prediction_time = pt.get<float>("prediction_time", prediction_time);
+		prediction_time = pt.get<float>("prediction_time", prediction_time);
+		ang_prediction_time = pt.get<float>("ang_prediction_time", ang_prediction_time);
 
         position_variance_exp_fit_a = pt.get<float>("Calibration.Position.VarianceExpFitA", position_variance_exp_fit_a);
         position_variance_exp_fit_b = pt.get<float>("Calibration.Position.VarianceExpFitB", position_variance_exp_fit_b);
@@ -446,6 +448,11 @@ float VirtualController::getIdentityForwardDegrees() const
 float VirtualController::getPredictionTime() const
 {
 	return getConfig()->prediction_time;
+}
+
+float VirtualController::getOrientationPredictionTime() const
+{
+	return getConfig()->ang_prediction_time;
 }
 
 bool VirtualController::getWasSystemButtonPressed() const

@@ -1055,6 +1055,11 @@ float PSNaviController::getPredictionTime() const
 	return 0.f; // No state prediction on the psnavi
 }
 
+float PSNaviController::getOrientationPredictionTime() const
+{
+	return 0.f; // No state prediction on the psnavi
+}
+
 bool PSNaviController::getWasSystemButtonPressed() const
 {
     const PSNaviControllerInputState *psnavi_state= static_cast<const PSNaviControllerInputState *>(getState());

@@ -1194,7 +1194,7 @@ bool ServerControllerView::setHostBluetoothAddress(
 }
 
 CommonDevicePose
-ServerControllerView::getFilteredPose(float time) const
+ServerControllerView::getFilteredPose(float time, float ang_time) const
 {
     CommonDevicePose pose;
 
@@ -1213,7 +1213,7 @@ ServerControllerView::getFilteredPose(float time) const
 			const CommonDevicePosition offset_scale = psmove->getConfig()->offset_scale;
 
 			Eigen::Quaternionf orientation = m_pose_filter->getOrientation(
-				time,
+				ang_time,
 				offset_orientation.x,
 				offset_orientation.y,
 				offset_orientation.z,
@@ -1253,7 +1253,7 @@ ServerControllerView::getFilteredPose(float time) const
 			const CommonDevicePosition offset_scale = ds4->getConfig()->offset_scale;
 
 			const Eigen::Quaternionf orientation = m_pose_filter->getOrientation(
-				time,
+				ang_time,
 				offset_orientation.x,
 				offset_orientation.y,
 				offset_orientation.z,
@@ -1293,7 +1293,7 @@ ServerControllerView::getFilteredPose(float time) const
 			const CommonDevicePosition offset_scale = virt->getConfig()->offset_scale;
 
 			const Eigen::Quaternionf orientation = m_pose_filter->getOrientation(
-				time,
+				ang_time,
 				offset_orientation.x,
 				offset_orientation.y,
 				offset_orientation.z,
@@ -1325,7 +1325,7 @@ ServerControllerView::getFilteredPose(float time) const
 			break;
 		}
 		default:
-			const Eigen::Quaternionf orientation = m_pose_filter->getOrientation(time);
+			const Eigen::Quaternionf orientation = m_pose_filter->getOrientation(ang_time);
 			const Eigen::Vector3f position_cm = m_pose_filter->getPositionCm(time);
 
 			// Playspace
@@ -1843,7 +1843,7 @@ static void generate_psmove_data_frame_for_stream(
     const IPoseFilter *pose_filter= controller_view->getPoseFilter();
     const PSMoveControllerConfig *psmove_config= psmove_controller->getConfig();
     const CommonControllerState *controller_state= controller_view->getState();
-    const CommonDevicePose controller_pose = controller_view->getFilteredPose(psmove_config->prediction_time);
+    const CommonDevicePose controller_pose = controller_view->getFilteredPose(psmove_config->prediction_time, psmove_config->ang_prediction_time);
 
     auto *controller_data_frame= data_frame->mutable_controller_data_packet();
     auto *psmove_data_frame = controller_data_frame->mutable_psmove_state();
@@ -2088,7 +2088,7 @@ static void generate_psdualshock4_data_frame_for_stream(
     const IPoseFilter *pose_filter= controller_view->getPoseFilter();
     const PSDualShock4ControllerConfig *psmove_config = ds4_controller->getConfig();
     const CommonControllerState *controller_state = controller_view->getState();
-    const CommonDevicePose controller_pose = controller_view->getFilteredPose(psmove_config->prediction_time);
+    const CommonDevicePose controller_pose = controller_view->getFilteredPose(psmove_config->prediction_time, psmove_config->ang_prediction_time);
 
     auto *controller_data_frame = data_frame->mutable_controller_data_packet();
     auto *psds4_data_frame = controller_data_frame->mutable_psdualshock4_state();
@@ -2331,7 +2331,7 @@ static void generate_virtual_controller_data_frame_for_stream(
     const IPoseFilter *pose_filter= controller_view->getPoseFilter();
     const VirtualControllerConfig *controller_config= virtual_controller->getConfig();
     const CommonControllerState *controller_state= controller_view->getState();
-    const CommonDevicePose controller_pose = controller_view->getFilteredPose(controller_config->prediction_time);
+    const CommonDevicePose controller_pose = controller_view->getFilteredPose(controller_config->prediction_time, controller_config->ang_prediction_time);
 
 	// ###Externet $TODO Emulate PSmove so we can transmit orientation data without changing the protocol.
 	//					 This is super hacky. Sadly the gamepad functionality falls away(?).

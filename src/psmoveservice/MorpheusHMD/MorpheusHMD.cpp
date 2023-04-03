@@ -250,6 +250,7 @@ MorpheusHMDConfig::config2ptree()
 	pt.put("Offsets.Scale.Z", offset_scale.z);
 
 	pt.put("prediction_time", prediction_time);
+	pt.put("ang_prediction_time", ang_prediction_time);
 	pt.put("max_poll_failure_timeout_ms", max_poll_failure_timeout_ms);
 
 	pt.put("FilterSettings.PredictionDistance", filter_prediction_distance);
@@ -274,6 +275,7 @@ MorpheusHMDConfig::ptree2config(const boost::property_tree::ptree &pt)
 		disable_command_interface= pt.get<bool>("disable_command_interface", disable_command_interface);
 
 		prediction_time = pt.get<float>("prediction_time", prediction_time);
+		ang_prediction_time = pt.get<float>("ang_prediction_time", ang_prediction_time);
 		max_poll_failure_timeout_ms = pt.get<long>("max_poll_failure_timeout_ms", max_poll_failure_timeout_ms);
 
 		// Use the current accelerometer values (constructor defaults) as the default values
@@ -677,10 +679,16 @@ MorpheusHMD::getTrackingColorID(eCommonTrackingColorID &out_tracking_color_id) c
 	return true;
 }
 
-float 
+float
 MorpheusHMD::getPredictionTime() const
 {
 	return getConfig()->prediction_time;
+}
+
+float
+MorpheusHMD::getOrientationPredictionTime() const
+{
+	return getConfig()->ang_prediction_time;
 }
 
 const CommonDeviceState *

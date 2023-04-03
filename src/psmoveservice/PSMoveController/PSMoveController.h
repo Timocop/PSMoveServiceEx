@@ -42,7 +42,8 @@ public:
 		, firmware_revision(0)
 		, max_poll_failure_timeout_ms(1000)
         , max_hid_poll_timeout_ms(1000)
-        , prediction_time(0.f)
+		, prediction_time(0.f)
+		, ang_prediction_time(0.f)
 		, enable_optical_tracking(true)
 		, position_filter_type("LowPassOptical")
 		, orientation_filter_type("ComplementaryMARG")
@@ -114,7 +115,8 @@ public:
 	long max_hid_poll_timeout_ms;
 
 	// The amount of prediction to apply to the controller pose after filtering
-    float prediction_time;
+	float prediction_time;
+	float ang_prediction_time;
 	
 	// Enable or disable optical tracking.
 	bool enable_optical_tracking;
@@ -323,7 +325,8 @@ public:
 	virtual bool getTrackingColorID(eCommonTrackingColorID &out_tracking_color_id) const override;
 	virtual float getIdentityForwardDegrees() const override;
 	virtual float getPredictionTime() const override;
-    virtual bool getWasSystemButtonPressed() const override;
+	virtual float getOrientationPredictionTime() const override;
+	virtual bool getWasSystemButtonPressed() const override;
 
     // -- Getters
     inline const PSMoveControllerConfig *getConfig() const

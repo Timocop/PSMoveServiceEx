@@ -354,8 +354,8 @@ void OrientationFilterMadgwickARG::update(const float delta_time, const PoseFilt
 		// Derive the second derivative
 		{
 			const Eigen::Quaternionf &new_orientation = SEq_new;
-			const Eigen::Vector3f new_angular_velocity= Eigen::Vector3f::Zero(); // current_omega;
-			const Eigen::Vector3f new_angular_acceleration= Eigen::Vector3f::Zero(); // (current_omega - m_state->angular_velocity) / delta_time;
+			const Eigen::Vector3f new_angular_velocity= current_omega;
+			const Eigen::Vector3f new_angular_acceleration= (current_omega - m_state->angular_velocity) / delta_time;
 
 			m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, delta_time);
 		}
@@ -485,8 +485,8 @@ void OrientationFilterMadgwickMARG::update(const float delta_time, const PoseFil
 		// Derive the second derivative
 		{
 			const Eigen::Quaternionf &new_orientation = SEq_new;
-			const Eigen::Vector3f new_angular_velocity = Eigen::Vector3f::Zero(); //(corrected_omega.x(), corrected_omega.y(), corrected_omega.z());
-			const Eigen::Vector3f new_angular_acceleration = Eigen::Vector3f::Zero(); //(new_angular_velocity - m_state->angular_velocity) / delta_time;
+			const Eigen::Vector3f new_angular_velocity = Eigen::Vector3f(corrected_omega.x(), corrected_omega.y(), corrected_omega.z());
+			const Eigen::Vector3f new_angular_acceleration = (new_angular_velocity - m_state->angular_velocity) / delta_time;
 
 			m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, delta_time);
 		}
@@ -816,8 +816,8 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 			// The final rotation is a blend between the integrated orientation and absolute rotation from the earth-frame
 			const Eigen::Quaternionf new_orientation =
 				eigen_quaternion_normalized_lerp(ar_orientation, mg_orientation, mg_weight);
-			const Eigen::Vector3f new_angular_velocity = Eigen::Vector3f::Zero(); // current_omega;
-			const Eigen::Vector3f new_angular_acceleration = Eigen::Vector3f::Zero(); // (current_omega - m_state->angular_velocity) / delta_time;
+			const Eigen::Vector3f new_angular_velocity = current_omega;
+			const Eigen::Vector3f new_angular_acceleration = (current_omega - m_state->angular_velocity) / delta_time;
 
 			m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, delta_time);
 		}

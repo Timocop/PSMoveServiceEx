@@ -518,7 +518,8 @@ PSDualShock4ControllerConfig::config2ptree()
 	pt.put("Offsets.Scale.Y", offset_scale.y);
 	pt.put("Offsets.Scale.Z", offset_scale.z);
 
-    pt.put("prediction_time", prediction_time);
+	pt.put("prediction_time", prediction_time);
+	pt.put("ang_prediction_time", ang_prediction_time);
     pt.put("max_poll_failure_timeout_ms", max_poll_failure_timeout_ms);
 
 	pt.put("hand", hand);
@@ -541,7 +542,8 @@ PSDualShock4ControllerConfig::ptree2config(const boost::property_tree::ptree &pt
     if (version == PSDualShock4ControllerConfig::CONFIG_VERSION)
     {
         is_valid = pt.get<bool>("is_valid", false);
-        prediction_time = pt.get<float>("prediction_time", prediction_time);
+		prediction_time = pt.get<float>("prediction_time", prediction_time);
+		ang_prediction_time = pt.get<float>("ang_prediction_time", ang_prediction_time);
 		max_poll_failure_timeout_ms = pt.get<long>("max_poll_failure_timeout_ms", max_poll_failure_timeout_ms);
 
         // Use the current accelerometer values (constructor defaults) as the default values
@@ -1308,6 +1310,11 @@ float PSDualShock4Controller::getIdentityForwardDegrees() const
 float PSDualShock4Controller::getPredictionTime() const
 {
 	return getConfig()->prediction_time;
+}
+
+float PSDualShock4Controller::getOrientationPredictionTime() const
+{
+	return getConfig()->ang_prediction_time;
 }
 
 bool PSDualShock4Controller::getWasSystemButtonPressed() const

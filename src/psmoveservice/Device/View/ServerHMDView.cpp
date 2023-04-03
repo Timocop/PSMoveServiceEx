@@ -739,7 +739,7 @@ void ServerHMDView::updateStateAndPredict()
 }
 
 CommonDevicePose
-ServerHMDView::getFilteredPose(float time) const
+ServerHMDView::getFilteredPose(float time, float ang_time) const
 {
 	CommonDevicePose pose;
 
@@ -758,7 +758,7 @@ ServerHMDView::getFilteredPose(float time) const
 			const CommonDevicePosition offset_scale = hmd->getConfig()->offset_scale;
 
 			const Eigen::Quaternionf orientation = m_pose_filter->getOrientation(
-				time,
+				ang_time,
 				offset_orientation.x,
 				offset_orientation.y,
 				offset_orientation.z,
@@ -798,7 +798,7 @@ ServerHMDView::getFilteredPose(float time) const
 			const CommonDevicePosition offset_scale = virt->getConfig()->offset_scale;
 
 			const Eigen::Quaternionf orientation = m_pose_filter->getOrientation(
-				time,
+				ang_time,
 				offset_orientation.x,
 				offset_orientation.y,
 				offset_orientation.z,
@@ -830,7 +830,7 @@ ServerHMDView::getFilteredPose(float time) const
 			break;
 		}
 		default:
-			const Eigen::Quaternionf orientation = m_pose_filter->getOrientation(time);
+			const Eigen::Quaternionf orientation = m_pose_filter->getOrientation(ang_time);
 			const Eigen::Vector3f position_cm = m_pose_filter->getPositionCm(time);
 
 			// Playspace
@@ -1430,7 +1430,7 @@ static void generate_morpheus_hmd_data_frame_for_stream(
     const MorpheusHMDConfig *morpheus_config = morpheus_hmd->getConfig();
 	const IPoseFilter *pose_filter = hmd_view->getPoseFilter();
     const CommonHMDState *hmd_state = hmd_view->getState();
-    const CommonDevicePose hmd_pose = hmd_view->getFilteredPose(morpheus_config->prediction_time);
+    const CommonDevicePose hmd_pose = hmd_view->getFilteredPose(morpheus_config->prediction_time, morpheus_config->ang_prediction_time);
 
     PSMoveProtocol::DeviceOutputDataFrame_HMDDataPacket *hmd_data_frame = data_frame->mutable_hmd_data_packet();
 
@@ -1602,7 +1602,7 @@ static void generate_virtual_hmd_data_frame_for_stream(
     const VirtualHMDConfig *virtual_hmd_config = virtual_hmd->getConfig();
 	const IPoseFilter *pose_filter = hmd_view->getPoseFilter();
     const CommonHMDState *hmd_state = hmd_view->getState();
-    const CommonDevicePose hmd_pose = hmd_view->getFilteredPose(virtual_hmd_config->prediction_time);
+    const CommonDevicePose hmd_pose = hmd_view->getFilteredPose(virtual_hmd_config->prediction_time, virtual_hmd_config->ang_prediction_time);
 
     PSMoveProtocol::DeviceOutputDataFrame_HMDDataPacket *hmd_data_frame = data_frame->mutable_hmd_data_packet();
 

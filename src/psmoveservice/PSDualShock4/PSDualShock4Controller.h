@@ -46,8 +46,9 @@ public:
 		, position_filter_type("ComplimentaryOpticalIMU")
 		, orientation_filter_type("ComplementaryOpticalARG")
         , max_poll_failure_timeout_ms(1000)
-        , prediction_time(0.f)
-        , accelerometer_noise_radius(0.015f) // rounded value from config tool measurement (g-units)
+		, prediction_time(0.f)
+		, ang_prediction_time(0.f)
+		, accelerometer_noise_radius(0.015f) // rounded value from config tool measurement (g-units)
 		, accelerometer_variance(1.45e-05f) // rounded value from config tool measurement (g-units^2)
         , max_velocity(1.f)
         , gyro_variance(4.75e-06f) // rounded value from config tool measurement (rad^2/s^2)
@@ -128,7 +129,8 @@ public:
 	// The max number of polling failures before we consider the controller disconnected
     long max_poll_failure_timeout_ms;
 	// The amount of prediction to apply to the controller pose after filtering
-    float prediction_time;
+	float prediction_time;
+	float ang_prediction_time;
 
     // calibrated_acc= raw_acc*acc_gain + acc_bias
     CommonDeviceVector accelerometer_gain;
@@ -304,6 +306,7 @@ public:
 	virtual bool getTrackingColorID(eCommonTrackingColorID &out_tracking_color_id) const override;
 	virtual float getIdentityForwardDegrees() const override;
 	virtual float getPredictionTime() const override;
+	virtual float getOrientationPredictionTime() const override;
     virtual bool getWasSystemButtonPressed() const override;
 
     // -- Getters

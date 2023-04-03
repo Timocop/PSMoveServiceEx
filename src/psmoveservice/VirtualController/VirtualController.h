@@ -30,7 +30,8 @@ public:
 		, mean_update_time_delta(0.008333f)
 		, position_variance_exp_fit_a(0.0994158462f)
 		, position_variance_exp_fit_b(-0.000567041978f)
-        , prediction_time(0.f)
+		, prediction_time(0.f)
+		, ang_prediction_time(0.f)
 		, tracking_color_id(eCommonTrackingColorID::Blue)
         , bulb_radius(2.25f) // The radius of the psmove tracking bulb in cm
 		, hand("Any")
@@ -82,6 +83,7 @@ public:
 	CommonDevicePosition offset_scale;
 
 	float prediction_time;
+	float ang_prediction_time;
 
 	eCommonTrackingColorID tracking_color_id;
     float bulb_radius;
@@ -179,6 +181,7 @@ public:
 	virtual bool getTrackingColorID(eCommonTrackingColorID &out_tracking_color_id) const override;
 	virtual float getIdentityForwardDegrees() const override;
 	virtual float getPredictionTime() const override;
+	virtual float getOrientationPredictionTime() const override;
     virtual bool getWasSystemButtonPressed() const override;
 
     // -- Getters

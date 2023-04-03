@@ -100,7 +100,7 @@ public:
     inline const class IPoseFilter * getPoseFilter() const { return m_pose_filter; }
 
     // Estimate the given pose if the controller at some point into the future
-    CommonDevicePose getFilteredPose(float time= 0.f) const;
+    CommonDevicePose getFilteredPose(float time= 0.f, float ang_time = 0.f) const;
 
     // Get the current physics from the filter position and orientation
     CommonDevicePhysics getFilteredPhysics() const;

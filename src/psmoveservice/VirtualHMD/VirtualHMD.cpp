@@ -52,7 +52,8 @@ VirtualHMDConfig::config2ptree()
 	pt.put("Offsets.Scale.Y", offset_scale.y);
 	pt.put("Offsets.Scale.Z", offset_scale.z);
 
-    pt.put("prediction_time", prediction_time);
+	pt.put("prediction_time", prediction_time);
+	pt.put("ang_prediction_time", ang_prediction_time);
     pt.put("bulb_radius", bulb_radius);
 
 	pt.put("FilterSettings.PredictionDistance", filter_prediction_distance);
@@ -74,7 +75,8 @@ VirtualHMDConfig::ptree2config(const boost::property_tree::ptree &pt)
     {
         is_valid = pt.get<bool>("is_valid", false);
 
-        prediction_time = pt.get<float>("prediction_time", prediction_time);
+		prediction_time = pt.get<float>("prediction_time", prediction_time);
+		ang_prediction_time = pt.get<float>("ang_prediction_time", ang_prediction_time);
 
         position_variance_exp_fit_a = pt.get<float>("Calibration.Position.VarianceExpFitA", position_variance_exp_fit_a);
         position_variance_exp_fit_b = pt.get<float>("Calibration.Position.VarianceExpFitB", position_variance_exp_fit_b);
@@ -295,10 +297,16 @@ VirtualHMD::getTrackingColorID(eCommonTrackingColorID &out_tracking_color_id) co
     return true;
 }
 
-float 
+float
 VirtualHMD::getPredictionTime() const
 {
-    return getConfig()->prediction_time;
+	return getConfig()->prediction_time;
+}
+
+float
+VirtualHMD::getOrientationPredictionTime() const
+{
+	return getConfig()->ang_prediction_time;
 }
 
 const CommonDeviceState *
