@@ -89,7 +89,7 @@ struct GyroscopeNoiseSamples
             PSMVector3f diff_from_mean= PSM_Vector3fSubtract(&error_sample, &mean_omega_error);
             PSMVector3f diff_from_mean_sqrd= PSM_Vector3fSquare(&diff_from_mean);
 
-            var_omega= PSM_Vector3fAdd(&var_omega, &diff_from_mean);
+            var_omega= PSM_Vector3fAdd(&var_omega, &diff_from_mean_sqrd);
         }
         var_omega= PSM_Vector3fUnsafeScalarDivide(&var_omega, N - 1);
 

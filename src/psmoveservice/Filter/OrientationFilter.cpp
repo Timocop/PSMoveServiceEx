@@ -26,6 +26,11 @@
 // Decay rate to apply to the velocity
 #define k_velocity_decay 0.8f
 
+#define k_madgwick_begin_beta 1.0f
+#define k_madgwick_begin_beta_falloff 0.995f
+#define k_madgwick_max_beta 0.8f
+#define k_madgwick_min_beta 0.02f
+
 // -- private definitions -----
 struct OrientationFilterState
 {
@@ -283,6 +288,12 @@ void OrientationFilterPassThru::update(const float delta_time, const PoseFilterP
 	}
 }
 
+void OrientationFilterMadgwickARG::resetState()
+{
+	OrientationFilter::resetState();
+	m_begin_beta = k_madgwick_begin_beta;
+}
+
 // -- OrientationFilterMadgwickARG --
 // This algorithm comes from Sebastian O.H. Madgwick's 2010 paper:
 // "An efficient orientation filter for inertial and inertial/magnetic sensor arrays"
@@ -335,8 +346,10 @@ void OrientationFilterMadgwickARG::update(const float delta_time, const PoseFilt
 
 			// Compute the estimated quaternion rate of change
 			// Eqn 43) SEq_est = SEqDot_omega - beta*SEqHatDot
-			const float beta= sqrtf(3.0f / 4.0f) * fmaxf(fmaxf(m_constants.gyro_variance.x(), m_constants.gyro_variance.y()), m_constants.gyro_variance.z());
-			Eigen::Quaternionf SEqDot_est = Eigen::Quaternionf(SEqDot_omega.coeffs() - SEqHatDot.coeffs()*beta);
+			m_begin_beta = fmaxf(m_begin_beta, fminf(k_madgwick_max_beta, (fminf(fminf(abs(current_omega.x()), abs(current_omega.y())), abs(current_omega.z()))) * 0.1f));
+			m_begin_beta = fmaxf(k_madgwick_min_beta, (m_begin_beta * k_madgwick_begin_beta_falloff));
+
+			Eigen::Quaternionf SEqDot_est = Eigen::Quaternionf(SEqDot_omega.coeffs() - SEqHatDot.coeffs()*m_begin_beta);
 
 			// Compute then integrate the estimated quaternion rate
 			// Eqn 42) SEq_new = SEq + SEqDot_est*total_delta_time
@@ -377,6 +390,7 @@ void OrientationFilterMadgwickMARG::resetState()
 {
     OrientationFilterMadgwickARG::resetState();
     m_omega_bias_x= m_omega_bias_y= m_omega_bias_z= 0.f;
+	m_begin_beta = k_madgwick_begin_beta;
 }
 
 void OrientationFilterMadgwickMARG::update(const float delta_time, const PoseFilterPacket &packet)
@@ -386,7 +400,7 @@ void OrientationFilterMadgwickMARG::update(const float delta_time, const PoseFil
 		// Time delta used for filter update is time delta passed in
 		// plus the accumulated time since the packet hasn't has an IMU measurement
 		const float total_delta_time= (float)m_state->accumulated_imu_time_delta + delta_time;
-
+		
 		const Eigen::Vector3f &current_omega= packet.imu_gyroscope_rad_per_sec;
 
 		Eigen::Vector3f current_g= packet.imu_accelerometer_g_units;
@@ -471,8 +485,10 @@ void OrientationFilterMadgwickMARG::update(const float delta_time, const PoseFil
 
 		// Compute the estimated quaternion rate of change
 		// Eqn 43) SEq_est = SEqDot_omega - beta*SEqHatDot
-		const float beta= sqrtf(3.0f / 4.0f) * fmaxf(fmaxf(m_constants.gyro_variance.x(), m_constants.gyro_variance.y()), m_constants.gyro_variance.z());
-		Eigen::Quaternionf SEqDot_est = Eigen::Quaternionf(SEqDot_omega.coeffs() - SEqHatDot.coeffs()*beta);
+		m_begin_beta = fmaxf(m_begin_beta, fminf(k_madgwick_max_beta, (fminf(fminf(abs(current_omega.x()), abs(current_omega.y())), abs(current_omega.z()))) * 0.1f));
+		m_begin_beta = fmaxf(k_madgwick_min_beta, (m_begin_beta * k_madgwick_begin_beta_falloff));
+
+		Eigen::Quaternionf SEqDot_est = Eigen::Quaternionf(SEqDot_omega.coeffs() - SEqHatDot.coeffs()*m_begin_beta);
 
 		// Compute then integrate the estimated quaternion rate
 		// Eqn 42) SEq_new = SEq + SEqDot_est*delta_t
