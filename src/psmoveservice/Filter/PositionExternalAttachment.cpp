@@ -546,7 +546,7 @@ void PositionFilterExternalAttachment::update(
 		}
 
 		Eigen::Vector3f joint_position = parent_controller_view->getPoseFilter()->getPositionCm(current_controller->getPredictionTime());
-		Eigen::Quaternionf joint_orientation = parent_controller_view->getPoseFilter()->getOrientation(current_controller->getOrientationPredictionTime());
+		Eigen::Quaternionf joint_orientation = parent_controller_view->getPoseFilter()->getOrientation(target_controller->getOrientationPredictionTime());
 
 		Eigen::Vector3f prime = Eigen::Vector3f::Zero();
 
