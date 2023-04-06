@@ -58,14 +58,14 @@ class OrientationFilterMadgwickARG : public OrientationFilter
 public:
 	OrientationFilterMadgwickARG() 
 		: OrientationFilter()
-		, m_begin_beta(0.f)
+		, m_beta(0.f)
 	{}
 
 	void resetState() override;
     void update(const float delta_time, const PoseFilterPacket &packet) override;
 
 protected:
-	float m_begin_beta;
+	float m_beta;
 };
 
 /// Magnetic, Angular Rate, and Gravity fusion algorithm from Madgwick
@@ -77,7 +77,7 @@ public:
         , m_omega_bias_x(0.f)
         , m_omega_bias_y(0.f)
         , m_omega_bias_z(0.f)
-		, m_begin_beta(0.f)
+		, m_beta(0.f)
     {}
 
     void resetState() override;
@@ -87,7 +87,7 @@ protected:
     float m_omega_bias_x;
     float m_omega_bias_y;
     float m_omega_bias_z;
-	float m_begin_beta;
+	float m_beta;
 };
 
 /// Angular Rate, Gravity, and Optical fusion algorithm

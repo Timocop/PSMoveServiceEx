@@ -27,9 +27,9 @@
 #define k_velocity_decay 0.8f
 
 #define k_madgwick_begin_beta 1.0f
-#define k_madgwick_begin_beta_falloff 0.995f
+#define k_madgwick_begin_beta_falloff 0.99f
 #define k_madgwick_max_beta 0.8f
-#define k_madgwick_min_beta 0.02f
+#define k_madgwick_min_beta 0.05f
 
 // -- private definitions -----
 struct OrientationFilterState
@@ -291,7 +291,7 @@ void OrientationFilterPassThru::update(const float delta_time, const PoseFilterP
 void OrientationFilterMadgwickARG::resetState()
 {
 	OrientationFilter::resetState();
-	m_begin_beta = k_madgwick_begin_beta;
+	m_beta = k_madgwick_begin_beta;
 }
 
 // -- OrientationFilterMadgwickARG --
@@ -346,10 +346,15 @@ void OrientationFilterMadgwickARG::update(const float delta_time, const PoseFilt
 
 			// Compute the estimated quaternion rate of change
 			// Eqn 43) SEq_est = SEqDot_omega - beta*SEqHatDot
-			m_begin_beta = fmaxf(m_begin_beta, fminf(k_madgwick_max_beta, (fminf(fminf(abs(current_omega.x()), abs(current_omega.y())), abs(current_omega.z()))) * 0.1f));
-			m_begin_beta = fmaxf(k_madgwick_min_beta, (m_begin_beta * k_madgwick_begin_beta_falloff));
+			const Eigen::Vector3f &world_g = -packet.world_accelerometer;
+			const float accel_b = (fmaxf(0.f, sqrtf(world_g.x() * world_g.x() + world_g.y() * world_g.y() + world_g.z() * world_g.z()) - 1.f) * 0.25f);
+			const float gyro_b = ((fminf(fminf(abs(current_omega.x()), abs(current_omega.y())), abs(current_omega.z()))) * 0.25f);
 
-			Eigen::Quaternionf SEqDot_est = Eigen::Quaternionf(SEqDot_omega.coeffs() - SEqHatDot.coeffs()*m_begin_beta);
+			m_beta = fmaxf(m_beta, fminf(k_madgwick_max_beta, gyro_b));
+			m_beta = fmaxf(m_beta, fminf(k_madgwick_max_beta, accel_b));
+			m_beta = fmaxf(k_madgwick_min_beta, (m_beta * k_madgwick_begin_beta_falloff));
+
+			Eigen::Quaternionf SEqDot_est = Eigen::Quaternionf(SEqDot_omega.coeffs() - SEqHatDot.coeffs()*m_beta);
 
 			// Compute then integrate the estimated quaternion rate
 			// Eqn 42) SEq_new = SEq + SEqDot_est*total_delta_time
@@ -390,7 +395,7 @@ void OrientationFilterMadgwickMARG::resetState()
 {
     OrientationFilterMadgwickARG::resetState();
     m_omega_bias_x= m_omega_bias_y= m_omega_bias_z= 0.f;
-	m_begin_beta = k_madgwick_begin_beta;
+	m_beta = k_madgwick_begin_beta;
 }
 
 void OrientationFilterMadgwickMARG::update(const float delta_time, const PoseFilterPacket &packet)
@@ -485,10 +490,15 @@ void OrientationFilterMadgwickMARG::update(const float delta_time, const PoseFil
 
 		// Compute the estimated quaternion rate of change
 		// Eqn 43) SEq_est = SEqDot_omega - beta*SEqHatDot
-		m_begin_beta = fmaxf(m_begin_beta, fminf(k_madgwick_max_beta, (fminf(fminf(abs(current_omega.x()), abs(current_omega.y())), abs(current_omega.z()))) * 0.1f));
-		m_begin_beta = fmaxf(k_madgwick_min_beta, (m_begin_beta * k_madgwick_begin_beta_falloff));
+		const Eigen::Vector3f &world_g = -packet.world_accelerometer;
+		const float accel_b = (fmaxf(0.f, sqrtf(world_g.x() * world_g.x() + world_g.y() * world_g.y() + world_g.z() * world_g.z()) - 1.f) * 0.25f);
+		const float gyro_b = ((fminf(fminf(abs(current_omega.x()), abs(current_omega.y())), abs(current_omega.z()))) * 0.25f);
 
-		Eigen::Quaternionf SEqDot_est = Eigen::Quaternionf(SEqDot_omega.coeffs() - SEqHatDot.coeffs()*m_begin_beta);
+		m_beta = fmaxf(m_beta, fminf(k_madgwick_max_beta, gyro_b));
+		m_beta = fmaxf(m_beta, fminf(k_madgwick_max_beta, accel_b));
+		m_beta = fmaxf(k_madgwick_min_beta, (m_beta * k_madgwick_begin_beta_falloff));
+
+		Eigen::Quaternionf SEqDot_est = Eigen::Quaternionf(SEqDot_omega.coeffs() - SEqHatDot.coeffs()*m_beta);
 
 		// Compute then integrate the estimated quaternion rate
 		// Eqn 42) SEq_new = SEq + SEqDot_est*delta_t
