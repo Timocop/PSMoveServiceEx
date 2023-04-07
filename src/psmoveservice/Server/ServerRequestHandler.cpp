@@ -734,6 +734,10 @@ protected:
 				float filter_passive_drift_correction_delay;
 				bool filter_use_stabilization;
 				float filter_stabilization_min_scale;
+				float filter_madgwick_min_correction;
+				int filter_madgwick_apt_method;
+				float filter_madgwick_apt_max_correction;
+				float filter_madgwick_apt_falloff;
 
                 switch(controller_view->getControllerDeviceType())
                 {
@@ -770,6 +774,10 @@ protected:
 						filter_passive_drift_correction_delay = config->filter_passive_drift_correction_delay;
 						filter_use_stabilization = config->filter_use_stabilization;
 						filter_stabilization_min_scale = config->filter_stabilization_min_scale;
+						filter_madgwick_min_correction = config->filter_madgwick_min_correction;
+						filter_madgwick_apt_method = config->filter_madgwick_apt_method;
+						filter_madgwick_apt_max_correction = config->filter_madgwick_apt_max_correction;
+						filter_madgwick_apt_falloff = config->filter_madgwick_apt_falloff;
 
                         controller_info->set_controller_type(PSMoveProtocol::PSMOVE);
                     }
@@ -834,6 +842,10 @@ protected:
 						filter_prediction_smoothing = config->filter_prediction_smoothing;
 						filter_lowpassoptical_distance = config->filter_lowpassoptical_distance;
 						filter_lowpassoptical_smoothing = config->filter_lowpassoptical_smoothing;
+						filter_madgwick_min_correction = config->filter_madgwick_min_correction;
+						filter_madgwick_apt_method = config->filter_madgwick_apt_method;
+						filter_madgwick_apt_max_correction = config->filter_madgwick_apt_max_correction;
+						filter_madgwick_apt_falloff = config->filter_madgwick_apt_falloff;
 
 						controller_info->set_controller_type(PSMoveProtocol::PSDUALSHOCK4);
                     }
@@ -931,6 +943,10 @@ protected:
 				controller_info->set_filter_passive_drift_correction_delay(filter_passive_drift_correction_delay);
 				controller_info->set_filter_use_stabilization(filter_use_stabilization);
 				controller_info->set_filter_stabilization_min_scale(filter_stabilization_min_scale);
+				controller_info->set_filter_madgwick_min_correction(filter_madgwick_min_correction);
+				controller_info->set_filter_madgwick_apt_method(filter_madgwick_apt_method);
+				controller_info->set_filter_madgwick_apt_max_correction(filter_madgwick_apt_max_correction);
+				controller_info->set_filter_madgwick_apt_falloff(filter_madgwick_apt_falloff);
             }
         }
 
@@ -3115,7 +3131,11 @@ protected:
 					config.filter_passive_drift_correction_gravity_deadzone != request.filter_passive_drift_correction_gravity_deadzone() ||
 					config.filter_passive_drift_correction_delay != request.filter_passive_drift_correction_delay() ||
 					config.filter_use_stabilization != request.filter_use_stabilization() ||
-					config.filter_stabilization_min_scale != request.filter_stabilization_min_scale())
+					config.filter_stabilization_min_scale != request.filter_stabilization_min_scale() ||
+					config.filter_madgwick_min_correction != request.filter_madgwick_min_correction() ||
+					config.filter_madgwick_apt_method != request.filter_madgwick_apt_method() ||
+					config.filter_madgwick_apt_max_correction != request.filter_madgwick_apt_max_correction() ||
+					config.filter_madgwick_apt_falloff != request.filter_madgwick_apt_falloff())
 				{
 					config.filter_prediction_distance = request.filter_prediction_distance();
 					config.filter_prediction_smoothing = request.filter_prediction_smoothing();
@@ -3129,6 +3149,10 @@ protected:
 					config.filter_passive_drift_correction_delay = request.filter_passive_drift_correction_delay();
 					config.filter_use_stabilization = request.filter_use_stabilization();
 					config.filter_stabilization_min_scale = request.filter_stabilization_min_scale();
+					config.filter_madgwick_min_correction = request.filter_madgwick_min_correction();
+					config.filter_madgwick_apt_method = request.filter_madgwick_apt_method();
+					config.filter_madgwick_apt_max_correction = request.filter_madgwick_apt_max_correction();
+					config.filter_madgwick_apt_falloff = request.filter_madgwick_apt_falloff();
 
 					controller->setConfig(&config);
 				}
@@ -3143,12 +3167,20 @@ protected:
 				if (config.filter_prediction_distance != request.filter_prediction_distance() ||
 					config.filter_prediction_smoothing != request.filter_prediction_smoothing() ||
 					config.filter_lowpassoptical_distance != request.filter_lowpassoptical_distance() ||
-					config.filter_lowpassoptical_smoothing != request.filter_lowpassoptical_smoothing())
+					config.filter_lowpassoptical_smoothing != request.filter_lowpassoptical_smoothing() ||
+					config.filter_madgwick_min_correction != request.filter_madgwick_min_correction() ||
+					config.filter_madgwick_apt_method != request.filter_madgwick_apt_method() ||
+					config.filter_madgwick_apt_max_correction != request.filter_madgwick_apt_max_correction() ||
+					config.filter_madgwick_apt_falloff != request.filter_madgwick_apt_falloff())
 				{
 					config.filter_prediction_distance = request.filter_prediction_distance();
 					config.filter_prediction_smoothing = request.filter_prediction_smoothing();
 					config.filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
 					config.filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
+					config.filter_madgwick_min_correction = request.filter_madgwick_min_correction();
+					config.filter_madgwick_apt_method = request.filter_madgwick_apt_method();
+					config.filter_madgwick_apt_max_correction = request.filter_madgwick_apt_max_correction();
+					config.filter_madgwick_apt_falloff = request.filter_madgwick_apt_falloff();
 
 					controller->setConfig(&config);
 				}
@@ -3307,12 +3339,20 @@ protected:
 				if (config->filter_prediction_distance != request.filter_prediction_distance() ||
 					config->filter_prediction_smoothing != request.filter_prediction_smoothing() ||
 					config->filter_lowpassoptical_distance != request.filter_lowpassoptical_distance() ||
-					config->filter_lowpassoptical_smoothing != request.filter_lowpassoptical_smoothing())
+					config->filter_lowpassoptical_smoothing != request.filter_lowpassoptical_smoothing() ||
+					config->filter_madgwick_min_correction != request.filter_madgwick_min_correction() ||
+					config->filter_madgwick_apt_method != request.filter_madgwick_apt_method() ||
+					config->filter_madgwick_apt_max_correction != request.filter_madgwick_apt_max_correction() ||
+					config->filter_madgwick_apt_falloff != request.filter_madgwick_apt_falloff())
 				{
 					config->filter_prediction_distance = request.filter_prediction_distance();
 					config->filter_prediction_smoothing = request.filter_prediction_smoothing();
 					config->filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
 					config->filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
+					config->filter_madgwick_min_correction = request.filter_madgwick_min_correction();
+					config->filter_madgwick_apt_method = request.filter_madgwick_apt_method();
+					config->filter_madgwick_apt_max_correction = request.filter_madgwick_apt_max_correction();
+					config->filter_madgwick_apt_falloff = request.filter_madgwick_apt_falloff();
 
 					config->save();
 				}
@@ -3642,6 +3682,10 @@ protected:
 				float filter_prediction_smoothing;
 				float filter_lowpassoptical_distance;
 				float filter_lowpassoptical_smoothing;
+				float filter_madgwick_min_correction;
+				int filter_madgwick_apt_method;
+				float filter_madgwick_apt_max_correction;
+				float filter_madgwick_apt_falloff;
 
                 switch (hmd_view->getHMDDeviceType())
                 {
@@ -3664,6 +3708,10 @@ protected:
 						filter_prediction_smoothing = config->filter_prediction_smoothing;
 						filter_lowpassoptical_distance = config->filter_lowpassoptical_distance;
 						filter_lowpassoptical_smoothing = config->filter_lowpassoptical_smoothing;
+						filter_madgwick_min_correction = config->filter_madgwick_min_correction;
+						filter_madgwick_apt_method = config->filter_madgwick_apt_method;
+						filter_madgwick_apt_max_correction = config->filter_madgwick_apt_max_correction;
+						filter_madgwick_apt_falloff = config->filter_madgwick_apt_falloff;
 
 						hmd_info->set_hmd_type(PSMoveProtocol::Morpheus);
 
@@ -3721,6 +3769,10 @@ protected:
 				hmd_info->set_filter_prediction_smoothing(filter_prediction_smoothing);
 				hmd_info->set_filter_lowpassoptical_distance(filter_lowpassoptical_distance);
 				hmd_info->set_filter_lowpassoptical_smoothing(filter_lowpassoptical_smoothing);
+				hmd_info->set_filter_madgwick_min_correction(filter_madgwick_min_correction);
+				hmd_info->set_filter_madgwick_apt_method(filter_madgwick_apt_method);
+				hmd_info->set_filter_madgwick_apt_max_correction(filter_madgwick_apt_max_correction);
+				hmd_info->set_filter_madgwick_apt_falloff(filter_madgwick_apt_falloff);
             }
         }
 

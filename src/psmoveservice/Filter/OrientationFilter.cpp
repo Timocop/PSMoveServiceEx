@@ -300,6 +300,71 @@ void OrientationFilterMadgwickARG::resetState()
 // https://www.samba.org/tridge/UAV/madgwick_internal_report.pdf
 void OrientationFilterMadgwickARG::update(const float delta_time, const PoseFilterPacket &packet)
 {
+	float filter_madgwick_min_correction = k_madgwick_min_beta;
+	AdaptiveDriftCorrectionMethod filter_madgwick_apt_method = AdaptiveDriftCorrectionMethod::AdaptiveNone;
+	float filter_madgwick_apt_max_correction = k_madgwick_max_beta;
+	float filter_madgwick_apt_falloff = k_madgwick_begin_beta_falloff;
+
+#if !defined(IS_TESTING_KALMAN) 
+	if (packet.controllerDeviceId > -1)
+	{
+		ServerControllerViewPtr ControllerView = DeviceManager::getInstance()->getControllerViewPtr(packet.controllerDeviceId);
+		if (ControllerView != nullptr && ControllerView->getIsOpen())
+		{
+			switch (ControllerView->getControllerDeviceType())
+			{
+			case CommonDeviceState::PSMove:
+			{
+				PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
+				PSMoveControllerConfig config = *controller->getConfig();
+
+				filter_madgwick_min_correction = config.filter_madgwick_min_correction;
+				filter_madgwick_apt_method = static_cast<AdaptiveDriftCorrectionMethod>(config.filter_madgwick_apt_method);
+				filter_madgwick_apt_max_correction = config.filter_madgwick_apt_max_correction;
+				filter_madgwick_apt_falloff = config.filter_madgwick_apt_falloff;
+
+				break;
+			}
+			case CommonDeviceState::PSDualShock4:
+			{
+				PSDualShock4Controller *controller = ControllerView->castChecked<PSDualShock4Controller>();
+				PSDualShock4ControllerConfig config = *controller->getConfig();
+
+				filter_madgwick_min_correction = config.filter_madgwick_min_correction;
+				filter_madgwick_apt_method = static_cast<AdaptiveDriftCorrectionMethod>(config.filter_madgwick_apt_method);
+				filter_madgwick_apt_max_correction = config.filter_madgwick_apt_max_correction;
+				filter_madgwick_apt_falloff = config.filter_madgwick_apt_falloff;
+
+				break;
+			}
+			}
+		}
+	}
+
+	if (packet.hmdDeviceId > -1)
+	{
+		ServerHMDViewPtr HmdView = DeviceManager::getInstance()->getHMDViewPtr(packet.hmdDeviceId);
+		if (HmdView != nullptr && HmdView->getIsOpen())
+		{
+			switch (HmdView->getHMDDeviceType())
+			{
+			case CommonDeviceState::Morpheus:
+			{
+				MorpheusHMD *hmd = HmdView->castChecked<MorpheusHMD>();
+				MorpheusHMDConfig config = *hmd->getConfig();
+
+				filter_madgwick_min_correction = config.filter_madgwick_min_correction;
+				filter_madgwick_apt_method = static_cast<AdaptiveDriftCorrectionMethod>(config.filter_madgwick_apt_method);
+				filter_madgwick_apt_max_correction = config.filter_madgwick_apt_max_correction;
+				filter_madgwick_apt_falloff = config.filter_madgwick_apt_falloff;
+
+				break;
+			}
+			}
+		}
+	}
+#endif
+
 	if (packet.has_imu_measurements())
 	{
 		// Time delta used for filter update is time delta passed in
@@ -346,13 +411,36 @@ void OrientationFilterMadgwickARG::update(const float delta_time, const PoseFilt
 
 			// Compute the estimated quaternion rate of change
 			// Eqn 43) SEq_est = SEqDot_omega - beta*SEqHatDot
-			const Eigen::Vector3f &world_g = -packet.world_accelerometer;
-			const float accel_b = (fmaxf(0.f, sqrtf(world_g.x() * world_g.x() + world_g.y() * world_g.y() + world_g.z() * world_g.z()) - 1.f) * 0.25f);
-			const float gyro_b = ((fminf(fminf(abs(current_omega.x()), abs(current_omega.y())), abs(current_omega.z()))) * 0.25f);
+			{
+				const Eigen::Vector3f &world_g = -packet.world_accelerometer;
+				const float accel_b = (fmaxf(0.f, sqrtf(world_g.x() * world_g.x() + world_g.y() * world_g.y() + world_g.z() * world_g.z()) - 1.f) * 0.25f);
+				const float gyro_b = ((fminf(fminf(abs(current_omega.x()), abs(current_omega.y())), abs(current_omega.z()))) * 0.25f);
 
-			m_beta = fmaxf(m_beta, fminf(k_madgwick_max_beta, gyro_b));
-			m_beta = fmaxf(m_beta, fminf(k_madgwick_max_beta, accel_b));
-			m_beta = fmaxf(k_madgwick_min_beta, (m_beta * k_madgwick_begin_beta_falloff));
+				const float adaptive_max = clampf(filter_madgwick_apt_max_correction, 0.0f, 1.0f );
+				const float adaptive_min = clampf(filter_madgwick_min_correction, 0.0f, adaptive_max);
+				const float adaptive_falloff = clampf(filter_madgwick_apt_falloff, 0.0f, 0.999f);
+
+				switch (filter_madgwick_apt_method)
+				{
+				case AdaptiveDriftCorrectionMethod::AdaptiveGyro:
+				{
+					m_beta = fmaxf(m_beta, fminf(adaptive_max, gyro_b));
+					break;
+				}
+				case AdaptiveDriftCorrectionMethod::AdaptiveAccel:
+				{
+					m_beta = fmaxf(m_beta, fminf(adaptive_max, accel_b));
+					break;
+				}
+				case AdaptiveDriftCorrectionMethod::AdaptiveBoth:
+				{
+					m_beta = fmaxf(m_beta, fminf(adaptive_max, gyro_b));
+					m_beta = fmaxf(m_beta, fminf(adaptive_max, accel_b));
+					break;
+				}
+				}
+				m_beta = fmaxf(adaptive_min, (m_beta * adaptive_falloff));
+			}
 
 			Eigen::Quaternionf SEqDot_est = Eigen::Quaternionf(SEqDot_omega.coeffs() - SEqHatDot.coeffs()*m_beta);
 
@@ -400,6 +488,71 @@ void OrientationFilterMadgwickMARG::resetState()
 
 void OrientationFilterMadgwickMARG::update(const float delta_time, const PoseFilterPacket &packet)
 {
+	float filter_madgwick_min_correction = k_madgwick_min_beta;
+	AdaptiveDriftCorrectionMethod filter_madgwick_apt_method = AdaptiveDriftCorrectionMethod::AdaptiveNone;
+	float filter_madgwick_apt_max_correction = k_madgwick_max_beta;
+	float filter_madgwick_apt_falloff = k_madgwick_begin_beta_falloff;
+
+#if !defined(IS_TESTING_KALMAN) 
+	if (packet.controllerDeviceId > -1)
+	{
+		ServerControllerViewPtr ControllerView = DeviceManager::getInstance()->getControllerViewPtr(packet.controllerDeviceId);
+		if (ControllerView != nullptr && ControllerView->getIsOpen())
+		{
+			switch (ControllerView->getControllerDeviceType())
+			{
+			case CommonDeviceState::PSMove:
+			{
+				PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
+				PSMoveControllerConfig config = *controller->getConfig();
+
+				filter_madgwick_min_correction = config.filter_madgwick_min_correction;
+				filter_madgwick_apt_method = static_cast<AdaptiveDriftCorrectionMethod>(config.filter_madgwick_apt_method);
+				filter_madgwick_apt_max_correction = config.filter_madgwick_apt_max_correction;
+				filter_madgwick_apt_falloff = config.filter_madgwick_apt_falloff;
+
+				break;
+			}
+			case CommonDeviceState::PSDualShock4:
+			{
+				PSDualShock4Controller *controller = ControllerView->castChecked<PSDualShock4Controller>();
+				PSDualShock4ControllerConfig config = *controller->getConfig();
+
+				filter_madgwick_min_correction = config.filter_madgwick_min_correction;
+				filter_madgwick_apt_method = static_cast<AdaptiveDriftCorrectionMethod>(config.filter_madgwick_apt_method);
+				filter_madgwick_apt_max_correction = config.filter_madgwick_apt_max_correction;
+				filter_madgwick_apt_falloff = config.filter_madgwick_apt_falloff;
+
+				break;
+			}
+			}
+		}
+	}
+
+	if (packet.hmdDeviceId > -1)
+	{
+		ServerHMDViewPtr HmdView = DeviceManager::getInstance()->getHMDViewPtr(packet.hmdDeviceId);
+		if (HmdView != nullptr && HmdView->getIsOpen())
+		{
+			switch (HmdView->getHMDDeviceType())
+			{
+			case CommonDeviceState::Morpheus:
+			{
+				MorpheusHMD *hmd = HmdView->castChecked<MorpheusHMD>();
+				MorpheusHMDConfig config = *hmd->getConfig();
+
+				filter_madgwick_min_correction = config.filter_madgwick_min_correction;
+				filter_madgwick_apt_method = static_cast<AdaptiveDriftCorrectionMethod>(config.filter_madgwick_apt_method);
+				filter_madgwick_apt_max_correction = config.filter_madgwick_apt_max_correction;
+				filter_madgwick_apt_falloff = config.filter_madgwick_apt_falloff;
+
+				break;
+			}
+			}
+		}
+	}
+#endif
+
 	if (packet.has_imu_measurements())
 	{
 		// Time delta used for filter update is time delta passed in
@@ -490,13 +643,36 @@ void OrientationFilterMadgwickMARG::update(const float delta_time, const PoseFil
 
 		// Compute the estimated quaternion rate of change
 		// Eqn 43) SEq_est = SEqDot_omega - beta*SEqHatDot
-		const Eigen::Vector3f &world_g = -packet.world_accelerometer;
-		const float accel_b = (fmaxf(0.f, sqrtf(world_g.x() * world_g.x() + world_g.y() * world_g.y() + world_g.z() * world_g.z()) - 1.f) * 0.25f);
-		const float gyro_b = ((fminf(fminf(abs(current_omega.x()), abs(current_omega.y())), abs(current_omega.z()))) * 0.25f);
+		{
+			const Eigen::Vector3f &world_g = -packet.world_accelerometer;
+			const float accel_b = (fmaxf(0.f, sqrtf(world_g.x() * world_g.x() + world_g.y() * world_g.y() + world_g.z() * world_g.z()) - 1.f) * 0.25f);
+			const float gyro_b = ((fminf(fminf(abs(current_omega.x()), abs(current_omega.y())), abs(current_omega.z()))) * 0.25f);
 
-		m_beta = fmaxf(m_beta, fminf(k_madgwick_max_beta, gyro_b));
-		m_beta = fmaxf(m_beta, fminf(k_madgwick_max_beta, accel_b));
-		m_beta = fmaxf(k_madgwick_min_beta, (m_beta * k_madgwick_begin_beta_falloff));
+			const float adaptive_max = clampf(filter_madgwick_apt_max_correction, 0.0f, 1.0f);
+			const float adaptive_min = clampf(filter_madgwick_min_correction, 0.0f, adaptive_max);
+			const float adaptive_falloff = clampf(filter_madgwick_apt_falloff, 0.0f, 0.999f);
+
+			switch (filter_madgwick_apt_method)
+			{
+			case AdaptiveDriftCorrectionMethod::AdaptiveGyro:
+			{
+				m_beta = fmaxf(m_beta, fminf(adaptive_max, gyro_b));
+				break;
+			}
+			case AdaptiveDriftCorrectionMethod::AdaptiveAccel:
+			{
+				m_beta = fmaxf(m_beta, fminf(adaptive_max, accel_b));
+				break;
+			}
+			case AdaptiveDriftCorrectionMethod::AdaptiveBoth:
+			{
+				m_beta = fmaxf(m_beta, fminf(adaptive_max, gyro_b));
+				m_beta = fmaxf(m_beta, fminf(adaptive_max, accel_b));
+				break;
+			}
+			}
+			m_beta = fmaxf(adaptive_min, (m_beta * adaptive_falloff));
+		}
 
 		Eigen::Quaternionf SEqDot_est = Eigen::Quaternionf(SEqDot_omega.coeffs() - SEqHatDot.coeffs()*m_beta);
 

@@ -258,6 +258,11 @@ MorpheusHMDConfig::config2ptree()
 	pt.put("FilterSettings.LowPassOptical.Distance", filter_lowpassoptical_distance);
 	pt.put("FilterSettings.LowPassOptical.Smoothing", filter_lowpassoptical_smoothing);
 
+	pt.put("FilterSettings.Madgwick.MinCorrection", filter_madgwick_min_correction);
+	pt.put("FilterSettings.Madgwick.AdaptiveMethod", filter_madgwick_apt_method);
+	pt.put("FilterSettings.Madgwick.AdaptiveMaxCorrection", filter_madgwick_apt_max_correction);
+	pt.put("FilterSettings.Madgwick.AdaptiveFalloff", filter_madgwick_apt_falloff);
+
 	writeTrackingColor(pt, tracking_color_id);
 
     return pt;
@@ -334,6 +339,11 @@ MorpheusHMDConfig::ptree2config(const boost::property_tree::ptree &pt)
 		filter_prediction_smoothing = pt.get<float>("FilterSettings.PredictionSmoothing", filter_prediction_smoothing);
 		filter_lowpassoptical_distance = pt.get<float>("FilterSettings.LowPassOptical.Distance", filter_lowpassoptical_distance);
 		filter_lowpassoptical_smoothing = pt.get<float>("FilterSettings.LowPassOptical.Smoothing", filter_lowpassoptical_smoothing);
+		
+		filter_madgwick_min_correction = pt.get<float>("FilterSettings.Madgwick.MinCorrection", filter_madgwick_min_correction);
+		filter_madgwick_apt_method = pt.get<int>("FilterSettings.Madgwick.AdaptiveMethod", filter_madgwick_apt_method);
+		filter_madgwick_apt_max_correction = pt.get<float>("FilterSettings.Madgwick.AdaptiveMaxCorrection", filter_madgwick_apt_max_correction);
+		filter_madgwick_apt_falloff = pt.get<float>("FilterSettings.Madgwick.AdaptiveFalloff", filter_madgwick_apt_falloff);
     }
     else
     {

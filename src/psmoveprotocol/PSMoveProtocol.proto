@@ -650,6 +650,10 @@ message Request {
 		int32 filter_opticaltarget_controller_id = 12;
 		bool filter_use_stabilization = 13;
 		float filter_stabilization_min_scale = 14;
+		float filter_madgwick_min_correction = 15;
+		int32 filter_madgwick_apt_method = 16;
+		float filter_madgwick_apt_max_correction = 17;
+		float filter_madgwick_apt_falloff = 18;
     }
     RequestSetControllerFilterSettings request_set_controller_filter_settings = 55;
 	
@@ -660,6 +664,10 @@ message Request {
 		float filter_prediction_smoothing = 3;
 		float filter_lowpassoptical_smoothing = 4;
 		float filter_lowpassoptical_distance = 5;
+		float filter_madgwick_min_correction = 6;
+		int32 filter_madgwick_apt_method = 7;
+		float filter_madgwick_apt_max_correction = 8;
+		float filter_madgwick_apt_falloff = 9;
     }
     RequestSetHmdFilterSettings request_set_hmd_filter_settings = 56;
 	
@@ -788,6 +796,7 @@ message Response {
 			float filter_prediction_smoothing = 26;
 			float filter_lowpassoptical_smoothing = 27;
 			float filter_lowpassoptical_distance = 28;
+			
 			bool filter_enable_magnetometer = 29;
 			bool filter_use_passive_drift_correction = 30;
 			int32 filter_passive_drift_correction_method = 31;
@@ -797,7 +806,13 @@ message Response {
 			int32 filter_opticaltarget_controller_id = 35;
 			bool filter_use_stabilization = 36;
 			float filter_stabilization_min_scale = 37;
+			
             float ang_prediction_time = 38;
+			
+			float filter_madgwick_min_correction = 39;
+			int32 filter_madgwick_apt_method = 40;
+			float filter_madgwick_apt_max_correction = 41;
+			float filter_madgwick_apt_falloff = 42;
         }
         repeated ControllerInfo controllers = 1;
         string host_serial = 2;
@@ -927,7 +942,13 @@ message Response {
 			float filter_prediction_smoothing = 13;
 			float filter_lowpassoptical_smoothing = 14;
 			float filter_lowpassoptical_distance = 15;
+			
             float ang_prediction_time = 16;
+			
+			float filter_madgwick_min_correction = 17;
+			int32 filter_madgwick_apt_method = 18;
+			float filter_madgwick_apt_max_correction = 19;
+			float filter_madgwick_apt_falloff = 20;
         }
         repeated HMDInfo hmd_entries = 1;
     }

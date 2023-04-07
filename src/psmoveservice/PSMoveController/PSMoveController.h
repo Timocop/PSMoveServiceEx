@@ -77,6 +77,10 @@ public:
 		, filter_passive_drift_correction_delay(100.f)
 		, filter_use_stabilization(false)
 		, filter_stabilization_min_scale(0.1f)
+		, filter_madgwick_min_correction(0.05f)
+		, filter_madgwick_apt_method(0)
+		, filter_madgwick_apt_max_correction(0.8f)
+		, filter_madgwick_apt_falloff(0.99)
     {
         magnetometer_identity.clear();
         magnetometer_center.clear();
@@ -223,6 +227,11 @@ public:
 
 	bool filter_use_stabilization;
 	float filter_stabilization_min_scale;
+
+	float filter_madgwick_min_correction;
+	int filter_madgwick_apt_method;
+	float filter_madgwick_apt_max_correction;
+	float filter_madgwick_apt_falloff;
 };
 
 struct PSMoveControllerInputState : public CommonControllerState

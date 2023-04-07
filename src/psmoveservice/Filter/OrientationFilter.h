@@ -56,6 +56,16 @@ public:
 class OrientationFilterMadgwickARG : public OrientationFilter
 {
 public:
+
+	enum AdaptiveDriftCorrectionMethod
+	{
+		AdaptiveNone = 0,
+		AdaptiveGyro,
+		AdaptiveAccel,
+		AdaptiveBoth,
+	};
+
+
 	OrientationFilterMadgwickARG() 
 		: OrientationFilter()
 		, m_beta(0.f)
