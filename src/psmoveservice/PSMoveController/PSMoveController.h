@@ -33,6 +33,21 @@ class PSMoveControllerConfig : public PSMoveConfig
 public:
     static const int CONFIG_VERSION;
 
+	enum AdaptiveDriftCorrectionMethod
+	{
+		AdaptiveNone = 0,
+		AdaptiveGyro,
+		AdaptiveAccel,
+		AdaptiveBoth,
+	};
+
+	enum PassiveDriftCorrectionMethod
+	{
+		StableGravity = 0,
+		StableGyroAccel,
+		StableBoth,
+	};
+
     PSMoveControllerConfig(const std::string &fnamebase = "PSMoveControllerConfig")
         : PSMoveConfig(fnamebase)
         , is_valid(false)
@@ -71,14 +86,14 @@ public:
 		, filter_lowpassoptical_smoothing(0.40f)
 		, filter_enable_magnetometer(true)
 		, filter_use_passive_drift_correction(false)
-		, filter_passive_drift_correction_method(0)
+		, filter_passive_drift_correction_method(PassiveDriftCorrectionMethod::StableGravity)
 		, filter_passive_drift_correction_deadzone(3.f)
 		, filter_passive_drift_correction_gravity_deadzone(0.8f)
 		, filter_passive_drift_correction_delay(100.f)
 		, filter_use_stabilization(false)
 		, filter_stabilization_min_scale(0.1f)
-		, filter_madgwick_min_correction(0.05f)
-		, filter_madgwick_apt_method(0)
+		, filter_madgwick_min_correction(0.02f)
+		, filter_madgwick_apt_method(AdaptiveDriftCorrectionMethod::AdaptiveBoth)
 		, filter_madgwick_apt_max_correction(0.8f)
 		, filter_madgwick_apt_falloff(0.99)
     {

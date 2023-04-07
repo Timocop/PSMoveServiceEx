@@ -1149,8 +1149,8 @@ void AppStage_ControllerSettings::renderUI()
 												controllerInfo.FilterPassiveDriftCorrectionDelay = 100.f;
 												controllerInfo.FilterUseStabilization = false;
 												controllerInfo.FilterStabilizationMinScale = 0.1f;
-												controllerInfo.FilterMadgwickMinCorrection = 0.05f;
-												controllerInfo.FilterMadgwickAdaptiveMethod = AdaptiveDriftCorrectionMethod::AdaptiveNone;
+												controllerInfo.FilterMadgwickMinCorrection = 0.02f;
+												controllerInfo.FilterMadgwickAdaptiveMethod = AdaptiveDriftCorrectionMethod::AdaptiveBoth;
 												controllerInfo.FilterMadgwickAdaptiveMaxCorrection = 0.8f;
 												controllerInfo.FilterMadgwickAdaptiveFalloff = 0.99;
 

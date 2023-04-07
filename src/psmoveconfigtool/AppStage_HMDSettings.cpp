@@ -565,8 +565,8 @@ void AppStage_HMDSettings::renderUI()
 							hmdInfo.FilterPredictionSmoothing = 0.40f;
 							hmdInfo.FilterLowPassOpticalDistance = 10.f;
 							hmdInfo.FilterLowPassOpticalSmoothing = 0.40f;
-							hmdInfo.FilterMadgwickMinCorrection = 0.05f;
-							hmdInfo.FilterMadgwickAdaptiveMethod = AdaptiveDriftCorrectionMethod::AdaptiveNone;
+							hmdInfo.FilterMadgwickMinCorrection = 0.02f;
+							hmdInfo.FilterMadgwickAdaptiveMethod = AdaptiveDriftCorrectionMethod::AdaptiveBoth;
 							hmdInfo.FilterMadgwickAdaptiveMaxCorrection = 0.8f;
 							hmdInfo.FilterMadgwickAdaptiveFalloff = 0.99;
 

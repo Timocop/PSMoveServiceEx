@@ -20,6 +20,14 @@ class MorpheusHMDConfig : public PSMoveConfig
 public:
     static const int CONFIG_VERSION;
 
+	enum AdaptiveDriftCorrectionMethod
+	{
+		AdaptiveNone = 0,
+		AdaptiveGyro,
+		AdaptiveAccel,
+		AdaptiveBoth,
+	};
+
     MorpheusHMDConfig(const std::string &fnamebase = "MorpheusHMDConfig")
         : PSMoveConfig(fnamebase)
 		, is_valid(false)
@@ -43,8 +51,8 @@ public:
 		, filter_prediction_smoothing(0.40f)
 		, filter_lowpassoptical_distance(10.f)
 		, filter_lowpassoptical_smoothing(0.40f)
-		, filter_madgwick_min_correction(0.05f)
-		, filter_madgwick_apt_method(0)
+		, filter_madgwick_min_correction(0.02f)
+		, filter_madgwick_apt_method(AdaptiveDriftCorrectionMethod::AdaptiveBoth)
 		, filter_madgwick_apt_max_correction(0.8f)
 		, filter_madgwick_apt_falloff(0.99)
     {
