@@ -387,7 +387,7 @@ void AppStage_TrackerSettings::renderUI()
 									ImGui::PushTextWrapPos();
 									ImGui::TextDisabled(
 										"USB 3.2 (20 Gbit) controller or higher is required."
-										"This amount of trackers connected to a USB 3.1 (10 Gbit) controller may not work due to bandwidth issues.\n"
+										"This amount of trackers connected to a USB 3.1 (10 Gbit) controller may not work due to bandwidth limitations.\n"
 										"(Assuming the trackers run at 480p@30Hz)"
 									);
 									ImGui::PopTextWrapPos();
@@ -400,7 +400,7 @@ void AppStage_TrackerSettings::renderUI()
 									ImGui::PushTextWrapPos();
 									ImGui::TextDisabled(
 										"USB 3.1 (10 Gbit) controller or higher is required.\n"
-										"This amount of trackers connected to a USB 3.0 (5 Gbit) controller may not work due to bandwidth issues.\n"
+										"This amount of trackers connected to a USB 3.0 (5 Gbit) controller may not work due to bandwidth limitations.\n"
 										"(Assuming the trackers run at 480p@30Hz)"
 									);
 									ImGui::PopTextWrapPos();
@@ -413,7 +413,7 @@ void AppStage_TrackerSettings::renderUI()
 									ImGui::PushTextWrapPos();
 									ImGui::TextDisabled(
 										"USB 3.0 (5 Gbit) controller or higher is required.\n"
-										"This amount of trackers connected to a USB 2.0 (500 Mbit) controller may not work due to bandwidth issues.\n"
+										"This amount of trackers connected to a USB 2.0 (500 Mbit) controller may not work due to bandwidth limitations.\n"
 										"(Assuming the trackers run at 480p@30Hz)"
 									);
 									ImGui::PopTextWrapPos();
