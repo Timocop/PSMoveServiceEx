@@ -427,7 +427,7 @@ void AppStage_HMDSettings::renderUI()
 						{
 							settings_shown = true;
 
-							ImGui::Text("Position Prediction\nSmoothing Distance: ");
+							ImGui::Text("Position Prediction Smoothing Distance: ");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(120.f);
 							if (ImGui::InputFloat("##PredictionSmoothingDistance", &hmdInfo.FilterPredictionDistance, 1.f, 5.f, 2))
@@ -438,7 +438,7 @@ void AppStage_HMDSettings::renderUI()
 							}
 							ImGui::PopItemWidth();
 
-							ImGui::Text("Position Prediction\nSmoothing Power (%%): ");
+							ImGui::Text("Position Prediction Smoothing Power (%%): ");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(120.f);
 							float filter_predict_smoothing = (1.f - hmdInfo.FilterPredictionSmoothing) * 100.f;
