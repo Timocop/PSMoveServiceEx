@@ -23,7 +23,7 @@ const char *AppStage_HMDSettings::APP_STAGE_NAME= "HMDSettings";
 //-- constants -----
 const int k_default_hmd_position_filter_index = 1; // LowPassOptical
 const int k_default_morpheus_position_filter_index = 1; // LowPassOptical
-const int k_default_morpheus_orientation_filter_index = 1; // MadgwickARG //Why this one?
+const int k_default_morpheus_orientation_filter_index = 1; // MadgwickARG
 
 const char* k_hmd_position_filter_names[] = { "PassThru", "LowPassOptical", "LowPassIMU", "LowPassExponential", "ComplimentaryOpticalIMU", "PositionKalman" };
 const char* k_morpheus_orientation_filter_names[] = { "PassThru", "MadgwickARG", "ComplementaryOpticalARG", "OrientationKalman" };
@@ -479,9 +479,69 @@ void AppStage_HMDSettings::renderUI()
 							ImGui::PopItemWidth();
 						}
 
+						if (hmdInfo.OrientationFilterName == "MadgwickMARG" || hmdInfo.OrientationFilterName == "MadgwickARG")
+						{
+							settings_shown = true;
+
+							ImGui::Text("Minimum Drift Correction: ");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(120.f);
+							float filter_madgwick_min_correction = hmdInfo.FilterMadgwickMinCorrection;
+							if (ImGui::InputFloat("##MadgwickAdaptiveMinimumCorrection", &filter_madgwick_min_correction, 0.01f, 0.05f, 2))
+							{
+								hmdInfo.FilterMadgwickMinCorrection = clampf(filter_madgwick_min_correction, 0.0f, 1.0f);
+
+								request_offset = true;
+							}
+							ImGui::PopItemWidth();
+
+							ImGui::Text("Adaptive Drift Correction Method: ");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(120.f);
+							int filter_madgwick_apt_method = hmdInfo.FilterMadgwickAdaptiveMethod;
+							if (ImGui::Combo("##MadgwickAdaptiveDriftCorrectionMethod", &filter_madgwick_apt_method, "Disabled\0Gyro\0Accel\0Both\0\0"))
+							{
+								hmdInfo.FilterMadgwickAdaptiveMethod = static_cast<AdaptiveDriftCorrectionMethod>(filter_madgwick_apt_method);
+
+								request_offset = true;
+							}
+							ImGui::PopItemWidth();
+
+							if (hmdInfo.FilterMadgwickAdaptiveMethod != AdaptiveDriftCorrectionMethod::AdaptiveNone)
+							{
+								ImGui::Indent();
+								{
+									ImGui::Text("Maximum Drift Correction: ");
+									ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+									ImGui::PushItemWidth(120.f);
+									float filter_madgwick_apt_max_correction = hmdInfo.FilterMadgwickAdaptiveMaxCorrection;
+									if (ImGui::InputFloat("##MadgwickAdaptiveMaximumCorrection", &filter_madgwick_apt_max_correction, 0.01f, 0.05f, 2))
+									{
+										hmdInfo.FilterMadgwickAdaptiveMaxCorrection = clampf(filter_madgwick_apt_max_correction, 0.0f, 1.0f);
+
+										request_offset = true;
+									}
+									ImGui::PopItemWidth();
+
+									ImGui::Text("Drift Crrection Falloff: ");
+									ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+									ImGui::PushItemWidth(120.f);
+									float filter_madgwick_apt_falloff = hmdInfo.FilterMadgwickAdaptiveFalloff;
+									if (ImGui::InputFloat("##MadgwickAdaptiveFalloff", &filter_madgwick_apt_falloff, 0.001f, 0.005f, 3))
+									{
+										hmdInfo.FilterMadgwickAdaptiveFalloff = clampf(filter_madgwick_apt_falloff, 0.0f, 0.999f);
+
+										request_offset = true;
+									}
+									ImGui::PopItemWidth();
+								}
+								ImGui::Unindent();
+							}
+						}
+
 						if (!settings_shown)
 						{
-							ImGui::Text("There are no settings for this filter.");
+							ImGui::Text("There are no settings for these filters.");
 						}
 
 						ImGui::Separator();
@@ -492,6 +552,10 @@ void AppStage_HMDSettings::renderUI()
 							hmdInfo.FilterPredictionSmoothing = 0.40f;
 							hmdInfo.FilterLowPassOpticalDistance = 10.f;
 							hmdInfo.FilterLowPassOpticalSmoothing = 0.40f;
+							hmdInfo.FilterMadgwickMinCorrection = 0.05f;
+							hmdInfo.FilterMadgwickAdaptiveMethod = AdaptiveDriftCorrectionMethod::AdaptiveNone;
+							hmdInfo.FilterMadgwickAdaptiveMaxCorrection = 0.8f;
+							hmdInfo.FilterMadgwickAdaptiveFalloff = 0.99;
 
 							request_offset = true;
 
@@ -504,6 +568,10 @@ void AppStage_HMDSettings::renderUI()
 							filterSettings.filter_prediction_smoothing = hmdInfo.FilterPredictionSmoothing;
 							filterSettings.filter_lowpassoptical_distance = hmdInfo.FilterLowPassOpticalDistance;
 							filterSettings.filter_lowpassoptical_smoothing = hmdInfo.FilterLowPassOpticalSmoothing;
+							filterSettings.filter_madgwick_min_correction = hmdInfo.FilterMadgwickMinCorrection;
+							filterSettings.filter_madgwick_apt_method = hmdInfo.FilterMadgwickAdaptiveMethod;
+							filterSettings.filter_madgwick_apt_max_correction = hmdInfo.FilterMadgwickAdaptiveMaxCorrection;
+							filterSettings.filter_madgwick_apt_falloff = hmdInfo.FilterMadgwickAdaptiveFalloff;
 
 							request_set_hmd_filter_settings(hmdInfo.HmdID, filterSettings);
 						}
@@ -970,6 +1038,10 @@ void AppStage_HMDSettings::request_set_hmd_filter_settings(
 	filter_settings->set_filter_prediction_smoothing(filterSettings.filter_prediction_smoothing);
 	filter_settings->set_filter_lowpassoptical_distance(filterSettings.filter_lowpassoptical_distance);
 	filter_settings->set_filter_lowpassoptical_smoothing(filterSettings.filter_lowpassoptical_smoothing);
+	filter_settings->set_filter_madgwick_min_correction(filterSettings.filter_madgwick_min_correction);
+	filter_settings->set_filter_madgwick_apt_method(filterSettings.filter_madgwick_apt_method);
+	filter_settings->set_filter_madgwick_apt_max_correction(filterSettings.filter_madgwick_apt_max_correction);
+	filter_settings->set_filter_madgwick_apt_falloff(filterSettings.filter_madgwick_apt_falloff);
 
 	PSMRequestID request_id;
 	PSM_SendOpaqueRequest(&request, &request_id);
@@ -1069,6 +1141,10 @@ void AppStage_HMDSettings::handle_hmd_list_response(
 				HmdInfo.FilterPredictionSmoothing = HmdResponse.filter_prediction_smoothing();
 				HmdInfo.FilterLowPassOpticalDistance = HmdResponse.filter_lowpassoptical_distance();
 				HmdInfo.FilterLowPassOpticalSmoothing = HmdResponse.filter_lowpassoptical_smoothing();
+				HmdInfo.FilterMadgwickMinCorrection = HmdResponse.filter_madgwick_min_correction();
+				HmdInfo.FilterMadgwickAdaptiveMethod = static_cast<AdaptiveDriftCorrectionMethod>(HmdResponse.filter_madgwick_apt_method());
+				HmdInfo.FilterMadgwickAdaptiveMaxCorrection = HmdResponse.filter_madgwick_apt_max_correction();
+				HmdInfo.FilterMadgwickAdaptiveFalloff = HmdResponse.filter_madgwick_apt_falloff();
 
                 if (HmdInfo.HmdType == AppStage_HMDSettings::Morpheus)
                 {

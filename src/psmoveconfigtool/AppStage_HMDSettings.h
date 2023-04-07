@@ -10,6 +10,14 @@
 class AppStage_HMDSettings : public AppStage
 {
 public:
+	enum AdaptiveDriftCorrectionMethod
+	{
+		AdaptiveNone = 0,
+		AdaptiveGyro,
+		AdaptiveAccel,
+		AdaptiveBoth,
+	};
+
     enum eHMDType
     {
         Morpheus,
@@ -44,6 +52,10 @@ public:
 		float filter_prediction_smoothing;
 		float filter_lowpassoptical_distance;
 		float filter_lowpassoptical_smoothing;
+		float filter_madgwick_min_correction;
+		int filter_madgwick_apt_method;
+		float filter_madgwick_apt_max_correction;
+		float filter_madgwick_apt_falloff;
 	};
 
     struct HMDInfo
@@ -68,6 +80,10 @@ public:
 		float FilterPredictionSmoothing;
 		float FilterLowPassOpticalDistance;
 		float FilterLowPassOpticalSmoothing;
+		float FilterMadgwickMinCorrection;
+		AdaptiveDriftCorrectionMethod FilterMadgwickAdaptiveMethod;
+		float FilterMadgwickAdaptiveMaxCorrection;
+		float FilterMadgwickAdaptiveFalloff;
     };
 
 
