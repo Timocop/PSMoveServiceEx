@@ -1232,9 +1232,9 @@ ServerControllerView::getFilteredPose(float time, float ang_time) const
 
 				DeviceManager::getInstance()->m_tracker_manager->applyPlayspaceOffsets(poseVec, postQuat, true, true, true, true);
 
-				pose.PositionCm.x = (poseVec.x() + offset_position.x) * offset_scale.x;
-				pose.PositionCm.y = (poseVec.y() + offset_position.y) * offset_scale.y;
-				pose.PositionCm.z = (poseVec.z() + offset_position.z) * offset_scale.z;
+				pose.PositionCm.x = (poseVec.x() + clampf(offset_position.x, -(1 << 16), (1 << 16))) * clampf(offset_scale.x, 0.01f, 100.f);
+				pose.PositionCm.y = (poseVec.y() + clampf(offset_position.y, -(1 << 16), (1 << 16))) * clampf(offset_scale.y, 0.01f, 100.f);
+				pose.PositionCm.z = (poseVec.z() + clampf(offset_position.z, -(1 << 16), (1 << 16))) * clampf(offset_scale.z, 0.01f, 100.f);
 
 				// Rotate Orientation
 				pose.Orientation.w = postQuat.w();
@@ -1272,9 +1272,9 @@ ServerControllerView::getFilteredPose(float time, float ang_time) const
 
 				DeviceManager::getInstance()->m_tracker_manager->applyPlayspaceOffsets(poseVec, postQuat, true, true, true, true);
 
-				pose.PositionCm.x = (poseVec.x() + offset_position.x) * offset_scale.x;
-				pose.PositionCm.y = (poseVec.y() + offset_position.y) * offset_scale.y;
-				pose.PositionCm.z = (poseVec.z() + offset_position.z) * offset_scale.z;
+				pose.PositionCm.x = (poseVec.x() + clampf(offset_position.x, -(1 << 16), (1 << 16))) * clampf(offset_scale.x, 0.01f, 100.f);
+				pose.PositionCm.y = (poseVec.y() + clampf(offset_position.y, -(1 << 16), (1 << 16))) * clampf(offset_scale.y, 0.01f, 100.f);
+				pose.PositionCm.z = (poseVec.z() + clampf(offset_position.z, -(1 << 16), (1 << 16))) * clampf(offset_scale.z, 0.01f, 100.f);
 
 				// Rotate Orientation
 				pose.Orientation.w = postQuat.w();
@@ -1312,9 +1312,9 @@ ServerControllerView::getFilteredPose(float time, float ang_time) const
 
 				DeviceManager::getInstance()->m_tracker_manager->applyPlayspaceOffsets(poseVec, postQuat, true, true, true, true);
 
-				pose.PositionCm.x = (poseVec.x() + offset_position.x) * offset_scale.x;
-				pose.PositionCm.y = (poseVec.y() + offset_position.y) * offset_scale.y;
-				pose.PositionCm.z = (poseVec.z() + offset_position.z) * offset_scale.z;
+				pose.PositionCm.x = (poseVec.x() + clampf(offset_position.x, -(1 << 16), (1 << 16))) * clampf(offset_scale.x, 0.01f, 100.f);
+				pose.PositionCm.y = (poseVec.y() + clampf(offset_position.y, -(1 << 16), (1 << 16))) * clampf(offset_scale.y, 0.01f, 100.f);
+				pose.PositionCm.z = (poseVec.z() + clampf(offset_position.z, -(1 << 16), (1 << 16))) * clampf(offset_scale.z, 0.01f, 100.f);
 
 				// Rotate Orientation
 				pose.Orientation.w = postQuat.w();
