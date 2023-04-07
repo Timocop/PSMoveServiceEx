@@ -626,16 +626,20 @@ void OrientationFilterMadgwickMARG::update(const float delta_time, const PoseFil
 
 		// Eqn 48) net_omega_bias+= zeta*omega_err
 		// Compute the net accumulated gyroscope bias
-		const float zeta= sqrtf(3.0f / 4.0f) * fmaxf(fmaxf(m_constants.gyro_variance.x(), m_constants.gyro_variance.y()), m_constants.gyro_variance.z());
-		Eigen::Quaternionf omega_bias(0.f, m_omega_bias_x, m_omega_bias_y, m_omega_bias_z);
-		omega_bias = Eigen::Quaternionf(omega_bias.coeffs() + omega_err.coeffs()*zeta*total_delta_time);
-		m_omega_bias_x= omega_bias.x();
-		m_omega_bias_y= omega_bias.y();
-		m_omega_bias_z= omega_bias.z();
+
+		// $TODO Doesn't do anything. Only accumulates permanent gyro drift over time?
+		// Lets just change beta instead.
+
+		//const float zeta = sqrtf(3.0f / 4.0f) * fmaxf(fmaxf(m_constants.gyro_variance.x(), m_constants.gyro_variance.y()), m_constants.gyro_variance.z());
+		//Eigen::Quaternionf omega_bias(0.f, m_omega_bias_x, m_omega_bias_y, m_omega_bias_z);
+		//omega_bias = Eigen::Quaternionf(omega_bias.coeffs() + omega_err.coeffs()*zeta*total_delta_time);
+		//m_omega_bias_x= omega_bias.x();
+		//m_omega_bias_y= omega_bias.y();
+		//m_omega_bias_z= omega_bias.z();
 
 		// Eqn 49) omega_corrected = omega - net_omega_bias
 		Eigen::Quaternionf omega = Eigen::Quaternionf(0.f, current_omega.x(), current_omega.y(), current_omega.z());
-		Eigen::Quaternionf corrected_omega = Eigen::Quaternionf(omega.coeffs() - omega_bias.coeffs());
+		Eigen::Quaternionf corrected_omega = Eigen::Quaternionf(omega.coeffs() /*- omega_bias.coeffs()*/);
 
 		// Compute the rate of change of the orientation purely from the gyroscope
 		// Eqn 12) q_dot = 0.5*q*omega
