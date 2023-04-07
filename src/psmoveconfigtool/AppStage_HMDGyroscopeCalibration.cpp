@@ -28,7 +28,6 @@ const char *AppStage_HMDGyroscopeCalibration::APP_STAGE_NAME = "HMDGyroscopeCali
 //-- constants -----
 const double k_stabilize_wait_time_ms = 3000.f;
 const int k_desired_noise_sample_count = 1000;
-const float k_desired_drift_sampling_time = 30.0*1000.f; // milliseconds
 
 //-- definitions -----
 struct HMDGyroscopeErrorSamples
@@ -295,9 +294,7 @@ void AppStage_HMDGyroscopeCalibration::update()
 						m_errorSamples->raw_gyro_samples[m_errorSamples->sample_count] = raw_gyro;
 						++m_errorSamples->sample_count;
 					}
-
-					// See if we have completed the sampling period
-					if (sampleDurationMilli.count() >= k_desired_drift_sampling_time)
+					else
 					{
 						// Compute bias and drift statistics
 						m_errorSamples->computeStatistics(sampleDurationMilli);
@@ -490,10 +487,6 @@ void AppStage_HMDGyroscopeCalibration::renderUI()
             ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
-            std::chrono::time_point<std::chrono::high_resolution_clock> now= std::chrono::high_resolution_clock::now();
-            std::chrono::duration<double, std::milli> stableDuration = now - m_errorSamples->sampleStartTime;
-            float timeFraction = static_cast<float>(stableDuration.count() / k_desired_drift_sampling_time);
-
             const float sampleFraction = 
                 static_cast<float>(m_errorSamples->sample_count)
                 / static_cast<float>(k_desired_noise_sample_count);
@@ -501,7 +494,7 @@ void AppStage_HMDGyroscopeCalibration::renderUI()
             ImGui::TextWrapped(
                 "[Step 1 of 2: Measuring gyroscope drift and bias]\n" \
                 "Sampling Gyroscope...");
-            ImGui::ProgressBar(fminf(sampleFraction, timeFraction), ImVec2(250, 20));
+            ImGui::ProgressBar(sampleFraction, ImVec2(250, 20));
 
             if (ImGui::Button("Cancel"))
             {
