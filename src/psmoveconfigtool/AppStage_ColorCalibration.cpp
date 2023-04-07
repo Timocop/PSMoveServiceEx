@@ -801,12 +801,6 @@ void AppStage_ColorCalibration::renderUI()
             ImGui::Begin(k_window_title, nullptr, window_flags);
 			ImGui::BeginGroup();
 			{
-
-				if (ImGui::Button("Return to Main Menu"))
-				{
-					request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
-				}
-
 				if (ImGui::Button("Return to Tracker Settings"))
 				{
 					request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
