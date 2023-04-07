@@ -318,10 +318,19 @@ void AppStage_HMDSettings::renderUI()
 								hmdInfo.PositionFilterName = k_hmd_position_filter_names[hmdInfo.PositionFilterIndex];
 								request_set_position_filter(hmdInfo.HmdID, hmdInfo.PositionFilterName);
 							}
+							if (ImGui::IsItemHovered())
+							{
+								show_position_filter_tooltip(hmdInfo.PositionFilterName);
+							}
+
 							if (ImGui::Combo("Orientation Filter", &hmdInfo.OrientationFilterIndex, k_morpheus_orientation_filter_names, UI_ARRAYSIZE(k_morpheus_orientation_filter_names)))
 							{
 								hmdInfo.OrientationFilterName = k_morpheus_orientation_filter_names[hmdInfo.OrientationFilterIndex];
 								request_set_orientation_filter(hmdInfo.HmdID, hmdInfo.OrientationFilterName);
+							}
+							if (ImGui::IsItemHovered())
+							{
+								show_orientation_filter_tooltip(hmdInfo.OrientationFilterName);
 							}
 
 							ImGui::ProgressBar(hmdInfo.PredictionTime / k_max_hmd_prediction_time, ImVec2(195.f - 55.f, 0.f), " ");
@@ -380,6 +389,10 @@ void AppStage_HMDSettings::renderUI()
 							{
 								hmdInfo.PositionFilterName = k_hmd_position_filter_names[hmdInfo.PositionFilterIndex];
 								request_set_position_filter(hmdInfo.HmdID, hmdInfo.PositionFilterName);
+							}
+							if (ImGui::IsItemHovered())
+							{
+								show_position_filter_tooltip(hmdInfo.PositionFilterName);
 							}
 
 							ImGui::ProgressBar(hmdInfo.PredictionTime / k_max_hmd_prediction_time, ImVec2(195.f - 55.f, 0.f), " ");
@@ -1218,4 +1231,125 @@ void AppStage_HMDSettings::handle_hmd_list_response(
             thisPtr->m_menuState = AppStage_HMDSettings::failedHmdListRequest;
         } break;
     }
+}
+
+
+void AppStage_HMDSettings::show_position_filter_tooltip(const std::string name)
+{
+	if (name == "PassThru")
+	{
+		ImGui::SetTooltip(
+			"Direct pass through of optical position.\n"
+			"The most responsive position filter but does not smooth optical jitter."
+		);
+	}
+	else if (name == "LowPassOptical")
+	{
+		ImGui::SetTooltip(
+			"Optical smoothing filter using distance.\n"
+			"Smooths smaller movements within short distances to reduce position jitter,\n"
+			"but behaves like PassThru on larger quicker movements."
+		);
+	}
+	else if (name == "LowPassIMU")
+	{
+		ImGui::SetTooltip(
+			"Predictive smoothing filter using device accelerometer.\n"
+			"Uses the device's accelerometer to predict and smooth optical movement."
+		);
+	}
+	else if (name == "LowPassExponential")
+	{
+		ImGui::SetTooltip(
+			"Optical smoothing filter using exponential curve.\n"
+			"Reduces optical jitter greatly but can also causes springy tracking and over prediction."
+		);
+	}
+	else if (name == "ComplimentaryOpticalIMU")
+	{
+		ImGui::SetTooltip(
+			"Optical smoothing filter using variance curve and IMU for smoothing.\n"
+			"Smooths optical tracking and reduces optical noise by tracker projection, distance and IMU.\n"
+			"Requires calibration.\n"
+			"(Use 'Calibrate Optical Noise' to calibrate)"
+		);
+	}
+	else if (name == "PositionKalman")
+	{
+		ImGui::SetTooltip(
+			"Optical smoothing filter using kalman and IMU.\n"
+			"Smooths optical tracking and reduces optical noise by tracker projection, distance and IMU.\n"
+			"Requires calibration.\n"
+			"(Use 'Calibrate Optical Noise' to calibrate / Experimental)"
+		);
+	}
+	else if (name == "PositionExternalAttachment")
+	{
+		ImGui::SetTooltip(
+			"Parents this controller to another and overwrites the optical tracking behavior.\n"
+			"It's recommended to turn off 'Enable Optical Tracking' when using this filter.\n"
+			"(Requires 'PSMoveServiceEx Virtual Device Manager')"
+		);
+	}
+}
+
+void AppStage_HMDSettings::show_orientation_filter_tooltip(const std::string name)
+{
+	if (name == "PassThru")
+	{
+		ImGui::SetTooltip(
+			"Direct pass through optical orientation filter.\n"
+			"Only works with Morpheus HMDs and DualShock4 controllers.\n"
+			"[Optical]"
+		);
+	}
+	else if (name == "MadgwickARG")
+	{
+		ImGui::SetTooltip(
+			"Advanced IMU orientation filter using madgwick.\n"
+			"[Gyroscope; Accelerometer]"
+		);
+	}
+	else if (name == "MadgwickMARG")
+	{
+		ImGui::SetTooltip(
+			"Advanced IMU orientation filter using madgwick algorithm.\n"
+			"[Gyroscope; Accelerometer; Magnetometer]"
+		);
+	}
+	else if (name == "ComplementaryMARG")
+	{
+		ImGui::SetTooltip(
+			"Fast and simple IMU orientation filter.\n"
+			"[Gyroscope; Accelerometer; Magnetometer]"
+		);
+	}
+	else if (name == "ComplementaryOpticalARG")
+	{
+		ImGui::SetTooltip(
+			"Optical orientation filter using variance curve and madgwick.\n"
+			"Smooths optical orintation and reduces optical orintation noise by tracker projection and distance.\n"
+			"Only works with Morpheus HMDs and DualShock4 controllers.\n"
+			"Requires calibration.\n"
+			"[Optical; Gyroscope]\n"
+			"(Use 'Calibrate Optical Noise' to calibrate)"
+		);
+	}
+	else if (name == "OrientationKalman")
+	{
+		ImGui::SetTooltip(
+			"Optical orientation filter using kalman.\n"
+			"Smooths optical orintation and reduces optical orintation noise by tracker projection and distance.\n"
+			"Requires calibration.\n"
+			"[Optical; Gyroscope; Accelerometer; Magnetometer]\n"
+			"(Use 'Calibrate Optical Noise' to calibrate / Experimental)"
+		);
+	}
+	else if (name == "OrientationExternal")
+	{
+		ImGui::SetTooltip(
+			"Allows external source for orientation data (e.g. OwOTrack, SlimeVR).\n"
+			"(Requires 'PSMoveServiceEx Virtual Device Manager')"
+		);
+	}
 }

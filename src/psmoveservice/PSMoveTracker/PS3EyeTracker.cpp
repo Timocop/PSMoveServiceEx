@@ -37,7 +37,7 @@ const int PS3EyeTrackerConfig::LENS_CALIBRATION_VERSION= 1;
 PS3EyeTrackerConfig::PS3EyeTrackerConfig(const std::string &fnamebase)
     : PSMoveConfig(fnamebase)
     , is_valid(false)
-    , max_poll_failure_timeout_ms(1000)
+    , max_poll_failure_timeout_ms(3000)
 	, frame_width(640)
 	, frame_height(480)
 	, frame_rate(30)

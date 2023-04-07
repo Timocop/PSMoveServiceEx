@@ -45,7 +45,7 @@ public:
         , version(CONFIG_VERSION)
 		, position_filter_type("ComplimentaryOpticalIMU")
 		, orientation_filter_type("ComplementaryOpticalARG")
-        , max_poll_failure_timeout_ms(1000)
+        , max_poll_failure_timeout_ms(3000)
 		, prediction_time(0.f)
 		, ang_prediction_time(0.f)
 		, accelerometer_noise_radius(0.015f) // rounded value from config tool measurement (g-units)

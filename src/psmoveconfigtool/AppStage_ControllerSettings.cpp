@@ -186,7 +186,7 @@ const char *AppStage_ControllerSettings::GAMEPAD_COMBO_LABELS[MAX_GAMEPAD_LABELS
 
 //-- constants -----
 const int k_default_position_filter_index = 1; // LowPassOptical
-const int k_default_psmove_orientation_filter_index = 3; // ComplementaryMARG
+const int k_default_psmove_orientation_filter_index = 2; // MadgwickMARG
 const int k_default_ds4_position_filter_index = 4; // ComplimentaryOpticalIMU
 const int k_default_ds4_orientation_filter_index = 2; // ComplementaryOpticalARG
 const int k_default_ds4_gyro_gain_index = 4; // 2000deg/s
@@ -2264,8 +2264,7 @@ void AppStage_ControllerSettings::show_position_filter_tooltip(const std::string
 		ImGui::SetTooltip(
 			"Optical smoothing filter using distance.\n"
 			"Smooths smaller movements within short distances to reduce position jitter,\n"
-			"but behaves like PassThru on larger quicker movements.\n"
-			"(Recommended)"
+			"but behaves like PassThru on larger quicker movements."
 		);
 	}
 	else if (name == "LowPassIMU")
@@ -2323,23 +2322,22 @@ void AppStage_ControllerSettings::show_orientation_filter_tooltip(const std::str
 	else if (name == "MadgwickARG")
 	{
 		ImGui::SetTooltip(
-			"IMU orientation filter using madgwick.\n"
-			"[Gyro]"
+			"Advanced IMU orientation filter using madgwick.\n"
+			"[Gyroscope; Accelerometer]"
 		);
 	}
 	else if (name == "MadgwickMARG")
 	{
 		ImGui::SetTooltip(
-			"IMU orientation filter using madgwick.\n"
-			"[Gyro; Accelerometer; Magnetometer]"
+			"Advanced IMU orientation filter using madgwick algorithm.\n"
+			"[Gyroscope; Accelerometer; Magnetometer]"
 		);
 	}
 	else if (name == "ComplementaryMARG")
 	{
 		ImGui::SetTooltip(
-			"Simple IMU orientation filter.\n"
-			"[Gyro; Accelerometer; Magnetometer]\n"
-			"(Recommended)"
+			"Fast and simple IMU orientation filter.\n"
+			"[Gyroscope; Accelerometer; Magnetometer]"
 		);
 	}
 	else if (name == "ComplementaryOpticalARG")
@@ -2349,7 +2347,7 @@ void AppStage_ControllerSettings::show_orientation_filter_tooltip(const std::str
 			"Smooths optical orintation and reduces optical orintation noise by tracker projection and distance.\n"
 			"Only works with Morpheus HMDs and DualShock4 controllers.\n"
 			"Requires calibration.\n"
-			"[Optical; Gyro]\n"
+			"[Optical; Gyroscope]\n"
 			"(Use 'Calibrate Optical Noise' to calibrate)"
 		);
 	}
@@ -2359,7 +2357,7 @@ void AppStage_ControllerSettings::show_orientation_filter_tooltip(const std::str
 			"Optical orientation filter using kalman.\n"
 			"Smooths optical orintation and reduces optical orintation noise by tracker projection and distance.\n"
 			"Requires calibration.\n"
-			"[Optical; Gyro; Accelerometer; Magnetometer]\n"
+			"[Optical; Gyroscope; Accelerometer; Magnetometer]\n"
 			"(Use 'Calibrate Optical Noise' to calibrate / Experimental)"
 		);
 	}

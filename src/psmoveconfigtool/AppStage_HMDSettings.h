@@ -116,6 +116,10 @@ protected:
 		const PSMResponseMessage *response,
 		void *userdata);
 
+	void show_position_filter_tooltip(const std::string name);
+
+	void show_orientation_filter_tooltip(const std::string name);
+
 	void request_set_orientation_filter(const int hmd_id, const std::string &filter_name);
 	void request_set_position_filter(const int hmd_id, const std::string &filter_name);
 	void request_set_hmd_prediction(const int hmd_id, float prediction_time);

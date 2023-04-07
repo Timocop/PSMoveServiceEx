@@ -12,7 +12,7 @@ class PSNaviControllerConfig : public PSMoveConfig
 public:
     PSNaviControllerConfig(const std::string &fnamebase = "PSNaviControllerConfig")
         : PSMoveConfig(fnamebase)
-        , max_poll_failure_timeout_ms(1000) // ms
+        , max_poll_failure_timeout_ms(3000) // ms
 		, attached_to_controller("")
     {};
 
