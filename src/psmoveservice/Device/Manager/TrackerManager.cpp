@@ -58,6 +58,9 @@ TrackerManagerConfig::TrackerManagerConfig(const std::string &fnamebase)
 	playspace_position_x = 0.f;
 	playspace_position_y = 0.f;
 	playspace_position_z = 0.f;
+	playspace_scale_x = 1.f;
+	playspace_scale_y = 1.f;
+	playspace_scale_z = 1.f;
 
 	for (int preset_index = 0; preset_index < eCommonTrackingColorID::MAX_TRACKING_COLOR_TYPES; ++preset_index)
 	{
@@ -114,6 +117,9 @@ TrackerManagerConfig::config2ptree()
 	pt.put("playspace_position_x", playspace_position_x);
 	pt.put("playspace_position_y", playspace_position_y);
 	pt.put("playspace_position_z", playspace_position_z);
+	pt.put("playspace_scale_x", playspace_scale_x);
+	pt.put("playspace_scale_y", playspace_scale_y);
+	pt.put("playspace_scale_z", playspace_scale_z);
 
 	writeColorPropertyPresetTable(&default_tracker_profile.color_preset_table, pt);
 
@@ -169,6 +175,9 @@ TrackerManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
 		playspace_position_x = pt.get<float>("playspace_position_x", playspace_position_x);
 		playspace_position_y = pt.get<float>("playspace_position_y", playspace_position_y);
 		playspace_position_z = pt.get<float>("playspace_position_z", playspace_position_z);
+		playspace_scale_x = pt.get<float>("playspace_scale_x", playspace_scale_x);
+		playspace_scale_y = pt.get<float>("playspace_scale_y", playspace_scale_y);
+		playspace_scale_z = pt.get<float>("playspace_scale_z", playspace_scale_z);
 
 		readColorPropertyPresetTable(pt, &default_tracker_profile.color_preset_table);
     }
@@ -538,13 +547,7 @@ TrackerManager::freeTrackingColorID(eCommonTrackingColorID color_id)
 }
 
 void
-TrackerManager::applyPlayspaceOffsets(Eigen::Vector3f &poseVec, Eigen::Quaternionf &postQuat)
-{
-	applyPlayspaceOffsets(poseVec, postQuat, true, true, true);
-}
-
-void
-TrackerManager::applyPlayspaceOffsets(Eigen::Vector3f &poseVec, Eigen::Quaternionf &postQuat, bool move_pos, bool rotate_pos, bool rotate_ang)
+TrackerManager::applyPlayspaceOffsets(Eigen::Vector3f &poseVec, Eigen::Quaternionf &postQuat, bool move_pos, bool rotate_pos, bool scale_pos, bool rotate_ang)
 {
 	const TrackerManagerConfig &cfg = DeviceManager::getInstance()->m_tracker_manager->getConfig();
 
@@ -556,7 +559,16 @@ TrackerManager::applyPlayspaceOffsets(Eigen::Vector3f &poseVec, Eigen::Quaternio
 
 	// Move by Axis
 	if (move_pos)
-		poseVec += Eigen::Vector3f(cfg.playspace_position_x, cfg.playspace_position_y, cfg.playspace_position_z);
+		poseVec += Eigen::Vector3f(
+			clampf(cfg.playspace_position_x, -(1 << 16), (1 << 16)),
+			clampf(cfg.playspace_position_y, -(1 << 16), (1 << 16)),
+			clampf(cfg.playspace_position_z, -(1 << 16), (1 << 16)));
+
+	if(scale_pos)
+		poseVec = Eigen::Vector3f(
+			poseVec.x() * clampf(cfg.playspace_scale_x, 0.01f, 100.f),
+			poseVec.y() * clampf(cfg.playspace_scale_y, 0.01f, 100.f),
+			poseVec.z() * clampf(cfg.playspace_scale_z, 0.01f, 100.f));
 
 	// Rotate Orientation
 	if (rotate_ang)

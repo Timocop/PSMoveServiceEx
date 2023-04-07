@@ -1216,7 +1216,7 @@ CommonDevicePose ServerTrackerView::getTrackerPose() const
 	Eigen::Vector3f poseVec = Eigen::Vector3f(pose.PositionCm.x, pose.PositionCm.y, pose.PositionCm.z);
 	Eigen::Quaternionf postQuat = Eigen::Quaternionf(pose.Orientation.w, pose.Orientation.x, pose.Orientation.y, pose.Orientation.z);
 
-	DeviceManager::getInstance()->m_tracker_manager->applyPlayspaceOffsets(poseVec, postQuat);
+	DeviceManager::getInstance()->m_tracker_manager->applyPlayspaceOffsets(poseVec, postQuat, true, true, false, true);
 
 	pose.PositionCm.x = poseVec.x();
 	pose.PositionCm.y = poseVec.y();

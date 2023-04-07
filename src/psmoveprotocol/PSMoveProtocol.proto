@@ -624,6 +624,7 @@ message Request {
     message RequestGetPlayspaceOffsets {
 		float playspace_orientation_yaw = 1;
 		Position playspace_position= 2;
+		Position playspace_scale= 3;
     }
     RequestGetPlayspaceOffsets request_get_playspace_offsets = 53;
 	
@@ -631,6 +632,7 @@ message Request {
     message RequestSetPlayspaceOffsets {
 		float playspace_orientation_yaw = 1;
 		Position playspace_position= 2;
+		Position playspace_scale= 3;
     }
     RequestSetPlayspaceOffsets request_set_playspace_offsets = 54;
 	
@@ -982,6 +984,7 @@ message Response {
     message ResultGetPlayspaceOffsets {
         float playspace_orientation_yaw= 1;
 		Position playspace_position= 2;
+		Position playspace_scale= 3;
     }
     ResultGetPlayspaceOffsets result_get_playspace_offsets = 36;
 }

@@ -830,6 +830,25 @@ void AppStage_HMDSettings::renderUI()
 
 						ImGui::Separator();
 
+						if (hmdInfo.OffsetPosition.x != 0.0f ||
+							hmdInfo.OffsetPosition.y != 0.0f ||
+							hmdInfo.OffsetPosition.z != 0.0f ||
+							hmdInfo.OffsetScale.x != 1.0f ||
+							hmdInfo.OffsetScale.y != 1.0f ||
+							hmdInfo.OffsetScale.z != 1.0f)
+						{
+							ImGui::Bullet();
+							ImGui::SameLine();
+							ImGui::PushTextWrapPos();
+							ImGui::TextDisabled(
+								"HMD scale or position has been changed!\n"
+								"Changing the scale or position can cause abnormal artifacts in pose previews!"
+							);
+							ImGui::PopTextWrapPos();
+
+							ImGui::Separator();
+						}
+
 						if (ImGui::Button("Reset All"))
 						{
 							hmdInfo.OffsetOrientation.x = 0.f;

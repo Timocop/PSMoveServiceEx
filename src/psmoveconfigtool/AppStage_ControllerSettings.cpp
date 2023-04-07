@@ -1385,6 +1385,25 @@ void AppStage_ControllerSettings::renderUI()
 
 										ImGui::Separator();
 
+										if (controllerInfo.OffsetPosition.x != 0.0f ||
+											controllerInfo.OffsetPosition.y != 0.0f ||
+											controllerInfo.OffsetPosition.z != 0.0f ||
+											controllerInfo.OffsetScale.x != 1.0f ||
+											controllerInfo.OffsetScale.y != 1.0f ||
+											controllerInfo.OffsetScale.z != 1.0f)
+										{
+											ImGui::Bullet();
+											ImGui::SameLine();
+											ImGui::PushTextWrapPos();
+											ImGui::TextDisabled(
+												"Controller scale or position has been changed!\n"
+												"Changing the scale or position can cause abnormal artifacts in pose previews!"
+											);
+											ImGui::PopTextWrapPos();
+
+											ImGui::Separator();
+										}
+
 										if (ImGui::Button("Reset All"))
 										{
 											controllerInfo.OffsetOrientation.x = 0.f;

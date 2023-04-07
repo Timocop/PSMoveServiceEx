@@ -66,10 +66,13 @@ public:
 	void gotoTrackingVideoALL(bool value = false) { m_gotoTrackingVideoALL = value; }
 
 	void setPlayspaceOffsets(
-		float playspace_orientation_yaw,
-		float playspace_position_x,
-		float playspace_position_y,
-		float playspace_position_z);
+		float orientation_yaw,
+		float position_x,
+		float position_y,
+		float position_z,
+		float scale_x,
+		float scale_y,
+		float scale_z);
 
 protected:
     virtual bool onClientAPIEvent(
@@ -100,11 +103,15 @@ protected:
 	static void handle_playspace_info_response(
 		const PSMResponseMessage *response,
 		void *userdata);
+
 	void request_set_playspace_offsets(
-		float offset_orientation_yaw,
-		float offset_position_x,
-		float offset_position_y,
-		float offset_position_z);
+		float playspace_orientation_yaw, 
+		float playspace_position_x, 
+		float playspace_position_y, 
+		float playspace_position_z, 
+		float playspace_scale_x, 
+		float playspace_scale_y, 
+		float playspace_scale_z);
 
 protected:
     enum eTrackerMenuState
@@ -144,6 +151,9 @@ protected:
 	float playspace_position_x;
 	float playspace_position_y;
 	float playspace_position_z;
+	float playspace_scale_x;
+	float playspace_scale_y;
+	float playspace_scale_z;
 };
 
 #endif // APP_STAGE_TRACKER_SETTINGS_H

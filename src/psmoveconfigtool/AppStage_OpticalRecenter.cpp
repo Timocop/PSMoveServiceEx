@@ -448,7 +448,10 @@ void AppStage_OpticalRecenter::renderUI()
 				-forwardAng.get_y_degrees(),
 				-m_CenterSample.x,
 				-k_height_to_psmove_bulb_center,
-				-m_CenterSample.z
+				-m_CenterSample.z,
+				1.0f,
+				1.0f,
+				1.0f
 			);
 
 			AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, m_iControllerId, -1);

@@ -3403,9 +3403,13 @@ protected:
 		playspace_offsets->set_playspace_orientation_yaw(config.playspace_orientation_yaw);
 
 		PSMoveProtocol::Position *mutable_playspace_position = playspace_offsets->mutable_playspace_position();
+		PSMoveProtocol::Position *mutable_playspace_scale = playspace_offsets->mutable_playspace_scale();
 		mutable_playspace_position->set_x(config.playspace_position_x);
 		mutable_playspace_position->set_y(config.playspace_position_y);
 		mutable_playspace_position->set_z(config.playspace_position_z);
+		mutable_playspace_scale->set_x(config.playspace_scale_x);
+		mutable_playspace_scale->set_y(config.playspace_scale_y);
+		mutable_playspace_scale->set_z(config.playspace_scale_z);
 
 		response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
 	}
@@ -3420,14 +3424,20 @@ protected:
 			context.request->request_set_playspace_offsets();
 
 		if (config->playspace_orientation_yaw != request.playspace_orientation_yaw() ||
-			config->playspace_position_x != request.playspace_position().x() || 
+			config->playspace_position_x != request.playspace_position().x() ||
 			config->playspace_position_y != request.playspace_position().y() ||
-			config->playspace_position_z != request.playspace_position().z())
+			config->playspace_position_z != request.playspace_position().z() ||
+			config->playspace_scale_x != request.playspace_scale().x() ||
+			config->playspace_scale_y != request.playspace_scale().y() ||
+			config->playspace_scale_z != request.playspace_scale().z())
 		{
 			config->playspace_orientation_yaw = request.playspace_orientation_yaw();
 			config->playspace_position_x = request.playspace_position().x();
 			config->playspace_position_y = request.playspace_position().y();
 			config->playspace_position_z = request.playspace_position().z();
+			config->playspace_scale_x = request.playspace_scale().x();
+			config->playspace_scale_y = request.playspace_scale().y();
+			config->playspace_scale_z = request.playspace_scale().z();
 			config->save();
 
 			// Notify if the playspace has been changed

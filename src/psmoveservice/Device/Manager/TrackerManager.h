@@ -92,6 +92,9 @@ public:
 	float playspace_position_x;
 	float playspace_position_y;
 	float playspace_position_z;
+	float playspace_scale_x;
+	float playspace_scale_y;
+	float playspace_scale_z;
 
 	CommonDeviceVector get_global_forward_axis() const;
 	CommonDeviceVector get_global_backward_axis() const;
@@ -158,8 +161,13 @@ public:
     bool claimTrackingColorID(const class ServerControllerView *controller_view, eCommonTrackingColorID color_id);
     bool claimTrackingColorID(const class ServerHMDView *hmd_view, eCommonTrackingColorID color_id);
     void freeTrackingColorID(eCommonTrackingColorID color_id);
-	void applyPlayspaceOffsets(Eigen::Vector3f &poseVec, Eigen::Quaternionf &postQuat);
-	void applyPlayspaceOffsets(Eigen::Vector3f &poseVec, Eigen::Quaternionf &postQuat, bool move_pos, bool rotate_pos, bool rotate_ang);
+	void applyPlayspaceOffsets(
+		Eigen::Vector3f & poseVec, 
+		Eigen::Quaternionf & postQuat, 
+		bool move_pos, 
+		bool rotate_pos, 
+		bool scale_pos, 
+		bool rotate_ang);
 
 protected:
     bool can_update_connected_devices() override;

@@ -384,7 +384,7 @@ void OrientationTargetOpticalARG::UpdateOpticalTarget(const float delta_time, co
 				forwardQuat.setFromTwoVectors(forwardDirection, Eigen::Vector3f::UnitZ());
 
 				Eigen::Vector3f nullVec = Eigen::Vector3f::Zero();
-				DeviceManager::getInstance()->m_tracker_manager->applyPlayspaceOffsets(nullVec, forwardQuat, false, false, true);
+				DeviceManager::getInstance()->m_tracker_manager->applyPlayspaceOffsets(nullVec, forwardQuat, false, false, false, true);
 
 				Eigen::Quaternionf forwardQuat_inv = forwardQuat.inverse();
 

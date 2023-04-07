@@ -42,6 +42,9 @@ AppStage_TrackerSettings::AppStage_TrackerSettings(App *app)
 	, playspace_position_x(0.f)
 	, playspace_position_y(0.f)
 	, playspace_position_z(0.f)
+	, playspace_scale_x(1.f)
+	, playspace_scale_y(1.f)
+	, playspace_scale_z(1.f)
 { }
 
 void AppStage_TrackerSettings::enter()
@@ -901,12 +904,67 @@ void AppStage_TrackerSettings::renderUI()
 
 						ImGui::Separator();
 
+						ImGui::Text("Scale X (Left/Right): ");
+						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+						ImGui::PushItemWidth(120.f);
+						if (ImGui::InputFloat("##ScalePositionX", &playspace_scale_x, 0.01f, 0.05f, 2))
+						{
+							playspace_scale_x = clampf(playspace_scale_x, 0.01, 100.f);
+
+							request_offset = true;
+						}
+						ImGui::PopItemWidth();
+
+						ImGui::Text("Scale Y (Up/Down): ");
+						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+						ImGui::PushItemWidth(120.f);
+						if (ImGui::InputFloat("##ScalePositionY", &playspace_scale_y, 0.01f, 0.05f, 2))
+						{
+							playspace_scale_y = clampf(playspace_scale_y, 0.01, 100.f);
+
+							request_offset = true;
+						}
+						ImGui::PopItemWidth();
+
+						ImGui::Text("Scale Z (Backward): ");
+						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+						ImGui::PushItemWidth(120.f);
+						if (ImGui::InputFloat("##ScalePositionZ", &playspace_scale_z, 0.01f, 0.05f, 2))
+						{
+							playspace_scale_z = clampf(playspace_scale_z, 0.01, 100.f);
+
+							request_offset = true;
+						}
+						ImGui::PopItemWidth();
+
+						ImGui::Separator();
+
+						if (playspace_scale_x != 1.0f ||
+							playspace_scale_y != 1.0f ||
+							playspace_scale_z != 1.0f)
+						{
+							ImGui::Bullet();
+							ImGui::SameLine();
+							ImGui::PushTextWrapPos();
+							ImGui::TextDisabled(
+								"Playspace scale has been changed!\n"
+								"Scaling will not be applied to trackers.\n"
+								"Changing the playspace scale can cause abnormal artifacts in pose previews!"
+							);
+							ImGui::PopTextWrapPos();
+
+							ImGui::Separator();
+						}
+
 						if (ImGui::Button("Reset All"))
 						{
 							playspace_orientation_yaw = 0.f;
 							playspace_position_x = 0.f;
 							playspace_position_y = 0.f;
 							playspace_position_z = 0.f;
+							playspace_scale_x = 1.f;
+							playspace_scale_y = 1.f;
+							playspace_scale_z = 1.f;
 
 							request_offset = true;
 						}
@@ -917,7 +975,10 @@ void AppStage_TrackerSettings::renderUI()
 								playspace_orientation_yaw,
 								playspace_position_x,
 								playspace_position_y,
-								playspace_position_z);
+								playspace_position_z,
+								playspace_scale_x,
+								playspace_scale_y,
+								playspace_scale_z);
 						}
 					}
 					ImGui::EndGroup();
@@ -1313,21 +1374,28 @@ void AppStage_TrackerSettings::handle_playspace_info_response(
 	}
 }
 void AppStage_TrackerSettings::request_set_playspace_offsets(
-	float offset_orientation_yaw,
-	float offset_position_x,
-	float offset_position_y,
-	float offset_position_z)
+	float playspace_orientation_yaw,
+	float playspace_position_x,
+	float playspace_position_y,
+	float playspace_position_z,
+	float playspace_scale_x,
+	float playspace_scale_y,
+	float playspace_scale_z)
 {
 	RequestPtr request(new PSMoveProtocol::Request());
 	request->set_type(PSMoveProtocol::Request_RequestType_SET_PLAYSPACE_OFFSETS);
 
 	PSMoveProtocol::Request_RequestSetPlayspaceOffsets *mutable_request_set_playspace_offsets = request->mutable_request_set_playspace_offsets();
-	PSMoveProtocol::Position *mutable_offset_position = mutable_request_set_playspace_offsets->mutable_playspace_position();
+	PSMoveProtocol::Position *mutable_playspace_position = mutable_request_set_playspace_offsets->mutable_playspace_position();
+	PSMoveProtocol::Position *mutable_playspace_scale = mutable_request_set_playspace_offsets->mutable_playspace_scale();
 
-	request->mutable_request_set_playspace_offsets()->set_playspace_orientation_yaw(offset_orientation_yaw);
-	mutable_offset_position->set_x(offset_position_x);
-	mutable_offset_position->set_y(offset_position_y);
-	mutable_offset_position->set_z(offset_position_z);
+	request->mutable_request_set_playspace_offsets()->set_playspace_orientation_yaw(playspace_orientation_yaw);
+	mutable_playspace_position->set_x(playspace_position_x);
+	mutable_playspace_position->set_y(playspace_position_y);
+	mutable_playspace_position->set_z(playspace_position_z);
+	mutable_playspace_scale->set_x(playspace_scale_x);
+	mutable_playspace_scale->set_y(playspace_scale_y);
+	mutable_playspace_scale->set_z(playspace_scale_z);
 
 	PSMRequestID request_id;
 	PSM_SendOpaqueRequest(&request, &request_id);
@@ -1361,16 +1429,25 @@ void AppStage_TrackerSettings::setPlayspaceOffsets(
 	float orientation_yaw,
 	float position_x,
 	float position_y,
-	float position_z)
+	float position_z,
+	float scale_x,
+	float scale_y,
+	float scale_z)
 {
 	playspace_orientation_yaw = orientation_yaw;
 	playspace_position_x = position_x;
 	playspace_position_y = position_y;
 	playspace_position_z = position_z;
+	playspace_scale_x = scale_x;
+	playspace_scale_y = scale_y;
+	playspace_scale_z = scale_z;
 
 	request_set_playspace_offsets(
 		playspace_orientation_yaw,
 		playspace_position_x,
 		playspace_position_y,
-		playspace_position_z);
+		playspace_position_z,
+		playspace_scale_x,
+		playspace_scale_y,
+		playspace_scale_z);
 }
