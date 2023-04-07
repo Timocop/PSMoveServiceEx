@@ -673,9 +673,9 @@ void AppStage_HMDSettings::renderUI()
 							ImGui::PushItemWidth(120.f);
 							if (ImGui::InputFloat("##LocalOffsetOrientationX", &hmdInfo.OffsetOrientation.x, 1.f, 5.f, 2))
 							{
-								while (hmdInfo.OffsetOrientation.x < 0.f)
+								while (hmdInfo.OffsetOrientation.x < -180.f)
 									hmdInfo.OffsetOrientation.x += 360.f;
-								while (hmdInfo.OffsetOrientation.x >= 360.f)
+								while (hmdInfo.OffsetOrientation.x >= 180.f)
 									hmdInfo.OffsetOrientation.x -= 360.f;
 
 								request_offset = true;
@@ -687,9 +687,9 @@ void AppStage_HMDSettings::renderUI()
 							ImGui::PushItemWidth(120.f);
 							if (ImGui::InputFloat("##LocalOffsetOrientationY", &hmdInfo.OffsetOrientation.y, 1.f, 5.f, 2))
 							{
-								while (hmdInfo.OffsetOrientation.y < 0.f)
+								while (hmdInfo.OffsetOrientation.y < -180.f)
 									hmdInfo.OffsetOrientation.y += 360.f;
-								while (hmdInfo.OffsetOrientation.y >= 360.f)
+								while (hmdInfo.OffsetOrientation.y >= 180.f)
 									hmdInfo.OffsetOrientation.y -= 360.f;
 
 								request_offset = true;
@@ -701,9 +701,9 @@ void AppStage_HMDSettings::renderUI()
 							ImGui::PushItemWidth(120.f);
 							if (ImGui::InputFloat("##LocalOffsetOrientationZ", &hmdInfo.OffsetOrientation.z, 1.f, 5.f, 2))
 							{
-								while (hmdInfo.OffsetOrientation.z < 0.f)
+								while (hmdInfo.OffsetOrientation.z < -180.f)
 									hmdInfo.OffsetOrientation.z += 360.f;
-								while (hmdInfo.OffsetOrientation.z >= 360.f)
+								while (hmdInfo.OffsetOrientation.z >= 180.f)
 									hmdInfo.OffsetOrientation.z -= 360.f;
 
 								request_offset = true;
@@ -717,9 +717,9 @@ void AppStage_HMDSettings::renderUI()
 							ImGui::PushItemWidth(120.f);
 							if (ImGui::InputFloat("##WorldOffsetOrientationX", &hmdInfo.OffsetWorldOrientation.x, 1.f, 5.f, 2))
 							{
-								while (hmdInfo.OffsetWorldOrientation.x < 0.f)
+								while (hmdInfo.OffsetWorldOrientation.x < -180.f)
 									hmdInfo.OffsetWorldOrientation.x += 360.f;
-								while (hmdInfo.OffsetWorldOrientation.x >= 360.f)
+								while (hmdInfo.OffsetWorldOrientation.x >= 180.f)
 									hmdInfo.OffsetWorldOrientation.x -= 360.f;
 
 								request_offset = true;
@@ -732,9 +732,9 @@ void AppStage_HMDSettings::renderUI()
 						ImGui::PushItemWidth(120.f);
 						if (ImGui::InputFloat("##WorldOffsetOrientationY", &hmdInfo.OffsetWorldOrientation.y, 1.f, 5.f, 2))
 						{
-							while (hmdInfo.OffsetWorldOrientation.y < 0.f)
+							while (hmdInfo.OffsetWorldOrientation.y < -180.f)
 								hmdInfo.OffsetWorldOrientation.y += 360.f;
-							while (hmdInfo.OffsetWorldOrientation.y >= 360.f)
+							while (hmdInfo.OffsetWorldOrientation.y >= 180.f)
 								hmdInfo.OffsetWorldOrientation.y -= 360.f;
 
 							request_offset = true;
@@ -748,9 +748,9 @@ void AppStage_HMDSettings::renderUI()
 							ImGui::PushItemWidth(120.f);
 							if (ImGui::InputFloat("##WorldOffsetOrientationZ", &hmdInfo.OffsetWorldOrientation.z, 1.f, 5.f, 2))
 							{
-								while (hmdInfo.OffsetWorldOrientation.z < 0.f)
+								while (hmdInfo.OffsetWorldOrientation.z < -180.f)
 									hmdInfo.OffsetWorldOrientation.z += 360.f;
-								while (hmdInfo.OffsetWorldOrientation.z >= 360.f)
+								while (hmdInfo.OffsetWorldOrientation.z >= 180.f)
 									hmdInfo.OffsetWorldOrientation.z -= 360.f;
 
 								request_offset = true;

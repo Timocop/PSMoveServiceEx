@@ -855,9 +855,9 @@ void AppStage_TrackerSettings::renderUI()
 						ImGui::PushItemWidth(120.f);
 						if (ImGui::InputFloat("##OffsetOrientationY", &playspace_orientation_yaw, 1.f, 5.f, 2))
 						{
-							while (playspace_orientation_yaw < 0.f)
+							while (playspace_orientation_yaw < -180.f)
 								playspace_orientation_yaw += 360.f;
-							while (playspace_orientation_yaw >= 360.f)
+							while (playspace_orientation_yaw >= 180.f)
 								playspace_orientation_yaw -= 360.f;
 
 							request_offset = true;

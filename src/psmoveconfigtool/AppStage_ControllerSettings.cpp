@@ -1210,9 +1210,9 @@ void AppStage_ControllerSettings::renderUI()
 											ImGui::PushItemWidth(120.f);
 											if (ImGui::InputFloat("##LocalOffsetOrientationX", &controllerInfo.OffsetOrientation.x, 1.f, 5.f, 2))
 											{
-												while (controllerInfo.OffsetOrientation.x < 0.f)
+												while (controllerInfo.OffsetOrientation.x < -180.f)
 													controllerInfo.OffsetOrientation.x += 360.f;
-												while (controllerInfo.OffsetOrientation.x >= 360.f)
+												while (controllerInfo.OffsetOrientation.x >= 180.f)
 													controllerInfo.OffsetOrientation.x -= 360.f;
 
 												request_offset = true;
@@ -1224,9 +1224,9 @@ void AppStage_ControllerSettings::renderUI()
 											ImGui::PushItemWidth(120.f);
 											if (ImGui::InputFloat("##LocalOffsetOrientationY", &controllerInfo.OffsetOrientation.y, 1.f, 5.f, 2))
 											{
-												while (controllerInfo.OffsetOrientation.y < 0.f)
+												while (controllerInfo.OffsetOrientation.y < -180.f)
 													controllerInfo.OffsetOrientation.y += 360.f;
-												while (controllerInfo.OffsetOrientation.y >= 360.f)
+												while (controllerInfo.OffsetOrientation.y >= 180.f)
 													controllerInfo.OffsetOrientation.y -= 360.f;
 
 												request_offset = true;
@@ -1238,9 +1238,9 @@ void AppStage_ControllerSettings::renderUI()
 											ImGui::PushItemWidth(120.f);
 											if (ImGui::InputFloat("##LocalOffsetOrientationZ", &controllerInfo.OffsetOrientation.z, 1.f, 5.f, 2))
 											{
-												while (controllerInfo.OffsetOrientation.z < 0.f)
+												while (controllerInfo.OffsetOrientation.z < -180.f)
 													controllerInfo.OffsetOrientation.z += 360.f;
-												while (controllerInfo.OffsetOrientation.z >= 360.f)
+												while (controllerInfo.OffsetOrientation.z >= 180.f)
 													controllerInfo.OffsetOrientation.z -= 360.f;
 
 												request_offset = true;
@@ -1254,9 +1254,9 @@ void AppStage_ControllerSettings::renderUI()
 											ImGui::PushItemWidth(120.f);
 											if (ImGui::InputFloat("##WorldOffsetOrientationX", &controllerInfo.OffsetWorldOrientation.x, 1.f, 5.f, 2))
 											{
-												while (controllerInfo.OffsetWorldOrientation.x < 0.f)
+												while (controllerInfo.OffsetWorldOrientation.x < -180.f)
 													controllerInfo.OffsetWorldOrientation.x += 360.f;
-												while (controllerInfo.OffsetWorldOrientation.x >= 360.f)
+												while (controllerInfo.OffsetWorldOrientation.x >= 180.f)
 													controllerInfo.OffsetWorldOrientation.x -= 360.f;
 
 												request_offset = true;
@@ -1269,9 +1269,9 @@ void AppStage_ControllerSettings::renderUI()
 										ImGui::PushItemWidth(120.f);
 										if (ImGui::InputFloat("##WorldOffsetOrientationY", &controllerInfo.OffsetWorldOrientation.y, 1.f, 5.f, 2))
 										{
-											while (controllerInfo.OffsetWorldOrientation.y < 0.f)
+											while (controllerInfo.OffsetWorldOrientation.y < -180.f)
 												controllerInfo.OffsetWorldOrientation.y += 360.f;
-											while (controllerInfo.OffsetWorldOrientation.y >= 360.f)
+											while (controllerInfo.OffsetWorldOrientation.y >= 180.f)
 												controllerInfo.OffsetWorldOrientation.y -= 360.f;
 
 											request_offset = true;
@@ -1285,9 +1285,9 @@ void AppStage_ControllerSettings::renderUI()
 											ImGui::PushItemWidth(120.f);
 											if (ImGui::InputFloat("##WorldOffsetOrientationZ", &controllerInfo.OffsetWorldOrientation.z, 1.f, 5.f, 2))
 											{
-												while (controllerInfo.OffsetWorldOrientation.z < 0.f)
+												while (controllerInfo.OffsetWorldOrientation.z < -180.f)
 													controllerInfo.OffsetWorldOrientation.z += 360.f;
-												while (controllerInfo.OffsetWorldOrientation.z >= 360.f)
+												while (controllerInfo.OffsetWorldOrientation.z >= 180.f)
 													controllerInfo.OffsetWorldOrientation.z -= 360.f;
 
 												request_offset = true;
