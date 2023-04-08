@@ -90,7 +90,11 @@ ServerHMDView::ServerHMDView(const int device_id)
 	, m_pose_filter_space(nullptr)
 	, m_lastPollSeqNumProcessed(-1)
 	, m_last_filter_update_timestamp()
+	, m_last_optical_filter_update_timestamp()
+	, m_last_imu_filter_update_timestamp()
 	, m_last_filter_update_timestamp_valid(false)
+	, m_last_optical_filter_update_timestamp_valid(false)
+	, m_last_imu_filter_update_timestamp_valid(false)
 {
 }
 
@@ -672,27 +676,6 @@ void ServerHMDView::updateStateAndPredict()
 	}
 	assert(firstLookBackIndex >= 0);
 
-	// Compute the time in seconds since the last update
-	const std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
-	float time_delta_seconds;
-	if (m_last_filter_update_timestamp_valid)
-	{
-		const std::chrono::duration<float, std::milli> time_delta = now - m_last_filter_update_timestamp;
-		const float time_delta_milli = time_delta.count();
-
-		// convert delta to seconds clamp time delta between 120hz and 30hz
-		time_delta_seconds = clampf(time_delta_milli / 1000.f, k_min_time_delta_seconds, k_max_time_delta_seconds);
-	}
-	else
-	{
-		time_delta_seconds = k_max_time_delta_seconds;
-	}
-	m_last_filter_update_timestamp = now;
-	m_last_filter_update_timestamp_valid = true;
-
-	// Evenly apply the list of hmd state updates over the time since last filter update
-	float per_state_time_delta_seconds = time_delta_seconds / static_cast<float>(firstLookBackIndex + 1);
-
 	// Process the polled hmd states forward in time
 	// computing the new orientation along the way.
 	for (int lookBackIndex = firstLookBackIndex; lookBackIndex >= 0; --lookBackIndex)
@@ -703,31 +686,224 @@ void ServerHMDView::updateStateAndPredict()
 		{
 		case CommonHMDState::Morpheus:
 		    {
+				bool isLoosePacket = true;
+
 			    const MorpheusHMD *morpheusHMD = this->castCheckedConst<MorpheusHMD>();
 			    const MorpheusHMDState *morpheusHMDState = static_cast<const MorpheusHMDState *>(hmdState);
 
-			    // Only update the position filter when tracking is enabled
-			    update_filters_for_morpheus_hmd(
-					this,
-				    morpheusHMD, morpheusHMDState,
-				    per_state_time_delta_seconds,
-				    m_multicam_pose_estimation,
-				    m_pose_filter_space,
-				    m_pose_filter);
+				if (m_multicam_pose_estimation->bOrientationValid)
+				{
+					// Compute the time in seconds since the last update
+					const std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+					float time_delta_seconds;
+					if (m_last_imu_filter_update_timestamp_valid)
+					{
+						const std::chrono::duration<float, std::milli> time_delta = now - m_last_imu_filter_update_timestamp;
+						const float time_delta_milli = time_delta.count();
+
+						// convert delta to seconds clamp time delta between 120hz and 30hz
+						time_delta_seconds = clampf(time_delta_milli / 1000.f, k_min_time_delta_seconds, k_max_time_delta_seconds);
+					}
+					else
+					{
+						time_delta_seconds = k_max_time_delta_seconds;
+					}
+					m_last_imu_filter_update_timestamp = now;
+					m_last_imu_filter_update_timestamp_valid = true;
+
+					// Evenly apply the list of hmd state updates over the time since last filter update
+					float per_state_time_delta_seconds = time_delta_seconds / static_cast<float>(firstLookBackIndex + 1);
+
+					// Only update the position filter when tracking is enabled
+					update_filters_for_morpheus_hmd(
+						this,
+						morpheusHMD, morpheusHMDState,
+						per_state_time_delta_seconds,
+						m_multicam_pose_estimation,
+						m_pose_filter_space,
+						m_pose_filter);
+
+					isLoosePacket = false;
+				}
+
+				if (m_multicam_pose_estimation->bCurrentlyTracking)
+				{
+					// Compute the time in seconds since the last update
+					const std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+					float time_delta_seconds;
+					if (m_last_optical_filter_update_timestamp_valid)
+					{
+						const std::chrono::duration<float, std::milli> time_delta = now - m_last_optical_filter_update_timestamp;
+						const float time_delta_milli = time_delta.count();
+
+						// convert delta to seconds clamp time delta between 120hz and 30hz
+						time_delta_seconds = clampf(time_delta_milli / 1000.f, k_min_time_delta_seconds, k_max_time_delta_seconds);
+					}
+					else
+					{
+						time_delta_seconds = k_max_time_delta_seconds;
+					}
+					m_last_optical_filter_update_timestamp = now;
+					m_last_optical_filter_update_timestamp_valid = true;
+
+					// Evenly apply the list of hmd state updates over the time since last filter update
+					float per_state_time_delta_seconds = time_delta_seconds / static_cast<float>(firstLookBackIndex + 1);
+
+					// Only update the position filter when tracking is enabled
+					update_filters_for_morpheus_hmd(
+						this,
+						morpheusHMD, morpheusHMDState,
+						per_state_time_delta_seconds,
+						m_multicam_pose_estimation,
+						m_pose_filter_space,
+						m_pose_filter);
+
+					isLoosePacket = false;
+				}
+
+				if (isLoosePacket)
+				{
+					// Compute the time in seconds since the last update
+					const std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+					float time_delta_seconds;
+					if (m_last_filter_update_timestamp_valid)
+					{
+						const std::chrono::duration<float, std::milli> time_delta = now - m_last_filter_update_timestamp;
+						const float time_delta_milli = time_delta.count();
+
+						// convert delta to seconds clamp time delta between 120hz and 30hz
+						time_delta_seconds = clampf(time_delta_milli / 1000.f, k_min_time_delta_seconds, k_max_time_delta_seconds);
+					}
+					else
+					{
+						time_delta_seconds = k_max_time_delta_seconds;
+					}
+					m_last_filter_update_timestamp = now;
+					m_last_filter_update_timestamp_valid = true;
+
+					// Evenly apply the list of hmd state updates over the time since last filter update
+					float per_state_time_delta_seconds = time_delta_seconds / static_cast<float>(firstLookBackIndex + 1);
+
+					// Only update the position filter when tracking is enabled
+					update_filters_for_morpheus_hmd(
+						this,
+						morpheusHMD, morpheusHMDState,
+						per_state_time_delta_seconds,
+						m_multicam_pose_estimation,
+						m_pose_filter_space,
+						m_pose_filter);
+				}
+
 		    } break;
 		case CommonHMDState::VirtualHMD:
 		    {
+				bool isLoosePacket = true;
+
 			    const VirtualHMD *virtualHMD = this->castCheckedConst<VirtualHMD>();
 			    const VirtualHMDState *virtualHMDState = static_cast<const VirtualHMDState *>(hmdState);
-				
-			    // Only update the position filter when tracking is enabled
-			    update_filters_for_virtual_hmd(
-					this,
-				    virtualHMD, virtualHMDState,
-				    per_state_time_delta_seconds,
-				    m_multicam_pose_estimation,
-				    m_pose_filter_space,
-				    m_pose_filter);
+
+				if (m_multicam_pose_estimation->bOrientationValid)
+				{
+					// Compute the time in seconds since the last update
+					const std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+					float time_delta_seconds;
+					if (m_last_imu_filter_update_timestamp_valid)
+					{
+						const std::chrono::duration<float, std::milli> time_delta = now - m_last_imu_filter_update_timestamp;
+						const float time_delta_milli = time_delta.count();
+
+						// convert delta to seconds clamp time delta between 120hz and 30hz
+						time_delta_seconds = clampf(time_delta_milli / 1000.f, k_min_time_delta_seconds, k_max_time_delta_seconds);
+					}
+					else
+					{
+						time_delta_seconds = k_max_time_delta_seconds;
+					}
+					m_last_imu_filter_update_timestamp = now;
+					m_last_imu_filter_update_timestamp_valid = true;
+
+					// Evenly apply the list of hmd state updates over the time since last filter update
+					float per_state_time_delta_seconds = time_delta_seconds / static_cast<float>(firstLookBackIndex + 1);
+
+					// Only update the position filter when tracking is enabled
+					update_filters_for_virtual_hmd(
+						this,
+						virtualHMD, virtualHMDState,
+						per_state_time_delta_seconds,
+						m_multicam_pose_estimation,
+						m_pose_filter_space,
+						m_pose_filter);
+
+					isLoosePacket = false;
+				}
+
+				if (m_multicam_pose_estimation->bCurrentlyTracking)
+				{
+					// Compute the time in seconds since the last update
+					const std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+					float time_delta_seconds;
+					if (m_last_optical_filter_update_timestamp_valid)
+					{
+						const std::chrono::duration<float, std::milli> time_delta = now - m_last_optical_filter_update_timestamp;
+						const float time_delta_milli = time_delta.count();
+
+						// convert delta to seconds clamp time delta between 120hz and 30hz
+						time_delta_seconds = clampf(time_delta_milli / 1000.f, k_min_time_delta_seconds, k_max_time_delta_seconds);
+					}
+					else
+					{
+						time_delta_seconds = k_max_time_delta_seconds;
+					}
+					m_last_optical_filter_update_timestamp = now;
+					m_last_optical_filter_update_timestamp_valid = true;
+
+					// Evenly apply the list of hmd state updates over the time since last filter update
+					float per_state_time_delta_seconds = time_delta_seconds / static_cast<float>(firstLookBackIndex + 1);
+
+					// Only update the position filter when tracking is enabled
+					update_filters_for_virtual_hmd(
+						this,
+						virtualHMD, virtualHMDState,
+						per_state_time_delta_seconds,
+						m_multicam_pose_estimation,
+						m_pose_filter_space,
+						m_pose_filter);
+
+					isLoosePacket = false;
+				}
+
+				if (isLoosePacket)
+				{
+					// Compute the time in seconds since the last update
+					const std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+					float time_delta_seconds;
+					if (m_last_filter_update_timestamp_valid)
+					{
+						const std::chrono::duration<float, std::milli> time_delta = now - m_last_filter_update_timestamp;
+						const float time_delta_milli = time_delta.count();
+
+						// convert delta to seconds clamp time delta between 120hz and 30hz
+						time_delta_seconds = clampf(time_delta_milli / 1000.f, k_min_time_delta_seconds, k_max_time_delta_seconds);
+					}
+					else
+					{
+						time_delta_seconds = k_max_time_delta_seconds;
+					}
+					m_last_filter_update_timestamp = now;
+					m_last_filter_update_timestamp_valid = true;
+
+					// Evenly apply the list of hmd state updates over the time since last filter update
+					float per_state_time_delta_seconds = time_delta_seconds / static_cast<float>(firstLookBackIndex + 1);
+
+					// Only update the position filter when tracking is enabled
+					update_filters_for_virtual_hmd(
+						this,
+						virtualHMD, virtualHMDState,
+						per_state_time_delta_seconds,
+						m_multicam_pose_estimation,
+						m_pose_filter_space,
+						m_pose_filter);
+				}
 		    } break;
 		default:
 			assert(0 && "Unhandled HMD type");

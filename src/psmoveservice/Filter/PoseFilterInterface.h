@@ -108,7 +108,6 @@ struct PoseFilterPacket : PoseSensorPacket
 	bool isCurrentlyTracking;
 
 	bool isSynced = false;
-	bool doDeltaAccumulation = true;
 
     /// The current orientation of the controller
     Eigen::Quaternionf current_orientation;
@@ -132,7 +131,6 @@ struct PoseFilterPacket : PoseSensorPacket
 		hmdDeviceId = -1;
 		isCurrentlyTracking = false;
 		isSynced = false;
-		doDeltaAccumulation = true;
 		current_orientation= Eigen::Quaternionf::Identity();
 		current_position_cm= Eigen::Vector3f::Zero();
 		current_linear_velocity_cm_s= Eigen::Vector3f::Zero();

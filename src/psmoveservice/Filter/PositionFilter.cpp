@@ -50,14 +50,8 @@ struct PositionFilterState
     /// Position that's considered the origin position 
     Eigen::Vector3f origin_position; // meters
 
-    /// The number of seconds the filter has been running
-    double time;
-
-	/// The amount of time since the optical filter was updated
-	double accumulated_optical_time_delta;
-
-	/// The amount of time since the imu filter was updated
-	double accumulated_imu_time_delta;
+	/// The number of seconds the filter has been running
+	double time;
 
     void reset()
     {
@@ -68,9 +62,7 @@ struct PositionFilterState
         accelerometer_g_units = Eigen::Vector3f::Zero();
         accelerometer_derivative_g_per_sec = Eigen::Vector3f::Zero();
         origin_position = Eigen::Vector3f::Zero();
-        time= 0.0;
-		accumulated_optical_time_delta= 0.f;
-		accumulated_imu_time_delta= 0.f;
+		time = 0.0;
     }
 
 	void apply_imu_state(
@@ -128,8 +120,7 @@ struct PositionFilterState
 
 		if (is_valid_float(delta_time))
 		{
-			time= accumulated_imu_time_delta + (double)delta_time;
-			accumulated_imu_time_delta= 0.0;
+			time = time + (double)delta_time;
 		}
 		else
 		{
@@ -172,8 +163,7 @@ struct PositionFilterState
 
 		if (is_valid_float(delta_time))
 		{
-			time= accumulated_optical_time_delta + (double)delta_time;
-			accumulated_optical_time_delta = 0.0;
+			time = time + (double)delta_time;
 		}
 		else
 		{
@@ -182,30 +172,6 @@ struct PositionFilterState
 
         // state is valid now that we have had an update
         bIsValid= true;
-	}
-
-	void accumulate_optical_delta_time(const float delta_time)
-	{
-		if (is_valid_float(delta_time))
-		{
-			accumulated_optical_time_delta+= (double)delta_time;
-		}
-		else
-		{
-			SERVER_LOG_WARNING("PositionFilter") << "optical time delta is NaN!";
-		}
-	}
-
-	void accumulate_imu_delta_time(const float delta_time)
-	{
-		if (is_valid_float(delta_time))
-		{
-			accumulated_imu_time_delta+= (double)delta_time;
-		}
-		else
-		{
-			SERVER_LOG_WARNING("PositionFilter") << "imu time delta is NaN!";
-		}
 	}
 };
 
@@ -477,13 +443,6 @@ void PositionFilterPassThru::update(
 
 		m_state->apply_optical_state(new_position_meters, new_position_meters_sec, delta_time);
 	}
-	else
-	{
-		if (packet.doDeltaAccumulation)
-		{
-			m_state->accumulate_optical_delta_time(delta_time);
-		}
-	}
 }
 
 // -- PositionFilterLowPassOptical --
@@ -658,13 +617,6 @@ void PositionFilterLowPassOptical::update(
 
 		m_state->apply_optical_state(new_position_meters, new_position_meters_sec, delta_time);
     }
-	else
-	{
-		if (packet.doDeltaAccumulation)
-		{
-			m_state->accumulate_optical_delta_time(delta_time);
-		}
-	}
 }
 
 // -- PositionFilterLowPassIMU --
@@ -679,20 +631,13 @@ void PositionFilterLowPassIMU::update(
 
 		m_state->apply_optical_state(new_position_meters, delta_time);
     }
-	else
-	{
-		if (packet.doDeltaAccumulation)
-		{
-			m_state->accumulate_optical_delta_time(delta_time);
-		}
-	}
 
     if (packet.has_imu_measurements() && m_state->bIsValid)
     {
 		PositionFilterState new_state;
 
         lowpass_filter_imu_step(
-            (float)m_state->accumulated_imu_time_delta + delta_time,
+            delta_time,
             &m_constants,
             &packet,
             m_state,
@@ -706,13 +651,6 @@ void PositionFilterLowPassIMU::update(
 			new_state.accelerometer_derivative_g_per_sec,
 			delta_time);
     }
-	else
-	{
-		if (packet.doDeltaAccumulation)
-		{
-			m_state->accumulate_imu_delta_time(delta_time);
-		}
-	}
 }
 
 // -- PositionFilterComplimentaryOpticalIMU --
@@ -724,8 +662,11 @@ void PositionFilterComplimentaryOpticalIMU::update(const float delta_time, const
 	{
 		Eigen::Vector3f new_position_meters;
 
+		std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<float, std::milli> timeSinceLast = now - lastOpticalFrame;
+
 		if (m_state->bIsValid &&
-			m_state->accumulated_optical_time_delta < g_max_unseen_position_timeout)
+			timeSinceLast.count() < g_max_unseen_position_timeout)
 		{
             // Compute a low-pass filter on the optical position update
 			new_position_meters =
@@ -738,14 +679,8 @@ void PositionFilterComplimentaryOpticalIMU::update(const float delta_time, const
 		}
 
 		m_state->apply_optical_state(new_position_meters, delta_time);
+		lastOpticalFrame = now;
     }
-	else
-	{
-		if (packet.doDeltaAccumulation)
-		{
-			m_state->accumulate_optical_delta_time(delta_time);
-		}
-	}
 
 	// Don't bother with IMU state updates until the we've gotten one valid optical update
 	if (m_state->bIsValid)
@@ -757,7 +692,7 @@ void PositionFilterComplimentaryOpticalIMU::update(const float delta_time, const
 
 			// Compute the new filter state based on the previous filter state and new sensor data
 			lowpass_filter_imu_step(
-				(float)m_state->accumulated_imu_time_delta+delta_time,
+				delta_time,
 				&m_constants,
 				&packet,
 				m_state,
@@ -770,13 +705,6 @@ void PositionFilterComplimentaryOpticalIMU::update(const float delta_time, const
 				new_imu_state.accelerometer_g_units, 
 				new_imu_state.accelerometer_derivative_g_per_sec,
 				delta_time);
-		}
-		else
-		{
-			if (packet.doDeltaAccumulation)
-			{
-				m_state->accumulate_imu_delta_time(delta_time);
-			}
 		}
 	}
 }
@@ -923,13 +851,6 @@ void PositionFilterLowPassExponential::update(const float delta_time, const Pose
 
 		m_state->apply_optical_state(new_position_meters, new_velocity_m_per_sec, delta_time);
     }
-	else
-	{
-		if (packet.doDeltaAccumulation)
-		{
-			m_state->accumulate_optical_delta_time(delta_time);
-		}
-	}
 }
 
 //-- helper functions ---

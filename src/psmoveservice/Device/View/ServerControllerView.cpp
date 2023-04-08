@@ -1078,7 +1078,6 @@ void ServerControllerView::updateStateAndPredict()
 				filter_packet.controllerDeviceId = this->getDeviceID();
 				filter_packet.isCurrentlyTracking = this->getIsCurrentlyTracking();
 				filter_packet.isSynced = DeviceManager::getInstance()->m_tracker_manager->trackersSynced();
-				filter_packet.doDeltaAccumulation = false;
 
 				// Create a filter input packet from the sensor data 
 				// and the filter's previous orientation and position
@@ -1123,7 +1122,6 @@ void ServerControllerView::updateStateAndPredict()
 				filter_packet.controllerDeviceId = this->getDeviceID();
 				filter_packet.isCurrentlyTracking = this->getIsCurrentlyTracking();
 				filter_packet.isSynced = DeviceManager::getInstance()->m_tracker_manager->trackersSynced();
-				filter_packet.doDeltaAccumulation = false;
 
 				// Create a filter input packet from the sensor data 
 				// and the filter's previous orientation and position
@@ -1168,7 +1166,6 @@ void ServerControllerView::updateStateAndPredict()
 				filter_packet.controllerDeviceId = this->getDeviceID();
 				filter_packet.isCurrentlyTracking = this->getIsCurrentlyTracking();
 				filter_packet.isSynced = DeviceManager::getInstance()->m_tracker_manager->trackersSynced();
-				filter_packet.doDeltaAccumulation = false;
 
 				// Create a filter input packet from the sensor data 
 				// and the filter's previous orientation and position

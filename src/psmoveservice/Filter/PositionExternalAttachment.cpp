@@ -37,12 +37,6 @@ struct ExternalAttachmentPositionFilterState
     /// The number of seconds the filter has been running
     double time;
 
-	/// The amount of time since the optical filter was updated
-	double accumulated_optical_time_delta;
-
-	/// The amount of time since the imu filter was updated
-	double accumulated_imu_time_delta;
-
     void reset()
     {
         bIsValid = false;
@@ -53,8 +47,6 @@ struct ExternalAttachmentPositionFilterState
         accelerometer_derivative_g_per_sec = Eigen::Vector3f::Zero();
         origin_position = Eigen::Vector3f::Zero();
         time= 0.0;
-		accumulated_optical_time_delta= 0.f;
-		accumulated_imu_time_delta= 0.f;
     }
 
 	void apply_imu_state(
@@ -112,8 +104,7 @@ struct ExternalAttachmentPositionFilterState
 
 		if (is_valid_float(delta_time))
 		{
-			time= accumulated_imu_time_delta + (double)delta_time;
-			accumulated_imu_time_delta= 0.0;
+			time = time + (double)delta_time;
 		}
 		else
 		{
@@ -156,8 +147,7 @@ struct ExternalAttachmentPositionFilterState
 
 		if (is_valid_float(delta_time))
 		{
-			time= accumulated_optical_time_delta + (double)delta_time;
-			accumulated_optical_time_delta = 0.0;
+			time = time + (double)delta_time;
 		}
 		else
 		{

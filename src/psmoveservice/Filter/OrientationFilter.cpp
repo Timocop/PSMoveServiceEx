@@ -48,12 +48,6 @@ struct OrientationFilterState
     /* Quaternion measured when controller points towards camera */
     Eigen::Quaternionf reset_orientation;
 
-	/// The amount of time since the optical filter was updated
-	double accumulated_optical_time_delta;
-
-	/// The amount of time since the imu filter was updated
-	double accumulated_imu_time_delta;
-
     void reset()
     {
         bIsValid= false;
@@ -62,8 +56,6 @@ struct OrientationFilterState
         angular_acceleration = Eigen::Vector3f::Zero();
         reset_orientation= Eigen::Quaternionf::Identity();
         time= 0.0;
-		accumulated_optical_time_delta= 0.f;
-		accumulated_imu_time_delta= 0.f;
     }
 
     void apply_imu_state(
@@ -101,8 +93,7 @@ struct OrientationFilterState
 
 		if (is_valid_float(delta_time))
 		{
-			time= accumulated_imu_time_delta + (double)delta_time;
-			accumulated_imu_time_delta= 0.0;
+			time = time + (double)delta_time;
 		}
 		else
 		{
@@ -128,8 +119,7 @@ struct OrientationFilterState
 
 		if (is_valid_float(delta_time))
 		{
-			time= accumulated_optical_time_delta + (double)delta_time;
-			accumulated_optical_time_delta = 0.0;
+			time = time + (double)delta_time;
 		}
 		else
 		{
@@ -139,30 +129,6 @@ struct OrientationFilterState
         // state is valid now that we have had an update
         bIsValid= true;
     }
-
-	void accumulate_optical_delta_time(const float delta_time)
-	{
-		if (is_valid_float(delta_time))
-		{
-			accumulated_optical_time_delta+= (double)delta_time;
-		}
-		else
-		{
-			SERVER_LOG_WARNING("PositionFilter") << "optical time delta is NaN!";
-		}
-	}
-
-	void accumulate_imu_delta_time(const float delta_time)
-	{
-		if (is_valid_float(delta_time))
-		{
-			accumulated_imu_time_delta+= (double)delta_time;
-		}
-		else
-		{
-			SERVER_LOG_WARNING("PositionFilter") << "imu time delta is NaN!";
-		}
-	}
 };
 
 // -- public interface -----
@@ -279,13 +245,6 @@ void OrientationFilterPassThru::update(const float delta_time, const PoseFilterP
 
 		m_state->apply_optical_state(new_orientation, delta_time);
 	}
-	else
-	{
-		if (packet.doDeltaAccumulation)
-		{
-			m_state->accumulate_optical_delta_time(delta_time);
-		}
-	}
 }
 
 void OrientationFilterMadgwickARG::resetState()
@@ -369,7 +328,7 @@ void OrientationFilterMadgwickARG::update(const float delta_time, const PoseFilt
 	{
 		// Time delta used for filter update is time delta passed in
 		// plus the accumulated time since the packet hasn't has an IMU measurement
-		const float total_delta_time= (float)m_state->accumulated_imu_time_delta + delta_time;
+		const float total_delta_time= delta_time;
 
 		const Eigen::Vector3f &current_omega= packet.imu_gyroscope_rad_per_sec;
 
@@ -466,13 +425,6 @@ void OrientationFilterMadgwickARG::update(const float delta_time, const PoseFilt
 			m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, delta_time);
 		}
 	}
-	else
-	{
-		if (packet.doDeltaAccumulation)
-		{
-			m_state->accumulate_imu_delta_time(delta_time);
-		}
-	}
 }
 
 // -- OrientationFilterMadgwickMARG --
@@ -557,7 +509,7 @@ void OrientationFilterMadgwickMARG::update(const float delta_time, const PoseFil
 	{
 		// Time delta used for filter update is time delta passed in
 		// plus the accumulated time since the packet hasn't has an IMU measurement
-		const float total_delta_time= (float)m_state->accumulated_imu_time_delta + delta_time;
+		const float total_delta_time= delta_time;
 		
 		const Eigen::Vector3f &current_omega= packet.imu_gyroscope_rad_per_sec;
 
@@ -697,13 +649,6 @@ void OrientationFilterMadgwickMARG::update(const float delta_time, const PoseFil
 			m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, delta_time);
 		}
 	}
-	else
-	{
-		if (packet.doDeltaAccumulation)
-		{
-			m_state->accumulate_imu_delta_time(delta_time);
-		}
-	}
 }
 
 // -- OrientationFilterComplementaryOpticalARG --
@@ -824,13 +769,6 @@ void OrientationFilterComplementaryOpticalARG::update(const float delta_time, co
 
 		m_state->apply_optical_state(new_orientation, delta_time);
     }
-	else
-	{
-		if (packet.doDeltaAccumulation)
-		{
-			m_state->accumulate_optical_delta_time(delta_time);
-		}
-	}
 
     OrientationFilterMadgwickARG::update(delta_time, packet);
 }
@@ -922,7 +860,7 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 	{
 		// Time delta used for filter update is time delta passed in
 		// plus the accumulated time since the packet hasn't has an IMU measurement
-		const float total_delta_time = (float)m_state->accumulated_imu_time_delta + delta_time;
+		const float total_delta_time = delta_time;
 
 		const Eigen::Vector3f &current_omega = packet.imu_gyroscope_rad_per_sec;
 
@@ -1027,14 +965,6 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 
 			m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, delta_time);
 		}
-
-	}
-	else
-	{
-		if (packet.doDeltaAccumulation)
-		{
-			m_state->accumulate_imu_delta_time(delta_time);
-		}
 	}
 }
 
@@ -1049,7 +979,7 @@ bool OrientationFilterComplementaryMARG::filter_process_passive_drift_correction
 {
 	// Time delta used for filter update is time delta passed in
 	// plus the accumulated time since the packet hasn't has an IMU measurement
-	const float total_delta_time = (float)m_state->accumulated_imu_time_delta + delta_time;
+	const float total_delta_time = delta_time;
 
 	const Eigen::Vector3f &current_omega = packet.imu_gyroscope_rad_per_sec;
 
@@ -1172,7 +1102,7 @@ void OrientationFilterComplementaryMARG::filter_process_stabilization(
 {
 	// Time delta used for filter update is time delta passed in
 	// plus the accumulated time since the packet hasn't has an IMU measurement
-	const float total_delta_time = (float)m_state->accumulated_imu_time_delta + delta_time;
+	const float total_delta_time = delta_time;
 
 	const Eigen::Vector3f &current_omega = packet.imu_gyroscope_rad_per_sec;
 

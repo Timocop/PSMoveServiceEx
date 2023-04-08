@@ -83,6 +83,7 @@ class PositionFilterComplimentaryOpticalIMU : public PositionFilter
 {
 public:
     void update(const float delta_time, const PoseFilterPacket &packet) override;
+	std::chrono::time_point<std::chrono::high_resolution_clock> lastOpticalFrame;
 };
 
 #endif // POSITION_FILTER_H
