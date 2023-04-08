@@ -345,27 +345,33 @@ void OrientationFilterExternal::update(const float delta_time, const PoseFilterP
 		p += vector.back().size() + 1;
 	}
 
-	if (vector.size() >= 4)
-	{
-		Eigen::Quaternionf new_orientation;
-		new_orientation.x() = (float)_atof_l(vector[0].c_str(), localeInvariant);
-		new_orientation.y() = (float)_atof_l(vector[1].c_str(), localeInvariant);
-		new_orientation.z() = (float)_atof_l(vector[2].c_str(), localeInvariant);
-		new_orientation.w() = (float)_atof_l(vector[3].c_str(), localeInvariant);
+	int __size = 0;
+	bool isValid = false;
 
-		if (eigen_quaternion_is_valid(new_orientation))
-		{
-			m_state->apply_optical_state(new_orientation, delta_time);
-		}
+	Eigen::Quaternionf new_orientation = Eigen::Quaternionf::Identity();
+	Eigen::Vector3f new_angular_velocity = Eigen::Vector3f::Zero();
+
+	// Get orientation
+	__size += 4;
+	if (vector.size() >= __size)
+	{
+		new_orientation.x() = (float)_atof_l(vector[__size - 4].c_str(), localeInvariant);
+		new_orientation.y() = (float)_atof_l(vector[__size - 3].c_str(), localeInvariant);
+		new_orientation.z() = (float)_atof_l(vector[__size - 2].c_str(), localeInvariant);
+		new_orientation.w() = (float)_atof_l(vector[__size - 1].c_str(), localeInvariant);
+
+		isValid = true;
 	}
 
-	if (vector.size() >= 8)
+	// Get reset orientation
+	__size += 4;
+	if (vector.size() >= __size)
 	{
 		Eigen::Quaternionf reset_orientation;
-		reset_orientation.x() = (float)_atof_l(vector[4].c_str(), localeInvariant);
-		reset_orientation.y() = (float)_atof_l(vector[5].c_str(), localeInvariant);
-		reset_orientation.z() = (float)_atof_l(vector[6].c_str(), localeInvariant);
-		reset_orientation.w() = (float)_atof_l(vector[7].c_str(), localeInvariant);
+		reset_orientation.x() = (float)_atof_l(vector[__size - 4].c_str(), localeInvariant);
+		reset_orientation.y() = (float)_atof_l(vector[__size - 3].c_str(), localeInvariant);
+		reset_orientation.z() = (float)_atof_l(vector[__size - 2].c_str(), localeInvariant);
+		reset_orientation.w() = (float)_atof_l(vector[__size - 1].c_str(), localeInvariant);
 
 		if (eigen_quaternion_is_valid(reset_orientation))
 		{
@@ -374,6 +380,22 @@ void OrientationFilterExternal::update(const float delta_time, const PoseFilterP
 			eigen_quaternion_normalize_with_default(q_inverse, Eigen::Quaternionf::Identity());
 			m_state->reset_orientation = q_inverse;
 		}
+	}
+
+	// Get gyro angular velocity
+	__size += 3;
+	if (vector.size() >= __size)
+	{
+		new_angular_velocity.x() = (float)_atof_l(vector[__size - 3].c_str(), localeInvariant);
+		new_angular_velocity.y() = (float)_atof_l(vector[__size - 2].c_str(), localeInvariant);
+		new_angular_velocity.z() = (float)_atof_l(vector[__size - 1].c_str(), localeInvariant);
+	}
+
+	if (isValid && eigen_quaternion_is_valid(new_orientation))
+	{
+		const Eigen::Vector3f new_angular_acceleration = (new_angular_velocity - m_state->angular_velocity) / delta_time;
+
+		m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, delta_time);
 	}
 #endif
 }
