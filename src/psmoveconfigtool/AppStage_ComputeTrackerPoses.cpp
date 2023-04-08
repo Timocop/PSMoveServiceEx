@@ -408,8 +408,19 @@ void AppStage_ComputeTrackerPoses::render()
                 const PSMHeadMountedDisplay *hmdView = hmd_iter->second.hmdView;
                 const PSMTrackingColorType trackingColorType= hmd_iter->second.trackingColorType;
 
-                PSMPosef hmdPose;
-                PSM_GetHmdPose(hmdView->HmdID, &hmdPose);
+				PSMPosef hmdPose;
+				PSMPhysicsData physicsData;
+				switch (hmdView->HmdType)
+				{
+				case PSMHmdType::PSMHmd_Morpheus:
+					hmdPose = hmdView->HmdState.MorpheusState.Pose;
+					physicsData = hmdView->HmdState.MorpheusState.PhysicsData;
+					break;
+				case PSMHmdType::PSMHmd_Virtual:
+					hmdPose = hmdView->HmdState.VirtualHMDState.Pose;
+					physicsData = hmdView->HmdState.VirtualHMDState.PhysicsData;
+					break;
+				}
                 glm::mat4 hmdMat4 = psm_posef_to_glm_mat4(hmdPose);
 
                 if (m_hmdViews.size() > 1)
@@ -419,6 +430,27 @@ void AppStage_ComputeTrackerPoses::render()
 
                 drawHMD(hmdView, hmdMat4, trackingColorType);
                 drawTransformedAxes(hmdMat4, 10.f);
+
+				// Draw the acceleration and velocity arrows
+				{
+					const glm::mat4 originMat4 = glm::translate(glm::mat4(1.f), psm_vector3f_to_glm_vec3(hmdPose.Position));
+					const glm::vec3 vel_endpoint = psm_vector3f_to_glm_vec3(physicsData.LinearVelocityCmPerSec);
+					const glm::vec3 acc_endpoint = psm_vector3f_to_glm_vec3(physicsData.LinearAccelerationCmPerSecSqr)*PSM_CENTIMETERS_TO_METERS;
+
+					const float vel = glm::length(vel_endpoint);
+					if (vel > k_positional_epsilon)
+					{
+						drawArrow(originMat4, glm::vec3(0.f), vel_endpoint, 0.1f, glm::vec3(0.f, 1.f, 1.f));
+						//drawTextAtWorldPosition(originMat4, vel_endpoint, "v=%.2fcm/s", vel);
+					}
+
+					const float acc = glm::length(acc_endpoint);
+					if (acc > k_positional_epsilon)
+					{
+						drawArrow(originMat4, glm::vec3(0.f), acc_endpoint, 0.1f, glm::vec3(1.f, 1.f, 0.f));
+						//drawTextAtWorldPosition(originMat4, acc_endpoint, "a=%.2fm/s^2", acc);
+					}
+				}
             }
 
         } break;
@@ -1759,9 +1791,11 @@ void AppStage_ComputeTrackerPoses::request_start_hmd_stream(
     // Increment the number of requests we're waiting to get back
     ++m_pendingHmdStartCount;
 
-    unsigned int flags =
-        PSMStreamFlags_includePositionData |
-        PSMStreamFlags_includeRawTrackerData;
+	unsigned int flags =
+		PSMStreamFlags_includePositionData |
+		PSMStreamFlags_includeCalibratedSensorData |
+		PSMStreamFlags_includeRawTrackerData |
+		PSMStreamFlags_includePhysicsData;
 
     // Start off getting getting projection data from tracker 0
     {
