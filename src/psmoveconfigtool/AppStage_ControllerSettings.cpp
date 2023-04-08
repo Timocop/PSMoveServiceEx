@@ -754,18 +754,15 @@ void AppStage_ControllerSettings::renderUI()
 											}
 											ImGui::PopItemWidth();
 
-											if (controllerInfo.ControllerType == PSMController_Move)
+											ImGui::ProgressBar(controllerInfo.AngPredictionTime / k_max_hmd_prediction_time, ImVec2(195.f - 55.f, 0.f), " ");
+											ImGui::SameLine();
+											ImGui::PushItemWidth(96);
+											if (ImGui::InputFloat("Angular Prediction Time (ms)##AngPredictionTime", &controllerInfo.AngPredictionTime, 0.005f, 0.025f, 3))
 											{
-												ImGui::ProgressBar(controllerInfo.AngPredictionTime / k_max_hmd_prediction_time, ImVec2(195.f - 55.f, 0.f), " ");
-												ImGui::SameLine();
-												ImGui::PushItemWidth(96);
-												if (ImGui::InputFloat("Angular Prediction Time (ms)##AngPredictionTime", &controllerInfo.AngPredictionTime, 0.005f, 0.025f, 3))
-												{
-													controllerInfo.AngPredictionTime = clampf(controllerInfo.AngPredictionTime, 0.f, k_max_hmd_prediction_time);
-													request_set_controller_angular_prediction(controllerInfo.ControllerID, controllerInfo.AngPredictionTime);
-												}
-												ImGui::PopItemWidth();
+												controllerInfo.AngPredictionTime = clampf(controllerInfo.AngPredictionTime, 0.f, k_max_hmd_prediction_time);
+												request_set_controller_angular_prediction(controllerInfo.ControllerID, controllerInfo.AngPredictionTime);
 											}
+											ImGui::PopItemWidth();
 
 											ImGui::Separator();
 
