@@ -1361,6 +1361,9 @@ void AppStage_TrackerSettings::handle_playspace_info_response(
 		thisPtr->playspace_position_x = response->result_get_playspace_offsets().playspace_position().x();
 		thisPtr->playspace_position_y = response->result_get_playspace_offsets().playspace_position().y();
 		thisPtr->playspace_position_z = response->result_get_playspace_offsets().playspace_position().z();
+		thisPtr->playspace_scale_x = response->result_get_playspace_offsets().playspace_scale().x();
+		thisPtr->playspace_scale_y = response->result_get_playspace_offsets().playspace_scale().y();
+		thisPtr->playspace_scale_z = response->result_get_playspace_offsets().playspace_scale().z();
 
 		thisPtr->m_menuState = AppStage_TrackerSettings::idle;
 	} break;
