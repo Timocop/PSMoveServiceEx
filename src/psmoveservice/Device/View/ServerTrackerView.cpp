@@ -1374,6 +1374,7 @@ ServerTrackerView::computeProjectionForController(
 	const bool bEnforceNewROI = priorPoseEst->bEnforceNewROI;
 	const bool bIsOccluded = priorPoseEst->bIsOccluded;
 	const bool bIsBlacklisted = priorPoseEst->bIsBlacklisted;
+	const bool bIsOutOfBounds = priorPoseEst->bIsOutOfBounds;
 	const CommonDeviceScreenLocation mOcclusionAreaPos = priorPoseEst->occlusionAreaPos;
 	const float fOcclusionAreaSize = priorPoseEst->occlusionAreaSize;
 	const CommonDeviceBlacklistProjection mBlacklistedAreaRec = priorPoseEst->blacklistedAreaRec;
@@ -1384,8 +1385,8 @@ ServerTrackerView::computeProjectionForController(
         bRoiDisabled,
 		iRoiEdgeOffset,
         this,		
-        ((bIsTracking || bIsOccluded) && !bIsBlacklisted && !bEnforceNewROI) ? (tracked_controller->getPoseFilter()) : (nullptr),
-        ((bIsTracking || bIsOccluded) && !bIsBlacklisted && !bEnforceNewROI) ? (&priorPoseEst->projection) : (nullptr),
+        ((bIsTracking || bIsOccluded) && !bIsOutOfBounds && !bIsBlacklisted && !bEnforceNewROI) ? (tracked_controller->getPoseFilter()) : (nullptr),
+        ((bIsTracking || bIsOccluded) && !bIsOutOfBounds && !bIsBlacklisted && !bEnforceNewROI) ? (&priorPoseEst->projection) : (nullptr),
         tracking_shape);
 
     m_opencv_buffer_state->applyROI(ROI);
