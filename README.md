@@ -5,6 +5,15 @@ Please use the original PSMoveService Wiki for now until i added my own.
 # PSMoveService
 A background service that manages multiple PSMove Controllers and PS3 Eye Cameras. Clients connect to the service and stream PSMove Controller state (position, orientation and button presses). A visual client front-end is used for controller/tracker configuration. The [FAQ](https://github.com/psmoveservice/PSMoveService/wiki/Frequently-Asked-Questions) is a good starting point for any specific questions you may have about the project. 
 
+ # PSMoveServiceEx with SteamVR
+ℹ️ *Requires [PSMoveServiceEx - Virtual Device Manager](https://github.com/Timocop/PSMoveServiceEx-Virtual-Device-Manager/tree/master)*
+
+<a href="https://youtu.be/8pwCMh_Z4ko" title="">
+  <p align="center">
+    <img width="100%" src="https://img.youtube.com/vi/8pwCMh_Z4ko/0.jpg" alt=""/>
+  </p>
+</a>
+
 # Documentation
 * General setup guides, troubleshooting and design docs can be found on the [wiki](https://github.com/psmoveservice/PSMoveService/wiki)
 
