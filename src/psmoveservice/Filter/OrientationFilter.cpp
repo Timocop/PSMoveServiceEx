@@ -26,7 +26,7 @@
 // Decay rate to apply to the velocity
 #define k_velocity_decay 0.8f
 
-#define k_madgwick_begin_beta 1.0f
+#define k_madgwick_reset_time 3000.f
 #define k_madgwick_begin_beta_falloff 0.99f
 #define k_madgwick_max_beta 0.8f
 #define k_madgwick_min_beta 0.05f
@@ -250,7 +250,7 @@ void OrientationFilterPassThru::update(const float delta_time, const PoseFilterP
 void OrientationFilterMadgwickARG::resetState()
 {
 	OrientationFilter::resetState();
-	m_beta = k_madgwick_begin_beta;
+	timeReset = std::chrono::high_resolution_clock::now();
 }
 
 // -- OrientationFilterMadgwickARG --
@@ -379,26 +379,36 @@ void OrientationFilterMadgwickARG::update(const float delta_time, const PoseFilt
 				const float adaptive_min = clampf(filter_madgwick_min_correction, 0.0f, adaptive_max);
 				const float adaptive_falloff = clampf(filter_madgwick_apt_falloff, 0.0f, 0.999f);
 
-				switch (filter_madgwick_apt_method)
+				std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+				std::chrono::duration<double, std::milli> resetDuration = now - timeReset;
+
+				if (resetDuration.count() < k_madgwick_reset_time)
 				{
-				case AdaptiveDriftCorrectionMethod::AdaptiveGyro:
+					m_beta = 2.0;
+				}
+				else
 				{
-					m_beta = fmaxf(m_beta, fminf(adaptive_max, gyro_b));
-					break;
+					switch (filter_madgwick_apt_method)
+					{
+					case AdaptiveDriftCorrectionMethod::AdaptiveGyro:
+					{
+						m_beta = fmaxf(m_beta, fminf(adaptive_max, gyro_b));
+						break;
+					}
+					case AdaptiveDriftCorrectionMethod::AdaptiveAccel:
+					{
+						m_beta = fmaxf(m_beta, fminf(adaptive_max, accel_b));
+						break;
+					}
+					case AdaptiveDriftCorrectionMethod::AdaptiveBoth:
+					{
+						m_beta = fmaxf(m_beta, fminf(adaptive_max, gyro_b));
+						m_beta = fmaxf(m_beta, fminf(adaptive_max, accel_b));
+						break;
+					}
+					}
+					m_beta = fmaxf(adaptive_min, (m_beta * adaptive_falloff));
 				}
-				case AdaptiveDriftCorrectionMethod::AdaptiveAccel:
-				{
-					m_beta = fmaxf(m_beta, fminf(adaptive_max, accel_b));
-					break;
-				}
-				case AdaptiveDriftCorrectionMethod::AdaptiveBoth:
-				{
-					m_beta = fmaxf(m_beta, fminf(adaptive_max, gyro_b));
-					m_beta = fmaxf(m_beta, fminf(adaptive_max, accel_b));
-					break;
-				}
-				}
-				m_beta = fmaxf(adaptive_min, (m_beta * adaptive_falloff));
 			}
 
 			Eigen::Quaternionf SEqDot_est = Eigen::Quaternionf(SEqDot_omega.coeffs() - SEqHatDot.coeffs()*m_beta);
@@ -435,7 +445,7 @@ void OrientationFilterMadgwickMARG::resetState()
 {
     OrientationFilterMadgwickARG::resetState();
     m_omega_bias_x= m_omega_bias_y= m_omega_bias_z= 0.f;
-	m_beta = k_madgwick_begin_beta;
+	timeReset = std::chrono::high_resolution_clock::now();
 }
 
 void OrientationFilterMadgwickMARG::update(const float delta_time, const PoseFilterPacket &packet)
@@ -608,26 +618,36 @@ void OrientationFilterMadgwickMARG::update(const float delta_time, const PoseFil
 			const float adaptive_min = clampf(filter_madgwick_min_correction, 0.0f, adaptive_max);
 			const float adaptive_falloff = clampf(filter_madgwick_apt_falloff, 0.0f, 0.999f);
 
-			switch (filter_madgwick_apt_method)
+			std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+			std::chrono::duration<double, std::milli> resetDuration = now - timeReset;
+
+			if (resetDuration.count() < k_madgwick_reset_time)
 			{
-			case AdaptiveDriftCorrectionMethod::AdaptiveGyro:
+				m_beta = 2.0;
+			}
+			else
 			{
-				m_beta = fmaxf(m_beta, fminf(adaptive_max, gyro_b));
-				break;
+				switch (filter_madgwick_apt_method)
+				{
+				case AdaptiveDriftCorrectionMethod::AdaptiveGyro:
+				{
+					m_beta = fmaxf(m_beta, fminf(adaptive_max, gyro_b));
+					break;
+				}
+				case AdaptiveDriftCorrectionMethod::AdaptiveAccel:
+				{
+					m_beta = fmaxf(m_beta, fminf(adaptive_max, accel_b));
+					break;
+				}
+				case AdaptiveDriftCorrectionMethod::AdaptiveBoth:
+				{
+					m_beta = fmaxf(m_beta, fminf(adaptive_max, gyro_b));
+					m_beta = fmaxf(m_beta, fminf(adaptive_max, accel_b));
+					break;
+				}
+				}
+				m_beta = fmaxf(adaptive_min, (m_beta * adaptive_falloff));
 			}
-			case AdaptiveDriftCorrectionMethod::AdaptiveAccel:
-			{
-				m_beta = fmaxf(m_beta, fminf(adaptive_max, accel_b));
-				break;
-			}
-			case AdaptiveDriftCorrectionMethod::AdaptiveBoth:
-			{
-				m_beta = fmaxf(m_beta, fminf(adaptive_max, gyro_b));
-				m_beta = fmaxf(m_beta, fminf(adaptive_max, accel_b));
-				break;
-			}
-			}
-			m_beta = fmaxf(adaptive_min, (m_beta * adaptive_falloff));
 		}
 
 		Eigen::Quaternionf SEqDot_est = Eigen::Quaternionf(SEqDot_omega.coeffs() - SEqHatDot.coeffs()*m_beta);

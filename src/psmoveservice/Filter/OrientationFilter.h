@@ -69,13 +69,16 @@ public:
 	OrientationFilterMadgwickARG() 
 		: OrientationFilter()
 		, m_beta(0.f)
-	{}
+	{
+		timeReset = std::chrono::high_resolution_clock::now();
+	}
 
 	void resetState() override;
     void update(const float delta_time, const PoseFilterPacket &packet) override;
 
 protected:
 	float m_beta;
+	std::chrono::time_point<std::chrono::high_resolution_clock> timeReset;
 };
 
 /// Magnetic, Angular Rate, and Gravity fusion algorithm from Madgwick
@@ -88,7 +91,9 @@ public:
         , m_omega_bias_y(0.f)
         , m_omega_bias_z(0.f)
 		, m_beta(0.f)
-    {}
+    {
+		timeReset = std::chrono::high_resolution_clock::now();
+	}
 
     void resetState() override;
     void update(const float delta_time, const PoseFilterPacket &packet) override;
@@ -98,6 +103,7 @@ protected:
     float m_omega_bias_y;
     float m_omega_bias_z;
 	float m_beta;
+	std::chrono::time_point<std::chrono::high_resolution_clock> timeReset;
 };
 
 /// Angular Rate, Gravity, and Optical fusion algorithm
