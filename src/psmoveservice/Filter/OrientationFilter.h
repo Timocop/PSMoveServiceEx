@@ -69,6 +69,7 @@ public:
 	OrientationFilterMadgwickARG() 
 		: OrientationFilter()
 		, m_beta(0.f)
+		, m_reset(true)
 	{
 		timeReset = std::chrono::high_resolution_clock::now();
 	}
@@ -78,6 +79,7 @@ public:
 
 protected:
 	float m_beta;
+	float m_reset;
 	std::chrono::time_point<std::chrono::high_resolution_clock> timeReset;
 };
 
@@ -91,6 +93,7 @@ public:
         , m_omega_bias_y(0.f)
         , m_omega_bias_z(0.f)
 		, m_beta(0.f)
+		, m_reset(true)
     {
 		timeReset = std::chrono::high_resolution_clock::now();
 	}
@@ -103,6 +106,7 @@ protected:
     float m_omega_bias_y;
     float m_omega_bias_z;
 	float m_beta;
+	float m_reset;
 	std::chrono::time_point<std::chrono::high_resolution_clock> timeReset;
 };
 

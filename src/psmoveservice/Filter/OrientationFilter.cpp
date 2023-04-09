@@ -250,7 +250,7 @@ void OrientationFilterPassThru::update(const float delta_time, const PoseFilterP
 void OrientationFilterMadgwickARG::resetState()
 {
 	OrientationFilter::resetState();
-	timeReset = std::chrono::high_resolution_clock::now();
+	m_reset = true;
 }
 
 // -- OrientationFilterMadgwickARG --
@@ -380,6 +380,12 @@ void OrientationFilterMadgwickARG::update(const float delta_time, const PoseFilt
 				const float adaptive_falloff = clampf(filter_madgwick_apt_falloff, 0.0f, 0.999f);
 
 				std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+				if (m_reset)
+				{
+					m_reset = false;
+					timeReset = now;
+				}
+
 				std::chrono::duration<double, std::milli> resetDuration = now - timeReset;
 
 				if (resetDuration.count() < k_madgwick_reset_time)
@@ -445,7 +451,7 @@ void OrientationFilterMadgwickMARG::resetState()
 {
     OrientationFilterMadgwickARG::resetState();
     m_omega_bias_x= m_omega_bias_y= m_omega_bias_z= 0.f;
-	timeReset = std::chrono::high_resolution_clock::now();
+	m_reset = true;
 }
 
 void OrientationFilterMadgwickMARG::update(const float delta_time, const PoseFilterPacket &packet)
@@ -619,6 +625,12 @@ void OrientationFilterMadgwickMARG::update(const float delta_time, const PoseFil
 			const float adaptive_falloff = clampf(filter_madgwick_apt_falloff, 0.0f, 0.999f);
 
 			std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+			if (m_reset)
+			{
+				m_reset = false;
+				timeReset = now;
+			}
+
 			std::chrono::duration<double, std::milli> resetDuration = now - timeReset;
 
 			if (resetDuration.count() < k_madgwick_reset_time)
