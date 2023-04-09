@@ -1149,7 +1149,7 @@ void AppStage_ControllerSettings::renderUI()
 												controllerInfo.FilterMadgwickMinCorrection = 0.02f;
 												controllerInfo.FilterMadgwickAdaptiveMethod = AdaptiveDriftCorrectionMethod::AdaptiveBoth;
 												controllerInfo.FilterMadgwickAdaptiveMaxCorrection = 0.8f;
-												controllerInfo.FilterMadgwickAdaptiveFalloff = 0.99;
+												controllerInfo.FilterMadgwickAdaptiveFalloff = 0.975;
 
 												request_offset = true;
 

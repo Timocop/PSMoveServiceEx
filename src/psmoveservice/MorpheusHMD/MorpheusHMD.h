@@ -54,7 +54,7 @@ public:
 		, filter_madgwick_min_correction(0.02f)
 		, filter_madgwick_apt_method(AdaptiveDriftCorrectionMethod::AdaptiveBoth)
 		, filter_madgwick_apt_max_correction(0.8f)
-		, filter_madgwick_apt_falloff(0.99)
+		, filter_madgwick_apt_falloff(0.975)
     {
 		offset_position.set(0.0, 0.0, 0.0);
 		offset_orientation.set(0.0, 0.0, 0.0);

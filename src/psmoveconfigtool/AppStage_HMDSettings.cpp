@@ -568,7 +568,7 @@ void AppStage_HMDSettings::renderUI()
 							hmdInfo.FilterMadgwickMinCorrection = 0.02f;
 							hmdInfo.FilterMadgwickAdaptiveMethod = AdaptiveDriftCorrectionMethod::AdaptiveBoth;
 							hmdInfo.FilterMadgwickAdaptiveMaxCorrection = 0.8f;
-							hmdInfo.FilterMadgwickAdaptiveFalloff = 0.99;
+							hmdInfo.FilterMadgwickAdaptiveFalloff = 0.975;
 
 							request_offset = true;
 

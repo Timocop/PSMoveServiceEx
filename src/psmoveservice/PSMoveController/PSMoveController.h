@@ -95,7 +95,7 @@ public:
 		, filter_madgwick_min_correction(0.02f)
 		, filter_madgwick_apt_method(AdaptiveDriftCorrectionMethod::AdaptiveBoth)
 		, filter_madgwick_apt_max_correction(0.8f)
-		, filter_madgwick_apt_falloff(0.99)
+		, filter_madgwick_apt_falloff(0.975)
     {
         magnetometer_identity.clear();
         magnetometer_center.clear();
