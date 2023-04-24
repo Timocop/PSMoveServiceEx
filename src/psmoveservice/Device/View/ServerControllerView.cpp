@@ -706,23 +706,23 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 							// Blacklisted projections
 							for (int i = 0; i < eCommonBlacklistProjection::MAX_BLACKLIST_PROJECTIONS; ++i)
 							{
-								float x, y, w, h;
-								if (tracker->getBlacklistProjection(i, x, y, w, h))
+								float bad_x, bad_y, bad_w, bad_h;
+								if (tracker->getBlacklistProjection(i, bad_x, bad_y, bad_w, bad_h))
 								{
-									const float tracker_x = trackerPoseEstimateRef.projection.shape.ellipse.center.x;
-									const float tracker_y = trackerPoseEstimateRef.projection.shape.ellipse.center.y;
+									const float x = trackerPoseEstimateRef.projection.shape.ellipse.center.x;
+									const float y = trackerPoseEstimateRef.projection.shape.ellipse.center.y;
 
-									bool bInArea = (tracker_x > x)
-										&& (tracker_y > y)
-										&& (tracker_x < x + w)
-										&& (tracker_y < y + h);
+									bool bInArea = (x >= bad_x)
+										&& (y >= bad_y)
+										&& (x < bad_x + bad_w)
+										&& (y < bad_y + bad_h);
 
 									if (bInArea)
 									{
-										trackerPoseEstimateRef.blacklistedAreaRec.x = x;
-										trackerPoseEstimateRef.blacklistedAreaRec.y = y;
-										trackerPoseEstimateRef.blacklistedAreaRec.w = w;
-										trackerPoseEstimateRef.blacklistedAreaRec.h = h;
+										trackerPoseEstimateRef.blacklistedAreaRec.x = bad_x;
+										trackerPoseEstimateRef.blacklistedAreaRec.y = bad_y;
+										trackerPoseEstimateRef.blacklistedAreaRec.w = bad_w;
+										trackerPoseEstimateRef.blacklistedAreaRec.h = bad_h;
 
 										bIsBlacklisted = true;
 										break;
@@ -761,8 +761,8 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 									if (area > other_area)
 										continue;
 
-									bool bInArea = (other_x > x)
-										&& (other_y > y)
+									bool bInArea = (other_x >= x)
+										&& (other_y >= y)
 										&& (other_x < x + w)
 										&& (other_y < y + h);
 
@@ -807,8 +807,8 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 									if (area > other_area)
 										continue;
 
-									bool bInArea = (other_x > x)
-										&& (other_y > y)
+									bool bInArea = (other_x >= x)
+										&& (other_y >= y)
 										&& (other_x < x + w)
 										&& (other_y < y + h);
 
@@ -829,7 +829,6 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 						}
 					}
 
-					// Ignore projections that are occluded BUT always pass atleast 2 biggest projected trackers.
 					if (bIsOutOfBounds)
 					{
 						bOutOfBounds = true;
@@ -846,6 +845,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 						{
 							bBlacklisted = false;
 
+							// Ignore projections that are occluded BUT always pass atleast 2 biggest projected trackers.
 							if (!bIsOccluded || projections_found < trackerMgrConfig.occluded_area_ignore_num_trackers)
 							{
 								bOccluded = false;
