@@ -319,6 +319,7 @@ private:
 	bool m_bDetectingCancel;
 	eDetectionFailReason m_iDetectingFailReason;
 	std::vector<std::vector<int>> m_mAutoDetectedContures;
+	std::chrono::time_point<std::chrono::high_resolution_clock> m_lastDetection;
 };
 
 #endif // APP_STAGE_COLOR_CALIBRATION_H

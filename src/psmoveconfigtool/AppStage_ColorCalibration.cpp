@@ -32,7 +32,7 @@
 const int k_color_autodetect_probe_max = 64; 
 const int k_color_autodetect_probe_step = 8;
 
-const int k_auto_calib_sleep = 100;
+const int k_auto_calib_sleep = 350;
 
 //-- statics ----
 const char *AppStage_ColorCalibration::APP_STAGE_NAME = "ColorCalibration";
@@ -756,7 +756,6 @@ void AppStage_ColorCalibration::renderUI()
 						setState(eMenuState::autoConfig_wait1);
 						request_set_controller_tracking_color(m_masterControllerView, PSMTrackingColorType_Magenta);
 						m_masterTrackingColorType = PSMTrackingColorType_Magenta;
-						std::this_thread::sleep_for(std::chrono::milliseconds(k_auto_calib_sleep));
 					}
 					else if (m_bAutoChangeController) {
 						setState(eMenuState::changeController);
@@ -1907,8 +1906,6 @@ void AppStage_ColorCalibration::renderUI()
 		}
 
         m_masterTrackingColorType = new_color;
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(k_auto_calib_sleep));
     } break;
 
 	case eMenuState::detection_init:
@@ -2063,18 +2060,25 @@ void AppStage_ColorCalibration::renderUI()
 		}
 
 		setState(eMenuState::detection_exposure_wait1);
-		std::this_thread::sleep_for(std::chrono::milliseconds(k_auto_calib_sleep));
 		break;
 	}
 	case eMenuState::detection_exposure_wait1:
-		// $TODO: Wait for frame ready instead of sleep
+	{
+		m_lastDetection = std::chrono::high_resolution_clock::now();
 		setState(eMenuState::detection_exposure_wait2);
-		std::this_thread::sleep_for(std::chrono::milliseconds(k_auto_calib_sleep));
 		break;
+	}
 	case eMenuState::detection_exposure_wait2:
-		setState(eMenuState::detection_get_red);
-		std::this_thread::sleep_for(std::chrono::milliseconds(k_auto_calib_sleep));
+	{
+		// $TODO: Wait for frame ready instead of waiting
+		std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastDetection;
+		if (timeSinceLast.count() > k_auto_calib_sleep)
+		{
+			setState(eMenuState::detection_get_red);
+		}
 		break;
+	}
 	case eMenuState::detection_get_red:
 	{
 		TrackerColorPreset preset = getColorPreset();
@@ -2091,18 +2095,25 @@ void AppStage_ColorCalibration::renderUI()
 		m_masterTrackingColorType = PSMTrackingColorType::PSMTrackingColorType_Red;
 
 		setState(eMenuState::detection_get_red_wait1);
-		std::this_thread::sleep_for(std::chrono::milliseconds(k_auto_calib_sleep));
 		break;
 	}
 	case eMenuState::detection_get_red_wait1:
-		// $TODO: Wait for frame ready instead of sleep
+	{
+		m_lastDetection = std::chrono::high_resolution_clock::now();
 		setState(eMenuState::detection_get_red_wait2);
-		std::this_thread::sleep_for(std::chrono::milliseconds(k_auto_calib_sleep));
 		break;
+	}
 	case eMenuState::detection_get_red_wait2:
-		setState(eMenuState::detection_get_red_done);
-		std::this_thread::sleep_for(std::chrono::milliseconds(k_auto_calib_sleep));
+	{
+		// $TODO: Wait for frame ready instead of waiting
+		std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastDetection;
+		if (timeSinceLast.count() > k_auto_calib_sleep)
+		{
+			setState(eMenuState::detection_get_red_done);
+		}
 		break;
+	}
 	case eMenuState::detection_get_red_done:
 	{
 		if (m_video_buffer_state == nullptr)
@@ -2142,18 +2153,25 @@ void AppStage_ColorCalibration::renderUI()
 		m_masterTrackingColorType = PSMTrackingColorType::PSMTrackingColorType_Green;
 
 		setState(eMenuState::detection_get_green_wait1);
-		std::this_thread::sleep_for(std::chrono::milliseconds(k_auto_calib_sleep));
 		break;
 	}
 	case eMenuState::detection_get_green_wait1:
-		// $TODO: Wait for frame ready instead of sleep
+	{
+		m_lastDetection = std::chrono::high_resolution_clock::now();
 		setState(eMenuState::detection_get_green_wait2);
-		std::this_thread::sleep_for(std::chrono::milliseconds(k_auto_calib_sleep));
 		break;
-	case eMenuState::detection_get_green_wait2:
-		setState(eMenuState::detection_get_green_done);
-		std::this_thread::sleep_for(std::chrono::milliseconds(k_auto_calib_sleep));
+	}
+	case eMenuState::detection_get_green_wait2: 
+	{
+		// $TODO: Wait for frame ready instead of waiting
+		std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastDetection;
+		if (timeSinceLast.count() > k_auto_calib_sleep)
+		{
+			setState(eMenuState::detection_get_green_done);
+		}
 		break;
+	}
 	case eMenuState::detection_get_green_done:
 	{
 		if (m_video_buffer_state == nullptr)
@@ -2191,18 +2209,23 @@ void AppStage_ColorCalibration::renderUI()
 		m_masterTrackingColorType = PSMTrackingColorType::PSMTrackingColorType_Blue;
 
 		setState(eMenuState::detection_get_blue_wait1);
-		std::this_thread::sleep_for(std::chrono::milliseconds(k_auto_calib_sleep));
 		break;
 	}
 	case eMenuState::detection_get_blue_wait1:
-		// $TODO: Wait for frame ready instead of sleep
+		m_lastDetection = std::chrono::high_resolution_clock::now();
 		setState(eMenuState::detection_get_blue_wait2);
-		std::this_thread::sleep_for(std::chrono::milliseconds(k_auto_calib_sleep));
 		break;
 	case eMenuState::detection_get_blue_wait2:
-		setState(eMenuState::detection_get_blue_done);
-		std::this_thread::sleep_for(std::chrono::milliseconds(k_auto_calib_sleep));
+	{
+		// $TODO: Wait for frame ready instead of waiting
+		std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastDetection;
+		if (timeSinceLast.count() > k_auto_calib_sleep)
+		{
+			setState(eMenuState::detection_get_blue_done);
+		}
 		break;
+	}
 	case eMenuState::detection_get_blue_done:
 	{
 		if (m_video_buffer_state == nullptr)
@@ -2224,7 +2247,6 @@ void AppStage_ColorCalibration::renderUI()
 		setState(eMenuState::detection_change_color_wait1);
 		request_set_controller_tracking_color(m_masterControllerView, PSMTrackingColorType_Magenta);
 		m_masterTrackingColorType = PSMTrackingColorType_Magenta;
-		std::this_thread::sleep_for(std::chrono::milliseconds(k_auto_calib_sleep));
 		break;
 	}
 	case eMenuState::detection_change_color:
@@ -2336,19 +2358,25 @@ void AppStage_ColorCalibration::renderUI()
 			m_iDetectingFailReason = eDetectionFailReason::failreason_canceled;
 			setState(eMenuState::detection_fail_pre);
 		}
-
-		std::this_thread::sleep_for(std::chrono::milliseconds(k_auto_calib_sleep));
 		break;
 	}
 	case eMenuState::detection_change_color_wait1:
-		// $TODO: Wait for frame ready instead of sleep
+	{
+		m_lastDetection = std::chrono::high_resolution_clock::now();
 		setState(eMenuState::detection_change_color_wait2);
-		std::this_thread::sleep_for(std::chrono::milliseconds(k_auto_calib_sleep));
 		break;
+	}
 	case eMenuState::detection_change_color_wait2:
-		setState(eMenuState::detection_change_color);
-		std::this_thread::sleep_for(std::chrono::milliseconds(k_auto_calib_sleep));
+	{
+		// $TODO: Wait for frame ready instead of waiting
+		std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastDetection;
+		if (timeSinceLast.count() > k_auto_calib_sleep)
+		{
+			setState(eMenuState::detection_change_color);
+		}
 		break;
+	}
 	case eMenuState::detection_fail_pre:
 	{
 		if (m_iDetectingAdjustMethod != eDetectionAdjustMethod::adjust_keep)
@@ -2507,14 +2535,22 @@ void AppStage_ColorCalibration::renderUI()
 
 
     case eMenuState::autoConfig_wait1:
-		// $TODO: Wait for frame ready instead of sleep
-        setState(eMenuState::autoConfig_wait2);
-        std::this_thread::sleep_for(std::chrono::milliseconds(k_auto_calib_sleep));
-        break;
+	{
+		m_lastDetection = std::chrono::high_resolution_clock::now();
+		setState(eMenuState::autoConfig_wait2);
+		break;
+	}
     case eMenuState::autoConfig_wait2:
-        setState(eMenuState::autoConfig);
-        std::this_thread::sleep_for(std::chrono::milliseconds(k_auto_calib_sleep));
-        break;
+	{
+		// $TODO: Wait for frame ready instead of waiting
+		std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastDetection;
+		if (timeSinceLast.count() > k_auto_calib_sleep)
+		{
+			setState(eMenuState::autoConfig);
+		}
+		break;
+	}
     case eMenuState::changeController:
 		if (m_bDetectingColors)
 		{
