@@ -581,6 +581,7 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 					bool bIsOutOfBounds = false;
 
 					// Check if the shape is out of the screen.
+					if (bWasTracking || bIsVisibleThisUpdate) 
 					{
 						CommonDeviceScreenLocation projection_pixel_center;
 						projection_pixel_center.clear();
