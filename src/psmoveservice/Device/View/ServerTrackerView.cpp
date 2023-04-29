@@ -1531,6 +1531,20 @@ ServerTrackerView::computeProjectionForController(
 		m_opencv_buffer_state->draw_pose_blacklist(mBlacklistedAreaRec);
 	}
 
+	if (bIsOutOfBounds)
+	{
+		float screenWidth, screenHeight;
+		getPixelDimensions(screenWidth, screenHeight);
+
+		CommonDeviceBlacklistProjection area;
+		area.x = 0.f;
+		area.y = 0.f;
+		area.w = screenWidth;
+		area.h = screenHeight;
+
+		m_opencv_buffer_state->draw_pose_blacklist(area);
+	}
+
 
     // Throw out the result if the contour we found was too small and 
     // we were using an ROI less that the size of the full screen
@@ -1747,6 +1761,20 @@ bool ServerTrackerView::computeProjectionForHMD(
 	if (bIsBlacklisted)
 	{
 		m_opencv_buffer_state->draw_pose_blacklist(mBlacklistedAreaRec);
+	}
+
+	if (bIsOutOfBounds)
+	{
+		float screenWidth, screenHeight;
+		getPixelDimensions(screenWidth, screenHeight);
+
+		CommonDeviceBlacklistProjection area;
+		area.x = 0.f;
+		area.y = 0.f;
+		area.w = screenWidth;
+		area.h = screenHeight;
+
+		m_opencv_buffer_state->draw_pose_blacklist(area);
 	}
 
 
