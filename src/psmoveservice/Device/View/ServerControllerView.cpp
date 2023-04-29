@@ -21,6 +21,8 @@
 #include "HMDManager.h"
 #include "ServerHMDView.h"
 
+#include "opencv2/opencv.hpp"
+
 #include <glm/glm.hpp>
 
 //-- typedefs ----
@@ -479,9 +481,6 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 		static bool occluded_tracker_ids[TrackerManager::k_max_devices][ControllerManager::k_max_devices];
 		static float occluded_projection_tracker_ids[TrackerManager::k_max_devices][ControllerManager::k_max_devices][2];
 
-		static bool project_avoid_valid[TrackerManager::k_max_devices][ControllerManager::k_max_devices];
-		static float porject_avoid_region[TrackerManager::k_max_devices][ControllerManager::k_max_devices][3];
-
         CommonDeviceTrackingShape trackingShape;
         m_device->getTrackingShape(trackingShape);
         assert(trackingShape.shape_type != eCommonTrackingShapeType::INVALID_SHAPE);
@@ -623,9 +622,15 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 
 						float screenWidth, screenHeight;
 						tracker->getPixelDimensions(screenWidth, screenHeight);
+						cv::Rect2i screen_rec(
+							0,
+							0,
+							static_cast<int>(screenWidth),
+							static_cast<int>(screenHeight)
+						);
 
-						if (projection_pixel_center.x < 0.f || projection_pixel_center.x >= screenWidth ||
-							projection_pixel_center.y < 0.f || projection_pixel_center.y >= screenHeight)
+						if (projection_pixel_center.x < screen_rec.x || projection_pixel_center.x >= screen_rec.width ||
+							projection_pixel_center.y < screen_rec.y || projection_pixel_center.y >= screen_rec.height)
 						{
 							bIsOutOfBounds = true;
 						}
@@ -634,18 +639,6 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 					//Only available
 					if (trackerPoseEstimateRef.projection.shape_type == eCommonTrackingProjectionType::ProjectionType_Ellipse)
 					{
-						if (bWasTracking || bIsVisibleThisUpdate)
-						{
-							project_avoid_valid[tracker_id][controller_id] = true;
-							porject_avoid_region[tracker_id][controller_id][0] = trackerPoseEstimateRef.projection.shape.ellipse.center.x;
-							porject_avoid_region[tracker_id][controller_id][1] = trackerPoseEstimateRef.projection.shape.ellipse.center.y;
-							porject_avoid_region[tracker_id][controller_id][2] = trackerPoseEstimateRef.projection.screen_area;
-						}
-						else
-						{
-							project_avoid_valid[tracker_id][controller_id] = false;
-						}
-
 						//Create an occlusion area at the last seen valid tracked projection.
 						//If the projection center is near the occluded area it will not mark the projection as valid.
 						//This will remove jitter when the shape of the controllers is partially visible to the trackers.
@@ -710,13 +703,20 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 								float bad_x, bad_y, bad_w, bad_h;
 								if (tracker->getBlacklistProjection(i, bad_x, bad_y, bad_w, bad_h))
 								{
+									cv::Rect2i blacklist_rec(
+										static_cast<int>(bad_x),
+										static_cast<int>(bad_y),
+										static_cast<int>(bad_w),
+										static_cast<int>(bad_h)
+									);
+
 									const float x = trackerPoseEstimateRef.projection.shape.ellipse.center.x;
 									const float y = trackerPoseEstimateRef.projection.shape.ellipse.center.y;
 
-									bool bInArea = (x >= bad_x)
-										&& (y >= bad_y)
-										&& (x < bad_x + bad_w)
-										&& (y < bad_y + bad_h);
+									bool bInArea = (x >= blacklist_rec.x)
+										&& (y >= blacklist_rec.y)
+										&& (x < blacklist_rec.x + blacklist_rec.width)
+										&& (y < blacklist_rec.y + blacklist_rec.height);
 
 									if (bInArea)
 									{
@@ -787,16 +787,20 @@ void ServerControllerView::updateOpticalPoseEstimation(TrackerManager* tracker_m
 									if (i == controller_id)
 										continue;
 
-									if (!project_avoid_valid[tracker_id][i])
-										continue;
-
 									ServerControllerViewPtr controllerView = m_controllerManager->getControllerViewPtr(i);
 									if (!controllerView || !controllerView->getIsOpen())
 										continue;
 
-									float other_x = porject_avoid_region[tracker_id][i][0];
-									float other_y = porject_avoid_region[tracker_id][i][1];
-									float other_area = porject_avoid_region[tracker_id][i][2];
+									const ControllerOpticalPoseEstimation *poseEst = controllerView->getTrackerPoseEstimate(tracker_id);
+									if (!poseEst)
+										continue;
+
+									if (poseEst->projection.shape_type != eCommonTrackingProjectionType::ProjectionType_Ellipse)
+										continue;
+
+									float other_x = poseEst->projection.shape.ellipse.center.x;
+									float other_y = poseEst->projection.shape.ellipse.center.y;
+									float other_area = poseEst->projection.screen_area;
 
 									float x = trackerPoseEstimateRef.projection.shape.ellipse.center.x - trackerPoseEstimateRef.projection.shape.ellipse.half_x_extent - trackerMgrConfig.projection_collision_offset;
 									float y = trackerPoseEstimateRef.projection.shape.ellipse.center.y - trackerPoseEstimateRef.projection.shape.ellipse.half_y_extent - trackerMgrConfig.projection_collision_offset;

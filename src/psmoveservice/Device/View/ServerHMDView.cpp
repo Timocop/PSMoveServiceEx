@@ -15,6 +15,8 @@
 #include "ControllerManager.h"
 #include "ServerControllerView.h"
 
+#include "opencv2/opencv.hpp"
+
 //-- constants -----
 static const float k_min_time_delta_seconds = 1 / 120.f;
 static const float k_max_time_delta_seconds = 1 / 30.f;
@@ -444,9 +446,15 @@ void ServerHMDView::updateOpticalPoseEstimation(TrackerManager* tracker_manager)
 
 						float screenWidth, screenHeight;
 						tracker->getPixelDimensions(screenWidth, screenHeight);
+						cv::Rect2i screen_rec(
+							0,
+							0,
+							static_cast<int>(screenWidth),
+							static_cast<int>(screenHeight)
+						);
 
-						if (projection_pixel_center.x < 0.f || projection_pixel_center.x >= screenWidth ||
-							projection_pixel_center.y < 0.f || projection_pixel_center.y >= screenHeight)
+						if (projection_pixel_center.x < screen_rec.x || projection_pixel_center.x >= screen_rec.width ||
+							projection_pixel_center.y < screen_rec.y || projection_pixel_center.y >= screen_rec.height)
 						{
 							bIsOutOfBounds = true;
 						}
@@ -519,13 +527,20 @@ void ServerHMDView::updateOpticalPoseEstimation(TrackerManager* tracker_manager)
 								float bad_x, bad_y, bad_w, bad_h;
 								if (tracker->getBlacklistProjection(i, bad_x, bad_y, bad_w, bad_h))
 								{
+									cv::Rect2i blacklist_rec(
+										static_cast<int>(bad_x),
+										static_cast<int>(bad_y),
+										static_cast<int>(bad_w),
+										static_cast<int>(bad_h)
+									);
+
 									const float x = trackerPoseEstimateRef.projection.shape.ellipse.center.x;
 									const float y = trackerPoseEstimateRef.projection.shape.ellipse.center.y;
 
-									bool bInArea = (x >= bad_x)
-										&& (y >= bad_y)
-										&& (x < bad_x + bad_w)
-										&& (y < bad_y + bad_h);
+									bool bInArea = (x >= blacklist_rec.x)
+										&& (y >= blacklist_rec.y)
+										&& (x < blacklist_rec.x + blacklist_rec.width)
+										&& (y < blacklist_rec.y + blacklist_rec.height);
 
 									if (bInArea)
 									{
