@@ -34,7 +34,8 @@ const CommonHSVColorRange g_default_color_presets[] = {
 const CommonHSVColorRange *k_default_color_presets = g_default_color_presets;
 
 PSMoveConfig::PSMoveConfig(const std::string &fnamebase)
-: ConfigFileBase(fnamebase)
+	: ConfigFileBase(fnamebase)
+	, bHasLoaded(false)
 {
 }
 
@@ -67,6 +68,9 @@ PSMoveConfig::getConfigPath()
 void
 PSMoveConfig::save()
 {
+	if (!bHasLoaded)
+		return;
+
     boost::property_tree::write_json(getConfigPath(), config2ptree());
 }
 
@@ -83,6 +87,8 @@ PSMoveConfig::load()
         ptree2config(pt);
         bLoadedOk = true;
     }
+
+	bHasLoaded = true;
 
     return bLoadedOk;
 }

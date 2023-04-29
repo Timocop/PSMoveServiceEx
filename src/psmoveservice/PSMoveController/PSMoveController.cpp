@@ -1183,8 +1183,10 @@ bool PSMoveController::open(
                 {
                     if (!cfg.is_valid)
                     {
-                        SERVER_LOG_ERROR("PSMoveController::open") << "PSMoveController(" << cur_dev_path << ") has invalid calibration. Reloading.";
+                        SERVER_LOG_ERROR("PSMoveController::open") << "PSMoveController(" << cur_dev_path << ") has invalid calibration.";
                     }
+
+					SERVER_LOG_INFO("PSMoveController::open") << "PSMoveController(" << cur_dev_path << ") is loading factory calibration.";
 
                     // Load calibration from controller internal memory.
 					if (getIsPS4Controller())
