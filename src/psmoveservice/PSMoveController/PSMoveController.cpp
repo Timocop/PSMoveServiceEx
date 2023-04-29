@@ -1179,14 +1179,9 @@ bool PSMoveController::open(
                 cfg = PSMoveControllerConfig(btaddr);
                 cfg.load();
 
-                if (!IsBluetooth || !cfg.is_valid)
+                if (!cfg.is_valid && !IsBluetooth)
                 {
-                    if (!cfg.is_valid)
-                    {
-                        SERVER_LOG_ERROR("PSMoveController::open") << "PSMoveController(" << cur_dev_path << ") has invalid calibration.";
-                    }
-
-					SERVER_LOG_INFO("PSMoveController::open") << "PSMoveController(" << cur_dev_path << ") is loading factory calibration.";
+					SERVER_LOG_WARNING("PSMoveController::open") << "PSMoveController(" << cur_dev_path << ") has invalid calibration. Using device factory calibration.";
 
                     // Load calibration from controller internal memory.
 					if (getIsPS4Controller())
