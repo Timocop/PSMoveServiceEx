@@ -453,8 +453,13 @@ void ServerHMDView::updateOpticalPoseEstimation(TrackerManager* tracker_manager)
 							static_cast<int>(screenHeight)
 						);
 
-						if (projection_pixel_center.x < screen_rec.x || projection_pixel_center.x >= screen_rec.width ||
-							projection_pixel_center.y < screen_rec.y || projection_pixel_center.y >= screen_rec.height)
+						cv::Point2i projection_center(
+							static_cast<int>(projection_pixel_center.x),
+							static_cast<int>(projection_pixel_center.y)
+						);
+
+						if (projection_center.x < screen_rec.x || projection_center.x >= (screen_rec.x + screen_rec.width) ||
+							projection_center.y < screen_rec.y || projection_center.y >= (screen_rec.y + screen_rec.height))
 						{
 							bIsOutOfBounds = true;
 						}
@@ -527,20 +532,29 @@ void ServerHMDView::updateOpticalPoseEstimation(TrackerManager* tracker_manager)
 								float bad_x, bad_y, bad_w, bad_h;
 								if (tracker->getBlacklistProjection(i, bad_x, bad_y, bad_w, bad_h))
 								{
-									cv::Rect2i blacklist_rec(
+									cv::Rect2i blacklist_rect(
 										static_cast<int>(bad_x),
 										static_cast<int>(bad_y),
 										static_cast<int>(bad_w),
 										static_cast<int>(bad_h)
 									);
 
+									// Ignore invalid areas
+									if (blacklist_rect.width == 0 || blacklist_rect.height == 0)
+										continue;
+
 									const float x = trackerPoseEstimateRef.projection.shape.ellipse.center.x;
 									const float y = trackerPoseEstimateRef.projection.shape.ellipse.center.y;
 
-									bool bInArea = (x >= blacklist_rec.x)
-										&& (y >= blacklist_rec.y)
-										&& (x < blacklist_rec.x + blacklist_rec.width)
-										&& (y < blacklist_rec.y + blacklist_rec.height);
+									cv::Point2i projection_center(
+										static_cast<int>(x),
+										static_cast<int>(y)
+									);
+
+									bool bInArea = (projection_center.x >= blacklist_rect.x)
+										&& (projection_center.y >= blacklist_rect.y)
+										&& (projection_center.x < blacklist_rect.x + blacklist_rect.width)
+										&& (projection_center.y < blacklist_rect.y + blacklist_rect.height);
 
 									if (bInArea)
 									{
