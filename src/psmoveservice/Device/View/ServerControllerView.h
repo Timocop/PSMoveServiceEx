@@ -43,7 +43,6 @@ struct ControllerOpticalPoseEstimation
 	bool bEnforceNewROI;
 	bool bIsOccluded;
 	bool bIsBlacklisted;
-	bool bIsOutOfBounds;
 	CommonDeviceScreenLocation occlusionAreaPos;
 	float occlusionAreaSize;
 	CommonDeviceBlacklistProjection blacklistedAreaRec;
@@ -63,7 +62,6 @@ struct ControllerOpticalPoseEstimation
 		bEnforceNewROI = false;
 		bIsOccluded = false;
 		bIsBlacklisted = false;
-		bIsOutOfBounds = false;
 		occlusionAreaPos.clear();
 		occlusionAreaSize = 0.f;
 		blacklistedAreaRec.clear();

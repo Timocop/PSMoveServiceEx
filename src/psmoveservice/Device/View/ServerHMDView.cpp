@@ -402,68 +402,6 @@ void ServerHMDView::updateOpticalPoseEstimation(TrackerManager* tracker_manager)
 
 					bool bIsOccluded = false;
 					bool bIsBlacklisted = false;
-					bool bIsOutOfBounds = false;
-
-					// Check if the shape is out of the screen.
-					{
-						CommonDeviceScreenLocation projection_pixel_center;
-						projection_pixel_center.clear();
-
-						switch (trackerPoseEstimateRef.projection.shape_type)
-						{
-						case eCommonTrackingProjectionType::ProjectionType_Ellipse:
-						{
-							projection_pixel_center = trackerPoseEstimateRef.projection.shape.ellipse.center;
-						} break;
-
-						case eCommonTrackingProjectionType::ProjectionType_LightBar:
-						{
-							const auto proj_tl = trackerPoseEstimateRef.projection.shape.lightbar.quad[CommonDeviceTrackingShape::QuadVertexUpperLeft];
-							const auto proj_br = trackerPoseEstimateRef.projection.shape.lightbar.quad[CommonDeviceTrackingShape::QuadVertexLowerRight];
-
-							projection_pixel_center.set(0.5f * (proj_tl.x + proj_br.x), 0.5f * (proj_tl.y + proj_br.y));
-						} break;
-
-						case eCommonTrackingProjectionType::ProjectionType_Points:
-						{
-							for (int point_index = 0; point_index < trackerPoseEstimateRef.projection.shape.points.point_count; ++point_index)
-							{
-								const auto &pixel = trackerPoseEstimateRef.projection.shape.points.point[point_index];
-
-								projection_pixel_center.x += pixel.x;
-								projection_pixel_center.y += pixel.y;
-							}
-							const float N = static_cast<float>(trackerPoseEstimateRef.projection.shape.points.point_count);
-							projection_pixel_center.x /= N;
-							projection_pixel_center.y /= N;
-						} break;
-
-						default:
-						{
-							assert(false && "unreachable");
-						} break;
-						}
-
-						float screenWidth, screenHeight;
-						tracker->getPixelDimensions(screenWidth, screenHeight);
-						cv::Rect2i screen_rec(
-							0,
-							0,
-							static_cast<int>(screenWidth),
-							static_cast<int>(screenHeight)
-						);
-
-						cv::Point2i projection_center(
-							static_cast<int>(projection_pixel_center.x),
-							static_cast<int>(projection_pixel_center.y)
-						);
-
-						if (projection_center.x < screen_rec.x || projection_center.x >= (screen_rec.x + screen_rec.width) ||
-							projection_center.y < screen_rec.y || projection_center.y >= (screen_rec.y + screen_rec.height))
-						{
-							bIsOutOfBounds = true;
-						}
-					}
 
 					//Only available
 					if (trackerPoseEstimateRef.projection.shape_type == eCommonTrackingProjectionType::ProjectionType_Ellipse)
@@ -526,49 +464,6 @@ void ServerHMDView::updateOpticalPoseEstimation(TrackerManager* tracker_manager)
 
 						if (bWasTracking || bIsVisibleThisUpdate)
 						{
-							// Blacklisted projections
-							for (int i = 0; i < eCommonBlacklistProjection::MAX_BLACKLIST_PROJECTIONS; ++i)
-							{
-								float bad_x, bad_y, bad_w, bad_h;
-								if (tracker->getBlacklistProjection(i, bad_x, bad_y, bad_w, bad_h))
-								{
-									cv::Rect2i blacklist_rect(
-										static_cast<int>(bad_x),
-										static_cast<int>(bad_y),
-										static_cast<int>(bad_w),
-										static_cast<int>(bad_h)
-									);
-
-									// Ignore invalid areas
-									if (blacklist_rect.width == 0 || blacklist_rect.height == 0)
-										continue;
-
-									const float x = trackerPoseEstimateRef.projection.shape.ellipse.center.x;
-									const float y = trackerPoseEstimateRef.projection.shape.ellipse.center.y;
-
-									cv::Point2i projection_center(
-										static_cast<int>(x),
-										static_cast<int>(y)
-									);
-
-									bool bInArea = (projection_center.x >= blacklist_rect.x)
-										&& (projection_center.y >= blacklist_rect.y)
-										&& (projection_center.x < blacklist_rect.x + blacklist_rect.width)
-										&& (projection_center.y < blacklist_rect.y + blacklist_rect.height);
-
-									if (bInArea)
-									{
-										trackerPoseEstimateRef.blacklistedAreaRec.x = bad_x;
-										trackerPoseEstimateRef.blacklistedAreaRec.y = bad_y;
-										trackerPoseEstimateRef.blacklistedAreaRec.w = bad_w;
-										trackerPoseEstimateRef.blacklistedAreaRec.h = bad_h;
-
-										bIsBlacklisted = true;
-										break;
-									}
-								}
-							}
-
 							// Avoid other device projections
 							if (trackerMgrConfig.projection_collision_avoid)
 							{
@@ -621,44 +516,35 @@ void ServerHMDView::updateOpticalPoseEstimation(TrackerManager* tracker_manager)
 						}
 					}
 
-					if (bIsOutOfBounds)
+					if (bIsBlacklisted)
 					{
-						bOutOfBounds = true;
+						bBlacklisted = true;
 					}
 					else
 					{
-						bOutOfBounds = false;
+						bBlacklisted = false;
 
-						if (bIsBlacklisted)
+						// Ignore projections that are occluded BUT always pass atleast 2 biggest projected trackers.
+						if (!bIsOccluded || projections_found < trackerMgrConfig.occluded_area_ignore_num_trackers)
 						{
-							bBlacklisted = true;
+							bOccluded = false;
+
+							// If the projection isn't too old (or updated this tick), 
+							// say we have a valid tracked location
+							if ((bWasTracking && !tracker->getHasUnpublishedState()) || bIsVisibleThisUpdate)
+							{
+								// If this tracker has a valid projection for the controller
+								// add it to the tracker id list
+								valid_projection_tracker_ids[projections_found] = tracker_id;
+								++projections_found;
+
+								// Flag this pose estimate as invalid
+								bCurrentlyTracking = true;
+							}
 						}
 						else
 						{
-							bBlacklisted = false;
-
-							// Ignore projections that are occluded BUT always pass atleast 2 biggest projected trackers.
-							if (!bIsOccluded || projections_found < trackerMgrConfig.occluded_area_ignore_num_trackers)
-							{
-								bOccluded = false;
-
-								// If the projection isn't too old (or updated this tick), 
-								// say we have a valid tracked location
-								if ((bWasTracking && !tracker->getHasUnpublishedState()) || bIsVisibleThisUpdate)
-								{
-									// If this tracker has a valid projection for the controller
-									// add it to the tracker id list
-									valid_projection_tracker_ids[projections_found] = tracker_id;
-									++projections_found;
-
-									// Flag this pose estimate as invalid
-									bCurrentlyTracking = true;
-								}
-							}
-							else
-							{
-								bOccluded = true;
-							}
+							bOccluded = true;
 						}
 					}
                 }
@@ -670,7 +556,6 @@ void ServerHMDView::updateOpticalPoseEstimation(TrackerManager* tracker_manager)
             trackerPoseEstimateRef.bCurrentlyTracking = bCurrentlyTracking;
 			trackerPoseEstimateRef.bIsOccluded = bOccluded;
 			trackerPoseEstimateRef.bIsBlacklisted = bBlacklisted;
-			trackerPoseEstimateRef.bIsOutOfBounds = bOutOfBounds;
         }
 
         // How we compute the final world pose estimate varies based on

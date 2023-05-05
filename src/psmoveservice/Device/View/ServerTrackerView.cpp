@@ -423,47 +423,47 @@ public:
             cv::cvtColor(bgrROI, hsvROI, cv::COLOR_BGR2HSV);
         }
     }
-    
-    void applyROI(cv::Rect2i ROI)
-    {
-        // Make sure the ROI box is always clamped in bounds of the frame buffer
-        int x0= std::min(std::max(ROI.tl().x, 0), frameWidth-1);
-        int y0= std::min(std::max(ROI.tl().y, 0), frameHeight-1);
-        int x1= std::min(std::max(ROI.br().x, 0), frameWidth-1);
-        int y1= std::min(std::max(ROI.br().y, 0), frameHeight-1);
-        int clamped_width = std::max(x1-x0, 0);
-        int clamped_height = std::max(y1-y0, 0);
 
-        // If the clamped ROI ends up being zero-width or zero-height, 
-        // just make it full screen
-        if (clamped_width > 0 && clamped_height > 0)
-        {
-            ROI.x= x0;
-            ROI.y= y0;
-            ROI.width = clamped_width;
-            ROI.height = clamped_height;
-        }
-        else
-        {
-            ROI.x= 0;
-            ROI.y= 0;
-            ROI.width = frameWidth;
-            ROI.height = frameHeight;
-        }
-       
-        //Create the ROI matrices.
-        //It's not a full copy, so this isn't too slow.
-        //adjustROI is probably slightly faster but I ran into trouble with it.
-        bgrROI = cv::Mat(*bgrBuffer, ROI);
-        hsvROI = cv::Mat(*hsvBuffer, ROI);
-        gsLowerROI = cv::Mat(*gsLowerBuffer, ROI);
-        gsUpperROI = cv::Mat(*gsUpperBuffer, ROI);
-        
-        updateHsvBuffer();
-        
-        //Draw ROI.
-        cv::rectangle(*bgrShmemBuffer, ROI, cv::Scalar(255, 0, 0));
-    }
+	void applyROI(cv::Rect2i ROI)
+	{
+		// Make sure the ROI box is always clamped in bounds of the frame buffer
+		int x0 = std::min(std::max(ROI.tl().x, 0), frameWidth - 1);
+		int y0 = std::min(std::max(ROI.tl().y, 0), frameHeight - 1);
+		int x1 = std::min(std::max(ROI.br().x, 0), frameWidth - 1);
+		int y1 = std::min(std::max(ROI.br().y, 0), frameHeight - 1);
+		int clamped_width = std::max(x1 - x0, 0);
+		int clamped_height = std::max(y1 - y0, 0);
+
+		// If the clamped ROI ends up being zero-width or zero-height, 
+		// just make it full screen
+		if (clamped_width > 0 && clamped_height > 0)
+		{
+			ROI.x = x0;
+			ROI.y = y0;
+			ROI.width = clamped_width;
+			ROI.height = clamped_height;
+		}
+		else
+		{
+			ROI.x = 0;
+			ROI.y = 0;
+			ROI.width = frameWidth;
+			ROI.height = frameHeight;
+		}
+
+		//Create the ROI matrices.
+		//It's not a full copy, so this isn't too slow.
+		//adjustROI is probably slightly faster but I ran into trouble with it.
+		bgrROI = cv::Mat(*bgrBuffer, ROI);
+		hsvROI = cv::Mat(*hsvBuffer, ROI);
+		gsLowerROI = cv::Mat(*gsLowerBuffer, ROI);
+		gsUpperROI = cv::Mat(*gsUpperBuffer, ROI);
+
+		updateHsvBuffer();
+
+		//Draw ROI.
+		cv::rectangle(*bgrShmemBuffer, ROI, cv::Scalar(255, 0, 0));
+	}
 
     // Return points in raw image space:
     // i.e. [0, 0] at lower left  to [frameWidth-1, frameHeight-1] at lower right
@@ -1370,14 +1370,13 @@ ServerTrackerView::computeProjectionForController(
 
     const ControllerOpticalPoseEstimation *priorPoseEst= 
         tracked_controller->getTrackerPoseEstimate(this->getDeviceID());
-	const bool bIsTracking = priorPoseEst->bCurrentlyTracking;
-	const bool bEnforceNewROI = priorPoseEst->bEnforceNewROI;
-	const bool bIsOccluded = priorPoseEst->bIsOccluded;
-	const bool bIsBlacklisted = priorPoseEst->bIsBlacklisted;
-	const bool bIsOutOfBounds = priorPoseEst->bIsOutOfBounds;
-	const CommonDeviceScreenLocation mOcclusionAreaPos = priorPoseEst->occlusionAreaPos;
-	const float fOcclusionAreaSize = priorPoseEst->occlusionAreaSize;
-	const CommonDeviceBlacklistProjection mBlacklistedAreaRec = priorPoseEst->blacklistedAreaRec;
+	bool bIsTracking = priorPoseEst->bCurrentlyTracking;
+	bool bEnforceNewROI = priorPoseEst->bEnforceNewROI;
+	bool bIsOccluded = priorPoseEst->bIsOccluded;
+	bool bIsBlacklisted = priorPoseEst->bIsBlacklisted;
+	CommonDeviceScreenLocation mOcclusionAreaPos = priorPoseEst->occlusionAreaPos;
+	float fOcclusionAreaSize = priorPoseEst->occlusionAreaSize;
+	CommonDeviceBlacklistProjection mBlacklistedAreaRec = priorPoseEst->blacklistedAreaRec;
 
     cv::Rect2i ROI= computeTrackerROIForPoseProjection(
 		(bRoiOptimized) ? tracked_controller->getDeviceID() : -1,
@@ -1385,8 +1384,8 @@ ServerTrackerView::computeProjectionForController(
         bRoiDisabled,
 		iRoiEdgeOffset,
         this,		
-        ((bIsTracking || bIsOccluded) && !bIsOutOfBounds && !bIsBlacklisted && !bEnforceNewROI) ? (tracked_controller->getPoseFilter()) : (nullptr),
-        ((bIsTracking || bIsOccluded) && !bIsOutOfBounds && !bIsBlacklisted && !bEnforceNewROI) ? (&priorPoseEst->projection) : (nullptr),
+        ((bIsTracking || bIsOccluded) && !bIsBlacklisted && !bEnforceNewROI) ? (tracked_controller->getPoseFilter()) : (nullptr),
+        ((bIsTracking || bIsOccluded) && !bIsBlacklisted && !bEnforceNewROI) ? (&priorPoseEst->projection) : (nullptr),
         tracking_shape);
 
     m_opencv_buffer_state->applyROI(ROI);
@@ -1398,6 +1397,59 @@ ServerTrackerView::computeProjectionForController(
     {
         bSuccess = m_opencv_buffer_state->computeBiggestNContours(hsvColorRange, biggest_contours, contour_areas, 1);
     }
+
+	// Check if contours are in blacklisted areas.
+	if (bSuccess)
+	{
+		cv::Point avg_contour(0, 0);
+		int N = 0;
+
+		for (auto it = biggest_contours[0].begin(); it != biggest_contours[0].end(); ++it)
+		{
+			avg_contour.x += it->x;
+			avg_contour.y += it->y;
+			N++;
+		}
+
+		avg_contour.x /= N;
+		avg_contour.y /= N;
+
+		for (int i = 0; i < eCommonBlacklistProjection::MAX_BLACKLIST_PROJECTIONS; ++i)
+		{
+			float bad_x, bad_y, bad_w, bad_h;
+			if (getBlacklistProjection(i, bad_x, bad_y, bad_w, bad_h))
+			{
+				cv::Rect2i blacklist_rect(
+					static_cast<int>(bad_x),
+					static_cast<int>(bad_y),
+					static_cast<int>(bad_w),
+					static_cast<int>(bad_h)
+				);
+
+				// Ignore invalid areas
+				if (blacklist_rect.width == 0 || blacklist_rect.height == 0)
+					continue;
+
+				bool bInArea = (avg_contour.x >= blacklist_rect.x)
+					&& (avg_contour.y >= blacklist_rect.y)
+					&& (avg_contour.x < blacklist_rect.x + blacklist_rect.width)
+					&& (avg_contour.y < blacklist_rect.y + blacklist_rect.height);
+
+				if (bInArea)
+				{
+					mBlacklistedAreaRec.x = bad_x;
+					mBlacklistedAreaRec.y = bad_y;
+					mBlacklistedAreaRec.w = bad_w;
+					mBlacklistedAreaRec.h = bad_h;
+
+					bIsBlacklisted = true;
+
+					bSuccess = false;
+					break;
+				}
+			}
+		}
+	}
 
     // Process the contour for its 2D and 3D pose.
     if (bSuccess)
@@ -1531,21 +1583,6 @@ ServerTrackerView::computeProjectionForController(
 		m_opencv_buffer_state->draw_pose_blacklist(mBlacklistedAreaRec);
 	}
 
-	if (bIsOutOfBounds)
-	{
-		float screenWidth, screenHeight;
-		getPixelDimensions(screenWidth, screenHeight);
-
-		CommonDeviceBlacklistProjection area;
-		area.x = 0.f;
-		area.y = 0.f;
-		area.w = screenWidth;
-		area.h = screenHeight;
-
-		m_opencv_buffer_state->draw_pose_blacklist(area);
-	}
-
-
     // Throw out the result if the contour we found was too small and 
     // we were using an ROI less that the size of the full screen
     if (bSuccess && !bRoiDisabled)
@@ -1595,14 +1632,13 @@ bool ServerTrackerView::computeProjectionForHMD(
 
     const HMDOpticalPoseEstimation *priorPoseEst= 
         tracked_hmd->getTrackerPoseEstimate(this->getDeviceID());
-    const bool bIsTracking = priorPoseEst->bCurrentlyTracking;
-	const bool bEnforceNewROI = priorPoseEst->bEnforceNewROI;
-	const bool bIsOccluded = priorPoseEst->bIsOccluded;
-	const bool bIsBlacklisted = priorPoseEst->bIsBlacklisted;
-	const bool bIsOutOfBounds = priorPoseEst->bIsOutOfBounds;
-	const CommonDeviceScreenLocation mOcclusionAreaPos = priorPoseEst->occlusionAreaPos;
-	const float fOcclusionAreaSize = priorPoseEst->occlusionAreaSize;
-	const CommonDeviceBlacklistProjection mBlacklistedAreaRec = priorPoseEst->blacklistedAreaRec;
+    bool bIsTracking = priorPoseEst->bCurrentlyTracking;
+	bool bEnforceNewROI = priorPoseEst->bEnforceNewROI;
+	bool bIsOccluded = priorPoseEst->bIsOccluded;
+	bool bIsBlacklisted = priorPoseEst->bIsBlacklisted;
+	CommonDeviceScreenLocation mOcclusionAreaPos = priorPoseEst->occlusionAreaPos;
+	float fOcclusionAreaSize = priorPoseEst->occlusionAreaSize;
+	CommonDeviceBlacklistProjection mBlacklistedAreaRec = priorPoseEst->blacklistedAreaRec;
 
     cv::Rect2i ROI = computeTrackerROIForPoseProjection(
 		-1,
@@ -1610,8 +1646,8 @@ bool ServerTrackerView::computeProjectionForHMD(
         bRoiDisabled,
 		iRoiEdgeOffset,
         this,
-		((bIsTracking || bIsOccluded) && !bIsOutOfBounds && !bIsBlacklisted && !bEnforceNewROI) ? (tracked_hmd->getPoseFilter()) : (nullptr),
-		((bIsTracking || bIsOccluded) && !bIsOutOfBounds && !bIsBlacklisted && !bEnforceNewROI) ? (&priorPoseEst->projection) : (nullptr),
+		((bIsTracking || bIsOccluded) && !bIsBlacklisted && !bEnforceNewROI) ? (tracked_hmd->getPoseFilter()) : (nullptr),
+		((bIsTracking || bIsOccluded) && !bIsBlacklisted && !bEnforceNewROI) ? (&priorPoseEst->projection) : (nullptr),
         tracking_shape);
     m_opencv_buffer_state->applyROI(ROI);
 
@@ -1624,6 +1660,82 @@ bool ServerTrackerView::computeProjectionForHMD(
             m_opencv_buffer_state->computeBiggestNContours(
                 hsvColorRange, biggest_contours, contour_areas, CommonDeviceTrackingProjection::MAX_POINT_CLOUD_POINT_COUNT);
     }
+
+	// Check if contours are in blacklisted areas.
+	if (bSuccess)
+	{
+		cv::Point avg_contour(0, 0);
+		int N = 0;
+
+		switch (tracking_shape->shape_type)
+		{
+		case eCommonTrackingShapeType::Sphere:
+		{
+			for (auto it = biggest_contours[0].begin(); it != biggest_contours[0].end(); ++it)
+			{
+				avg_contour.x += it->x;
+				avg_contour.y += it->y;
+				N++;
+			}
+			break;
+		}
+		case eCommonTrackingShapeType::PointCloud:
+		{
+			for (int i = biggest_contours.size() - 1; i >= 0; --i)
+			{
+				for (t_opencv_int_contour::iterator it = biggest_contours[i].begin(); it != biggest_contours[i].end(); ++it)
+				{
+					avg_contour.x += it->x;
+					avg_contour.y += it->y;
+					N++;
+				}
+			}
+			break;
+		}
+		default:
+			assert(0 && "Unreachable");
+			break;
+		}
+
+		avg_contour.x /= N;
+		avg_contour.y /= N;
+
+		for (int i = 0; i < eCommonBlacklistProjection::MAX_BLACKLIST_PROJECTIONS; ++i)
+		{
+			float bad_x, bad_y, bad_w, bad_h;
+			if (getBlacklistProjection(i, bad_x, bad_y, bad_w, bad_h))
+			{
+				cv::Rect2i blacklist_rect(
+					static_cast<int>(bad_x),
+					static_cast<int>(bad_y),
+					static_cast<int>(bad_w),
+					static_cast<int>(bad_h)
+				);
+
+				// Ignore invalid areas
+				if (blacklist_rect.width == 0 || blacklist_rect.height == 0)
+					continue;
+
+				bool bInArea = (avg_contour.x >= blacklist_rect.x)
+					&& (avg_contour.y >= blacklist_rect.y)
+					&& (avg_contour.x < blacklist_rect.x + blacklist_rect.width)
+					&& (avg_contour.y < blacklist_rect.y + blacklist_rect.height);
+
+				if (bInArea)
+				{
+					mBlacklistedAreaRec.x = bad_x;
+					mBlacklistedAreaRec.y = bad_y;
+					mBlacklistedAreaRec.w = bad_w;
+					mBlacklistedAreaRec.h = bad_h;
+
+					bIsBlacklisted = true;
+
+					bSuccess = false;
+					break;
+				}
+			}
+		}
+	}
 
     // Compute the tracker relative 3d position of the controller from the contour
     if (bSuccess)
@@ -1762,21 +1874,6 @@ bool ServerTrackerView::computeProjectionForHMD(
 	{
 		m_opencv_buffer_state->draw_pose_blacklist(mBlacklistedAreaRec);
 	}
-
-	if (bIsOutOfBounds)
-	{
-		float screenWidth, screenHeight;
-		getPixelDimensions(screenWidth, screenHeight);
-
-		CommonDeviceBlacklistProjection area;
-		area.x = 0.f;
-		area.y = 0.f;
-		area.w = screenWidth;
-		area.h = screenHeight;
-
-		m_opencv_buffer_state->draw_pose_blacklist(area);
-	}
-
 
     return bSuccess;
 }
