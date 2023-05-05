@@ -430,12 +430,14 @@ void AppStage_ColorCalibration::update()
 						proj_w = m_blacklisted_projection[i].w;
 						proj_h = m_blacklisted_projection[i].h;
 
-						cv::Rect rect = cv::Rect(proj_x, proj_y, proj_w, proj_h);
+						cv::Rect rect = cv::Rect(
+							static_cast<int>(proj_x), 
+							static_cast<int>(proj_y),
+							static_cast<int>(proj_w),
+							static_cast<int>(proj_h));
 
 						if (rect.width < 1 || rect.height < 1)
-						{
 							continue;
-						}
 
 						cv::rectangle(
 							*m_video_buffer_state->bgrBuffer,
@@ -449,7 +451,10 @@ void AppStage_ColorCalibration::update()
 						cv::putText(
 							*m_video_buffer_state->bgrBuffer,
 							strIndex,
-							cv::Point(proj_x + 2.0, proj_y + 10.0),
+							cv::Point(
+								static_cast<int>(proj_x + 2.0), 
+								static_cast<int>(proj_y + 10.0)
+							),
 							cv::FONT_HERSHEY_PLAIN,
 							0.75,
 							CvScalar(0, 255, 255),
@@ -474,10 +479,10 @@ void AppStage_ColorCalibration::update()
 						if (detect_count++ == 0)
 						{
 							cv::Rect rect = cv::Rect(
-								wndCenter.x - (align_window_size / 2),
-								wndCenter.y - (align_window_size / 2),
-								align_window_size,
-								align_window_size);
+								static_cast<int>(wndCenter.x - (align_window_size / 2)),
+								static_cast<int>(wndCenter.y - (align_window_size / 2)),
+								static_cast<int>(align_window_size),
+								static_cast<int>(align_window_size));
 
 							cv::rectangle(
 								*m_video_buffer_state->bgrBuffer,
@@ -488,10 +493,10 @@ void AppStage_ColorCalibration::update()
 						else
 						{
 							cv::Rect rect = cv::Rect(
-								wndCenter.x - (align_window_size / 2),
-								wndCenter.y - (align_window_size / 2),
-								align_window_size,
-								align_window_size);
+								static_cast<int>(wndCenter.x - (align_window_size / 2)),
+								static_cast<int>(wndCenter.y - (align_window_size / 2)),
+								static_cast<int>(align_window_size),
+								static_cast<int>(align_window_size));
 
 							cv::rectangle(
 								*m_video_buffer_state->bgrBuffer,
@@ -513,10 +518,10 @@ void AppStage_ColorCalibration::update()
 						ImVec2 wndCenter = ImVec2(static_cast<float>(img_x), static_cast<float>(img_y));
 
 						cv::Rect rect = cv::Rect(
-							wndCenter.x - (align_window_size / 2),
-							wndCenter.y - (align_window_size / 2),
-							align_window_size,
-							align_window_size);
+							static_cast<int>(wndCenter.x - (align_window_size / 2)),
+							static_cast<int>(wndCenter.y - (align_window_size / 2)),
+							static_cast<int>(align_window_size),
+							static_cast<int>(align_window_size));
 
 						cv::rectangle(
 							*m_video_buffer_state->bgrBuffer,
@@ -1862,7 +1867,7 @@ void AppStage_ColorCalibration::renderUI()
 							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
 							ImGui::SameLine();
 							ImGui::TextWrapped(
-								"Could not detect tracking color! Place your controller in view of the tracker. "
+								"Could not detect tracking color! Place your device in view of the tracker. "
 								"If it already is, then your color settings are not correctly set up."
 							);
 							bHasIssues = true;
@@ -1881,7 +1886,7 @@ void AppStage_ColorCalibration::renderUI()
 							ImGui::SameLine();
 							ImGui::TextWrapped(
 								"Color noise/collisions detected! "
-								"The tracker could track different objects instead of the controller! "
+								"The tracker could track different objects instead of the device you want to track! "
 								"Enable 'Show color collisions' to show color collisions on screen. "
 								"Adjust your color settings to avoid color noise."
 							);
@@ -1992,7 +1997,7 @@ void AppStage_ColorCalibration::renderUI()
 
 		if (m_bAutoChangeTracker || m_bAutoChangeController)
 		{
-			stable_total_controllers = m_controllerViews.size();
+			stable_total_controllers = static_cast<int>(m_controllerViews.size());
 
 			for (int i = 0; i < m_controllerViews.size(); i++)
 			{
