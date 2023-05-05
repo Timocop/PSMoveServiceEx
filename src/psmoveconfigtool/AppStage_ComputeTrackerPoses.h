@@ -174,6 +174,8 @@ protected:
     void release_devices();
     void request_exit_to_app_stage(const char *app_stage_name);
 
+	void get_points_bounds(PSMVector3f &box_min, PSMVector3f &box_max, PSMVector3f &bounds_size);
+
 protected:
     eMenuState m_menuState;
 
@@ -212,6 +214,7 @@ protected:
 	bool m_triangShowFrustum;
 	bool m_triangShowTrackerIds;
 	bool m_triangShowBounds;
+	bool m_triangCenter;
 	std::vector<TriangulationInfo> m_triangInfo;
 };
 

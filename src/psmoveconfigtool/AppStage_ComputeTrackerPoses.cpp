@@ -56,6 +56,7 @@ AppStage_ComputeTrackerPoses::AppStage_ComputeTrackerPoses(App *app)
 	, m_triangShowFrustum(true)
 	, m_triangShowTrackerIds(false)
 	, m_triangShowBounds(true)
+	, m_triangCenter(false)
 { 
     m_renderTrackerIter = m_trackerViews.end();
 }
@@ -606,6 +607,32 @@ void AppStage_ComputeTrackerPoses::render()
 		drawTransformedAxes(glm::mat4(1.0f), 100.f);
 		drawTransformeGrid(glm::mat4(1.0f), 250.f);
 
+		// Get avergage center and recenter whole playspace
+		PSMVector3f center_point;
+		center_point.x = 0.f;
+		center_point.y = 0.f;
+		center_point.z = 0.f;
+
+		if (m_triangCenter)
+		{
+			int N = 0;
+
+			for (auto it = m_triangInfo.begin(); it != m_triangInfo.end(); ++it)
+			{
+				center_point.x += it->m_point.x;
+				center_point.y += it->m_point.y;
+				center_point.z += it->m_point.z;
+				++N;
+			}
+
+			if (N > 0)
+			{
+				center_point.x /= N;
+				center_point.y /= N;
+				center_point.z /= N;
+			}
+		}
+
 		// Draw the frustum for each tracking camera.
 		// The frustums are defined in PSMove tracking space.
 		// We need to transform them into chaperone space to display them along side the HMD.
@@ -613,11 +640,19 @@ void AppStage_ComputeTrackerPoses::render()
 		{
 			const PSMTracker *trackerView = tracker_iter->second.trackerView;
 			const int tracker_id = trackerView->tracker_info.tracker_id;
-			const PSMPosef trackerPose = trackerView->tracker_info.tracker_pose;
+
+			PSMPosef trackerPose = trackerView->tracker_info.tracker_pose;
+			trackerPose.Position.x -= center_point.x;
+			trackerPose.Position.y -= center_point.y;
+			trackerPose.Position.z -= center_point.z;
+
 			const glm::mat4 trackerMat4 = psm_posef_to_glm_mat4(trackerPose);
 			
 			PSMFrustum frustum;
 			PSM_GetTrackerFrustum(tracker_id, &frustum);
+			frustum.origin.x -= center_point.x;
+			frustum.origin.y -= center_point.y;
+			frustum.origin.z -= center_point.z;
 
 			// use color depending on tracking status
 			glm::vec3 color;
@@ -643,6 +678,11 @@ void AppStage_ComputeTrackerPoses::render()
 			
 		}
 
+		PSMPosef m_newTriangLastControllerPose = m_triangLastControllerPose;
+		m_newTriangLastControllerPose.Position.x -= center_point.x;
+		m_newTriangLastControllerPose.Position.y -= center_point.y;
+		m_newTriangLastControllerPose.Position.z -= center_point.z;
+
 		// Draw each controller model
 		t_controller_state_map_iterator controllerState = m_controllerViews.find(m_overrideControllerId);
 		if (controllerState != m_controllerViews.end())
@@ -653,11 +693,11 @@ void AppStage_ComputeTrackerPoses::render()
 				{
 					const PSMTrackingColorType trackingColorType = controllerState->second.trackingColorType;
 
-					glm::mat4 controllerMat4 = psm_posef_to_glm_mat4(m_triangLastControllerPose);
+					glm::mat4 controllerMat4 = psm_posef_to_glm_mat4(m_newTriangLastControllerPose);
 
 					if (m_controllerViews.size() > 1)
 					{
-						drawTextAtWorldPosition(glm::mat4(1.f), psm_vector3f_to_glm_vec3(m_triangLastControllerPose.Position), "#%d", controllerView->ControllerID);
+						drawTextAtWorldPosition(glm::mat4(1.f), psm_vector3f_to_glm_vec3(m_newTriangLastControllerPose.Position), "#%d", controllerView->ControllerID);
 					}
 
 					if (m_triangShowControllers)
@@ -667,7 +707,7 @@ void AppStage_ComputeTrackerPoses::render()
 					}
 					else
 					{
-						drawPointCloud(glm::mat4(1.f), glm::vec3(1.f, 0.f, 0.f), reinterpret_cast<float *>(&m_triangLastControllerPose.Position), 1);
+						drawPointCloud(glm::mat4(1.f), glm::vec3(1.f, 0.f, 0.f), reinterpret_cast<float *>(&m_newTriangLastControllerPose.Position), 1);
 					}
 				}
 
@@ -677,10 +717,19 @@ void AppStage_ComputeTrackerPoses::render()
 						continue;
 
 					PSMPosef offset_pose;
-					offset_pose.Position.x = it->m_point.x;
-					offset_pose.Position.y = it->m_point.y;
-					offset_pose.Position.z = it->m_point.z;
-					offset_pose.Orientation = m_triangLastControllerPose.Orientation;
+					offset_pose.Position.x = it->m_point.x - center_point.x;
+					offset_pose.Position.y = it->m_point.y - center_point.y;
+					offset_pose.Position.z = it->m_point.z - center_point.z;
+					offset_pose.Orientation = m_newTriangLastControllerPose.Orientation;
+
+					PSMPosef trackerPose = it->m_trackerPose;
+					PSMPosef trackerOtherPose = it->m_trackerOtherPose;
+					trackerPose.Position.x -= center_point.x;
+					trackerPose.Position.y -= center_point.y;
+					trackerPose.Position.z -= center_point.z;
+					trackerOtherPose.Position.x -= center_point.x;
+					trackerOtherPose.Position.y -= center_point.y;
+					trackerOtherPose.Position.z -= center_point.z;
 
 					glm::mat4 controllerMat4 = psm_posef_to_glm_mat4(offset_pose);
 
@@ -701,8 +750,8 @@ void AppStage_ComputeTrackerPoses::render()
 
 					if (m_triangShowArrows)
 					{
-						drawArrow(glm::mat4(1.f), psm_vector3f_to_glm_vec3(it->m_trackerPose.Position), psm_vector3f_to_glm_vec3(offset_pose.Position), 0.1f, glm::vec3(1.f, 1.f, 1.f));
-						drawArrow(glm::mat4(1.f), psm_vector3f_to_glm_vec3(it->m_trackerOtherPose.Position), psm_vector3f_to_glm_vec3(offset_pose.Position), 0.1f, glm::vec3(1.f, 1.f, 1.f));
+						drawArrow(glm::mat4(1.f), psm_vector3f_to_glm_vec3(trackerPose.Position), psm_vector3f_to_glm_vec3(offset_pose.Position), 0.1f, glm::vec3(1.f, 1.f, 1.f));
+						drawArrow(glm::mat4(1.f), psm_vector3f_to_glm_vec3(trackerOtherPose.Position), psm_vector3f_to_glm_vec3(offset_pose.Position), 0.1f, glm::vec3(1.f, 1.f, 1.f));
 					}
 				}
 			}
@@ -710,37 +759,19 @@ void AppStage_ComputeTrackerPoses::render()
 
 		if (m_triangShowBounds && m_triangInfo.size() > 0)
 		{
-			int count = 0;
 			PSMVector3f box_min;
 			PSMVector3f box_max;
-			for (auto it = m_triangInfo.begin(); it != m_triangInfo.end(); ++it)
-			{
-				if (count == 0)
-				{
-					box_min = it->m_point;
-					box_max = it->m_point;
-				}
-				else
-				{
-					PSMVector3f point = it->m_point;
-					box_min.x = fmax(box_min.x, point.x);
-					box_min.y = fmax(box_min.y, point.y);
-					box_min.z = fmax(box_min.z, point.z);
-					box_max.x = fmin(box_max.x, point.x);
-					box_max.y = fmin(box_max.y, point.y);
-					box_max.z = fmin(box_max.z, point.z);
-				}
-				++count;
-			}
-			if (count > 1)
-			{
-				float distance_x = sqrtf(powf(abs(box_min.x - box_max.x), 2));
-				float distance_y = sqrtf(powf(abs(box_min.y - box_max.y), 2));
-				float distance_z = sqrtf(powf(abs(box_min.z - box_max.z), 2));
-				
-				drawTransformedBox(glm::mat4(1.f), psm_vector3f_to_glm_vec3(box_min), psm_vector3f_to_glm_vec3(box_max), glm::vec3(1.f, 1.f, 1.f));
-				drawTextAtWorldPosition(glm::mat4(1.f), psm_vector3f_to_glm_vec3(box_max), " %.2f, %.2f, %.2f cm", distance_x, distance_y, distance_z);
-			}
+			PSMVector3f bounds_size;
+			get_points_bounds(box_min, box_max, bounds_size);
+			box_min.x -= center_point.x;
+			box_min.y -= center_point.y;
+			box_min.z -= center_point.z;
+			box_max.x -= center_point.x;
+			box_max.y -= center_point.y;
+			box_max.z -= center_point.z;
+
+			drawTransformedBox(glm::mat4(1.f), psm_vector3f_to_glm_vec3(box_min), psm_vector3f_to_glm_vec3(box_max), glm::vec3(1.f, 1.f, 1.f));
+			drawTextAtWorldPosition(glm::mat4(1.f), psm_vector3f_to_glm_vec3(box_max), " %.2f, %.2f, %.2f cm", bounds_size.x, bounds_size.y, bounds_size.z);
 		}
 
 	} break;
@@ -1087,7 +1118,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
 		case eMenuState::showControllerOffsets:
 		{
 			ImGui::SetNextWindowPos(ImVec2(20.f, 20.f));
-			ImGui::SetNextWindowSize(ImVec2(k_panel_width, 200));
+			ImGui::SetNextWindowSize(ImVec2(k_panel_width, 275));
 			ImGui::Begin(k_window_title, nullptr, window_flags);
 
 			if (ImGui::Button(" < ##Previous Tracker"))
@@ -1114,6 +1145,29 @@ void AppStage_ComputeTrackerPoses::renderUI()
 			ImGui::Checkbox("Show Tracker Frustum", &m_triangShowFrustum);
 			ImGui::Checkbox("Show Tracker Ids", &m_triangShowTrackerIds);
 			ImGui::Checkbox("Show Bounds", &m_triangShowBounds);
+			ImGui::Checkbox("Center", &m_triangCenter);
+
+			ImGui::Separator();
+
+			{
+				PSMVector3f box_min;
+				PSMVector3f box_max;
+				PSMVector3f bounds_size;
+				get_points_bounds(box_min, box_max, bounds_size);
+
+				float distance = 1.f - fmaxf(fabsf(bounds_size.x), fmaxf(fabsf(bounds_size.y), fabsf(bounds_size.z))) / 15.f;
+
+				ImGui::Text("Triangulation Quality:");
+
+				if(distance > 0.75f)
+					ImGui::ProgressBar(distance, ImVec2(-1, 0), "Perfect");
+				else if (distance > 0.5f)
+					ImGui::ProgressBar(distance, ImVec2(-1, 0), "Good");
+				else if (distance > 0.25f)
+					ImGui::ProgressBar(distance, ImVec2(-1, 0), "Poor");
+				else
+					ImGui::ProgressBar(distance, ImVec2(-1, 0), "Terrible");
+			}
 
 			ImGui::Separator();
 
@@ -1436,6 +1490,61 @@ void AppStage_ComputeTrackerPoses::request_exit_to_app_stage(const char *app_sta
     release_devices();
 
     m_app->setAppStage(app_stage_name);
+}
+
+void AppStage_ComputeTrackerPoses::get_points_bounds(PSMVector3f &box_min, PSMVector3f &box_max, PSMVector3f &bounds_size)
+{
+	if (m_triangInfo.size() < 1)
+	{
+		box_min.x = 0.f;
+		box_min.y = 0.f;
+		box_min.z = 0.f;
+		box_max.x = 0.f;
+		box_max.y = 0.f;
+		box_max.z = 0.f;
+		bounds_size.x = 0.f;
+		bounds_size.y = 0.f;
+		bounds_size.z = 0.f;
+
+		return;
+	}
+
+	int N = 0;
+	for (auto it = m_triangInfo.begin(); it != m_triangInfo.end(); ++it)
+	{
+		if (N == 0)
+		{
+			box_min.x = it->m_point.x;
+			box_min.y = it->m_point.y;
+			box_min.z = it->m_point.z;
+			box_max.x = it->m_point.x;
+			box_max.y = it->m_point.y;
+			box_max.z = it->m_point.z;
+		}
+		else
+		{
+			PSMVector3f point = it->m_point;
+			box_min.x = fmax(box_min.x, point.x);
+			box_min.y = fmax(box_min.y, point.y);
+			box_min.z = fmax(box_min.z, point.z);
+			box_max.x = fmin(box_max.x, point.x);
+			box_max.y = fmin(box_max.y, point.y);
+			box_max.z = fmin(box_max.z, point.z);
+		}
+		++N;
+	}
+	if (N > 1)
+	{
+		bounds_size.x = sqrtf(powf(abs(box_min.x - box_max.x), 2));
+		bounds_size.y = sqrtf(powf(abs(box_min.y - box_max.y), 2));
+		bounds_size.z = sqrtf(powf(abs(box_min.z - box_max.z), 2));
+	}
+	else
+	{
+		bounds_size.x = 0.f;
+		bounds_size.y = 0.f;
+		bounds_size.z = 0.f;
+	}
 }
 
 void AppStage_ComputeTrackerPoses::request_controller_list()
