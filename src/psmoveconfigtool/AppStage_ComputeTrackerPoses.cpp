@@ -272,6 +272,144 @@ void AppStage_ComputeTrackerPoses::update()
 								}
 								else
 								{
+									unsigned int processedTrackers[PSMOVESERVICE_MAX_TRACKER_COUNT];
+									m_triangInfo.clear();
+
+									for (t_tracker_state_map_iterator tracker_iter = m_trackerViews.begin(); tracker_iter != m_trackerViews.end(); ++tracker_iter)
+									{
+										const PSMTracker *trackerView = tracker_iter->second.trackerView;
+										const int tracker_id = trackerView->tracker_info.tracker_id;
+										const PSMPosef trackerPose = trackerView->tracker_info.tracker_pose;
+										const glm::mat4 trackerMat4 = psm_posef_to_glm_mat4(trackerPose);
+										const PSMClientTrackerInfo trackerInfo = trackerView->tracker_info;
+
+										cv::Matx33f tracker_inst;
+										{
+											cv::Matx<float, 5, 1> distortionOut;
+											tracker_inst(0, 0) = trackerInfo.tracker_focal_lengths.x;
+											tracker_inst(1, 1) = trackerInfo.tracker_focal_lengths.y;
+											tracker_inst(0, 2) = trackerInfo.tracker_principal_point.x;
+											tracker_inst(1, 2) = trackerInfo.tracker_principal_point.y;
+
+											tracker_inst(1, 1) *= -1;  //Negate F_PY because the screen coordinate system has +Y down.
+
+																	   // Fill the rest of the matrix with corrext values.
+											tracker_inst(0, 1) = 0.f;
+											tracker_inst(1, 0) = 0.f;
+											tracker_inst(2, 0) = 0.f;
+											tracker_inst(2, 1) = 0.f;
+											tracker_inst(2, 2) = 1.f;
+
+											distortionOut(0, 0) = trackerInfo.tracker_k1;
+											distortionOut(1, 0) = trackerInfo.tracker_k2;
+											distortionOut(4, 0) = trackerInfo.tracker_k3;
+											distortionOut(2, 0) = trackerInfo.tracker_p1;
+											distortionOut(3, 0) = trackerInfo.tracker_p2;
+										}
+
+										for (t_tracker_state_map_iterator trackerOther_iter = m_trackerViews.begin(); trackerOther_iter != m_trackerViews.end(); ++trackerOther_iter)
+										{
+											const PSMTracker *trackerOtherView = trackerOther_iter->second.trackerView;
+											const int trackerOther_id = trackerOtherView->tracker_info.tracker_id;
+											const PSMPosef trackerOtherPose = trackerOtherView->tracker_info.tracker_pose;
+											const glm::mat4 trackerOtherMat4 = psm_posef_to_glm_mat4(trackerOtherPose);
+											const PSMClientTrackerInfo trackerOtherInfo = trackerOtherView->tracker_info;
+
+											if (tracker_id == trackerOther_id)
+												continue;
+
+											if ((processedTrackers[tracker_id] & (1 << trackerOther_id)) > 0)
+												continue;
+
+											processedTrackers[tracker_id] |= (1 << trackerOther_id);
+											processedTrackers[trackerOther_id] |= (1 << tracker_id);
+
+											cv::Matx33f trackerOther_inst;
+											{
+												cv::Matx<float, 5, 1> distortionOut;
+												trackerOther_inst(0, 0) = trackerOtherInfo.tracker_focal_lengths.x;
+												trackerOther_inst(1, 1) = trackerOtherInfo.tracker_focal_lengths.y;
+												trackerOther_inst(0, 2) = trackerOtherInfo.tracker_principal_point.x;
+												trackerOther_inst(1, 2) = trackerOtherInfo.tracker_principal_point.y;
+
+												trackerOther_inst(1, 1) *= -1;  //Negate F_PY because the screen coordinate system has +Y down.
+
+																				// Fill the rest of the matrix with corrext values.
+												trackerOther_inst(0, 1) = 0.f;
+												trackerOther_inst(1, 0) = 0.f;
+												trackerOther_inst(2, 0) = 0.f;
+												trackerOther_inst(2, 1) = 0.f;
+												trackerOther_inst(2, 2) = 1.f;
+
+												distortionOut(0, 0) = trackerOtherInfo.tracker_k1;
+												distortionOut(1, 0) = trackerOtherInfo.tracker_k2;
+												distortionOut(4, 0) = trackerOtherInfo.tracker_k3;
+												distortionOut(2, 0) = trackerOtherInfo.tracker_p1;
+												distortionOut(3, 0) = trackerOtherInfo.tracker_p2;
+											}
+
+											t_controller_screenloc_map_iterator tracker_point = m_triangTrackerScreenLocations.find(tracker_id);
+											t_controller_screenloc_map_iterator trackerOther_point = m_triangTrackerScreenLocations.find(trackerOther_id);
+
+											if (tracker_point != m_triangTrackerScreenLocations.end() &&
+												trackerOther_point != m_triangTrackerScreenLocations.end())
+											{
+												cv::Point2f screen_location = cv::Point2f(tracker_point->second.x, tracker_point->second.y);
+												cv::Point2f screenOther_location = cv::Point2f(trackerOther_point->second.x, trackerOther_point->second.y);
+
+												cv::Mat projPoints1 = cv::Mat(screen_location);
+												cv::Mat projPoints2 = cv::Mat(screenOther_location);
+
+												cv::Matx34f projMat1;
+												{
+													const glm::quat glm_quat(trackerPose.Orientation.w, trackerPose.Orientation.x, trackerPose.Orientation.y, trackerPose.Orientation.z);
+													const glm::vec3 glm_pos(trackerPose.Position.x, trackerPose.Position.y, trackerPose.Position.z);
+													const glm::mat4 glm_camera_xform = glm_mat4_from_pose(glm_quat, glm_pos);
+													const glm::mat4 glm_mat = glm::inverse(glm_camera_xform);
+													cv::Matx34f out;
+													out(0, 0) = glm_mat[0][0]; out(0, 1) = glm_mat[1][0]; out(0, 2) = glm_mat[2][0]; out(0, 3) = glm_mat[3][0];
+													out(1, 0) = glm_mat[0][1]; out(1, 1) = glm_mat[1][1]; out(1, 2) = glm_mat[2][1]; out(1, 3) = glm_mat[3][1];
+													out(2, 0) = glm_mat[0][2]; out(2, 1) = glm_mat[1][2]; out(2, 2) = glm_mat[2][2]; out(2, 3) = glm_mat[3][2];
+
+													// intrinsic matrix * extrinsic matrix
+													projMat1 = cv::Mat(tracker_inst * out);
+												}
+
+												cv::Matx34f projMat2;
+												{
+													const glm::quat glm_quat(trackerOtherPose.Orientation.w, trackerOtherPose.Orientation.x, trackerOtherPose.Orientation.y, trackerOtherPose.Orientation.z);
+													const glm::vec3 glm_pos(trackerOtherPose.Position.x, trackerOtherPose.Position.y, trackerOtherPose.Position.z);
+													const glm::mat4 glm_camera_xform = glm_mat4_from_pose(glm_quat, glm_pos);
+													const glm::mat4 glm_mat = glm::inverse(glm_camera_xform);
+													cv::Matx34f out;
+													out(0, 0) = glm_mat[0][0]; out(0, 1) = glm_mat[1][0]; out(0, 2) = glm_mat[2][0]; out(0, 3) = glm_mat[3][0];
+													out(1, 0) = glm_mat[0][1]; out(1, 1) = glm_mat[1][1]; out(1, 2) = glm_mat[2][1]; out(1, 3) = glm_mat[3][1];
+													out(2, 0) = glm_mat[0][2]; out(2, 1) = glm_mat[1][2]; out(2, 2) = glm_mat[2][2]; out(2, 3) = glm_mat[3][2];
+
+													// intrinsic matrix * extrinsic matrix
+													projMat2 = cv::Mat(trackerOther_inst * out);
+												}
+
+												cv::Mat point3D(1, 1, CV_32FC4);
+												cv::triangulatePoints(projMat1, projMat2, projPoints1, projPoints2, point3D);
+
+												PSMVector3f result;
+												const float w = point3D.at<float>(3, 0);
+												result.x = point3D.at<float>(0, 0) / w;
+												result.y = point3D.at<float>(1, 0) / w;
+												result.z = point3D.at<float>(2, 0) / w;
+
+												TriangulationInfo info;
+												info.m_trackerId = tracker_id;
+												info.m_trackerOtherId = trackerOther_id;
+												info.m_trackerPose = trackerPose;
+												info.m_trackerOtherPose = trackerOtherPose;
+												info.m_point = result;
+												m_triangInfo.push_back(info);
+											}
+										}
+									}
+
 									setState(AppStage_ComputeTrackerPoses::showControllerOffsets);
 								}
 							}
@@ -505,9 +643,6 @@ void AppStage_ComputeTrackerPoses::render()
 			
 		}
 
-		unsigned int processedTrackers[PSMOVESERVICE_MAX_TRACKER_COUNT];
-		std::vector<PSMVector3f> points;
-
 		// Draw each controller model
 		t_controller_state_map_iterator controllerState = m_controllerViews.find(m_overrideControllerId);
 		if (controllerState != m_controllerViews.end())
@@ -518,23 +653,6 @@ void AppStage_ComputeTrackerPoses::render()
 				{
 					const PSMTrackingColorType trackingColorType = controllerState->second.trackingColorType;
 
-					PSMPosef controllerPose;
-					PSMPhysicsData physicsData;
-					switch (controllerView->ControllerType)
-					{
-					case PSMControllerType::PSMController_Move:
-						controllerPose = controllerView->ControllerState.PSMoveState.Pose;
-						physicsData = controllerView->ControllerState.PSMoveState.PhysicsData;
-						break;
-					case PSMControllerType::PSMController_DualShock4:
-						controllerPose = controllerView->ControllerState.PSDS4State.Pose;
-						physicsData = controllerView->ControllerState.PSDS4State.PhysicsData;
-						break;
-					case PSMControllerType::PSMController_Virtual:
-						controllerPose = controllerView->ControllerState.VirtualController.Pose;
-						physicsData = controllerView->ControllerState.VirtualController.PhysicsData;
-						break;
-					}
 					glm::mat4 controllerMat4 = psm_posef_to_glm_mat4(m_triangLastControllerPose);
 
 					if (m_controllerViews.size() > 1)
@@ -553,184 +671,58 @@ void AppStage_ComputeTrackerPoses::render()
 					}
 				}
 
-				for (t_tracker_state_map_iterator tracker_iter = m_trackerViews.begin(); tracker_iter != m_trackerViews.end(); ++tracker_iter)
+				for (auto it = m_triangInfo.begin(); it != m_triangInfo.end(); ++it)
 				{
-					const PSMTracker *trackerView = tracker_iter->second.trackerView;
-					const int tracker_id = trackerView->tracker_info.tracker_id;
-					const PSMPosef trackerPose = trackerView->tracker_info.tracker_pose;
-					const glm::mat4 trackerMat4 = psm_posef_to_glm_mat4(trackerPose);
-					const PSMClientTrackerInfo trackerInfo = trackerView->tracker_info;
-
-					if (m_triangSelectedTracker != -1 && m_triangSelectedTracker != tracker_id)
+					if (m_triangSelectedTracker != -1 && m_triangSelectedTracker != it->m_trackerId && m_triangSelectedTracker != it->m_trackerOtherId)
 						continue;
 
-					cv::Matx33f tracker_inst;
+					PSMPosef offset_pose;
+					offset_pose.Position.x = it->m_point.x;
+					offset_pose.Position.y = it->m_point.y;
+					offset_pose.Position.z = it->m_point.z;
+					offset_pose.Orientation = m_triangLastControllerPose.Orientation;
+
+					glm::mat4 controllerMat4 = psm_posef_to_glm_mat4(offset_pose);
+
+					if (m_triangShowControllers)
 					{
-						cv::Matx<float, 5, 1> distortionOut;
-						tracker_inst(0, 0) = trackerInfo.tracker_focal_lengths.x;
-						tracker_inst(1, 1) = trackerInfo.tracker_focal_lengths.y;
-						tracker_inst(0, 2) = trackerInfo.tracker_principal_point.x;
-						tracker_inst(1, 2) = trackerInfo.tracker_principal_point.y;
-
-						tracker_inst(1, 1) *= -1;  //Negate F_PY because the screen coordinate system has +Y down.
-
-						// Fill the rest of the matrix with corrext values.
-						tracker_inst(0, 1) = 0.f;
-						tracker_inst(1, 0) = 0.f;
-						tracker_inst(2, 0) = 0.f;
-						tracker_inst(2, 1) = 0.f;
-						tracker_inst(2, 2) = 1.f;
-
-						distortionOut(0, 0) = trackerInfo.tracker_k1;
-						distortionOut(1, 0) = trackerInfo.tracker_k2;
-						distortionOut(4, 0) = trackerInfo.tracker_k3;
-						distortionOut(2, 0) = trackerInfo.tracker_p1;
-						distortionOut(3, 0) = trackerInfo.tracker_p2;
+						drawController(controllerView, controllerMat4, PSMTrackingColorType::PSMTrackingColorType_MaxColorTypes);
+						drawTransformedAxes(controllerMat4, 10.f);
+					}
+					else
+					{
+						drawPointCloud(glm::mat4(1.f), glm::vec3(1.f, 1.f, 1.f), reinterpret_cast<float *>(&offset_pose.Position), 1);
 					}
 
-					for (t_tracker_state_map_iterator trackerOther_iter = m_trackerViews.begin(); trackerOther_iter != m_trackerViews.end(); ++trackerOther_iter)
+					if (m_triangShowTrackerIds)
 					{
-						const PSMTracker *trackerOtherView = trackerOther_iter->second.trackerView;
-						const int trackerOther_id = trackerOtherView->tracker_info.tracker_id;
-						const PSMPosef trackerOtherPose = trackerOtherView->tracker_info.tracker_pose;
-						const glm::mat4 trackerOtherMat4 = psm_posef_to_glm_mat4(trackerOtherPose);
-						const PSMClientTrackerInfo trackerOtherInfo = trackerOtherView->tracker_info;
+						drawTextAtWorldPosition(glm::mat4(1.f), psm_vector3f_to_glm_vec3(offset_pose.Position), "#%d+#%d", it->m_trackerId, it->m_trackerOtherId);
+					}
 
-						if (tracker_id == trackerOther_id)
-							continue;
-
-						if((processedTrackers[tracker_id] & (1 << trackerOther_id)) > 0)
-							continue;
-
-						processedTrackers[tracker_id] |= (1 << trackerOther_id);
-						processedTrackers[trackerOther_id] |= (1 << tracker_id);
-
-						cv::Matx33f trackerOther_inst;
-						{
-							cv::Matx<float, 5, 1> distortionOut;
-							trackerOther_inst(0, 0) = trackerOtherInfo.tracker_focal_lengths.x;
-							trackerOther_inst(1, 1) = trackerOtherInfo.tracker_focal_lengths.y;
-							trackerOther_inst(0, 2) = trackerOtherInfo.tracker_principal_point.x;
-							trackerOther_inst(1, 2) = trackerOtherInfo.tracker_principal_point.y;
-
-							trackerOther_inst(1, 1) *= -1;  //Negate F_PY because the screen coordinate system has +Y down.
-
-							// Fill the rest of the matrix with corrext values.
-							trackerOther_inst(0, 1) = 0.f;
-							trackerOther_inst(1, 0) = 0.f;
-							trackerOther_inst(2, 0) = 0.f;
-							trackerOther_inst(2, 1) = 0.f;
-							trackerOther_inst(2, 2) = 1.f;
-
-							distortionOut(0, 0) = trackerOtherInfo.tracker_k1;
-							distortionOut(1, 0) = trackerOtherInfo.tracker_k2;
-							distortionOut(4, 0) = trackerOtherInfo.tracker_k3;
-							distortionOut(2, 0) = trackerOtherInfo.tracker_p1;
-							distortionOut(3, 0) = trackerOtherInfo.tracker_p2;
-						}
-
-						t_controller_screenloc_map_iterator tracker_point = m_triangTrackerScreenLocations.find(tracker_id);
-						t_controller_screenloc_map_iterator trackerOther_point = m_triangTrackerScreenLocations.find(trackerOther_id);
-
-						if (tracker_point != m_triangTrackerScreenLocations.end() &&
-							trackerOther_point != m_triangTrackerScreenLocations.end())
-						{
-							cv::Point2f screen_location = cv::Point2f(tracker_point->second.x, tracker_point->second.y);
-							cv::Point2f screenOther_location = cv::Point2f(trackerOther_point->second.x, trackerOther_point->second.y);
-
-							cv::Mat projPoints1 = cv::Mat(screen_location);
-							cv::Mat projPoints2 = cv::Mat(screenOther_location);
-
-							cv::Matx34f projMat1;
-							{
-								const glm::quat glm_quat(trackerPose.Orientation.w, trackerPose.Orientation.x, trackerPose.Orientation.y, trackerPose.Orientation.z);
-								const glm::vec3 glm_pos(trackerPose.Position.x, trackerPose.Position.y, trackerPose.Position.z);
-								const glm::mat4 glm_camera_xform = glm_mat4_from_pose(glm_quat, glm_pos);
-								const glm::mat4 glm_mat = glm::inverse(glm_camera_xform);
-								cv::Matx34f out;
-								out(0, 0) = glm_mat[0][0]; out(0, 1) = glm_mat[1][0]; out(0, 2) = glm_mat[2][0]; out(0, 3) = glm_mat[3][0];
-								out(1, 0) = glm_mat[0][1]; out(1, 1) = glm_mat[1][1]; out(1, 2) = glm_mat[2][1]; out(1, 3) = glm_mat[3][1];
-								out(2, 0) = glm_mat[0][2]; out(2, 1) = glm_mat[1][2]; out(2, 2) = glm_mat[2][2]; out(2, 3) = glm_mat[3][2];
-
-								// intrinsic matrix * extrinsic matrix
-								projMat1 = cv::Mat(tracker_inst * out);
-							}
-
-							cv::Matx34f projMat2;
-							{
-								const glm::quat glm_quat(trackerOtherPose.Orientation.w, trackerOtherPose.Orientation.x, trackerOtherPose.Orientation.y, trackerOtherPose.Orientation.z);
-								const glm::vec3 glm_pos(trackerOtherPose.Position.x, trackerOtherPose.Position.y, trackerOtherPose.Position.z);
-								const glm::mat4 glm_camera_xform = glm_mat4_from_pose(glm_quat, glm_pos);
-								const glm::mat4 glm_mat = glm::inverse(glm_camera_xform);
-								cv::Matx34f out;
-								out(0, 0) = glm_mat[0][0]; out(0, 1) = glm_mat[1][0]; out(0, 2) = glm_mat[2][0]; out(0, 3) = glm_mat[3][0];
-								out(1, 0) = glm_mat[0][1]; out(1, 1) = glm_mat[1][1]; out(1, 2) = glm_mat[2][1]; out(1, 3) = glm_mat[3][1];
-								out(2, 0) = glm_mat[0][2]; out(2, 1) = glm_mat[1][2]; out(2, 2) = glm_mat[2][2]; out(2, 3) = glm_mat[3][2];
-
-								// intrinsic matrix * extrinsic matrix
-								projMat2 = cv::Mat(trackerOther_inst * out);
-							}
-
-							cv::Mat point3D(1, 1, CV_32FC4);
-							cv::triangulatePoints(projMat1, projMat2, projPoints1, projPoints2, point3D);
-
-							PSMVector3f result;
-							const float w = point3D.at<float>(3, 0);
-							result.x = point3D.at<float>(0, 0) / w;
-							result.y = point3D.at<float>(1, 0) / w;
-							result.z = point3D.at<float>(2, 0) / w;
-
-							points.push_back(result);
-
-							PSMPosef offset_pose;
-							offset_pose.Position.x = result.x;
-							offset_pose.Position.y = result.y;
-							offset_pose.Position.z = result.z;
-							offset_pose.Orientation = m_triangLastControllerPose.Orientation;
-
-							glm::mat4 controllerMat4 = psm_posef_to_glm_mat4(offset_pose);
-
-							if (m_triangShowControllers)
-							{
-								drawController(controllerView, controllerMat4, PSMTrackingColorType::PSMTrackingColorType_MaxColorTypes);
-								drawTransformedAxes(controllerMat4, 10.f);
-							}
-							else
-							{
-								drawPointCloud(glm::mat4(1.f), glm::vec3(1.f, 1.f, 1.f), reinterpret_cast<float *>(&offset_pose.Position), 1);
-							}
-
-							if (m_triangShowTrackerIds)
-							{
-								drawTextAtWorldPosition(glm::mat4(1.f), psm_vector3f_to_glm_vec3(offset_pose.Position), "#%d+#%d", tracker_id, trackerOther_id);
-							}
-
-							if (m_triangShowArrows)
-							{
-								drawArrow(glm::mat4(1.f), psm_vector3f_to_glm_vec3(trackerPose.Position), psm_vector3f_to_glm_vec3(offset_pose.Position), 0.1f, glm::vec3(1.f, 1.f, 1.f));
-								drawArrow(glm::mat4(1.f), psm_vector3f_to_glm_vec3(trackerOtherPose.Position), psm_vector3f_to_glm_vec3(offset_pose.Position), 0.1f, glm::vec3(1.f, 1.f, 1.f));
-							}
-						}
+					if (m_triangShowArrows)
+					{
+						drawArrow(glm::mat4(1.f), psm_vector3f_to_glm_vec3(it->m_trackerPose.Position), psm_vector3f_to_glm_vec3(offset_pose.Position), 0.1f, glm::vec3(1.f, 1.f, 1.f));
+						drawArrow(glm::mat4(1.f), psm_vector3f_to_glm_vec3(it->m_trackerOtherPose.Position), psm_vector3f_to_glm_vec3(offset_pose.Position), 0.1f, glm::vec3(1.f, 1.f, 1.f));
 					}
 				}
 			}
 		}
 
-		if (m_triangShowBounds && points.size() > 0)
+		if (m_triangShowBounds && m_triangInfo.size() > 0)
 		{
 			int count = 0;
 			PSMVector3f box_min;
 			PSMVector3f box_max;
-			for (std::vector<PSMVector3f>::iterator points_iter = points.begin(); points_iter != points.end(); ++points_iter)
+			for (auto it = m_triangInfo.begin(); it != m_triangInfo.end(); ++it)
 			{
 				if (count == 0)
 				{
-					box_min = *points_iter;
-					box_max = *points_iter;
+					box_min = it->m_point;
+					box_max = it->m_point;
 				}
 				else
 				{
-					PSMVector3f point = *points_iter;
+					PSMVector3f point = it->m_point;
 					box_min.x = fmax(box_min.x, point.x);
 					box_min.y = fmax(box_min.y, point.y);
 					box_min.z = fmax(box_min.z, point.z);

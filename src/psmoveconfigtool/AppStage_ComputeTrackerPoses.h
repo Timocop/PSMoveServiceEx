@@ -6,6 +6,7 @@
 #include "PSMoveClient_CAPI.h"
 
 #include <map>
+#include <vector>
 
 //-- definitions -----
 class AppStage_ComputeTrackerPoses : public AppStage
@@ -45,6 +46,15 @@ public:
 	typedef std::map<int, PSMVector2f> t_controller_screenloc_map;
 	typedef std::map<int, PSMVector2f>::iterator t_controller_screenloc_map_iterator;
 	typedef std::pair<int, PSMVector2f> t_controller_screenloc_pair;
+
+	struct TriangulationInfo
+	{
+		int m_trackerId;
+		int m_trackerOtherId;
+		PSMPosef m_trackerPose;
+		PSMPosef m_trackerOtherPose;
+		PSMVector3f m_point;
+	};
 
     AppStage_ComputeTrackerPoses(class App *app);
     ~AppStage_ComputeTrackerPoses();
@@ -202,6 +212,7 @@ protected:
 	bool m_triangShowFrustum;
 	bool m_triangShowTrackerIds;
 	bool m_triangShowBounds;
+	std::vector<TriangulationInfo> m_triangInfo;
 };
 
 #endif // APP_STAGE_COMPUTE_TRACKER_POSES_H
