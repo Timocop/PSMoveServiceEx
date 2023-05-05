@@ -418,7 +418,7 @@ void AppStage_ColorCalibration::update()
 			get_contures_lower(0, 2, m_mDetectedContures);
 
 
-			if (!m_bAlignDetectColor)
+			if (!m_bAlignDetectColor && !m_bDetectingColors)
 			{
 				if (m_bProjectionBlacklistedShow)
 				{
@@ -458,7 +458,7 @@ void AppStage_ColorCalibration::update()
 					}
 				}
 
-				if (m_bColorCollsionShow || m_bDetectingColors)
+				if (m_bColorCollsionShow)
 				{
 					float align_window_size = 32.f;
 
@@ -665,7 +665,7 @@ void AppStage_ColorCalibration::renderUI()
 				{
 					ImGui::TextColored(textColor, "Controller #%d", m_masterControllerView->ControllerID);
 				}
-				if (m_hmdView != nullptr)
+				else if (m_hmdView != nullptr)
 				{
 					ImGui::TextColored(textColor, "HMD #%d", m_hmdView->HmdID);
 				}
@@ -1111,6 +1111,11 @@ void AppStage_ColorCalibration::renderUI()
 						{
 							request_turn_on_all_tracking_bulbs(m_bTurnOnAllControllers || m_bColorCollsionShow);
 						}
+					}
+					else if (m_hmdView != nullptr)
+					{
+						// There are no bulbs to turn on.
+						ImGui::Checkbox("Show color collisions", &m_bColorCollsionShow);
 					}
 
 					ImGui::Separator();
