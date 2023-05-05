@@ -38,9 +38,6 @@ public:
 		isLoaded = false;
 
 		virtual_tracker_count = 0;
-		controller_position_smoothing = 0.f;
-		controller_position_prediction = 0.f;
-		controller_position_prediction_history = 5;
 		ignore_pose_from_one_tracker = true;
 		tracker_sync_mode = 0;
 		optical_tracking_timeout = 100;
@@ -72,9 +69,6 @@ public:
 	bool isLoaded;
 
 	int virtual_tracker_count;
-	float controller_position_smoothing;
-	float controller_position_prediction;
-	int controller_position_prediction_history;
 	bool ignore_pose_from_one_tracker;
 	int tracker_sync_mode;
 	int optical_tracking_timeout;

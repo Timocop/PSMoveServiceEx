@@ -59,9 +59,6 @@ public:
     virtual void ptree2config(const boost::property_tree::ptree &pt);
 
 	int virtual_tracker_count;
-	float controller_position_smoothing;
-	float controller_position_prediction;
-	int controller_position_prediction_history;
 	bool ignore_pose_from_one_tracker;
 	TrackerSyncMode tracker_sync_mode;
     long version;

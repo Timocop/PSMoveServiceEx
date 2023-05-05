@@ -220,9 +220,6 @@ TrackerConfig::config2ptree()
 	}
 
 	pt.put("virtual_tracker_count", virtual_tracker_count);
-	pt.put("controller_position_smoothing", controller_position_smoothing);
-	pt.put("controller_position_prediction", controller_position_prediction);
-	pt.put("controller_position_prediction_history", controller_position_prediction_history);
 	pt.put("ignore_pose_from_one_tracker", ignore_pose_from_one_tracker);
 	pt.put("tracker_sync_mode", tracker_sync_mode);
 	pt.put("optical_tracking_timeout", optical_tracking_timeout);
@@ -260,9 +257,6 @@ TrackerConfig::ptree2config(const boost::property_tree::ptree &pt)
 	map_flatten(pt, "");
 
 	virtual_tracker_count = pt.get<int>("virtual_tracker_count", virtual_tracker_count);
-	controller_position_smoothing = pt.get<float>("controller_position_smoothing", controller_position_smoothing);
-	controller_position_prediction = pt.get<float>("controller_position_prediction", controller_position_prediction);
-	controller_position_prediction_history = pt.get<int>("controller_position_prediction_history", controller_position_prediction_history);
 	ignore_pose_from_one_tracker = pt.get<bool>("ignore_pose_from_one_tracker", ignore_pose_from_one_tracker);
 	tracker_sync_mode = pt.get<int>("tracker_sync_mode", tracker_sync_mode);
 	optical_tracking_timeout = pt.get<int>("optical_tracking_timeout", optical_tracking_timeout);
@@ -529,65 +523,6 @@ void AppStage_AdvancedSettings::renderUI()
 								"Useful if you want to add your custom trackers that are not related to PlayStation Move."
 							);
 					}
-
-					{
-						ImGui::Text("Controller position smoothing:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::PushItemWidth(100.f);
-						if (ImGui::InputFloat("##ControllerPositionSmoothing", &cfg_tracker.controller_position_smoothing, 0.05f, 0.1f, 2))
-						{
-							cfg_tracker.controller_position_smoothing = static_cast<float>(std::fmax(0.f, std::fmin(1.f, cfg_tracker.controller_position_smoothing)));
-						}
-						ImGui::PopItemWidth();
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"The amount of position smoothing all controllers will have.\n"
-								"Should be a value between 0.00 and 1.00. Where 0.00 is no smoothing and 1.00 is maximum smoothing.\n"
-								"Beware that smoothing can cause input lag. Adjust 'Controller position prediction' to reduce input lag.\n"
-								"(The default value is 0)"
-							);
-					}
-
-					{
-						ImGui::Text("Controller position prediction:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::PushItemWidth(100.f);
-						if (ImGui::InputFloat("##ControllerPositionPrediction", &cfg_tracker.controller_position_prediction, 0.05f, 0.1f, 2))
-						{
-							cfg_tracker.controller_position_prediction = static_cast<float>(std::fmax(0.f, std::fmin(100.f, cfg_tracker.controller_position_prediction)));
-						}
-						ImGui::PopItemWidth();
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"The amount of position prediction all controllers will have.\n"
-								"Should be a value between 0.00 and 1.00. Whereas 0.00 is no prediction and 1.00 is very high prediction.\n"
-								"The value can be set higher than 1.00 but you might experience over-prediction.\n"
-								"Use 'Controller position smoothing' to remove position jitter when prediction is enabled.\n"
-								"(The default value is 0)"
-							);
-					}
-
-					ImGui::Indent();
-					{
-						ImGui::Text("Controller position prediction history:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::PushItemWidth(100.f);
-						if (ImGui::InputInt("##ControllerPositionPredictionHistory", &cfg_tracker.controller_position_prediction_history))
-						{
-							cfg_tracker.controller_position_prediction_history = static_cast<int>(std::fmax(1, std::fmin(50, cfg_tracker.controller_position_prediction_history)));
-						}
-						ImGui::PopItemWidth();
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"How many previous positions should be saved for calculations.\n"
-								"Lower values makes prediction respond faster and higher slower.\n"
-								"(The default value is 5)"
-							);
-					}
-					ImGui::Unindent();
 
 					{
 						ImGui::Text("Ignore pose from one tracker:");

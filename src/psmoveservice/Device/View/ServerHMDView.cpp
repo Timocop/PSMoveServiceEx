@@ -2037,18 +2037,7 @@ static void computeSpherePoseForHmdFromMultipleTrackers(
         average_world_position.z /= N;
 
         // Store the averaged tracking position
-        const float q = tracker_manager->getConfig().controller_position_smoothing;
-        if (q <= 0.01f)
-        {
-            multicam_pose_estimation->position_cm = average_world_position;
-        }
-        else
-        {
-            multicam_pose_estimation->position_cm.x = q * multicam_pose_estimation->position_cm.x + (1 - q) * average_world_position.x;
-            multicam_pose_estimation->position_cm.y = q * multicam_pose_estimation->position_cm.y + (1 - q) * average_world_position.y;
-            multicam_pose_estimation->position_cm.z = q * multicam_pose_estimation->position_cm.z + (1 - q) * average_world_position.z;
-        }
-
+		multicam_pose_estimation->position_cm = average_world_position;
         multicam_pose_estimation->bCurrentlyTracking = true;
     }
 
@@ -2161,18 +2150,7 @@ static void computePointCloudPoseForHmdFromMultipleTrackers(
         average_world_position.z /= N;
 
         // Store the averaged tracking position
-        const float q = tracker_manager->getConfig().controller_position_smoothing;
-        if (q <= 0.01f)
-        {
-            multicam_pose_estimation->position_cm = average_world_position;
-        }
-        else
-        {
-            multicam_pose_estimation->position_cm.x = q * multicam_pose_estimation->position_cm.x + (1 - q) * average_world_position.x;
-            multicam_pose_estimation->position_cm.y = q * multicam_pose_estimation->position_cm.y + (1 - q) * average_world_position.y;
-            multicam_pose_estimation->position_cm.z = q * multicam_pose_estimation->position_cm.z + (1 - q) * average_world_position.z;
-        }
-
+        multicam_pose_estimation->position_cm = average_world_position;
         multicam_pose_estimation->bCurrentlyTracking = true;
     }
 

@@ -22,9 +22,6 @@ TrackerManagerConfig::TrackerManagerConfig(const std::string &fnamebase)
     : PSMoveConfig(fnamebase)
 {
 	virtual_tracker_count = 0;
-	controller_position_smoothing = 0.f;
-	controller_position_prediction = 0.0f;
-	controller_position_prediction_history = 5;
 	ignore_pose_from_one_tracker = true;
 	tracker_sync_mode = TrackerSyncMode::WaitAll;
 	optical_tracking_timeout= 100;
@@ -76,9 +73,6 @@ TrackerManagerConfig::config2ptree()
     pt.put("version", TrackerManagerConfig::CONFIG_VERSION);
 
 	pt.put("virtual_tracker_count", virtual_tracker_count);
-	pt.put("controller_position_smoothing", controller_position_smoothing);
-	pt.put("controller_position_prediction", controller_position_prediction);
-	pt.put("controller_position_prediction_history", controller_position_prediction_history);
 	pt.put("ignore_pose_from_one_tracker", ignore_pose_from_one_tracker);
 	pt.put("tracker_sync_mode", tracker_sync_mode);
     pt.put("optical_tracking_timeout", optical_tracking_timeout);
@@ -134,9 +128,6 @@ TrackerManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
     if (version == TrackerManagerConfig::CONFIG_VERSION)
     {
 		virtual_tracker_count = pt.get<int>("virtual_tracker_count", virtual_tracker_count);
-		controller_position_smoothing = pt.get<float>("controller_position_smoothing", controller_position_smoothing);
-		controller_position_prediction = pt.get<float>("controller_position_prediction", controller_position_prediction);
-		controller_position_prediction_history = pt.get<int>("controller_position_prediction_history", controller_position_prediction_history);
 		ignore_pose_from_one_tracker = pt.get<bool>("ignore_pose_from_one_tracker", ignore_pose_from_one_tracker);
 		tracker_sync_mode = static_cast<TrackerSyncMode>(pt.get<int>("tracker_sync_mode", tracker_sync_mode));
         optical_tracking_timeout= pt.get<int>("optical_tracking_timeout", optical_tracking_timeout);
