@@ -676,7 +676,7 @@ void AppStage_ColorCalibration::renderUI()
 				}
 				ImGui::TextColored(textColor, "Tracker #%d", m_trackerView->tracker_info.tracker_id);
 
-				ImGui::TextColored(textColor, "Requested color:");
+				ImGui::TextColored(textColor, "Tracking Color:");
 				ImGui::SameLine();
 				switch (m_masterTrackingColorType)
 				{
