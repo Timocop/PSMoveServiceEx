@@ -678,53 +678,41 @@ void AppStage_ColorCalibration::renderUI()
 				case PSMTrackingColorType::PSMTrackingColorType_Red:
 				{
 					ImGui::ColorButton(ImColor(255, 0, 0), true);
-					ImGui::SameLine();
-					ImGui::TextColored(textColor, "Red");
 					break;
 				}
 				case PSMTrackingColorType::PSMTrackingColorType_Green:
 				{
 					ImGui::ColorButton(ImColor(0, 255, 0), true);
-					ImGui::SameLine();
-					ImGui::TextColored(textColor, "Green");
 					break;
 				}
 				case PSMTrackingColorType::PSMTrackingColorType_Blue:
 				{
 					ImGui::ColorButton(ImColor(0, 0, 255), true);
-					ImGui::SameLine();
-					ImGui::TextColored(textColor, "Blue");
 					break;
 				}
 				case PSMTrackingColorType::PSMTrackingColorType_Magenta:
 				{
 					ImGui::ColorButton(ImColor(255, 0, 255), true);
-					ImGui::SameLine();
-					ImGui::TextColored(textColor, "Magenta");
 					break;
 				}
 				case PSMTrackingColorType::PSMTrackingColorType_Cyan:
 				{
 					ImGui::ColorButton(ImColor(0, 255, 255), true);
-					ImGui::SameLine();
-					ImGui::TextColored(textColor, "Cyan");
 					break;
 				}
 				case PSMTrackingColorType::PSMTrackingColorType_Yellow:
 				{
 					ImGui::ColorButton(ImColor(255, 255, 0), true);
-					ImGui::SameLine();
-					ImGui::TextColored(textColor, "Yellow");
 					break;
 				}
 				default:
 				{
 					ImGui::ColorButton(ImColor(255, 255, 255), true);
-					ImGui::SameLine();
-					ImGui::TextColored(textColor, "Custom");
 					break;
 				}
 				}
+				ImGui::SameLine();
+				ImGui::TextColored(textColor, k_tracking_color_names[m_masterTrackingColorType]);
 			}
 			ImGui::End();
 
