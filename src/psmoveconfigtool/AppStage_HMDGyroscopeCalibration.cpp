@@ -585,7 +585,9 @@ void AppStage_HMDGyroscopeCalibration::request_set_gyroscope_calibration(
     calibration->set_raw_drift(raw_drift);
     calibration->set_raw_variance(raw_variance);
 
-	PSM_SendOpaqueRequest(&request, nullptr);
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_EatResponse(request_id);
 }
 
 void AppStage_HMDGyroscopeCalibration::request_playspace_info()

@@ -2108,7 +2108,9 @@ void AppStage_ComputeTrackerPoses::request_set_tracker_pose(
         set_pose_request->set_tracker_id(TrackerView->tracker_info.tracker_id);
         copy_pose_to_request(TrackerView->tracker_info.tracker_pose, set_pose_request->mutable_pose());
 
-        PSM_SendOpaqueRequest(&request, nullptr);
+		PSMRequestID request_id;
+		PSM_SendOpaqueRequest(&request, &request_id);
+		PSM_EatResponse(request_id);
     }
 }
 

@@ -883,7 +883,9 @@ void AppStage_OpticalCalibration::request_set_optical_calibration(
 	calibration->set_orientation_variance_exp_fit_a(orientation_var_exp_fit_a);
 	calibration->set_orientation_variance_exp_fit_b(orientation_var_exp_fit_b);
 
-	PSM_SendOpaqueRequest(&request, nullptr);
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_EatResponse(request_id);
 }
 
 void AppStage_OpticalCalibration::handle_acquire_controller(

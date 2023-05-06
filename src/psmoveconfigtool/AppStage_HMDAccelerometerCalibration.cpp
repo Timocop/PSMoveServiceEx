@@ -488,7 +488,9 @@ static void request_set_hmd_accelerometer_calibration(
 	calibration->mutable_raw_average_gravity()->set_k(raw_average_gravity.z);
     calibration->set_raw_variance(variance);
 
-    PSM_SendOpaqueRequest(&request, nullptr);
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_EatResponse(request_id);
 }
 
 void AppStage_HMDAccelerometerCalibration::request_playspace_info()

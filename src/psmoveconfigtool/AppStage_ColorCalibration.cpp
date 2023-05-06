@@ -3365,7 +3365,9 @@ void AppStage_ColorCalibration::request_save_default_tracker_profile()
     request->mutable_request_save_tracker_profile()->set_tracker_id(m_trackerView->tracker_info.tracker_id);
     request->mutable_request_save_tracker_profile()->set_controller_id(m_overrideControllerId);
 
-    PSM_SendOpaqueRequest(&request, nullptr);
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_EatResponse(request_id);
 }
 
 void AppStage_ColorCalibration::request_apply_default_tracker_profile()

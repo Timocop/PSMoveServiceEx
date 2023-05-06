@@ -1020,7 +1020,9 @@ void AppStage_DistortionCalibration::request_tracker_set_temp_gain(float gain)
     request->mutable_request_set_tracker_gain()->set_value(gain);
     request->mutable_request_set_tracker_gain()->set_save_setting(false);
 
-    PSM_SendOpaqueRequest(&request, nullptr);
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_EatResponse(request_id);
 }
 
 void AppStage_DistortionCalibration::request_tracker_set_temp_exposure(float exposure)
@@ -1034,7 +1036,9 @@ void AppStage_DistortionCalibration::request_tracker_set_temp_exposure(float exp
     request->mutable_request_set_tracker_exposure()->set_value(exposure);
     request->mutable_request_set_tracker_exposure()->set_save_setting(false);
 
-    PSM_SendOpaqueRequest(&request, nullptr);
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_EatResponse(request_id);
 }
 
 void AppStage_DistortionCalibration::request_tracker_set_intrinsic(
@@ -1074,7 +1078,9 @@ void AppStage_DistortionCalibration::request_tracker_set_intrinsic(
     request->mutable_request_set_tracker_intrinsics()->set_tracker_p1(distortionP1);
     request->mutable_request_set_tracker_intrinsics()->set_tracker_p2(distortionP2);    
 
-    PSM_SendOpaqueRequest(&request, nullptr);
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_EatResponse(request_id);
 }
 
 void AppStage_DistortionCalibration::request_tracker_reload_settings()
@@ -1083,7 +1089,9 @@ void AppStage_DistortionCalibration::request_tracker_reload_settings()
     request->set_type(PSMoveProtocol::Request_RequestType_RELOAD_TRACKER_SETTINGS);
     request->mutable_request_reload_tracker_settings()->set_tracker_id(m_tracker_view->tracker_info.tracker_id);
 
-    PSM_SendOpaqueRequest(&request, nullptr);
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_EatResponse(request_id);
 }
 
 void AppStage_DistortionCalibration::request_exit()

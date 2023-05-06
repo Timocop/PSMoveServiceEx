@@ -997,7 +997,9 @@ void AppStage_HMDSettings::request_set_orientation_filter(
     request->mutable_request_set_hmd_orientation_filter()->set_hmd_id(hmd_id);
     request->mutable_request_set_hmd_orientation_filter()->set_orientation_filter(filter_name);
 
-    PSM_SendOpaqueRequest(&request, nullptr);
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_EatResponse(request_id);
 }
 
 void AppStage_HMDSettings::request_set_position_filter(
@@ -1010,7 +1012,9 @@ void AppStage_HMDSettings::request_set_position_filter(
     request->mutable_request_set_hmd_position_filter()->set_hmd_id(hmd_id);
     request->mutable_request_set_hmd_position_filter()->set_position_filter(filter_name);
 
-    PSM_SendOpaqueRequest(&request, nullptr);
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_EatResponse(request_id);
 }
 
 void AppStage_HMDSettings::request_set_hmd_prediction(const int hmd_id, float prediction_time)
@@ -1024,7 +1028,9 @@ void AppStage_HMDSettings::request_set_hmd_prediction(const int hmd_id, float pr
 	calibration->set_hmd_id(hmd_id);
 	calibration->set_prediction_time(prediction_time);
 
-	PSM_SendOpaqueRequest(&request, nullptr);
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_EatResponse(request_id);
 }
 
 void AppStage_HMDSettings::request_set_hmd_angular_prediction(const int hmd_id, float prediction_time)
@@ -1038,7 +1044,9 @@ void AppStage_HMDSettings::request_set_hmd_angular_prediction(const int hmd_id, 
 	calibration->set_hmd_id(hmd_id);
 	calibration->set_ang_prediction_time(prediction_time);
 
-	PSM_SendOpaqueRequest(&request, nullptr);
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_EatResponse(request_id);
 }
 
 void AppStage_HMDSettings::request_set_hmd_tracking_color_id(
@@ -1051,7 +1059,9 @@ void AppStage_HMDSettings::request_set_hmd_tracking_color_id(
 	request->mutable_set_hmd_led_tracking_color_request()->set_color_type(
 		static_cast<PSMoveProtocol::TrackingColorType>(tracking_color_type));
 
-	PSM_SendOpaqueRequest(&request, nullptr);
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_EatResponse(request_id);
 }
 
 void AppStage_HMDSettings::request_set_hmd_filter_settings(
