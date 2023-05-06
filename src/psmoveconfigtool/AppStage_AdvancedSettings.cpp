@@ -658,7 +658,7 @@ void AppStage_AdvancedSettings::renderUI()
 						if (ImGui::IsItemHovered())
 							ImGui::SetTooltip(
 								"The number of trackers that will ignore occluded areas (sorted by biggest projection).\n"
-								"(The default value is 2)"
+								"(The default value is 0)"
 							);
 					}
 

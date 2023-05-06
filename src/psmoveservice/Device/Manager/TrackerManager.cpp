@@ -30,7 +30,7 @@ TrackerManagerConfig::TrackerManagerConfig(const std::string &fnamebase)
 	exclude_opposed_cameras = false;
 	min_valid_projection_area = 6;
 	occluded_area_on_loss_size = 4.f;
-	occluded_area_ignore_num_trackers = 2;
+	occluded_area_ignore_num_trackers = 0;
 	projection_collision_avoid = true;
 	projection_collision_offset = 5.0f;
 	average_position_cache_enabled = false;
