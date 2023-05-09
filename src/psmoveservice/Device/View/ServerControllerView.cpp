@@ -2917,7 +2917,7 @@ static void post_imu_filter_packets_for_psmove(
 		sensor_packet.has_magnetometer_measurement= true;
 	}
 
-	if (psmove->getIsPS4Controller())
+	if (!psmoveState->SensorTwoFrames)
 	{
 		const int frame= 0;
 

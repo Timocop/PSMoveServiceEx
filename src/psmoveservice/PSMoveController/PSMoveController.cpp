@@ -922,6 +922,7 @@ void PSMoveControllerInputState::parseDataInput(
         CalibratedMag[2] = calibrated_mag.z();
 
 		// Other
+		SensorTwoFrames = true;
 		RawSequence = (current_hid_input->buttons4 & 0x0F);
 		Battery = static_cast<CommonControllerState::BatteryLevel>(current_hid_input->battery);
 		RawTimeStamp = current_hid_input->timelow | (current_hid_input->timehigh << 8);
@@ -1013,6 +1014,7 @@ void PSMoveControllerInputState::parseDataInput(
 	CalibratedMag[0]= CalibratedMag[1] = CalibratedMag[2] = 0.f;
 
 	// Other
+	SensorTwoFrames = false;
 	RawSequence = (current_hid_input->buttons4 & 0x0F);
 	Battery = static_cast<CommonControllerState::BatteryLevel>(current_hid_input->battery);
 	RawTimeStamp = current_hid_input->timelow | (current_hid_input->timehigh << 8);
