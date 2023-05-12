@@ -3236,7 +3236,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 		CommonDevicePosition local_position;
 		CommonDevicePosition world_avg_position;
 		CommonDevicePosition new_local_position;
-		int total_pairs;
+		int paired_trackers;
 	};
 	struct orgPositionOffsetCaching
 	{
@@ -3393,7 +3393,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 						cache.new_local_position.x = world_position.x;
 						cache.new_local_position.y = world_position.y;
 						cache.new_local_position.z = world_position.z;
-						cache.total_pairs = -1;
+						cache.paired_trackers = 0;
 
 						globalPositionOffsetCaching[tracker_id][other_tracker_id].push_back(cache);
 
@@ -3569,8 +3569,11 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 				positionOffsetCaching *cache = &globalPositionOffsetCaching[orgCache.tracker_1_id][orgCache.tracker_2_id][orgCache.index];
 
 				// Only update when theres new pairs.
-				if (cache->total_pairs >= pair_count)
+				if ((cache->paired_trackers & ((1 << orgCache.tracker_1_id) | (1 << (orgCache.tracker_2_id + PSMOVESERVICE_MAX_TRACKER_COUNT)))) > 0)
 					continue;
+				if ((cache->paired_trackers & ((1 << orgCache.tracker_2_id) | (1 << (orgCache.tracker_1_id + PSMOVESERVICE_MAX_TRACKER_COUNT)))) > 0)
+					continue;
+
 
 				cache->world_avg_position.x = unfiltered_average_world_position.x;
 				cache->world_avg_position.y = unfiltered_average_world_position.y;
@@ -3578,10 +3581,12 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 				cache->local_position.x = cache->new_local_position.x;
 				cache->local_position.y = cache->new_local_position.y;
 				cache->local_position.z = cache->new_local_position.z;
-				cache->total_pairs = pair_count;
+				cache->paired_trackers |= (1 << orgCache.tracker_1_id) | (1 << orgCache.tracker_2_id + PSMOVESERVICE_MAX_TRACKER_COUNT);
 				cache->isValid = true;
 			}
 		}
+
+		//printf("Cache Size: %d\n", globalPositionOffsetCaching[0][1].size());
 
 		// Store the averaged tracking position
 		multicam_pose_estimation->position_cm = average_world_position;
