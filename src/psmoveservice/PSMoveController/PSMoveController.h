@@ -95,7 +95,7 @@ public:
 		, filter_madgwick_min_correction(0.02f)
 		, filter_madgwick_apt_method(AdaptiveDriftCorrectionMethod::AdaptiveBoth)
 		, filter_madgwick_apt_max_correction(0.8f)
-		, filter_madgwick_apt_falloff(0.975)
+		, filter_madgwick_apt_falloff(0.975f)
     {
         magnetometer_identity.clear();
         magnetometer_center.clear();
@@ -105,10 +105,10 @@ public:
         magnetometer_extents.clear();
         magnetometer_identity.clear();
 
-		offset_position.set(0.0, 0.0, 0.0);
-		offset_orientation.set(0.0, 0.0, 0.0);
-		offset_world_orientation.set(0.0, 0.0, 0.0);
-		offset_scale.set(1.0, 1.0, 1.0);
+		offset_position.set(0.0f, 0.0f, 0.0f);
+		offset_orientation.set(0.0f, 0.0f, 0.0f);
+		offset_world_orientation.set(0.0f, 0.0f, 0.0f);
+		offset_scale.set(1.0f, 1.0f, 1.0f);
     };
 
     virtual const boost::property_tree::ptree config2ptree();

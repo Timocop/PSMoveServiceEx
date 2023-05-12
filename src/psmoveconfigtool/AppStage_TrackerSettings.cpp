@@ -909,7 +909,7 @@ void AppStage_TrackerSettings::renderUI()
 						ImGui::PushItemWidth(120.f);
 						if (ImGui::InputFloat("##ScalePositionX", &playspace_scale_x, 0.01f, 0.05f, 2))
 						{
-							playspace_scale_x = clampf(playspace_scale_x, 0.01, 100.f);
+							playspace_scale_x = clampf(playspace_scale_x, 0.01f, 100.f);
 
 							request_offset = true;
 						}
@@ -920,7 +920,7 @@ void AppStage_TrackerSettings::renderUI()
 						ImGui::PushItemWidth(120.f);
 						if (ImGui::InputFloat("##ScalePositionY", &playspace_scale_y, 0.01f, 0.05f, 2))
 						{
-							playspace_scale_y = clampf(playspace_scale_y, 0.01, 100.f);
+							playspace_scale_y = clampf(playspace_scale_y, 0.01f, 100.f);
 
 							request_offset = true;
 						}
@@ -931,7 +931,7 @@ void AppStage_TrackerSettings::renderUI()
 						ImGui::PushItemWidth(120.f);
 						if (ImGui::InputFloat("##ScalePositionZ", &playspace_scale_z, 0.01f, 0.05f, 2))
 						{
-							playspace_scale_z = clampf(playspace_scale_z, 0.01, 100.f);
+							playspace_scale_z = clampf(playspace_scale_z, 0.01f, 100.f);
 
 							request_offset = true;
 						}

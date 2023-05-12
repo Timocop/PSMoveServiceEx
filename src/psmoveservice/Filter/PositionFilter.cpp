@@ -401,7 +401,7 @@ void PositionFilterPassThru::update(
 		int history_queue_length;
 		for (std::list<int>::iterator it = historyQueueLenght.begin(); it != historyQueueLenght.end(); it++)
 		{
-			history_queue_length = (int)clampf(fmax(history_queue_length, *it), 1.f, 100.f);
+			history_queue_length = static_cast<int>(clampf(fmaxf(static_cast<float>(history_queue_length), static_cast<float>(*it)), 1.f, 100.f));
 		}
 
 		Eigen::Vector3f old_position_meters;
@@ -564,7 +564,7 @@ void PositionFilterLowPassOptical::update(
 		int history_queue_length;
 		for (std::list<int>::iterator it = historyQueueLenght.begin(); it != historyQueueLenght.end(); it++)
 		{
-			history_queue_length = (int)clampf(fmax(history_queue_length, *it), 1.f, 100.f);
+			history_queue_length = static_cast<int>(clampf(fmaxf(static_cast<float>(history_queue_length), static_cast<float>(*it)), 1.f, 100.f));
 		}
 
 		Eigen::Vector3f old_position_meters;

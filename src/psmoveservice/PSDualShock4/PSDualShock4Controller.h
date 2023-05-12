@@ -78,12 +78,12 @@ public:
 		, filter_madgwick_min_correction(0.02f)
 		, filter_madgwick_apt_method(AdaptiveDriftCorrectionMethod::AdaptiveBoth)
 		, filter_madgwick_apt_max_correction(0.8f)
-		, filter_madgwick_apt_falloff(0.975)
+		, filter_madgwick_apt_falloff(0.975f)
     {
-		offset_position.set(0.0, 0.0, 0.0);
-		offset_orientation.set(0.0, 0.0, 0.0);
-		offset_world_orientation.set(0.0, 0.0, 0.0);
-		offset_scale.set(1.0, 1.0, 1.0);
+		offset_position.set(0.0f, 0.0f, 0.0f);
+		offset_orientation.set(0.0f, 0.0f, 0.0f);
+		offset_world_orientation.set(0.0f, 0.0f, 0.0f);
+		offset_scale.set(1.0f, 1.0f, 1.0f);
 
         // The DS4 uses the BMI055 IMU Chip: 
         // https://www.bosch-sensortec.com/bst/products/all_products/bmi055

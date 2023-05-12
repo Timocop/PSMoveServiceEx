@@ -40,8 +40,8 @@ static const char *k_video_display_mode_names[] = {
     "Undistorted"
 };
 
-static const double k_stabilize_init_wait_time_ms = 3000.f;
-static const double k_stabilize_next_wait_time_ms = 1000.f;
+static const float k_stabilize_init_wait_time_ms = 3000.f;
+static const float k_stabilize_next_wait_time_ms = 1000.f;
 
 #define PATTERN_W 9 // Internal corners
 #define PATTERN_H 6
