@@ -1440,7 +1440,7 @@ void AppStage_ColorCalibration::renderUI()
 							{
 								int colorSensitivity = m_iColorSensitivity;
 								ImGui::Text("Color detection sensitivity:");
-								if (ImGui::Combo("##SensitivityPostProcessing", &colorSensitivity, "Keep Settings\0Normal Sensitivity\0Medium Sensitivity\0High Sensitivity\0Aggressive Sensitivity\0Extreme Sensitivity\0\0"))
+								if (ImGui::Combo("##SensitivityPostProcessing", &colorSensitivity, "Keep Settings\0Normal Sensitivity\0High Sensitivity\0Aggressive Sensitivity\0Extreme Sensitivity\0\0"))
 								{
 									if (colorSensitivity >= sensitivity_MAX)
 										colorSensitivity = sensitivity_MAX - 1;
@@ -1451,7 +1451,7 @@ void AppStage_ColorCalibration::renderUI()
 								if (ImGui::IsItemHovered())
 									ImGui::SetTooltip(
 										"Automatically adjusts the color hue, hue range, saturation center,\n"
-										"saturation range, value center and value range.\n"
+										"saturation range, value center and value range while color sampling.\n"
 										"Using higher sensitivity can help improve tracking quality and\n"
 										"tracking range but also creates more color noise and collisions\n"
 										"between colors!"
@@ -1462,7 +1462,8 @@ void AppStage_ColorCalibration::renderUI()
 
 									if (ImGui::IsItemHovered())
 										ImGui::SetTooltip(
-											"Adjusts the hue range to avoid collisions between controller colors and potential color noise.\n"
+											"Adjusts the hue range to avoid collisions between\n"
+											"controller colors and potential color noise while color sampling.\n"
 											"This will reduce tracking quality if enabled."
 										);
 								}
@@ -3651,15 +3652,8 @@ void AppStage_ColorCalibration::auto_adjust_color_sensitivity(TrackerColorPreset
 	case sensitivity_normal:
 	{
 		preset.hue_range = 10.f * hueRangeMulti;
-		preset.saturation_range = 32.f;
+		preset.saturation_range = (32.f * saturationRangeMulti);
 		preset.value_range = 32.f;
-		break;
-	}
-	case sensitivity_mild:
-	{
-		preset.hue_range = 10.f * hueRangeMulti;
-		preset.saturation_range = (32.f * saturationRangeMulti) + (8.f / saturationRangeMulti);
-		preset.value_range = 32.f + 8.f;
 		break;
 	}
 	case sensitivity_high:
@@ -3669,7 +3663,7 @@ void AppStage_ColorCalibration::auto_adjust_color_sensitivity(TrackerColorPreset
 		preset.value_range = 32.f + 16.f;
 		break;
 	}
-	case sensitivity_very_high:
+	case sensitivity_aggressive:
 	{
 		preset.hue_range = 10.f * hueRangeMulti;
 		preset.saturation_range = (32.f * saturationRangeMulti) + (32.f / saturationRangeMulti);
@@ -3680,8 +3674,8 @@ void AppStage_ColorCalibration::auto_adjust_color_sensitivity(TrackerColorPreset
 	case sensitivity_extreme:
 	{
 		preset.hue_range = 10.f * hueRangeMulti;
-		preset.saturation_range = (32.f * saturationRangeMulti) + (64.f / saturationRangeMulti);
-		preset.value_range = 32.f + 64.f;
+		preset.saturation_range = (32.f * saturationRangeMulti) + (48.f / saturationRangeMulti);
+		preset.value_range = 32.f + 48.f;
 		break;
 	}
 	}

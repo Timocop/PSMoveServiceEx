@@ -127,9 +127,8 @@ protected:
 	{
 		sensitivity_disabled,
 		sensitivity_normal,
-		sensitivity_mild,
 		sensitivity_high,
-		sensitivity_very_high,
+		sensitivity_aggressive,
 		sensitivity_extreme,
 
 		sensitivity_MAX
