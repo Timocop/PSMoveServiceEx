@@ -1820,6 +1820,7 @@ static void generate_psmove_data_frame_for_stream(
         psmove_data_frame->set_istrackingenabled(controller_view->getIsTrackingEnabled());
         psmove_data_frame->set_isorientationvalid(pose_filter->getIsOrientationStateValid());
         psmove_data_frame->set_ispositionvalid(pose_filter->getIsPositionStateValid());
+		psmove_data_frame->set_tracking_color_type(controller_view->getTrackingColorID());
 
         psmove_data_frame->mutable_orientation()->set_w(controller_pose.Orientation.w);
         psmove_data_frame->mutable_orientation()->set_x(controller_pose.Orientation.x);
@@ -2065,6 +2066,7 @@ static void generate_psdualshock4_data_frame_for_stream(
         psds4_data_frame->set_istrackingenabled(controller_view->getIsTrackingEnabled());
         psds4_data_frame->set_isorientationvalid(pose_filter->getIsOrientationStateValid());
         psds4_data_frame->set_ispositionvalid(pose_filter->getIsPositionStateValid());
+		psds4_data_frame->set_tracking_color_type(controller_view->getTrackingColorID());
 
         psds4_data_frame->mutable_orientation()->set_w(controller_pose.Orientation.w);
         psds4_data_frame->mutable_orientation()->set_x(controller_pose.Orientation.x);
@@ -2313,6 +2315,7 @@ static void generate_virtual_controller_data_frame_for_stream(
 			psmove_data_frame->set_istrackingenabled(controller_view->getIsTrackingEnabled());
 			psmove_data_frame->set_isorientationvalid(pose_filter->getIsOrientationStateValid());
 			psmove_data_frame->set_ispositionvalid(pose_filter->getIsPositionStateValid());
+			psmove_data_frame->set_tracking_color_type(controller_view->getTrackingColorID());
 
 			psmove_data_frame->mutable_orientation()->set_w(controller_pose.Orientation.w);
 			psmove_data_frame->mutable_orientation()->set_x(controller_pose.Orientation.x);

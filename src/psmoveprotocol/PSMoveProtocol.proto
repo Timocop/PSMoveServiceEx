@@ -1107,7 +1107,8 @@ message DeviceOutputDataFrame
             PhysicsData physics_data = 12;
 
             // Battery charge state value [0,5;EE,EF]
-            int32 battery_value = 13;            
+            int32 battery_value = 13;
+			int32 tracking_color_type = 14;
         }
         PSMoveState psmove_state = 6;
 
@@ -1191,6 +1192,7 @@ message DeviceOutputDataFrame
                 FloatVector angular_acceleration_rad_per_sec_sqr= 4;
             }
             PhysicsData physics_data = 17;
+			int32 tracking_color_type = 18;
         }
         PSDualShock4State psdualshock4_state = 8;
         
@@ -1234,6 +1236,8 @@ message DeviceOutputDataFrame
                 FloatVector acceleration_cm_per_sec_sqr= 2;
             }
             PhysicsData physics_data = 10;
+			
+			int32 tracking_color_type = 11;
         }
         VirtualControllerState virtualcontroller_state = 9;        
     }

@@ -1354,7 +1354,9 @@ static void applyPSMoveDataFrame(
     psmove->bIsCurrentlyTracking = psmove_packet.iscurrentlytracking();
 	psmove->bIsOrientationValid = psmove_packet.isorientationvalid();
 	psmove->bIsPositionValid = psmove_packet.ispositionvalid();
-            
+
+	psmove->TrackingColorType = (PSMTrackingColorType)psmove_packet.tracking_color_type();
+
     psmove->Pose.Orientation.w= psmove_packet.orientation().w();
     psmove->Pose.Orientation.x= psmove_packet.orientation().x();
     psmove->Pose.Orientation.y= psmove_packet.orientation().y();
@@ -1545,7 +1547,9 @@ static void applyDualShock4DataFrame(
     ds4->bIsCurrentlyTracking = ds4_packet.iscurrentlytracking();
 	ds4->bIsOrientationValid = ds4_packet.isorientationvalid();
 	ds4->bIsPositionValid = ds4_packet.ispositionvalid();
-            
+
+	ds4->TrackingColorType = (PSMTrackingColorType)ds4_packet.tracking_color_type();
+
     ds4->Pose.Orientation.w= ds4_packet.orientation().w();
     ds4->Pose.Orientation.x= ds4_packet.orientation().x();
     ds4->Pose.Orientation.y= ds4_packet.orientation().y();
@@ -1736,7 +1740,9 @@ static void applyVirtualControllerDataFrame(
     virtual_controller->bIsTrackingEnabled = virtual_controller_packet.istrackingenabled();
     virtual_controller->bIsCurrentlyTracking = virtual_controller_packet.iscurrentlytracking();
 	virtual_controller->bIsPositionValid = virtual_controller_packet.ispositionvalid();
-            
+
+	virtual_controller->TrackingColorType = (PSMTrackingColorType)virtual_controller_packet.tracking_color_type();
+
     virtual_controller->Pose.Orientation.w= 1.f;
     virtual_controller->Pose.Orientation.x= 0.f;
     virtual_controller->Pose.Orientation.y= 0.f;
