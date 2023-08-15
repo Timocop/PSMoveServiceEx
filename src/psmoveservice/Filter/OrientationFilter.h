@@ -52,8 +52,61 @@ public:
     void update(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet) override;
 };
 
+/// Magnetic, Angular Rate, Gravity and fusion algorithm (hybrid Madgwick)
+/// Blends between best fit Mag-Grav alignment and Angular Rate integration
+class OrientationFilterComplementaryMARG : public OrientationFilter
+{
+public:
+	enum PassiveDriftCorrectionMethod
+	{
+		StableGravity = 0,
+		StableGyroAccel,
+		Both,
+	};
+
+	OrientationFilterComplementaryMARG()
+		: OrientationFilter()
+		, mg_weight(1.f)
+		, mg_ignored(false)
+		, ignoreSettings(false)
+	{
+		timeStableDelay = std::chrono::high_resolution_clock::now();
+
+		last_accelerometer_g_units = Eigen::Vector3f(0.f, 0.f, 0.f);
+		last_accelerometer_derivative_g_per_sec = Eigen::Vector3f(0.f, 0.f, 0.f);
+		last_acceleration_m_per_sec_sqr = Eigen::Vector3f(0.f, 0.f, 0.f);
+	}
+
+	void resetState() override;
+	void update(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet) override;
+
+	bool filter_process_passive_drift_correction(
+		const float delta_time,
+		const PoseFilterPacket & packet,
+		bool filter_use_passive_drift_correction,
+		PassiveDriftCorrectionMethod filter_passive_drift_correction_method,
+		float filter_passive_drift_correction_deadzone,
+		float filter_passive_drift_correction_gravity_deadzone,
+		float filter_passive_drift_correction_delay);
+
+	void filter_process_stabilization(
+		const float delta_time,
+		const PoseFilterPacket & packet,
+		float filter_stabilization_min_scale);
+
+protected:
+	float mg_weight;
+	bool mg_reset;
+	bool mg_ignored;
+	bool ignoreSettings;
+	std::chrono::time_point<std::chrono::high_resolution_clock> timeStableDelay;
+	Eigen::Vector3f last_accelerometer_g_units;
+	Eigen::Vector3f last_accelerometer_derivative_g_per_sec;
+	Eigen::Vector3f last_acceleration_m_per_sec_sqr;
+};
+
 /// Angular Rate and Gravity fusion algorithm from Madgwick
-class OrientationFilterMadgwickARG : public OrientationFilter
+class OrientationFilterMadgwickARG : public OrientationFilterComplementaryMARG
 {
 public:
 
@@ -67,10 +120,12 @@ public:
 
 
 	OrientationFilterMadgwickARG() 
-		: OrientationFilter()
+		: OrientationFilterComplementaryMARG()
 		, m_beta(0.f)
 		, m_reset(true)
+		, m_recenter(false)
 	{
+		m_recenterPose = Eigen::Quaternionf::Identity();
 		timeReset = std::chrono::high_resolution_clock::now();
 	}
 
@@ -80,7 +135,9 @@ public:
 
 protected:
 	float m_beta;
-	float m_reset;
+	bool m_reset;
+	bool m_recenter;
+	Eigen::Quaternionf m_recenterPose;
 	std::chrono::time_point<std::chrono::high_resolution_clock> timeReset;
 };
 
@@ -113,57 +170,6 @@ class OrientationFilterComplementaryOpticalARG : public OrientationFilterMadgwic
 {
 public:
     void update(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet) override;
-};
-
-/// Magnetic, Angular Rate, Gravity and fusion algorithm (hybrid Madgwick)
-/// Blends between best fit Mag-Grav alignment and Angular Rate integration
-class OrientationFilterComplementaryMARG : public OrientationFilter
-{
-public:
-	enum PassiveDriftCorrectionMethod
-	{
-		StableGravity = 0,
-		StableGyroAccel,
-		Both,
-	};
-
-    OrientationFilterComplementaryMARG()
-        : OrientationFilter()
-        , mg_weight(1.f)
-		, mg_ignored(false)
-    {
-		timeStableDelay = std::chrono::high_resolution_clock::now();
-
-		last_accelerometer_g_units = Eigen::Vector3f(0.f, 0.f, 0.f);
-		last_accelerometer_derivative_g_per_sec = Eigen::Vector3f(0.f, 0.f, 0.f);
-		last_acceleration_m_per_sec_sqr = Eigen::Vector3f(0.f, 0.f, 0.f);
-	}
-
-    void resetState() override;
-    void update(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet) override;
-
-	bool filter_process_passive_drift_correction(
-		const float delta_time, 
-		const PoseFilterPacket & packet, 
-		bool filter_use_passive_drift_correction, 
-		PassiveDriftCorrectionMethod filter_passive_drift_correction_method, 
-		float filter_passive_drift_correction_deadzone, 
-		float filter_passive_drift_correction_gravity_deadzone, 
-		float filter_passive_drift_correction_delay);
-
-	void filter_process_stabilization(
-		const float delta_time, 
-		const PoseFilterPacket & packet, 
-		float filter_stabilization_min_scale);
-
-protected:
-    float mg_weight;
-	bool mg_reset;
-	bool mg_ignored;
-	std::chrono::time_point<std::chrono::high_resolution_clock> timeStableDelay;
-	Eigen::Vector3f last_accelerometer_g_units;
-	Eigen::Vector3f last_accelerometer_derivative_g_per_sec;
-	Eigen::Vector3f last_acceleration_m_per_sec_sqr;
 };
 
 #endif // ORIENTATION_FILTER_H

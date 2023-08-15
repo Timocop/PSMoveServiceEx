@@ -270,7 +270,7 @@ void OrientationFilterPassThru::update(
 
 void OrientationFilterMadgwickARG::resetState()
 {
-	OrientationFilter::resetState();
+	OrientationFilterComplementaryMARG::resetState();
 	m_reset = true;
 }
 
@@ -357,6 +357,29 @@ void OrientationFilterMadgwickARG::update(
 
 	if (packet.has_imu_measurements())
 	{
+		if (m_reset || m_recenter)
+		{
+			// Reset using complimentary
+			mg_reset = true;
+			ignoreSettings = true;
+
+			// Lets fully reset everything first.
+			resetState();
+			OrientationFilterComplementaryMARG::update(timestamp, packet);
+
+			m_reset = false;
+
+			if (m_recenter)
+			{
+				m_recenter = false;
+
+				// Only do recenter after we got a new reset orentation
+				OrientationFilterComplementaryMARG::recenterOrientation(m_recenterPose);
+			}
+
+			return;
+		}
+
 		const Eigen::Vector3f &current_omega= packet.imu_gyroscope_rad_per_sec;
 
 		Eigen::Vector3f current_g= packet.imu_accelerometer_g_units;
@@ -406,42 +429,26 @@ void OrientationFilterMadgwickARG::update(
 				const float adaptive_min = clampf(filter_madgwick_min_correction, 0.0f, adaptive_max);
 				const float adaptive_falloff = clampf(filter_madgwick_apt_falloff, 0.0f, 0.999f);
 
-				std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
-				if (m_reset)
+				switch (filter_madgwick_apt_method)
 				{
-					m_reset = false;
-					timeReset = now;
-				}
-
-				std::chrono::duration<double, std::milli> resetDuration = now - timeReset;
-
-				if (resetDuration.count() < k_madgwick_reset_time)
+				case AdaptiveDriftCorrectionMethod::AdaptiveGyro:
 				{
-					m_beta = 1.0;
+					m_beta = fmaxf(m_beta, fminf(adaptive_max, gyro_b));
+					break;
 				}
-				else
+				case AdaptiveDriftCorrectionMethod::AdaptiveAccel:
 				{
-					switch (filter_madgwick_apt_method)
-					{
-					case AdaptiveDriftCorrectionMethod::AdaptiveGyro:
-					{
-						m_beta = fmaxf(m_beta, fminf(adaptive_max, gyro_b));
-						break;
-					}
-					case AdaptiveDriftCorrectionMethod::AdaptiveAccel:
-					{
-						m_beta = fmaxf(m_beta, fminf(adaptive_max, accel_b));
-						break;
-					}
-					case AdaptiveDriftCorrectionMethod::AdaptiveBoth:
-					{
-						m_beta = fmaxf(m_beta, fminf(adaptive_max, gyro_b));
-						m_beta = fmaxf(m_beta, fminf(adaptive_max, accel_b));
-						break;
-					}
-					}
-					m_beta = fmaxf(adaptive_min, (m_beta * adaptive_falloff));
+					m_beta = fmaxf(m_beta, fminf(adaptive_max, accel_b));
+					break;
 				}
+				case AdaptiveDriftCorrectionMethod::AdaptiveBoth:
+				{
+					m_beta = fmaxf(m_beta, fminf(adaptive_max, gyro_b));
+					m_beta = fmaxf(m_beta, fminf(adaptive_max, accel_b));
+					break;
+				}
+				}
+				m_beta = fmaxf(adaptive_min, (m_beta * adaptive_falloff));
 			}
 
 			Eigen::Quaternionf SEqDot_est = Eigen::Quaternionf(SEqDot_omega.coeffs() - SEqHatDot.coeffs()*m_beta);
@@ -472,9 +479,9 @@ void OrientationFilterMadgwickARG::update(
 
 void OrientationFilterMadgwickARG::recenterOrientation(const Eigen::Quaternionf & q_pose)
 {
-	m_reset = true;
-
-	OrientationFilter::recenterOrientation(q_pose);
+	// We cant recenter here because we reset the orientation using complimentary first.
+	m_recenter = true;
+	m_recenterPose = q_pose;
 }
 
 // -- OrientationFilterMadgwickMARG --
@@ -567,6 +574,30 @@ void OrientationFilterMadgwickMARG::update(
 
 	if (packet.has_imu_measurements())
 	{
+		if (m_reset || m_recenter)
+		{
+			// Reset using complimentary
+			mg_reset = true;
+			ignoreSettings = true;
+
+			// Fresh start, reset the state so we dont have any orientation abnormalities.
+			resetState();
+			OrientationFilterComplementaryMARG::update(timestamp, packet);
+
+			// Add m_resert after, because update() will set it to true.
+			m_reset = false;
+
+			if (m_recenter)
+			{
+				m_recenter = false;
+
+				// Only do recenter after we got a new reset orentation
+				OrientationFilterComplementaryMARG::recenterOrientation(m_recenterPose);
+			}
+
+			return;
+		}
+
 		const Eigen::Vector3f &current_omega= packet.imu_gyroscope_rad_per_sec;
 
 		Eigen::Vector3f current_g= packet.imu_accelerometer_g_units;
@@ -664,42 +695,26 @@ void OrientationFilterMadgwickMARG::update(
 			const float adaptive_min = clampf(filter_madgwick_min_correction, 0.0f, adaptive_max);
 			const float adaptive_falloff = clampf(filter_madgwick_apt_falloff, 0.0f, 0.999f);
 
-			std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
-			if (m_reset)
+			switch (filter_madgwick_apt_method)
 			{
-				m_reset = false;
-				timeReset = now;
-			}
-
-			std::chrono::duration<double, std::milli> resetDuration = now - timeReset;
-
-			if (resetDuration.count() < k_madgwick_reset_time)
+			case AdaptiveDriftCorrectionMethod::AdaptiveGyro:
 			{
-				m_beta = 1.0;
+				m_beta = fmaxf(m_beta, fminf(adaptive_max, gyro_b));
+				break;
 			}
-			else
+			case AdaptiveDriftCorrectionMethod::AdaptiveAccel:
 			{
-				switch (filter_madgwick_apt_method)
-				{
-				case AdaptiveDriftCorrectionMethod::AdaptiveGyro:
-				{
-					m_beta = fmaxf(m_beta, fminf(adaptive_max, gyro_b));
-					break;
-				}
-				case AdaptiveDriftCorrectionMethod::AdaptiveAccel:
-				{
-					m_beta = fmaxf(m_beta, fminf(adaptive_max, accel_b));
-					break;
-				}
-				case AdaptiveDriftCorrectionMethod::AdaptiveBoth:
-				{
-					m_beta = fmaxf(m_beta, fminf(adaptive_max, gyro_b));
-					m_beta = fmaxf(m_beta, fminf(adaptive_max, accel_b));
-					break;
-				}
-				}
-				m_beta = fmaxf(adaptive_min, (m_beta * adaptive_falloff));
+				m_beta = fmaxf(m_beta, fminf(adaptive_max, accel_b));
+				break;
 			}
+			case AdaptiveDriftCorrectionMethod::AdaptiveBoth:
+			{
+				m_beta = fmaxf(m_beta, fminf(adaptive_max, gyro_b));
+				m_beta = fmaxf(m_beta, fminf(adaptive_max, accel_b));
+				break;
+			}
+			}
+			m_beta = fmaxf(adaptive_min, (m_beta * adaptive_falloff));
 		}
 
 		Eigen::Quaternionf SEqDot_est = Eigen::Quaternionf(SEqDot_omega.coeffs() - SEqHatDot.coeffs()*m_beta);
@@ -918,31 +933,34 @@ void OrientationFilterComplementaryMARG::update(
 	float filter_stabilization_min_scale = 0.1f;
 
 #if !defined(IS_TESTING_KALMAN) 
-	if (packet.controllerDeviceId > -1)
+	if (!ignoreSettings)
 	{
-		ServerControllerViewPtr ControllerView = DeviceManager::getInstance()->getControllerViewPtr(packet.controllerDeviceId);
-		if (ControllerView != nullptr && ControllerView->getIsOpen())
+		if (packet.controllerDeviceId > -1)
 		{
-			switch (ControllerView->getControllerDeviceType())
+			ServerControllerViewPtr ControllerView = DeviceManager::getInstance()->getControllerViewPtr(packet.controllerDeviceId);
+			if (ControllerView != nullptr && ControllerView->getIsOpen())
 			{
-			case CommonDeviceState::PSMove:
-			{
-				PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
-				PSMoveControllerConfig config = *controller->getConfig();
+				switch (ControllerView->getControllerDeviceType())
+				{
+				case CommonDeviceState::PSMove:
+				{
+					PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
+					PSMoveControllerConfig config = *controller->getConfig();
 
-				filter_enable_magnetometer = config.filter_enable_magnetometer;
+					filter_enable_magnetometer = config.filter_enable_magnetometer;
 
-				filter_use_passive_drift_correction = config.filter_use_passive_drift_correction;
-				filter_passive_drift_correction_method = static_cast<PassiveDriftCorrectionMethod>(config.filter_passive_drift_correction_method);
-				filter_passive_drift_correction_deadzone = config.filter_passive_drift_correction_deadzone;
-				filter_passive_drift_correction_gravity_deadzone = config.filter_passive_drift_correction_gravity_deadzone;
-				filter_passive_drift_correction_delay = config.filter_passive_drift_correction_delay;
+					filter_use_passive_drift_correction = config.filter_use_passive_drift_correction;
+					filter_passive_drift_correction_method = static_cast<PassiveDriftCorrectionMethod>(config.filter_passive_drift_correction_method);
+					filter_passive_drift_correction_deadzone = config.filter_passive_drift_correction_deadzone;
+					filter_passive_drift_correction_gravity_deadzone = config.filter_passive_drift_correction_gravity_deadzone;
+					filter_passive_drift_correction_delay = config.filter_passive_drift_correction_delay;
 
-				filter_use_stabilization = config.filter_use_stabilization;
-				filter_stabilization_min_scale = config.filter_stabilization_min_scale;
+					filter_use_stabilization = config.filter_use_stabilization;
+					filter_stabilization_min_scale = config.filter_stabilization_min_scale;
 
-				break;
-			}
+					break;
+				}
+				}
 			}
 		}
 	}
