@@ -1069,60 +1069,29 @@ void AppStage_ControllerSettings::renderUI()
 											{
 												settings_shown = true;
 
-												ImGui::Text("Minimum Drift Correction: ");
+												ImGui::Text("Drift Correction Power (Beta): ");
 												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 												ImGui::PushItemWidth(120.f);
-												float filter_madgwick_min_correction = controllerInfo.FilterMadgwickMinCorrection;
-												if (ImGui::InputFloat("##MadgwickAdaptiveMinimumCorrection", &filter_madgwick_min_correction, 0.01f, 0.05f, 2))
+												float filter_madgwick_beta = controllerInfo.FilterMadgwickBeta;
+												if (ImGui::InputFloat("##MadgwickFilterMadgwickBeta", &filter_madgwick_beta, 0.01f, 0.05f, 2))
 												{
-													controllerInfo.FilterMadgwickMinCorrection = clampf(filter_madgwick_min_correction, 0.0f, 1.0f);
+													controllerInfo.FilterMadgwickBeta = clampf(filter_madgwick_beta, 0.0f, 1.0f);
 
 													request_offset = true;
 												}
 												ImGui::PopItemWidth();
 
-												ImGui::Text("Adaptive Drift Correction Method: ");
+												ImGui::Text("Use Stabilization: ");
 												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 												ImGui::PushItemWidth(120.f);
-												int filter_madgwick_apt_method = controllerInfo.FilterMadgwickAdaptiveMethod;
-												if (ImGui::Combo("##MadgwickAdaptiveDriftCorrectionMethod", &filter_madgwick_apt_method, "Disabled\0Gyro\0Accel\0Both\0\0"))
+												bool filter_madgwick_stabilization = controllerInfo.FilterMadgwickStabilization;
+												if (ImGui::Checkbox("##MadgwickFilterMadgwickStabilization", &filter_madgwick_stabilization))
 												{
-													controllerInfo.FilterMadgwickAdaptiveMethod = static_cast<AdaptiveDriftCorrectionMethod>(filter_madgwick_apt_method);
+													controllerInfo.FilterMadgwickStabilization = filter_madgwick_stabilization;
 
 													request_offset = true;
 												}
 												ImGui::PopItemWidth();
-
-												if (controllerInfo.FilterMadgwickAdaptiveMethod != AdaptiveDriftCorrectionMethod::AdaptiveNone)
-												{
-													ImGui::Indent();
-													{
-														ImGui::Text("Maximum Drift Correction: ");
-														ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-														ImGui::PushItemWidth(120.f);
-														float filter_madgwick_apt_max_correction = controllerInfo.FilterMadgwickAdaptiveMaxCorrection;
-														if (ImGui::InputFloat("##MadgwickAdaptiveMaximumCorrection", &filter_madgwick_apt_max_correction, 0.01f, 0.05f, 2))
-														{
-															controllerInfo.FilterMadgwickAdaptiveMaxCorrection = clampf(filter_madgwick_apt_max_correction, 0.0f, 1.0f);
-
-															request_offset = true;
-														}
-														ImGui::PopItemWidth();
-
-														ImGui::Text("Drift Crrection Falloff: ");
-														ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-														ImGui::PushItemWidth(120.f);
-														float filter_madgwick_apt_falloff = controllerInfo.FilterMadgwickAdaptiveFalloff;
-														if (ImGui::InputFloat("##MadgwickAdaptiveFalloff", &filter_madgwick_apt_falloff, 0.001f, 0.005f, 3))
-														{
-															controllerInfo.FilterMadgwickAdaptiveFalloff = clampf(filter_madgwick_apt_falloff, 0.0f, 0.999f);
-
-															request_offset = true;
-														}
-														ImGui::PopItemWidth();
-													}
-													ImGui::Unindent();
-												}
 											}
 
 											if (!settings_shown)
@@ -1146,10 +1115,8 @@ void AppStage_ControllerSettings::renderUI()
 												controllerInfo.FilterPassiveDriftCorrectionDelay = 100.f;
 												controllerInfo.FilterUseStabilization = false;
 												controllerInfo.FilterStabilizationMinScale = 0.1f;
-												controllerInfo.FilterMadgwickMinCorrection = 0.02f;
-												controllerInfo.FilterMadgwickAdaptiveMethod = AdaptiveDriftCorrectionMethod::AdaptiveBoth;
-												controllerInfo.FilterMadgwickAdaptiveMaxCorrection = 0.8f;
-												controllerInfo.FilterMadgwickAdaptiveFalloff = 0.975;
+												controllerInfo.FilterMadgwickBeta = 0.2f;
+												controllerInfo.FilterMadgwickStabilization = true;
 
 												request_offset = true;
 
@@ -1170,10 +1137,8 @@ void AppStage_ControllerSettings::renderUI()
 												filterSettings.filter_passive_drift_correction_delay = controllerInfo.FilterPassiveDriftCorrectionDelay;
 												filterSettings.filter_use_stabilization = controllerInfo.FilterUseStabilization;
 												filterSettings.filter_stabilization_min_scale = controllerInfo.FilterStabilizationMinScale;
-												filterSettings.filter_madgwick_min_correction = controllerInfo.FilterMadgwickMinCorrection;
-												filterSettings.filter_madgwick_apt_method = controllerInfo.FilterMadgwickAdaptiveMethod;
-												filterSettings.filter_madgwick_apt_max_correction = controllerInfo.FilterMadgwickAdaptiveMaxCorrection;
-												filterSettings.filter_madgwick_apt_falloff = controllerInfo.FilterMadgwickAdaptiveFalloff;
+												filterSettings.filter_madgwick_beta = controllerInfo.FilterMadgwickBeta;
+												filterSettings.filter_madgwick_stabilization = controllerInfo.FilterMadgwickStabilization;
 
 												request_set_controller_filter_settings(controllerInfo.ControllerID, filterSettings);
 											}
@@ -1841,10 +1806,8 @@ void AppStage_ControllerSettings::request_set_controller_filter_settings(
 	filter_settings->set_filter_passive_drift_correction_delay(filterSettings.filter_passive_drift_correction_delay);
 	filter_settings->set_filter_use_stabilization(filterSettings.filter_use_stabilization);
 	filter_settings->set_filter_stabilization_min_scale(filterSettings.filter_stabilization_min_scale);
-	filter_settings->set_filter_madgwick_min_correction(filterSettings.filter_madgwick_min_correction);
-	filter_settings->set_filter_madgwick_apt_method(filterSettings.filter_madgwick_apt_method);
-	filter_settings->set_filter_madgwick_apt_max_correction(filterSettings.filter_madgwick_apt_max_correction);
-	filter_settings->set_filter_madgwick_apt_falloff(filterSettings.filter_madgwick_apt_falloff);
+	filter_settings->set_filter_madgwick_beta(filterSettings.filter_madgwick_beta);
+	filter_settings->set_filter_madgwick_stabilization(filterSettings.filter_madgwick_stabilization);
 
 	PSMRequestID request_id;
 	PSM_SendOpaqueRequest(&request, &request_id);
@@ -1946,10 +1909,8 @@ void AppStage_ControllerSettings::handle_controller_list_response(
 				ControllerInfo.FilterPassiveDriftCorrectionDelay = ControllerResponse.filter_passive_drift_correction_delay();
 				ControllerInfo.FilterUseStabilization = ControllerResponse.filter_use_stabilization();
 				ControllerInfo.FilterStabilizationMinScale = ControllerResponse.filter_stabilization_min_scale();
-				ControllerInfo.FilterMadgwickMinCorrection = ControllerResponse.filter_madgwick_min_correction();
-				ControllerInfo.FilterMadgwickAdaptiveMethod = static_cast<AdaptiveDriftCorrectionMethod>(ControllerResponse.filter_madgwick_apt_method());
-				ControllerInfo.FilterMadgwickAdaptiveMaxCorrection = ControllerResponse.filter_madgwick_apt_max_correction();
-				ControllerInfo.FilterMadgwickAdaptiveFalloff = ControllerResponse.filter_madgwick_apt_falloff();
+				ControllerInfo.FilterMadgwickBeta = ControllerResponse.filter_madgwick_beta();
+				ControllerInfo.FilterMadgwickStabilization = ControllerResponse.filter_madgwick_stabilization();
 
                 if (ControllerInfo.ControllerType == PSMController_Move)
                 {

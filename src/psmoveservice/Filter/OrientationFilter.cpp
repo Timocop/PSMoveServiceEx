@@ -26,10 +26,7 @@
 // Decay rate to apply to the velocity
 #define k_velocity_decay 0.8f
 
-#define k_madgwick_reset_time 3000.f
-#define k_madgwick_begin_beta_falloff 0.99f
-#define k_madgwick_max_beta 0.8f
-#define k_madgwick_min_beta 0.05f
+#define k_madgwick_beta 0.20f
 #define k_madgwick_gyro_min_rad 0.025f
 #define k_madgwick_gyro_max_rad 0.25f
 
@@ -292,10 +289,8 @@ void OrientationFilterMadgwickARG::update(
 		imu_delta_time /= 2.0f;
 	}
 
-	float filter_madgwick_min_correction = k_madgwick_min_beta;
-	AdaptiveDriftCorrectionMethod filter_madgwick_apt_method = AdaptiveDriftCorrectionMethod::AdaptiveNone;
-	float filter_madgwick_apt_max_correction = k_madgwick_max_beta;
-	float filter_madgwick_apt_falloff = k_madgwick_begin_beta_falloff;
+	float filter_madgwick_beta = k_madgwick_beta;
+	bool filter_madgwick_stabilization = false;
 
 #if !defined(IS_TESTING_KALMAN) 
 	if (packet.controllerDeviceId > -1)
@@ -310,10 +305,8 @@ void OrientationFilterMadgwickARG::update(
 				PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
 				PSMoveControllerConfig config = *controller->getConfig();
 
-				filter_madgwick_min_correction = config.filter_madgwick_min_correction;
-				filter_madgwick_apt_method = static_cast<AdaptiveDriftCorrectionMethod>(config.filter_madgwick_apt_method);
-				filter_madgwick_apt_max_correction = config.filter_madgwick_apt_max_correction;
-				filter_madgwick_apt_falloff = config.filter_madgwick_apt_falloff;
+				filter_madgwick_beta = config.filter_madgwick_beta; 
+				filter_madgwick_stabilization = config.filter_madgwick_stabilization; 
 
 				break;
 			}
@@ -322,10 +315,8 @@ void OrientationFilterMadgwickARG::update(
 				PSDualShock4Controller *controller = ControllerView->castChecked<PSDualShock4Controller>();
 				PSDualShock4ControllerConfig config = *controller->getConfig();
 
-				filter_madgwick_min_correction = config.filter_madgwick_min_correction;
-				filter_madgwick_apt_method = static_cast<AdaptiveDriftCorrectionMethod>(config.filter_madgwick_apt_method);
-				filter_madgwick_apt_max_correction = config.filter_madgwick_apt_max_correction;
-				filter_madgwick_apt_falloff = config.filter_madgwick_apt_falloff;
+				filter_madgwick_beta = config.filter_madgwick_beta; 
+				filter_madgwick_stabilization = config.filter_madgwick_stabilization;
 
 				break;
 			}
@@ -345,10 +336,8 @@ void OrientationFilterMadgwickARG::update(
 				MorpheusHMD *hmd = HmdView->castChecked<MorpheusHMD>();
 				MorpheusHMDConfig config = *hmd->getConfig();
 
-				filter_madgwick_min_correction = config.filter_madgwick_min_correction;
-				filter_madgwick_apt_method = static_cast<AdaptiveDriftCorrectionMethod>(config.filter_madgwick_apt_method);
-				filter_madgwick_apt_max_correction = config.filter_madgwick_apt_max_correction;
-				filter_madgwick_apt_falloff = config.filter_madgwick_apt_falloff;
+				filter_madgwick_beta = config.filter_madgwick_beta; 
+				filter_madgwick_stabilization = config.filter_madgwick_stabilization;
 
 				break;
 			}
@@ -420,42 +409,20 @@ void OrientationFilterMadgwickARG::update(
 			// normalize the gradient
 			eigen_quaternion_normalize_with_default(SEqHatDot, *k_eigen_quaternion_zero);
 
-			// Compute the estimated quaternion rate of change
-			// Eqn 43) SEq_est = SEqDot_omega - beta*SEqHatDot
+			if (filter_madgwick_stabilization)
 			{
-				const Eigen::Vector3f &world_g = -packet.world_accelerometer;
-				const float accel_b = (fmaxf(0.f, sqrtf(world_g.x() * world_g.x() + world_g.y() * world_g.y() + world_g.z() * world_g.z()) - 1.f));
-				float gyro_b = ((fminf(fminf(abs(current_omega.x()), abs(current_omega.y())), abs(current_omega.z()))));
-				float gyro_multi = clampf((gyro_b - k_madgwick_gyro_min_rad) / k_madgwick_gyro_max_rad, 0.0f, 1.0f);
+				const float gyro_b = ((fminf(fminf(abs(current_omega.x()), abs(current_omega.y())), abs(current_omega.z()))));
+				const float gyro_multi = clampf((gyro_b - k_madgwick_gyro_min_rad) / k_madgwick_gyro_max_rad, 0.0f, 1.0f);
 
-				const float adaptive_max = clampf(filter_madgwick_apt_max_correction, 0.0f, 1.0f);
-				const float adaptive_min = clampf(filter_madgwick_min_correction, 0.0f, adaptive_max);
-				const float adaptive_falloff = clampf(filter_madgwick_apt_falloff, 0.0f, 0.999f);
-
-				m_beta = m_beta * adaptive_falloff;
-
-				switch (filter_madgwick_apt_method)
-				{
-				case AdaptiveDriftCorrectionMethod::AdaptiveGyro:
-				{
-					m_beta = fmaxf(m_beta, adaptive_max * gyro_multi);
-					break;
-				}
-				case AdaptiveDriftCorrectionMethod::AdaptiveAccel:
-				{
-					m_beta = fmaxf(m_beta, fminf(adaptive_max, accel_b));
-					break;
-				}
-				case AdaptiveDriftCorrectionMethod::AdaptiveBoth:
-				{
-					m_beta = fmaxf(m_beta, adaptive_max * gyro_multi);
-					m_beta = fmaxf(m_beta, fminf(adaptive_max, accel_b));
-					break;
-				}
-				}
-				m_beta = fmaxf(adaptive_min, m_beta);
+				m_beta = clampf(filter_madgwick_beta * gyro_multi, 0.0f, 1.0f);
+			}
+			else
+			{
+				m_beta = filter_madgwick_beta;
 			}
 
+			// Compute the estimated quaternion rate of change
+			// Eqn 43) SEq_est = SEqDot_omega - beta*SEqHatDot
 			Eigen::Quaternionf SEqDot_est = Eigen::Quaternionf(SEqDot_omega.coeffs() - SEqHatDot.coeffs()*m_beta);
 
 			// Compute then integrate the estimated quaternion rate
@@ -512,10 +479,8 @@ void OrientationFilterMadgwickMARG::update(
 		imu_delta_time /= 2.0f;
 	}
 
-	float filter_madgwick_min_correction = k_madgwick_min_beta;
-	AdaptiveDriftCorrectionMethod filter_madgwick_apt_method = AdaptiveDriftCorrectionMethod::AdaptiveNone;
-	float filter_madgwick_apt_max_correction = k_madgwick_max_beta;
-	float filter_madgwick_apt_falloff = k_madgwick_begin_beta_falloff;
+	float filter_madgwick_beta = k_madgwick_beta;
+	bool filter_madgwick_stabilization = false;
 
 #if !defined(IS_TESTING_KALMAN) 
 	if (packet.controllerDeviceId > -1)
@@ -530,10 +495,8 @@ void OrientationFilterMadgwickMARG::update(
 				PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
 				PSMoveControllerConfig config = *controller->getConfig();
 
-				filter_madgwick_min_correction = config.filter_madgwick_min_correction;
-				filter_madgwick_apt_method = static_cast<AdaptiveDriftCorrectionMethod>(config.filter_madgwick_apt_method);
-				filter_madgwick_apt_max_correction = config.filter_madgwick_apt_max_correction;
-				filter_madgwick_apt_falloff = config.filter_madgwick_apt_falloff;
+				filter_madgwick_beta = config.filter_madgwick_beta;
+				filter_madgwick_stabilization = config.filter_madgwick_stabilization;
 
 				break;
 			}
@@ -542,10 +505,8 @@ void OrientationFilterMadgwickMARG::update(
 				PSDualShock4Controller *controller = ControllerView->castChecked<PSDualShock4Controller>();
 				PSDualShock4ControllerConfig config = *controller->getConfig();
 
-				filter_madgwick_min_correction = config.filter_madgwick_min_correction;
-				filter_madgwick_apt_method = static_cast<AdaptiveDriftCorrectionMethod>(config.filter_madgwick_apt_method);
-				filter_madgwick_apt_max_correction = config.filter_madgwick_apt_max_correction;
-				filter_madgwick_apt_falloff = config.filter_madgwick_apt_falloff;
+				filter_madgwick_beta = config.filter_madgwick_beta;
+				filter_madgwick_stabilization = config.filter_madgwick_stabilization;
 
 				break;
 			}
@@ -565,10 +526,8 @@ void OrientationFilterMadgwickMARG::update(
 				MorpheusHMD *hmd = HmdView->castChecked<MorpheusHMD>();
 				MorpheusHMDConfig config = *hmd->getConfig();
 
-				filter_madgwick_min_correction = config.filter_madgwick_min_correction;
-				filter_madgwick_apt_method = static_cast<AdaptiveDriftCorrectionMethod>(config.filter_madgwick_apt_method);
-				filter_madgwick_apt_max_correction = config.filter_madgwick_apt_max_correction;
-				filter_madgwick_apt_falloff = config.filter_madgwick_apt_falloff;
+				filter_madgwick_beta = config.filter_madgwick_beta;
+				filter_madgwick_stabilization = config.filter_madgwick_stabilization;
 
 				break;
 			}
@@ -689,42 +648,20 @@ void OrientationFilterMadgwickMARG::update(
 		// Eqn 12) q_dot = 0.5*q*omega
 		Eigen::Quaternionf SEqDot_omega = Eigen::Quaternionf(SEq.coeffs() * 0.5f) * corrected_omega;
 
-		// Compute the estimated quaternion rate of change
-		// Eqn 43) SEq_est = SEqDot_omega - beta*SEqHatDot
+		if (filter_madgwick_stabilization)
 		{
-			const Eigen::Vector3f &world_g = -packet.world_accelerometer;
-			const float accel_b = (fmaxf(0.f, sqrtf(world_g.x() * world_g.x() + world_g.y() * world_g.y() + world_g.z() * world_g.z()) - 1.f));
-			float gyro_b = ((fminf(fminf(abs(current_omega.x()), abs(current_omega.y())), abs(current_omega.z()))));
-			float gyro_multi = clampf((gyro_b - k_madgwick_gyro_min_rad) / k_madgwick_gyro_max_rad, 0.0f, 1.0f);
+			const float gyro_b = ((fminf(fminf(abs(current_omega.x()), abs(current_omega.y())), abs(current_omega.z()))));
+			const float gyro_multi = clampf((gyro_b - k_madgwick_gyro_min_rad) / k_madgwick_gyro_max_rad, 0.0f, 1.0f);
 
-			const float adaptive_max = clampf(filter_madgwick_apt_max_correction, 0.0f, 1.0f);
-			const float adaptive_min = clampf(filter_madgwick_min_correction, 0.0f, adaptive_max);
-			const float adaptive_falloff = clampf(filter_madgwick_apt_falloff, 0.0f, 0.999f);
-
-			m_beta = m_beta * adaptive_falloff;
-
-			switch (filter_madgwick_apt_method)
-			{
-			case AdaptiveDriftCorrectionMethod::AdaptiveGyro:
-			{
-				m_beta = fmaxf(m_beta, adaptive_max * gyro_multi);
-				break;
-			}
-			case AdaptiveDriftCorrectionMethod::AdaptiveAccel:
-			{
-				m_beta = fmaxf(m_beta, fminf(adaptive_max, accel_b));
-				break;
-			}
-			case AdaptiveDriftCorrectionMethod::AdaptiveBoth:
-			{
-				m_beta = fmaxf(m_beta, adaptive_max * gyro_multi);
-				m_beta = fmaxf(m_beta, fminf(adaptive_max, accel_b));
-				break;
-			}
-			}
-			m_beta = fmaxf(adaptive_min, m_beta);
+			m_beta = clampf(filter_madgwick_beta * gyro_multi, 0.0f, 1.0f);
+		}
+		else
+		{
+			m_beta = filter_madgwick_beta;
 		}
 
+		// Compute the estimated quaternion rate of change
+		// Eqn 43) SEq_est = SEqDot_omega - beta*SEqHatDot
 		Eigen::Quaternionf SEqDot_est = Eigen::Quaternionf(SEqDot_omega.coeffs() - SEqHatDot.coeffs()*m_beta);
 
 		// Compute then integrate the estimated quaternion rate

@@ -52,10 +52,8 @@ public:
 		float filter_prediction_smoothing;
 		float filter_lowpassoptical_distance;
 		float filter_lowpassoptical_smoothing;
-		float filter_madgwick_min_correction;
-		int filter_madgwick_apt_method;
-		float filter_madgwick_apt_max_correction;
-		float filter_madgwick_apt_falloff;
+		float filter_madgwick_beta;
+		bool filter_madgwick_stabilization;
 	};
 
     struct HMDInfo
@@ -80,10 +78,8 @@ public:
 		float FilterPredictionSmoothing;
 		float FilterLowPassOpticalDistance;
 		float FilterLowPassOpticalSmoothing;
-		float FilterMadgwickMinCorrection;
-		AdaptiveDriftCorrectionMethod FilterMadgwickAdaptiveMethod;
-		float FilterMadgwickAdaptiveMaxCorrection;
-		float FilterMadgwickAdaptiveFalloff;
+		float FilterMadgwickBeta;
+		bool FilterMadgwickStabilization;
     };
 
 

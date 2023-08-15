@@ -33,14 +33,6 @@ class PSMoveControllerConfig : public PSMoveConfig
 public:
     static const int CONFIG_VERSION;
 
-	enum AdaptiveDriftCorrectionMethod
-	{
-		AdaptiveNone = 0,
-		AdaptiveGyro,
-		AdaptiveAccel,
-		AdaptiveBoth,
-	};
-
 	enum PassiveDriftCorrectionMethod
 	{
 		StableGravity = 0,
@@ -92,10 +84,8 @@ public:
 		, filter_passive_drift_correction_delay(100.f)
 		, filter_use_stabilization(false)
 		, filter_stabilization_min_scale(0.1f)
-		, filter_madgwick_min_correction(0.02f)
-		, filter_madgwick_apt_method(AdaptiveDriftCorrectionMethod::AdaptiveBoth)
-		, filter_madgwick_apt_max_correction(0.8f)
-		, filter_madgwick_apt_falloff(0.975f)
+		, filter_madgwick_beta(0.2f)
+		, filter_madgwick_stabilization(true)
     {
         magnetometer_identity.clear();
         magnetometer_center.clear();
@@ -243,10 +233,8 @@ public:
 	bool filter_use_stabilization;
 	float filter_stabilization_min_scale;
 
-	float filter_madgwick_min_correction;
-	int filter_madgwick_apt_method;
-	float filter_madgwick_apt_max_correction;
-	float filter_madgwick_apt_falloff;
+	float filter_madgwick_beta;
+	bool filter_madgwick_stabilization;
 };
 
 struct PSMoveControllerInputState : public CommonControllerState

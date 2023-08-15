@@ -51,10 +51,8 @@ public:
 		, filter_prediction_smoothing(0.40f)
 		, filter_lowpassoptical_distance(10.f)
 		, filter_lowpassoptical_smoothing(0.40f)
-		, filter_madgwick_min_correction(0.02f)
-		, filter_madgwick_apt_method(AdaptiveDriftCorrectionMethod::AdaptiveBoth)
-		, filter_madgwick_apt_max_correction(0.8f)
-		, filter_madgwick_apt_falloff(0.975f)
+		, filter_madgwick_beta(0.2f)
+		, filter_madgwick_stabilization(true)
     {
 		offset_position.set(0.0f, 0.0f, 0.0f);
 		offset_orientation.set(0.0f, 0.0f, 0.0f);
@@ -196,10 +194,8 @@ public:
 	float filter_lowpassoptical_distance;
 	float filter_lowpassoptical_smoothing;
 
-	float filter_madgwick_min_correction;
-	int filter_madgwick_apt_method;
-	float filter_madgwick_apt_max_correction;
-	float filter_madgwick_apt_falloff;
+	float filter_madgwick_beta;
+	bool filter_madgwick_stabilization;
 };
 
 struct MorpheusHMDSensorFrame

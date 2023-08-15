@@ -110,15 +110,6 @@ class OrientationFilterMadgwickARG : public OrientationFilterComplementaryMARG
 {
 public:
 
-	enum AdaptiveDriftCorrectionMethod
-	{
-		AdaptiveNone = 0,
-		AdaptiveGyro,
-		AdaptiveAccel,
-		AdaptiveBoth,
-	};
-
-
 	OrientationFilterMadgwickARG() 
 		: OrientationFilterComplementaryMARG()
 		, m_beta(0.f)

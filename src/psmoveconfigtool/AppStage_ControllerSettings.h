@@ -66,10 +66,8 @@ public:
 		float filter_passive_drift_correction_delay;
 		bool filter_use_stabilization;
 		float filter_stabilization_min_scale;
-		float filter_madgwick_min_correction;
-		int filter_madgwick_apt_method;
-		float filter_madgwick_apt_max_correction;
-		float filter_madgwick_apt_falloff;
+		float filter_madgwick_beta;
+		bool filter_madgwick_stabilization;
 	};
 
 	struct ControllerInfo
@@ -118,10 +116,8 @@ public:
 		float FilterPassiveDriftCorrectionDelay;
 		bool FilterUseStabilization;
 		float FilterStabilizationMinScale;
-		float FilterMadgwickMinCorrection;
-		AdaptiveDriftCorrectionMethod FilterMadgwickAdaptiveMethod;
-		float FilterMadgwickAdaptiveMaxCorrection;
-		float FilterMadgwickAdaptiveFalloff;
+		float FilterMadgwickBeta;
+		bool FilterMadgwickStabilization;
 
 		static bool ParentControllerComboItemGetter(void* userdata, int index, const char** out_string)
 		{

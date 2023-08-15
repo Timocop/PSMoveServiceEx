@@ -620,10 +620,8 @@ PSMoveControllerConfig::config2ptree()
 	pt.put("FilterSettings.Stabilization.Enabled", filter_use_stabilization);
 	pt.put("FilterSettings.Stabilization.MinScale", filter_stabilization_min_scale);
 
-	pt.put("FilterSettings.Madgwick.MinCorrection", filter_madgwick_min_correction);
-	pt.put("FilterSettings.Madgwick.AdaptiveMethod", filter_madgwick_apt_method);
-	pt.put("FilterSettings.Madgwick.AdaptiveMaxCorrection", filter_madgwick_apt_max_correction);
-	pt.put("FilterSettings.Madgwick.AdaptiveFalloff", filter_madgwick_apt_falloff);
+	pt.put("FilterSettings.Madgwick.Beta", filter_madgwick_beta);
+	pt.put("FilterSettings.Madgwick.Stabilization", filter_madgwick_stabilization);
 
 	writeTrackingColor(pt, tracking_color_id);
 
@@ -748,10 +746,8 @@ PSMoveControllerConfig::ptree2config(const boost::property_tree::ptree &pt)
 		filter_use_stabilization = pt.get<bool>("FilterSettings.Stabilization.Enabled", filter_use_stabilization);
 		filter_stabilization_min_scale = pt.get<float>("FilterSettings.Stabilization.MinScale", filter_stabilization_min_scale);
 		
-		filter_madgwick_min_correction = pt.get<float>("FilterSettings.Madgwick.MinCorrection", filter_madgwick_min_correction);
-		filter_madgwick_apt_method = pt.get<int>("FilterSettings.Madgwick.AdaptiveMethod", filter_madgwick_apt_method);
-		filter_madgwick_apt_max_correction = pt.get<float>("FilterSettings.Madgwick.AdaptiveMaxCorrection", filter_madgwick_apt_max_correction);
-		filter_madgwick_apt_falloff = pt.get<float>("FilterSettings.Madgwick.AdaptiveFalloff", filter_madgwick_apt_falloff);
+		filter_madgwick_beta = pt.get<float>("FilterSettings.Madgwick.Beta", filter_madgwick_beta);
+		filter_madgwick_stabilization = pt.get<bool>("FilterSettings.Madgwick.Stabilization", filter_madgwick_stabilization);
 }
     else
     {
