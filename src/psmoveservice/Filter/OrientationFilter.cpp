@@ -30,6 +30,8 @@
 #define k_madgwick_begin_beta_falloff 0.99f
 #define k_madgwick_max_beta 0.8f
 #define k_madgwick_min_beta 0.05f
+#define k_madgwick_gyro_min_rad 0.025f
+#define k_madgwick_gyro_max_rad 0.25f
 
 // -- private definitions -----
 struct OrientationFilterState
@@ -422,18 +424,21 @@ void OrientationFilterMadgwickARG::update(
 			// Eqn 43) SEq_est = SEqDot_omega - beta*SEqHatDot
 			{
 				const Eigen::Vector3f &world_g = -packet.world_accelerometer;
-				const float accel_b = (fmaxf(0.f, sqrtf(world_g.x() * world_g.x() + world_g.y() * world_g.y() + world_g.z() * world_g.z()) - 1.f) * 0.25f);
-				const float gyro_b = ((fminf(fminf(abs(current_omega.x()), abs(current_omega.y())), abs(current_omega.z()))) * 0.25f);
+				const float accel_b = (fmaxf(0.f, sqrtf(world_g.x() * world_g.x() + world_g.y() * world_g.y() + world_g.z() * world_g.z()) - 1.f));
+				float gyro_b = ((fminf(fminf(abs(current_omega.x()), abs(current_omega.y())), abs(current_omega.z()))));
+				float gyro_multi = clampf((gyro_b - k_madgwick_gyro_min_rad) / k_madgwick_gyro_max_rad, 0.0f, 1.0f);
 
-				const float adaptive_max = clampf(filter_madgwick_apt_max_correction, 0.0f, 1.0f );
+				const float adaptive_max = clampf(filter_madgwick_apt_max_correction, 0.0f, 1.0f);
 				const float adaptive_min = clampf(filter_madgwick_min_correction, 0.0f, adaptive_max);
 				const float adaptive_falloff = clampf(filter_madgwick_apt_falloff, 0.0f, 0.999f);
+
+				m_beta = m_beta * adaptive_falloff;
 
 				switch (filter_madgwick_apt_method)
 				{
 				case AdaptiveDriftCorrectionMethod::AdaptiveGyro:
 				{
-					m_beta = fmaxf(m_beta, fminf(adaptive_max, gyro_b));
+					m_beta = fmaxf(m_beta, adaptive_max * gyro_multi);
 					break;
 				}
 				case AdaptiveDriftCorrectionMethod::AdaptiveAccel:
@@ -443,12 +448,12 @@ void OrientationFilterMadgwickARG::update(
 				}
 				case AdaptiveDriftCorrectionMethod::AdaptiveBoth:
 				{
-					m_beta = fmaxf(m_beta, fminf(adaptive_max, gyro_b));
+					m_beta = fmaxf(m_beta, adaptive_max * gyro_multi);
 					m_beta = fmaxf(m_beta, fminf(adaptive_max, accel_b));
 					break;
 				}
 				}
-				m_beta = fmaxf(adaptive_min, (m_beta * adaptive_falloff));
+				m_beta = fmaxf(adaptive_min, m_beta);
 			}
 
 			Eigen::Quaternionf SEqDot_est = Eigen::Quaternionf(SEqDot_omega.coeffs() - SEqHatDot.coeffs()*m_beta);
@@ -688,18 +693,21 @@ void OrientationFilterMadgwickMARG::update(
 		// Eqn 43) SEq_est = SEqDot_omega - beta*SEqHatDot
 		{
 			const Eigen::Vector3f &world_g = -packet.world_accelerometer;
-			const float accel_b = (fmaxf(0.f, sqrtf(world_g.x() * world_g.x() + world_g.y() * world_g.y() + world_g.z() * world_g.z()) - 1.f) * 0.25f);
-			const float gyro_b = ((fminf(fminf(abs(current_omega.x()), abs(current_omega.y())), abs(current_omega.z()))) * 0.25f);
+			const float accel_b = (fmaxf(0.f, sqrtf(world_g.x() * world_g.x() + world_g.y() * world_g.y() + world_g.z() * world_g.z()) - 1.f));
+			float gyro_b = ((fminf(fminf(abs(current_omega.x()), abs(current_omega.y())), abs(current_omega.z()))));
+			float gyro_multi = clampf((gyro_b - k_madgwick_gyro_min_rad) / k_madgwick_gyro_max_rad, 0.0f, 1.0f);
 
 			const float adaptive_max = clampf(filter_madgwick_apt_max_correction, 0.0f, 1.0f);
 			const float adaptive_min = clampf(filter_madgwick_min_correction, 0.0f, adaptive_max);
 			const float adaptive_falloff = clampf(filter_madgwick_apt_falloff, 0.0f, 0.999f);
 
+			m_beta = m_beta * adaptive_falloff;
+
 			switch (filter_madgwick_apt_method)
 			{
 			case AdaptiveDriftCorrectionMethod::AdaptiveGyro:
 			{
-				m_beta = fmaxf(m_beta, fminf(adaptive_max, gyro_b));
+				m_beta = fmaxf(m_beta, adaptive_max * gyro_multi);
 				break;
 			}
 			case AdaptiveDriftCorrectionMethod::AdaptiveAccel:
@@ -709,12 +717,12 @@ void OrientationFilterMadgwickMARG::update(
 			}
 			case AdaptiveDriftCorrectionMethod::AdaptiveBoth:
 			{
-				m_beta = fmaxf(m_beta, fminf(adaptive_max, gyro_b));
+				m_beta = fmaxf(m_beta, adaptive_max * gyro_multi);
 				m_beta = fmaxf(m_beta, fminf(adaptive_max, accel_b));
 				break;
 			}
 			}
-			m_beta = fmaxf(adaptive_min, (m_beta * adaptive_falloff));
+			m_beta = fmaxf(adaptive_min, m_beta);
 		}
 
 		Eigen::Quaternionf SEqDot_est = Eigen::Quaternionf(SEqDot_omega.coeffs() - SEqHatDot.coeffs()*m_beta);
