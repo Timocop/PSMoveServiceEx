@@ -241,7 +241,7 @@ void OrientationFilterExternal::update(const float delta_time, const PoseFilterP
 {
 #ifdef WIN32
 	if (packet.controllerDeviceId < 0)
-		return false;
+		return;
 
 	std::string pipeName = "\\\\.\\pipe\\PSMoveSerivceEx\\VirtPSmoveStream_";
 
@@ -267,7 +267,7 @@ void OrientationFilterExternal::update(const float delta_time, const PoseFilterP
 				SERVER_LOG_INFO("OrientationFilterExternal::update") << pipeName.c_str() << " pipe created.";
 
 			showMessage = false;
-			return false;
+			return;
 		}
 		else
 		{
@@ -275,13 +275,13 @@ void OrientationFilterExternal::update(const float delta_time, const PoseFilterP
 				SERVER_LOG_ERROR("OrientationFilterExternal::update") << pipeName.c_str() << " pipe failed!, GLE=" << GetLastError();
 			
 			showMessage = false;
-			return false;
+			return;
 		}
 	}
 
 
 	if (orientationPipe == INVALID_HANDLE_VALUE)
-		return false;
+		return;
 
 	BOOL connected = ConnectNamedPipe(orientationPipe, NULL);
 	if (connected)
@@ -302,7 +302,7 @@ void OrientationFilterExternal::update(const float delta_time, const PoseFilterP
 	}
 
 	if (!connected)
-		return false;
+		return;
 
 	DWORD dwRead;
 	BOOL success = ReadFile(orientationPipe, pipeBuffer, 128, &dwRead, NULL);
@@ -336,7 +336,7 @@ void OrientationFilterExternal::update(const float delta_time, const PoseFilterP
 			}
 		}
 
-		return false;
+		return;
 	}
 
 	showMessage = true;
@@ -446,9 +446,6 @@ void OrientationFilterExternal::update(const float delta_time, const PoseFilterP
 		const Eigen::Vector3f new_angular_acceleration = (new_angular_velocity - m_state->angular_velocity) / delta_time;
 
 		m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, delta_time);
-		return true;
 	}
 #endif
-
-	return false;
 }
