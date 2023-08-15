@@ -3,6 +3,7 @@
 
 //-- includes -----
 #include "PoseFilterInterface.h"
+#include <list>
 
 #ifdef WIN32
 #include <windows.h> 
@@ -42,6 +43,9 @@ protected:
 	HANDLE orientationPipe;
 	char pipeBuffer[128];
 	bool showMessage;
+
+	std::list<Eigen::Quaternionf> blendedPositionHistory;
+	Eigen::Quaternionf last_orentation;
 
 #ifdef WIN32
 	_locale_t localeInvariant;

@@ -119,6 +119,8 @@ ExternalOrientationFilter::ExternalOrientationFilter() :
 
 	memset(&m_constants, 0, sizeof(OrientationFilterConstants));
 	resetState();
+
+	last_orentation = Eigen::Quaternionf::Identity();
 }
 
 ExternalOrientationFilter::~ExternalOrientationFilter()
@@ -179,6 +181,8 @@ bool ExternalOrientationFilter::init(const OrientationFilterConstants &constants
 	m_state->orientation = initial_orientation;
 	m_state->bIsValid = true;
 
+	last_orentation = initial_orientation;
+
 	return true;
 }
 
@@ -237,7 +241,7 @@ void OrientationFilterExternal::update(const float delta_time, const PoseFilterP
 {
 #ifdef WIN32
 	if (packet.controllerDeviceId < 0)
-		return;
+		return false;
 
 	std::string pipeName = "\\\\.\\pipe\\PSMoveSerivceEx\\VirtPSmoveStream_";
 
@@ -263,7 +267,7 @@ void OrientationFilterExternal::update(const float delta_time, const PoseFilterP
 				SERVER_LOG_INFO("OrientationFilterExternal::update") << pipeName.c_str() << " pipe created.";
 
 			showMessage = false;
-			return;
+			return false;
 		}
 		else
 		{
@@ -271,13 +275,13 @@ void OrientationFilterExternal::update(const float delta_time, const PoseFilterP
 				SERVER_LOG_ERROR("OrientationFilterExternal::update") << pipeName.c_str() << " pipe failed!, GLE=" << GetLastError();
 			
 			showMessage = false;
-			return;
+			return false;
 		}
 	}
 
 
 	if (orientationPipe == INVALID_HANDLE_VALUE)
-		return;
+		return false;
 
 	BOOL connected = ConnectNamedPipe(orientationPipe, NULL);
 	if (connected)
@@ -298,7 +302,7 @@ void OrientationFilterExternal::update(const float delta_time, const PoseFilterP
 	}
 
 	if (!connected)
-		return;
+		return false;
 
 	DWORD dwRead;
 	BOOL success = ReadFile(orientationPipe, pipeBuffer, 128, &dwRead, NULL);
@@ -332,7 +336,7 @@ void OrientationFilterExternal::update(const float delta_time, const PoseFilterP
 			}
 		}
 
-		return;
+		return false;
 	}
 
 	showMessage = true;
@@ -382,10 +386,15 @@ void OrientationFilterExternal::update(const float delta_time, const PoseFilterP
 		}
 	}
 
+	bool customVelocity = false;
+
 	// Get gyro angular velocity
-	__size += 3;
+	__size += 4;
 	if (vector.size() >= __size)
 	{
+		customVelocity = true;
+
+		long timeStamp = (long)_atoi64(vector[__size - 4].c_str());
 		new_angular_velocity.x() = (float)_atof_l(vector[__size - 3].c_str(), localeInvariant);
 		new_angular_velocity.y() = (float)_atof_l(vector[__size - 2].c_str(), localeInvariant);
 		new_angular_velocity.z() = (float)_atof_l(vector[__size - 1].c_str(), localeInvariant);
@@ -393,9 +402,53 @@ void OrientationFilterExternal::update(const float delta_time, const PoseFilterP
 
 	if (isValid && eigen_quaternion_is_valid(new_orientation))
 	{
+		// Get angular velocity from quaternions
+		if (!customVelocity) 
+		{
+			// Apply basic prediction
+			// Add the new blend to blend history
+			//blendedPositionHistory.push_back(new_orientation);
+			//while (blendedPositionHistory.size() > 50)
+			//{
+			//	blendedPositionHistory.pop_front();
+			//}
+
+			//Eigen::Vector3f quat_sum = Eigen::Vector3f::Zero();
+			//float quat_w = 0.0f;
+
+			//int sampleCount = 0;
+			//for (std::list<Eigen::Quaternionf>::iterator it = blendedPositionHistory.begin(); it != blendedPositionHistory.end(); it++)
+			//{
+			//	Eigen::Quaternionf quat = *it;
+			//	quat_sum += Eigen::Vector3f(quat.x(), quat.y(), quat.z());
+			//	quat_w += quat.w();
+			//	
+			//	sampleCount++;
+			//}
+
+			//quat_sum /= sampleCount;
+			//quat_w /= sampleCount;
+
+			//Eigen::Quaternionf old_orientation = Eigen::Quaternionf(quat_w, quat_sum.x(), quat_sum.y(), quat_sum.z());
+			//Eigen::Quaternionf deltaRotation = old_orientation.conjugate() * new_orientation;
+			
+			//$TODO: This seems very glitchy
+			Eigen::Quaternionf deltaRotation = last_orentation.conjugate() * new_orientation;
+			Eigen::AngleAxisf axisAngle(deltaRotation);
+
+			Eigen::Vector3f angularVelocity = axisAngle.axis() * (axisAngle.angle() / delta_time);
+
+			new_angular_velocity = angularVelocity.transpose();
+		}
+
+		last_orentation = new_orientation;
+		
 		const Eigen::Vector3f new_angular_acceleration = (new_angular_velocity - m_state->angular_velocity) / delta_time;
 
 		m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, delta_time);
+		return true;
 	}
 #endif
+
+	return false;
 }
