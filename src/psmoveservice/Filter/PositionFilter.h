@@ -50,31 +50,31 @@ protected:
 class PositionFilterPassThru : public PositionFilter
 {
 public:
-    void update(const float delta_time, const PoseFilterPacket &packet) override;
+    void update(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet) override;
 	std::list<Eigen::Vector3f> blendedPositionHistory;
 	std::list<int> historyQueueLenght;
-	std::chrono::time_point<std::chrono::high_resolution_clock> lastOpticalFrame;
+	t_high_resolution_timepoint lastOpticalFrame;
 };
 
 class PositionFilterLowPassOptical : public PositionFilter
 {
 public:
-    void update(const float delta_time, const PoseFilterPacket &packet) override;
+    void update(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet) override;
 	std::list<Eigen::Vector3f> blendedPositionHistory;
 	std::list<int> historyQueueLenght;
-	std::chrono::time_point<std::chrono::high_resolution_clock> lastOpticalFrame;
+	t_high_resolution_timepoint lastOpticalFrame;
 };
 
 class PositionFilterLowPassIMU : public PositionFilter
 {
 public:
-    void update(const float delta_time, const PoseFilterPacket &packet) override;
+    void update(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet) override;
 };
 
 class PositionFilterLowPassExponential : public PositionFilter
 {
 public:
-	void update(const float delta_time, const PoseFilterPacket &packet) override;
+	void update(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet) override;
 	std::list<float> deltaTimeHistory;
 	std::list<Eigen::Vector3f> blendedPositionHistory;
 };
@@ -82,8 +82,8 @@ public:
 class PositionFilterComplimentaryOpticalIMU : public PositionFilter
 {
 public:
-    void update(const float delta_time, const PoseFilterPacket &packet) override;
-	std::chrono::time_point<std::chrono::high_resolution_clock> lastOpticalFrame;
+    void update(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet) override;
+	t_high_resolution_timepoint lastOpticalFrame;
 };
 
 #endif // POSITION_FILTER_H

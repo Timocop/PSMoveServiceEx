@@ -355,13 +355,57 @@ public:
     /// Unscented Kalman Filter instance
 	PositionSRUKF ukf;
 
-    /// The duration the filter has been running
-    double time;
+	t_high_resolution_timepoint last_optical_timestamp;
+	t_high_resolution_timepoint last_imu_timestamp;
 
     KalmanPositionFilterImpl() 
 		: ukf(k_ukf_alpha, k_ukf_beta, k_ukf_kappa)
     {
+		last_optical_timestamp = t_high_resolution_timepoint();
+		last_imu_timestamp = t_high_resolution_timepoint();
     }
+
+	float getOpticalTime(const t_high_resolution_timepoint timestamp)
+	{
+		// Compute the time since the last packet
+		float time_delta_seconds;
+		const t_high_resolution_duration_milli time_delta = timestamp - last_optical_timestamp;
+		const float time_delta_milli = time_delta.count();
+
+		// convert delta to seconds clamp time delta between 2500hz and 30hz
+		time_delta_seconds = clampf(time_delta_milli / 1000.f, k_min_time_delta_seconds, k_max_time_delta_seconds);
+
+		return time_delta_seconds;
+	}
+
+	float getImuTime(const t_high_resolution_timepoint timestamp)
+	{
+		// Compute the time since the last packet
+		float time_delta_seconds;
+		const t_high_resolution_duration_milli time_delta = timestamp - last_imu_timestamp;
+		const float time_delta_milli = time_delta.count();
+
+		// convert delta to seconds clamp time delta between 2500hz and 30hz
+		time_delta_seconds = clampf(time_delta_milli / 1000.f, k_min_time_delta_seconds, k_max_time_delta_seconds);
+
+		return time_delta_seconds;
+	}
+
+	void applyOpticalTimestamp(
+		const t_high_resolution_timepoint timestamp,
+		const bool isTemporary)
+	{
+		if (!isTemporary)
+			last_optical_timestamp = timestamp;
+	}
+
+	void applyImuTimestamp(
+		const t_high_resolution_timepoint timestamp,
+		const bool isTemporary)
+	{
+		if (!isTemporary)
+			last_imu_timestamp = timestamp;
+	}
 
     virtual void init(const PositionFilterConstants &constants)
     {
@@ -373,7 +417,6 @@ public:
 		measurement_model.init(constants);
         system_model.init(constants);
         ukf.init(PositionStateVectord::Zero());
-        time= 0.0;
     }
 
 	virtual void init(const PositionFilterConstants &constants, const Eigen::Vector3f &initial_position_meters)
@@ -389,7 +432,6 @@ public:
 		measurement_model.init(constants);
 		system_model.init(constants);
 		ukf.init(state_vector);
-        time= 0.0;
 	}
 };
 
@@ -448,17 +490,27 @@ bool KalmanPositionFilter::init(const PositionFilterConstants &constants, const 
 	return true;
 }
 
-void KalmanPositionFilter::update(const float delta_time, const PoseFilterPacket &packet)
+void KalmanPositionFilter::update(
+	const t_high_resolution_timepoint timestamp, 
+	const PoseFilterPacket &packet)
 {
     if (m_filter->bIsValid)
     {
+		float optical_delta_time = (m_filter->getOpticalTime(timestamp) / static_cast<float>(packet.stateLookBack));
+		float imu_delta_time = (m_filter->getImuTime(timestamp) / static_cast<float>(packet.stateLookBack));
+		if (packet.isHalfFrame)
+		{
+			optical_delta_time /= 2.0f;
+			imu_delta_time /= 2.0f;
+		}
+
 		// Adjust the amount we trust the optical state based on the tracking projection area
 		m_filter->system_model.update_process_noise(
 			m_constants, 
 			packet.tracking_projection_area_px_sqr);
 
         // Predict state for current time-step using the filters
-        m_filter->system_model.set_time_step(delta_time);
+        m_filter->system_model.set_time_step(optical_delta_time);
         m_filter->ukf.predict(m_filter->system_model);
 
         // Get the measurement model for the DS4 from the derived filter impl
@@ -532,7 +584,8 @@ void KalmanPositionFilter::update(const float delta_time, const PoseFilterPacket
 
         // Update UKF
         m_filter->ukf.update(measurement_model, measurement);
-        m_filter->time+= (double)delta_time;
+
+		m_filter->applyOpticalTimestamp(timestamp, packet.isTemporary);
     }
     else
     {
@@ -547,7 +600,7 @@ void KalmanPositionFilter::update(const float delta_time, const PoseFilterPacket
 		}
 
 		m_filter->ukf.init(state_vector);
-        m_filter->time= 0.f;
+		m_filter->last_optical_timestamp = t_high_resolution_timepoint();
         m_filter->bIsValid= true;
     }
 }
@@ -559,7 +612,7 @@ bool KalmanPositionFilter::getIsStateValid() const
 
 double KalmanPositionFilter::getTimeInSeconds() const
 {
-    return m_filter->time;
+    return m_filter->getOpticalTime(std::chrono::high_resolution_clock::now());
 }
 
 void KalmanPositionFilter::resetState()

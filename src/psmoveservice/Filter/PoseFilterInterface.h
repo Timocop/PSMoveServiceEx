@@ -15,6 +15,15 @@ extern const Eigen::Matrix3f *k_eigen_identity_pose_laying_flat;
 extern const Eigen::Matrix3f *k_eigen_sensor_transform_identity;
 extern const Eigen::Matrix3f *k_eigen_sensor_transform_opengl;
 
+//-- constants -----
+static const float k_min_time_delta_seconds = 1 / 2500.f;
+static const float k_max_time_delta_seconds = 1 / 30.f;
+
+//-- typedefs ----
+using t_high_resolution_timepoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
+using t_high_resolution_duration = t_high_resolution_timepoint::duration;
+using t_high_resolution_duration_milli = std::chrono::duration<float, std::milli>;
+
 // 1 g-unit is equal 980.66499997877 gal (cm/s²)
 #define k_g_units_to_gal  980.665000f // gal (cm/s²)
 #define k_g_units_to_ms2  9.80665000f // m/s²
@@ -47,7 +56,7 @@ struct ExponentialCurve
 /// Intended to only exist on the stack.
 struct PoseSensorPacket
 {
-	std::chrono::time_point<std::chrono::high_resolution_clock> timestamp;
+	t_high_resolution_timepoint timestamp;
 
     // Optical readings in the world reference frame
     Eigen::Vector3f optical_position_cm;
@@ -67,7 +76,7 @@ struct PoseSensorPacket
 
 	inline void clear()
 	{
-		timestamp= std::chrono::time_point<std::chrono::high_resolution_clock>();
+		timestamp= t_high_resolution_timepoint();
 		optical_position_cm= Eigen::Vector3f::Zero();
 		optical_orientation= Eigen::Quaternionf::Identity();
 		tracking_projection_area_px_sqr= 0.f;
@@ -107,6 +116,10 @@ struct PoseFilterPacket : PoseSensorPacket
 	int hmdDeviceId;
 	bool isCurrentlyTracking;
 
+	int stateLookBack;
+	bool isHalfFrame;
+	bool isTemporary;
+
 	bool isSynced = false;
 
     /// The current orientation of the controller
@@ -136,6 +149,9 @@ struct PoseFilterPacket : PoseSensorPacket
 		current_linear_velocity_cm_s= Eigen::Vector3f::Zero();
 		current_linear_acceleration_cm_s2= Eigen::Vector3f::Zero();
 		world_accelerometer= Eigen::Vector3f::Zero();
+		stateLookBack = 1;
+		isHalfFrame = false;
+		isTemporary = false;
 	}
 
 	inline Eigen::Vector3f get_current_position_in_meters() const
@@ -314,7 +330,7 @@ public:
     virtual double getTimeInSeconds() const = 0;
 
     /// Update the state in the filter given the filter packet
-    virtual void update(const float delta_time, const PoseFilterPacket &packet) = 0;
+    virtual void update(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet) = 0;
 
     /// Clears the current history of the filter
     virtual void resetState() = 0;

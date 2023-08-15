@@ -49,7 +49,7 @@ protected:
 class OrientationFilterPassThru : public OrientationFilter
 {
 public:
-    void update(const float delta_time, const PoseFilterPacket &packet) override;
+    void update(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet) override;
 };
 
 /// Angular Rate and Gravity fusion algorithm from Madgwick
@@ -75,7 +75,7 @@ public:
 	}
 
 	void resetState() override;
-    void update(const float delta_time, const PoseFilterPacket &packet) override;
+    void update(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet) override;
 
 protected:
 	float m_beta;
@@ -99,7 +99,7 @@ public:
 	}
 
     void resetState() override;
-    void update(const float delta_time, const PoseFilterPacket &packet) override;
+    void update(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet) override;
 
 protected:
     float m_omega_bias_x;
@@ -115,7 +115,7 @@ protected:
 class OrientationFilterComplementaryOpticalARG : public OrientationFilterMadgwickARG
 {
 public:
-    void update(const float delta_time, const PoseFilterPacket &packet) override;
+    void update(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet) override;
 };
 
 /// Magnetic, Angular Rate, Gravity and fusion algorithm (hybrid Madgwick)
@@ -143,7 +143,7 @@ public:
 	}
 
     void resetState() override;
-    void update(const float delta_time, const PoseFilterPacket &packet) override;
+    void update(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet) override;
 
 	bool filter_process_passive_drift_correction(
 		const float delta_time, 

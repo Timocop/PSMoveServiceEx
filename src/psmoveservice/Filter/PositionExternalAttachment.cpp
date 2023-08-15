@@ -34,8 +34,34 @@ struct ExternalAttachmentPositionFilterState
     /// Position that's considered the origin position 
     Eigen::Vector3f origin_position; // meters
 
-    /// The number of seconds the filter has been running
-    double time;
+	t_high_resolution_timepoint last_optical_timestamp;
+	t_high_resolution_timepoint last_imu_timestamp;
+
+	float getOpticalTime(const t_high_resolution_timepoint timestamp)
+	{
+		// Compute the time since the last packet
+		float time_delta_seconds;
+		const t_high_resolution_duration_milli time_delta = timestamp - last_optical_timestamp;
+		const float time_delta_milli = time_delta.count();
+
+		// convert delta to seconds clamp time delta between 2500hz and 30hz
+		time_delta_seconds = clampf(time_delta_milli / 1000.f, k_min_time_delta_seconds, k_max_time_delta_seconds);
+
+		return time_delta_seconds;
+	}
+
+	float getImuTime(const t_high_resolution_timepoint timestamp)
+	{
+		// Compute the time since the last packet
+		float time_delta_seconds;
+		const t_high_resolution_duration_milli time_delta = timestamp  - last_imu_timestamp;
+		const float time_delta_milli = time_delta.count();
+
+		// convert delta to seconds clamp time delta between 2500hz and 30hz
+		time_delta_seconds = clampf(time_delta_milli / 1000.f, k_min_time_delta_seconds, k_max_time_delta_seconds);
+
+		return time_delta_seconds;
+	}
 
     void reset()
     {
@@ -46,7 +72,8 @@ struct ExternalAttachmentPositionFilterState
         accelerometer_g_units = Eigen::Vector3f::Zero();
         accelerometer_derivative_g_per_sec = Eigen::Vector3f::Zero();
         origin_position = Eigen::Vector3f::Zero();
-        time= 0.0;
+		last_optical_timestamp = t_high_resolution_timepoint();
+		last_imu_timestamp = t_high_resolution_timepoint();
     }
 
 	void apply_imu_state(
@@ -55,7 +82,8 @@ struct ExternalAttachmentPositionFilterState
 		const Eigen::Vector3f &new_acceleration_m_per_sec_sqr,
 		const Eigen::Vector3f &new_accelerometer_g_units,
 		const Eigen::Vector3f &new_accelerometer_derivative_g_per_sec,
-		const float delta_time)
+		const t_high_resolution_timepoint timestamp,
+		const bool isTemporary)
 	{
 		if (eigen_vector3f_is_valid(new_position_m))
 		{
@@ -102,14 +130,8 @@ struct ExternalAttachmentPositionFilterState
 			SERVER_LOG_WARNING("PositionExternalAttachmentFilter") << "AccelerometerDerivative is NaN!";
 		}
 
-		if (is_valid_float(delta_time))
-		{
-			time = time + (double)delta_time;
-		}
-		else
-		{
-			SERVER_LOG_WARNING("PositionExternalAttachmentFilter") << "time delta is NaN!";
-		}
+		if(!isTemporary)
+			last_imu_timestamp = timestamp;
 
         // state is valid now that we have had an update
         bIsValid= true;
@@ -117,15 +139,17 @@ struct ExternalAttachmentPositionFilterState
 
 	void apply_optical_state(
 		const Eigen::Vector3f &new_position_m,
-		const float delta_time)
+		const t_high_resolution_timepoint timestamp,
+		const bool isTemporary)
 	{
-		apply_optical_state(new_position_m, Eigen::Vector3f::Zero(), delta_time);
+		apply_optical_state(new_position_m, Eigen::Vector3f::Zero(), timestamp, isTemporary);
 	}
 
 	void apply_optical_state(
 		const Eigen::Vector3f &new_position_m,
 		const Eigen::Vector3f &new_velocity_m_per_sec,
-		const float delta_time)
+		const t_high_resolution_timepoint timestamp,
+		const bool isTemporary)
 	{
 		if (eigen_vector3f_is_valid(new_position_m))
 		{
@@ -145,14 +169,8 @@ struct ExternalAttachmentPositionFilterState
 			SERVER_LOG_WARNING("PositionExternalAttachmentFilter") << "Velocity is NaN!";
 		}
 
-		if (is_valid_float(delta_time))
-		{
-			time = time + (double)delta_time;
-		}
-		else
-		{
-			SERVER_LOG_WARNING("PositionExternalAttachmentFilter") << "time delta is NaN!";
-		}
+		if(!isTemporary)
+			last_optical_timestamp = timestamp;
 
         // state is valid now that we have had an update
         bIsValid= true;
@@ -218,7 +236,7 @@ bool PositionExternalAttachmentFilter::getIsStateValid() const
 
 double PositionExternalAttachmentFilter::getTimeInSeconds() const
 {
-    return m_state->time;
+    return m_state->getOpticalTime(std::chrono::high_resolution_clock::now());
 }
 
 void PositionExternalAttachmentFilter::resetState()
@@ -283,13 +301,9 @@ Eigen::Vector3f PositionExternalAttachmentFilter::getAccelerationCmPerSecSqr() c
 // -- Position Filters ----
 // -- PositionFilterPassThru --
 void PositionFilterExternalAttachment::update(
-	const float delta_time, 
+	const t_high_resolution_timepoint timestamp,
 	const PoseFilterPacket &packet)
 {
-	// We dont want optical measurements, IMU only.
-	if (packet.has_optical_measurement())
-		return;
-
 #ifdef WIN32
 	if (packet.controllerDeviceId < 0)
 	{
@@ -552,7 +566,7 @@ void PositionFilterExternalAttachment::update(
 		Eigen::Vector3f new_position_meters = (tracker_position + prime) * k_centimeters_to_meters;
 
 		Eigen::Vector3f new_position_meters_sec = Eigen::Vector3f::Zero();
-		m_state->apply_optical_state(new_position_meters, new_position_meters_sec, delta_time);
+		m_state->apply_optical_state(new_position_meters, new_position_meters_sec, timestamp, packet.isTemporary);
 	}
 
 #endif

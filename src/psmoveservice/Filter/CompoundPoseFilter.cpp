@@ -164,19 +164,26 @@ bool CompoundPoseFilter::getIsStateValid() const
 
 double CompoundPoseFilter::getTimeInSeconds() const
 {
-    return m_time;
+	const t_high_resolution_duration_milli optical_time_delta = std::chrono::high_resolution_clock::now() - last_optical_timestamp;
+	const t_high_resolution_duration_milli imu_time_delta = std::chrono::high_resolution_clock::now() - last_imu_timestamp;
+	const float time_delta_milli = optical_time_delta.count() + imu_time_delta.count();
+
+	return (time_delta_milli / 1000.f);
 }
 
 void CompoundPoseFilter::update(
-	const float delta_time,
+	const t_high_resolution_timepoint timestamp,
 	const PoseFilterPacket &orientation_filter_packet)
 {
     Eigen::Quaternionf filtered_orientation= Eigen::Quaternionf::Identity();
 	if (m_orientation_filter != nullptr && m_position_filter != nullptr)
 	{
 		// Update the orientation filter first
-		m_orientation_filter->update(delta_time, orientation_filter_packet);
+		m_orientation_filter->update(timestamp, orientation_filter_packet);
         filtered_orientation= m_orientation_filter->getOrientation();
+
+		if(!orientation_filter_packet.isTemporary)
+			last_imu_timestamp = timestamp;
     }
 
     if (m_position_filter != nullptr)
@@ -185,13 +192,11 @@ void CompoundPoseFilter::update(
 		PoseFilterPacket position_filter_packet= orientation_filter_packet;
 		position_filter_packet.current_orientation= filtered_orientation;
 
-		m_position_filter->update(delta_time, position_filter_packet);
-	}
+		m_position_filter->update(timestamp, position_filter_packet);
 
-    if (m_orientation_filter != nullptr || m_position_filter != nullptr)
-    {
-        m_time+= static_cast<double>(delta_time);
-    }
+		if (!orientation_filter_packet.isTemporary)
+			last_optical_timestamp = timestamp;
+	}
 }
 
 void CompoundPoseFilter::resetState()
@@ -200,7 +205,8 @@ void CompoundPoseFilter::resetState()
 	{
 		m_orientation_filter->resetState();
 		m_position_filter->resetState();
-        m_time= 0.0;
+		last_optical_timestamp = t_high_resolution_timepoint();
+		last_optical_timestamp = t_high_resolution_timepoint();
 	}
 }
 

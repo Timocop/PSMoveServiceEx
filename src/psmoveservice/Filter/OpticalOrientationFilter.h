@@ -64,11 +64,11 @@ public:
 	{
 	}
 
-	void update(const float delta_time, const PoseFilterPacket &packet) override;
+	void update(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet) override;
 
 protected:
-	void UpdateComplementaryMARG(const float delta_time, const PoseFilterPacket &packet);
-	void UpdateOpticalTarget(const float delta_time, const PoseFilterPacket &packet);
+	void UpdateComplementaryMARG(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet);
+	void UpdateOpticalTarget(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet);
 
 	float mg_weight;
 };

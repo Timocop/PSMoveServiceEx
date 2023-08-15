@@ -511,7 +511,8 @@ public:
     /// Unscented Kalman Filter instance
 	OrientationSRUKF ukf;
 
-    double time;
+	t_high_resolution_timepoint last_optical_timestamp;
+	t_high_resolution_timepoint last_imu_timestamp;
 
 	/// The final output of this filter.
 	/// This isn't part of the UKF state vector because it's non-linear.
@@ -525,9 +526,52 @@ public:
 		, system_model()
 		, ukf(k_ukf_alpha, k_ukf_beta, k_ukf_kappa)
         , world_orientation(Eigen::Quaternionf::Identity())
-        , time(0.0)
     {
+		last_optical_timestamp = t_high_resolution_timepoint();
+		last_imu_timestamp = t_high_resolution_timepoint();
     }
+
+	float getOpticalTime(const t_high_resolution_timepoint timestamp)
+	{
+		// Compute the time since the last packet
+		float time_delta_seconds;
+		const t_high_resolution_duration_milli time_delta = timestamp - last_optical_timestamp;
+		const float time_delta_milli = time_delta.count();
+
+		// convert delta to seconds clamp time delta between 2500hz and 30hz
+		time_delta_seconds = clampf(time_delta_milli / 1000.f, k_min_time_delta_seconds, k_max_time_delta_seconds);
+
+		return time_delta_seconds;
+	}
+
+	float getImuTime(const t_high_resolution_timepoint timestamp)
+	{
+		// Compute the time since the last packet
+		float time_delta_seconds;
+		const t_high_resolution_duration_milli time_delta = timestamp - last_imu_timestamp;
+		const float time_delta_milli = time_delta.count();
+
+		// convert delta to seconds clamp time delta between 2500hz and 30hz
+		time_delta_seconds = clampf(time_delta_milli / 1000.f, k_min_time_delta_seconds, k_max_time_delta_seconds);
+
+		return time_delta_seconds;
+	}
+
+	void applyOpticalTimestamp(
+		const t_high_resolution_timepoint timestamp,
+		const bool isTemporary)
+	{
+		if (!isTemporary)
+			last_optical_timestamp = timestamp;
+	}
+
+	void applyImuTimestamp(
+		const t_high_resolution_timepoint timestamp,
+		const bool isTemporary)
+	{
+		if(!isTemporary)
+			last_imu_timestamp = timestamp;
+	}
 
     virtual void init(const OrientationFilterConstants &constants)
     {
@@ -709,7 +753,7 @@ bool KalmanOrientationFilter::getIsStateValid() const
 
 double KalmanOrientationFilter::getTimeInSeconds() const
 {
-    return m_filter->time;
+    return m_filter->getImuTime(std::chrono::high_resolution_clock::now());
 }
 
 void KalmanOrientationFilter::resetState()
@@ -790,7 +834,9 @@ bool KalmanOrientationFilterPSVR::init(
 	return true;
 }
 
-void KalmanOrientationFilterPSVR::update(const float delta_time, const PoseFilterPacket &packet)
+void KalmanOrientationFilterPSVR::update(
+	const t_high_resolution_timepoint timestamp, 
+	const PoseFilterPacket &packet)
 {
     if (m_filter->bIsValid)
     {
@@ -798,8 +844,16 @@ void KalmanOrientationFilterPSVR::update(const float delta_time, const PoseFilte
 		OpticalOrientationMeasurementModel &optical_measurement_model = filter->optical_measurement_model;
 		GravMeasurementModel &imu_measurement_model= filter->imu_measurement_model;
 
+		float optical_delta_time = (filter->getOpticalTime(timestamp) / static_cast<float>(packet.stateLookBack));
+		float imu_delta_time = (filter->getImuTime(timestamp) / static_cast<float>(packet.stateLookBack));
+		if (packet.isHalfFrame)
+		{
+			optical_delta_time /= 2.0f;
+			imu_delta_time /= 2.0f;
+		}
+
         // Predict state for current time-step using the filters
-		filter->system_model.set_time_step(delta_time);
+		filter->system_model.set_time_step(imu_delta_time);
 
 		if (packet.has_imu_measurements())
 		{
@@ -852,10 +906,13 @@ void KalmanOrientationFilterPSVR::update(const float delta_time, const PoseFilte
 		// so that we can predict what the controller relative sensor measurements will be
 		optical_measurement_model.update_world_orientation(filter->world_orientation);
 		imu_measurement_model.update_world_orientation(filter->world_orientation);
+
+		filter->applyImuTimestamp(timestamp, packet.isTemporary);
     }
     else
     {
 		m_filter->ukf.init(OrientationStateVectord::Identity());
+		m_filter->last_imu_timestamp = t_high_resolution_timepoint();
         m_filter->bIsValid= true;
     }
 }
@@ -885,7 +942,9 @@ bool KalmanOrientationFilterDS4::init(
 	return true;
 }
 
-void KalmanOrientationFilterDS4::update(const float delta_time, const PoseFilterPacket &packet)
+void KalmanOrientationFilterDS4::update(
+	const t_high_resolution_timepoint timestamp, 
+	const PoseFilterPacket &packet)
 {
     if (m_filter->bIsValid)
     {
@@ -893,8 +952,16 @@ void KalmanOrientationFilterDS4::update(const float delta_time, const PoseFilter
 		OpticalOrientationMeasurementModel &optical_measurement_model = filter->optical_measurement_model;
 		GravMeasurementModel &imu_measurement_model= filter->imu_measurement_model;
 
+		float optical_delta_time = (filter->getOpticalTime(timestamp) / static_cast<float>(packet.stateLookBack));
+		float imu_delta_time = (filter->getImuTime(timestamp) / static_cast<float>(packet.stateLookBack));
+		if (packet.isHalfFrame)
+		{
+			optical_delta_time /= 2.0f;
+			imu_delta_time /= 2.0f;
+		}
+
         // Predict state for current time-step using the filters
-		filter->system_model.set_time_step(delta_time);
+		filter->system_model.set_time_step(imu_delta_time);
 
 		if (packet.has_imu_measurements())
 		{
@@ -947,10 +1014,13 @@ void KalmanOrientationFilterDS4::update(const float delta_time, const PoseFilter
 		// so that we can predict what the controller relative sensor measurements will be
 		optical_measurement_model.update_world_orientation(filter->world_orientation);
 		imu_measurement_model.update_world_orientation(filter->world_orientation);
+
+		filter->applyImuTimestamp(timestamp, packet.isTemporary);
     }
     else
     {
 		m_filter->ukf.init(OrientationStateVectord::Identity());
+		m_filter->last_imu_timestamp = t_high_resolution_timepoint();
         m_filter->bIsValid= true;
     }
 }
@@ -980,7 +1050,9 @@ bool KalmanOrientationFilterPSMove::init(
 	return true;
 }
 
-void KalmanOrientationFilterPSMove::update(const float delta_time, const PoseFilterPacket &packet)
+void KalmanOrientationFilterPSMove::update(
+	const t_high_resolution_timepoint timestamp, 
+	const PoseFilterPacket &packet)
 {
     if (m_filter->bIsValid)
     {
@@ -988,8 +1060,16 @@ void KalmanOrientationFilterPSMove::update(const float delta_time, const PoseFil
 		OpticalOrientationMeasurementModel &optical_measurement_model = filter->optical_measurement_model;
 		MagGravMeasurementModel &imu_measurement_model= filter->imu_measurement_model;
 
+		float optical_delta_time = (filter->getOpticalTime(timestamp) / static_cast<float>(packet.stateLookBack));
+		float imu_delta_time = (filter->getImuTime(timestamp) / static_cast<float>(packet.stateLookBack));
+		if (packet.isHalfFrame)
+		{
+			optical_delta_time /= 2.0f;
+			imu_delta_time /= 2.0f;
+		}
+
         // Predict state for current time-step using the filters
-		filter->system_model.set_time_step(delta_time);
+		filter->system_model.set_time_step(imu_delta_time);
 
 		if (packet.has_imu_measurements())
 		{
@@ -1043,10 +1123,13 @@ void KalmanOrientationFilterPSMove::update(const float delta_time, const PoseFil
 		// so that we can predict what the controller relative sensor measurements will be
 		optical_measurement_model.update_world_orientation(filter->world_orientation);
 		imu_measurement_model.update_world_orientation(filter->world_orientation);
+
+		filter->applyImuTimestamp(timestamp, packet.isTemporary);
     }
     else
     {
 		m_filter->ukf.init(OrientationStateVectord::Identity());
+		m_filter->last_imu_timestamp = t_high_resolution_timepoint();
         m_filter->bIsValid= true;
     }
 }

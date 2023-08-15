@@ -255,12 +255,6 @@ private:
     class IPoseFilter *m_pose_filter;
     class PoseFilterSpace *m_pose_filter_space;
     int m_lastPollSeqNumProcessed;
-	std::chrono::time_point<std::chrono::high_resolution_clock> m_last_filter_update_timestamp;
-	std::chrono::time_point<std::chrono::high_resolution_clock> m_last_imu_filter_update_timestamp;
-	std::chrono::time_point<std::chrono::high_resolution_clock> m_last_optical_filter_update_timestamp;
-	bool m_last_filter_update_timestamp_valid;
-	bool m_last_imu_filter_update_timestamp_valid;
-	bool m_last_optical_filter_update_timestamp_valid;
 };
 
 #endif // SERVER_CONTROLLER_VIEW_H

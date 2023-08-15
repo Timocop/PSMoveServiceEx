@@ -43,10 +43,38 @@ struct OrientationFilterState
     Eigen::Quaternionf orientation;
     Eigen::Vector3f angular_velocity;
     Eigen::Vector3f angular_acceleration;
-    double time;
+
+	t_high_resolution_timepoint last_optical_timestamp;
+	t_high_resolution_timepoint last_imu_timestamp;
 
     /* Quaternion measured when controller points towards camera */
     Eigen::Quaternionf reset_orientation;
+
+	float getOpticalTime(const t_high_resolution_timepoint timestamp)
+	{
+		// Compute the time since the last packet
+		float time_delta_seconds;
+		const t_high_resolution_duration_milli time_delta = timestamp - last_optical_timestamp;
+		const float time_delta_milli = time_delta.count();
+
+		// convert delta to seconds clamp time delta between 2500hz and 30hz
+		time_delta_seconds = clampf(time_delta_milli / 1000.f, k_min_time_delta_seconds, k_max_time_delta_seconds);
+
+		return time_delta_seconds;
+	}
+
+	float getImuTime(const t_high_resolution_timepoint timestamp)
+	{
+		// Compute the time since the last packet
+		float time_delta_seconds;
+		const t_high_resolution_duration_milli time_delta = timestamp - last_imu_timestamp;
+		const float time_delta_milli = time_delta.count();
+
+		// convert delta to seconds clamp time delta between 2500hz and 30hz
+		time_delta_seconds = clampf(time_delta_milli / 1000.f, k_min_time_delta_seconds, k_max_time_delta_seconds);
+
+		return time_delta_seconds;
+	}
 
     void reset()
     {
@@ -55,14 +83,16 @@ struct OrientationFilterState
         angular_velocity = Eigen::Vector3f::Zero();
         angular_acceleration = Eigen::Vector3f::Zero();
         reset_orientation= Eigen::Quaternionf::Identity();
-        time= 0.0;
+		last_optical_timestamp = t_high_resolution_timepoint();
+		last_imu_timestamp = t_high_resolution_timepoint();
     }
 
     void apply_imu_state(
         const Eigen::Quaternionf &new_orientation,
         const Eigen::Vector3f &new_angular_velocity,
         const Eigen::Vector3f &new_angular_acceleration,
-		const float delta_time)
+		const t_high_resolution_timepoint timestamp,
+		const bool isTemporary)
     {
         if (eigen_quaternion_is_valid(new_orientation))
         {
@@ -91,14 +121,8 @@ struct OrientationFilterState
             SERVER_LOG_WARNING("OrientationFilter") << "Angular Acceleration is NaN!";
         }
 
-		if (is_valid_float(delta_time))
-		{
-			time = time + (double)delta_time;
-		}
-		else
-		{
-			SERVER_LOG_WARNING("PositionFilter") << "time delta is NaN!";
-		}
+		if(!isTemporary)
+			last_imu_timestamp = timestamp;
 
         // state is valid now that we have had an update
         bIsValid= true;
@@ -106,7 +130,8 @@ struct OrientationFilterState
 
     void apply_optical_state(
         const Eigen::Quaternionf &new_orientation,
-		const float delta_time)
+		const t_high_resolution_timepoint timestamp,
+		const bool isTemporary)
     {
         if (eigen_quaternion_is_valid(new_orientation))
         {
@@ -117,14 +142,8 @@ struct OrientationFilterState
             SERVER_LOG_WARNING("OrientationFilter") << "Orientation is NaN!";
         }
 
-		if (is_valid_float(delta_time))
-		{
-			time = time + (double)delta_time;
-		}
-		else
-		{
-			SERVER_LOG_WARNING("PositionFilter") << "time delta is NaN!";
-		}
+		if (!isTemporary)
+			last_optical_timestamp = timestamp;
 
         // state is valid now that we have had an update
         bIsValid= true;
@@ -152,7 +171,7 @@ bool OrientationFilter::getIsStateValid() const
 
 double OrientationFilter::getTimeInSeconds() const
 {
-    return m_state->time;
+    return m_state->getImuTime(std::chrono::high_resolution_clock::now());
 }
 
 void OrientationFilter::resetState()
@@ -237,13 +256,15 @@ Eigen::Vector3f OrientationFilter::getAngularAccelerationRadPerSecSqr() const
 }
 
 // -- OrientationFilterPassThru --
-void OrientationFilterPassThru::update(const float delta_time, const PoseFilterPacket &packet)
+void OrientationFilterPassThru::update(
+	const t_high_resolution_timepoint timestamp, 
+	const PoseFilterPacket &packet)
 {
 	if (packet.has_optical_measurement() && packet.isSynced)
 	{
 		const Eigen::Quaternionf &new_orientation= packet.optical_orientation;
 
-		m_state->apply_optical_state(new_orientation, delta_time);
+		m_state->apply_optical_state(new_orientation, timestamp, packet.isTemporary);
 	}
 }
 
@@ -257,8 +278,18 @@ void OrientationFilterMadgwickARG::resetState()
 // This algorithm comes from Sebastian O.H. Madgwick's 2010 paper:
 // "An efficient orientation filter for inertial and inertial/magnetic sensor arrays"
 // https://www.samba.org/tridge/UAV/madgwick_internal_report.pdf
-void OrientationFilterMadgwickARG::update(const float delta_time, const PoseFilterPacket &packet)
+void OrientationFilterMadgwickARG::update(
+	const t_high_resolution_timepoint timestamp,
+	const PoseFilterPacket &packet)
 {
+	float optical_delta_time = (m_state->getOpticalTime(timestamp) / static_cast<float>(packet.stateLookBack));
+	float imu_delta_time = (m_state->getImuTime(timestamp) / static_cast<float>(packet.stateLookBack));
+	if (packet.isHalfFrame)
+	{
+		optical_delta_time /= 2.0f;
+		imu_delta_time /= 2.0f;
+	}
+
 	float filter_madgwick_min_correction = k_madgwick_min_beta;
 	AdaptiveDriftCorrectionMethod filter_madgwick_apt_method = AdaptiveDriftCorrectionMethod::AdaptiveNone;
 	float filter_madgwick_apt_max_correction = k_madgwick_max_beta;
@@ -326,10 +357,6 @@ void OrientationFilterMadgwickARG::update(const float delta_time, const PoseFilt
 
 	if (packet.has_imu_measurements())
 	{
-		// Time delta used for filter update is time delta passed in
-		// plus the accumulated time since the packet hasn't has an IMU measurement
-		const float total_delta_time= delta_time;
-
 		const Eigen::Vector3f &current_omega= packet.imu_gyroscope_rad_per_sec;
 
 		Eigen::Vector3f current_g= packet.imu_accelerometer_g_units;
@@ -420,12 +447,12 @@ void OrientationFilterMadgwickARG::update(const float delta_time, const PoseFilt
 			Eigen::Quaternionf SEqDot_est = Eigen::Quaternionf(SEqDot_omega.coeffs() - SEqHatDot.coeffs()*m_beta);
 
 			// Compute then integrate the estimated quaternion rate
-			// Eqn 42) SEq_new = SEq + SEqDot_est*total_delta_time
-			SEq_new = Eigen::Quaternionf(SEq.coeffs() + SEqDot_est.coeffs()*total_delta_time);
+			// Eqn 42) SEq_new = SEq + SEqDot_est*imu_delta_time
+			SEq_new = Eigen::Quaternionf(SEq.coeffs() + SEqDot_est.coeffs()*imu_delta_time);
 		}
 		else
 		{
-			SEq_new = Eigen::Quaternionf(SEq.coeffs() + SEqDot_omega.coeffs()*total_delta_time);
+			SEq_new = Eigen::Quaternionf(SEq.coeffs() + SEqDot_omega.coeffs()*imu_delta_time);
 		}
 
 		// Make sure the net quaternion is a pure rotation quaternion
@@ -436,9 +463,9 @@ void OrientationFilterMadgwickARG::update(const float delta_time, const PoseFilt
 		{
 			const Eigen::Quaternionf &new_orientation = SEq_new;
 			const Eigen::Vector3f new_angular_velocity= current_omega;
-			const Eigen::Vector3f new_angular_acceleration= (current_omega - m_state->angular_velocity) / delta_time;
+			const Eigen::Vector3f new_angular_acceleration= (current_omega - m_state->angular_velocity) / imu_delta_time;
 
-			m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, delta_time);
+			m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, timestamp, packet.isTemporary);
 		}
 	}
 }
@@ -454,8 +481,18 @@ void OrientationFilterMadgwickMARG::resetState()
 	m_reset = true;
 }
 
-void OrientationFilterMadgwickMARG::update(const float delta_time, const PoseFilterPacket &packet)
+void OrientationFilterMadgwickMARG::update(
+	const t_high_resolution_timepoint timestamp, 
+	const PoseFilterPacket &packet)
 {
+	float optical_delta_time = (m_state->getOpticalTime(timestamp) / static_cast<float>(packet.stateLookBack));
+	float imu_delta_time = (m_state->getImuTime(timestamp) / static_cast<float>(packet.stateLookBack));
+	if (packet.isHalfFrame)
+	{
+		optical_delta_time /= 2.0f;
+		imu_delta_time /= 2.0f;
+	}
+
 	float filter_madgwick_min_correction = k_madgwick_min_beta;
 	AdaptiveDriftCorrectionMethod filter_madgwick_apt_method = AdaptiveDriftCorrectionMethod::AdaptiveNone;
 	float filter_madgwick_apt_max_correction = k_madgwick_max_beta;
@@ -523,10 +560,6 @@ void OrientationFilterMadgwickMARG::update(const float delta_time, const PoseFil
 
 	if (packet.has_imu_measurements())
 	{
-		// Time delta used for filter update is time delta passed in
-		// plus the accumulated time since the packet hasn't has an IMU measurement
-		const float total_delta_time= delta_time;
-		
 		const Eigen::Vector3f &current_omega= packet.imu_gyroscope_rad_per_sec;
 
 		Eigen::Vector3f current_g= packet.imu_accelerometer_g_units;
@@ -538,7 +571,7 @@ void OrientationFilterMadgwickMARG::update(const float delta_time, const PoseFil
 		// If there isn't a valid magnetometer or accelerometer vector, fall back to the IMU style update
 		if (current_g.isZero(k_normal_epsilon) || current_m.isZero(k_normal_epsilon))
 		{
-			OrientationFilterMadgwickARG::update(delta_time, packet);
+			OrientationFilterMadgwickARG::update(timestamp, packet);
 			return;
 		}
 
@@ -600,7 +633,7 @@ void OrientationFilterMadgwickMARG::update(const float delta_time, const PoseFil
 
 		//const float zeta = sqrtf(3.0f / 4.0f) * fmaxf(fmaxf(m_constants.gyro_variance.x(), m_constants.gyro_variance.y()), m_constants.gyro_variance.z());
 		//Eigen::Quaternionf omega_bias(0.f, m_omega_bias_x, m_omega_bias_y, m_omega_bias_z);
-		//omega_bias = Eigen::Quaternionf(omega_bias.coeffs() + omega_err.coeffs()*zeta*total_delta_time);
+		//omega_bias = Eigen::Quaternionf(omega_bias.coeffs() + omega_err.coeffs()*zeta*imu_delta_time);
 		//m_omega_bias_x= omega_bias.x();
 		//m_omega_bias_y= omega_bias.y();
 		//m_omega_bias_z= omega_bias.z();
@@ -666,7 +699,7 @@ void OrientationFilterMadgwickMARG::update(const float delta_time, const PoseFil
 
 		// Compute then integrate the estimated quaternion rate
 		// Eqn 42) SEq_new = SEq + SEqDot_est*delta_t
-		Eigen::Quaternionf SEq_new = Eigen::Quaternionf(SEq.coeffs() + SEqDot_est.coeffs()*total_delta_time);
+		Eigen::Quaternionf SEq_new = Eigen::Quaternionf(SEq.coeffs() + SEqDot_est.coeffs()*imu_delta_time);
 
 		// Make sure the net quaternion is a pure rotation quaternion
 		SEq_new.normalize();
@@ -676,17 +709,27 @@ void OrientationFilterMadgwickMARG::update(const float delta_time, const PoseFil
 		{
 			const Eigen::Quaternionf &new_orientation = SEq_new;
 			const Eigen::Vector3f new_angular_velocity = Eigen::Vector3f(corrected_omega.x(), corrected_omega.y(), corrected_omega.z());
-			const Eigen::Vector3f new_angular_acceleration = (new_angular_velocity - m_state->angular_velocity) / delta_time;
+			const Eigen::Vector3f new_angular_acceleration = (new_angular_velocity - m_state->angular_velocity) / imu_delta_time;
 
-			m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, delta_time);
+			m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, timestamp, packet.isTemporary);
 		}
 	}
 }
 
 // -- OrientationFilterComplementaryOpticalARG --
 #define COMPLEMENTARY_FILTER_YAW_ONLY_BLEND 0
-void OrientationFilterComplementaryOpticalARG::update(const float delta_time, const PoseFilterPacket &packet)
+void OrientationFilterComplementaryOpticalARG::update(
+	const t_high_resolution_timepoint timestamp, 
+	const PoseFilterPacket &packet)
 {
+	float optical_delta_time = (m_state->getOpticalTime(timestamp) / static_cast<float>(packet.stateLookBack));
+	float imu_delta_time = (m_state->getImuTime(timestamp) / static_cast<float>(packet.stateLookBack));
+	if (packet.isHalfFrame)
+	{
+		optical_delta_time /= 2.0f;
+		imu_delta_time /= 2.0f;
+	}
+
 	// Blend with optical yaw
 	if (packet.has_optical_measurement() && packet.isSynced)
     {
@@ -799,10 +842,10 @@ void OrientationFilterComplementaryOpticalARG::update(const float delta_time, co
 			new_orientation= packet.optical_orientation;
 		}
 
-		m_state->apply_optical_state(new_orientation, delta_time);
+		m_state->apply_optical_state(new_orientation, timestamp, packet.isTemporary);
     }
 
-    OrientationFilterMadgwickARG::update(delta_time, packet);
+    OrientationFilterMadgwickARG::update(timestamp, packet);
 }
 
 // -- OrientationFilterComplementaryMARG --
@@ -844,8 +887,18 @@ static Eigen::Vector3f lowpass_filter_vector3f(
 	return filtered_vector;
 }
 
-void OrientationFilterComplementaryMARG::update(const float delta_time, const PoseFilterPacket &packet)
+void OrientationFilterComplementaryMARG::update(
+	const t_high_resolution_timepoint timestamp, 
+	const PoseFilterPacket &packet)
 {
+	float optical_delta_time = (m_state->getOpticalTime(timestamp) / static_cast<float>(packet.stateLookBack));
+	float imu_delta_time = (m_state->getImuTime(timestamp) / static_cast<float>(packet.stateLookBack));
+	if (packet.isHalfFrame)
+	{
+		optical_delta_time /= 2.0f;
+		imu_delta_time /= 2.0f;
+	}
+
 	bool filter_enable_magnetometer = true;
 
 	bool filter_use_passive_drift_correction = false;
@@ -890,10 +943,6 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 
 	if (packet.has_imu_measurements())
 	{
-		// Time delta used for filter update is time delta passed in
-		// plus the accumulated time since the packet hasn't has an IMU measurement
-		const float total_delta_time = delta_time;
-
 		const Eigen::Vector3f &current_omega = packet.imu_gyroscope_rad_per_sec;
 
 		Eigen::Vector3f current_g = packet.imu_accelerometer_g_units;
@@ -924,7 +973,7 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 
 		// Integrate the rate of change to get a new orientation
 		// q_new= q + q_dot*dT
-		Eigen::Quaternionf q_step = Eigen::Quaternionf(q_derivative.coeffs() * total_delta_time);
+		Eigen::Quaternionf q_step = Eigen::Quaternionf(q_derivative.coeffs() * imu_delta_time);
 		Eigen::Quaternionf ar_orientation = Eigen::Quaternionf(q_current.coeffs() + q_step.coeffs());
 
 		// Make sure the resulting quaternion is normalized
@@ -948,7 +997,7 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 		{
 			doStabilize = 
 				filter_process_passive_drift_correction(
-					delta_time,
+					imu_delta_time,
 					packet,
 					filter_use_passive_drift_correction,
 					filter_passive_drift_correction_method,
@@ -967,7 +1016,7 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 			// Scale by gyro amount
 			if (filter_use_stabilization)
 			{
-				filter_process_stabilization(delta_time, packet, filter_stabilization_min_scale);
+				filter_process_stabilization(imu_delta_time, packet, filter_stabilization_min_scale);
 			}
 			else
 			{
@@ -993,9 +1042,9 @@ void OrientationFilterComplementaryMARG::update(const float delta_time, const Po
 			const Eigen::Quaternionf new_orientation =
 				eigen_quaternion_normalized_lerp(ar_orientation, mg_orientation, mg_weight);
 			const Eigen::Vector3f new_angular_velocity = current_omega;
-			const Eigen::Vector3f new_angular_acceleration = (current_omega - m_state->angular_velocity) / delta_time;
+			const Eigen::Vector3f new_angular_acceleration = (current_omega - m_state->angular_velocity) / imu_delta_time;
 
-			m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, delta_time);
+			m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, timestamp, packet.isTemporary);
 		}
 	}
 }
@@ -1009,10 +1058,6 @@ bool OrientationFilterComplementaryMARG::filter_process_passive_drift_correction
 	float filter_passive_drift_correction_gravity_deadzone,
 	float filter_passive_drift_correction_delay)
 {
-	// Time delta used for filter update is time delta passed in
-	// plus the accumulated time since the packet hasn't has an IMU measurement
-	const float total_delta_time = delta_time;
-
 	const Eigen::Vector3f &current_omega = packet.imu_gyroscope_rad_per_sec;
 
 	// Gather sensor state from the previous frame
@@ -1028,7 +1073,7 @@ bool OrientationFilterComplementaryMARG::filter_process_passive_drift_correction
 	Eigen::Vector3f new_accelerometer_derivative = Eigen::Vector3f::Zero();
 	{
 		const Eigen::Vector3f accelerometer_derivative =
-			(new_accelerometer - old_accelerometer) / total_delta_time;
+			(new_accelerometer - old_accelerometer) / delta_time;
 
 		// Apply a decay filter to the jerk
 		static float g_jerk_decay = k_jerk_decay;
@@ -1041,13 +1086,13 @@ bool OrientationFilterComplementaryMARG::filter_process_passive_drift_correction
 
 	// Convert the new acceleration by integrating the jerk
 	Eigen::Vector3f new_acceleration =
-		0.5f*(old_jerk + new_jerk)*total_delta_time
+		0.5f*(old_jerk + new_jerk)*delta_time
 		+ old_acceleration;
 
 	// Apply a lowpass filter to the acceleration
 	static float g_cutoff_frequency = k_accelerometer_frequency_cutoff;
 	new_acceleration =
-		lowpass_filter_vector3f(total_delta_time, g_cutoff_frequency, old_acceleration, new_acceleration);
+		lowpass_filter_vector3f(delta_time, g_cutoff_frequency, old_acceleration, new_acceleration);
 
 	// Apply a decay filter to the acceleration
 	static float g_acceleration_decay = k_acceleration_decay;
@@ -1132,10 +1177,6 @@ void OrientationFilterComplementaryMARG::filter_process_stabilization(
 	const PoseFilterPacket &packet,
 	float filter_stabilization_min_scale)
 {
-	// Time delta used for filter update is time delta passed in
-	// plus the accumulated time since the packet hasn't has an IMU measurement
-	const float total_delta_time = delta_time;
-
 	const Eigen::Vector3f &current_omega = packet.imu_gyroscope_rad_per_sec;
 
 	const float k_gyro_multi = 1.f;

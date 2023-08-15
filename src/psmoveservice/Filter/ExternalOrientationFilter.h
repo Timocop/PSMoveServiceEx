@@ -56,7 +56,7 @@ protected:
 class OrientationFilterExternal : public ExternalOrientationFilter
 {
 public:
-	void update(const float delta_time, const PoseFilterPacket &packet) override;
+	void update(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet) override;
 };
 
 #endif // ORIENTATION_FILTER_H

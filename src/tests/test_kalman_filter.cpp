@@ -483,7 +483,9 @@ apply_filter(
 		PoseFilterPacket filterPacket;
 		pose_filter_space->createFilterPacket(sensorPacket, pose_filter, filterPacket);
 
-		pose_filter->update(dT, filterPacket);
+		//$TODO: Make it work with absolute time.
+		//pose_filter->update(dT, filterPacket);
+		pose_filter->update(std::chrono::high_resolution_clock::now(), filterPacket);
 
 		output_stream.writeFilterState(sample, pose_filter, sample.time);
 	}
