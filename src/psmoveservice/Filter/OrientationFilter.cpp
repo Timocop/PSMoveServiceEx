@@ -417,7 +417,7 @@ void OrientationFilterMadgwickARG::update(
 
 				if (resetDuration.count() < k_madgwick_reset_time)
 				{
-					m_beta = 2.0;
+					m_beta = 1.0;
 				}
 				else
 				{
@@ -468,6 +468,13 @@ void OrientationFilterMadgwickARG::update(
 			m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, timestamp, packet.isTemporary);
 		}
 	}
+}
+
+void OrientationFilterMadgwickARG::recenterOrientation(const Eigen::Quaternionf & q_pose)
+{
+	m_reset = true;
+
+	OrientationFilter::recenterOrientation(q_pose);
 }
 
 // -- OrientationFilterMadgwickMARG --
@@ -668,7 +675,7 @@ void OrientationFilterMadgwickMARG::update(
 
 			if (resetDuration.count() < k_madgwick_reset_time)
 			{
-				m_beta = 2.0;
+				m_beta = 1.0;
 			}
 			else
 			{
