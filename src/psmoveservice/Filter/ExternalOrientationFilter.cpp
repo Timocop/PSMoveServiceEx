@@ -138,8 +138,6 @@ ExternalOrientationFilter::ExternalOrientationFilter() :
 
 	memset(&m_constants, 0, sizeof(OrientationFilterConstants));
 	resetState();
-
-	last_orentation = Eigen::Quaternionf::Identity();
 }
 
 ExternalOrientationFilter::~ExternalOrientationFilter()
@@ -199,8 +197,6 @@ bool ExternalOrientationFilter::init(const OrientationFilterConstants &constants
 	m_constants = constants;
 	m_state->orientation = initial_orientation;
 	m_state->bIsValid = true;
-
-	last_orentation = initial_orientation;
 
 	return true;
 }
@@ -415,63 +411,18 @@ void OrientationFilterExternal::update(
 		}
 	}
 
-	bool customVelocity = false;
-
-	// Get gyro angular velocity
-	__size += 4;
-	if (vector.size() >= __size)
-	{
-		customVelocity = true;
-
-		long timeStamp = (long)_atoi64(vector[__size - 4].c_str());
-		new_angular_velocity.x() = (float)_atof_l(vector[__size - 3].c_str(), localeInvariant);
-		new_angular_velocity.y() = (float)_atof_l(vector[__size - 2].c_str(), localeInvariant);
-		new_angular_velocity.z() = (float)_atof_l(vector[__size - 1].c_str(), localeInvariant);
-	}
-
 	if (isValid && eigen_quaternion_is_valid(new_orientation))
 	{
-		// Get angular velocity from quaternions
-		if (!customVelocity) 
-		{
-			// Apply basic prediction
-			// Add the new blend to blend history
-			//blendedPositionHistory.push_back(new_orientation);
-			//while (blendedPositionHistory.size() > 50)
-			//{
-			//	blendedPositionHistory.pop_front();
-			//}
+		Eigen::Quaternionf deltaRotation = m_state->orientation.conjugate() * new_orientation;
+		Eigen::AngleAxisf axisAngle(deltaRotation);
 
-			//Eigen::Vector3f quat_sum = Eigen::Vector3f::Zero();
-			//float quat_w = 0.0f;
+		Eigen::Vector3f angularVelocity = axisAngle.axis() * (axisAngle.angle() / imu_delta_time);
 
-			//int sampleCount = 0;
-			//for (std::list<Eigen::Quaternionf>::iterator it = blendedPositionHistory.begin(); it != blendedPositionHistory.end(); it++)
-			//{
-			//	Eigen::Quaternionf quat = *it;
-			//	quat_sum += Eigen::Vector3f(quat.x(), quat.y(), quat.z());
-			//	quat_w += quat.w();
-			//	
-			//	sampleCount++;
-			//}
+		// Smooth angular velocity, otherwise its too jittery
+		const float alpha = 0.2f;
+		Eigen::Vector3f angVel = angularVelocity.transpose();
+		new_angular_velocity = ((1.f - alpha) * m_state->angular_velocity + alpha * angVel);
 
-			//quat_sum /= sampleCount;
-			//quat_w /= sampleCount;
-
-			//Eigen::Quaternionf old_orientation = Eigen::Quaternionf(quat_w, quat_sum.x(), quat_sum.y(), quat_sum.z());
-			//Eigen::Quaternionf deltaRotation = old_orientation.conjugate() * new_orientation;
-			
-			//$TODO: This seems very glitchy
-			Eigen::Quaternionf deltaRotation = last_orentation.conjugate() * new_orientation;
-			Eigen::AngleAxisf axisAngle(deltaRotation);
-
-			Eigen::Vector3f angularVelocity = axisAngle.axis() * (axisAngle.angle() / imu_delta_time);
-
-			new_angular_velocity = angularVelocity.transpose();
-		}
-
-		last_orentation = new_orientation;
-		
 		const Eigen::Vector3f new_angular_acceleration = (new_angular_velocity - m_state->angular_velocity) / imu_delta_time;
 
 		m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, timestamp, packet.isTemporary);
