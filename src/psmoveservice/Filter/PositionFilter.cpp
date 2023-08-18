@@ -924,8 +924,6 @@ static Eigen::Vector3f lowpass_filter_optical_position_using_distance(
     float distance = diff.norm();
     float new_position_weight = clampf01(lerpf(smoothing_power, 1.00f, distance / (smoothing_distance * k_meters_to_centimeters)));
 
-	printf("new_position_weight - %f\n", new_position_weight);
-
     // New position is blended against the old position
     const Eigen::Vector3f &old_position = state->position_meters;
     const Eigen::Vector3f new_position = packet->get_optical_position_in_meters();
