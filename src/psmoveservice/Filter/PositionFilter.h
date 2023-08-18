@@ -51,18 +51,16 @@ class PositionFilterPassThru : public PositionFilter
 {
 public:
     void update(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet) override;
-	std::list<Eigen::Vector3f> blendedPositionHistory;
-	std::list<int> historyQueueLenght;
 	t_high_resolution_timepoint lastOpticalFrame;
+	bool m_resetVelocity = false;
 };
 
 class PositionFilterLowPassOptical : public PositionFilter
 {
 public:
     void update(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet) override;
-	std::list<Eigen::Vector3f> blendedPositionHistory;
-	std::list<int> historyQueueLenght;
 	t_high_resolution_timepoint lastOpticalFrame;
+	bool m_resetVelocity = false;
 };
 
 class PositionFilterLowPassIMU : public PositionFilter

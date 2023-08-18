@@ -28,7 +28,7 @@
 // IMU extrapolation of an unseen controller
 #define k_max_unseen_position_timeout 10000.f // ms
 
-#define k_max_optical_prediction_power 10.0f
+#define k_lowpass_velocity_smoothing_factor 0.35f
 
 // -- private definitions -----
 struct PositionFilterState
@@ -401,70 +401,33 @@ void PositionFilterPassThru::update(
 	}
 #endif
 
-	// If device isnt tracking, clear position history to remove over-prediction
-	if (!packet.isCurrentlyTracking)
+	// If device isnt tracking, clear old position and velocity to remove over-prediction
+	if (!packet.isCurrentlyTracking && !m_resetVelocity)
 	{
-		blendedPositionHistory.clear();
+		m_resetVelocity = true;
 	}
 
 	if (packet.has_optical_measurement() && packet.isSynced)
 	{
-		const int queue_history_length = 200;
-		const float def_history_queue_hz = 30.f;
-		const int def_history_queue_length = 5;
-
-		t_high_resolution_timepoint now = std::chrono::high_resolution_clock::now();
-		t_high_resolution_duration_milli timeSinceLast = now - lastOpticalFrame;
-		
-		historyQueueLenght.push_back((int)floorf(def_history_queue_length * (1000.f / def_history_queue_hz) / timeSinceLast.count()));
-		while (historyQueueLenght.size() > queue_history_length)
-		{
-			historyQueueLenght.pop_front();
-		}
-		lastOpticalFrame = now;
-
-		// Get the biggest from all the samples
-		int history_queue_length;
-		for (std::list<int>::iterator it = historyQueueLenght.begin(); it != historyQueueLenght.end(); it++)
-		{
-			history_queue_length = static_cast<int>(clampf(fmaxf(static_cast<float>(history_queue_length), static_cast<float>(*it)), 1.f, 100.f));
-		}
-
-		Eigen::Vector3f old_position_meters;
+		Eigen::Vector3f old_position_meters = m_state->position_meters;
 		Eigen::Vector3f new_position_meters = packet.get_optical_position_in_meters();
 		Eigen::Vector3f new_position_meters_sec;
 
-		// Apply basic optical prediction
-		// Add the new blend position to blend history
-		blendedPositionHistory.push_back(new_position_meters);
-		while (blendedPositionHistory.size() > history_queue_length)
+		if (m_resetVelocity)
 		{
-			blendedPositionHistory.pop_front();
-		}
+			m_resetVelocity = false;
 
-		old_position_meters = Eigen::Vector3f::Zero();
-
-		int sampleCount = 0;
-		for (std::list<Eigen::Vector3f>::iterator it = blendedPositionHistory.begin(); it != blendedPositionHistory.end(); it++)
-		{
-			old_position_meters += *it;
-			sampleCount++;
-		}
-
-		if (sampleCount > 0)
-		{
-			new_position_meters_sec =
-				lowpass_prediction_vector3f(
-					optical_delta_time, 
-					(old_position_meters / sampleCount), 
-					new_position_meters, 
-					predict_smoothing_distance, 
-					predict_smoothing_power, 
-					k_max_optical_prediction_power);
+			new_position_meters_sec = Eigen::Vector3f::Zero();
 		}
 		else
 		{
-			new_position_meters_sec = Eigen::Vector3f::Zero();
+			Eigen::Vector3f newVel(
+				(new_position_meters.x() - old_position_meters.x()) / optical_delta_time,
+				(new_position_meters.y() - old_position_meters.y()) / optical_delta_time,
+				(new_position_meters.z() - old_position_meters.z()) / optical_delta_time
+			);
+
+			new_position_meters_sec = lowpass_filter_vector3f(k_lowpass_velocity_smoothing_factor, m_state->velocity_m_per_sec, newVel);
 		}
 
 		m_state->apply_optical_state(new_position_meters, new_position_meters_sec, timestamp, packet.isTemporary);
@@ -572,36 +535,15 @@ void PositionFilterLowPassOptical::update(
 	}
 #endif
 
-	// If device isnt tracking, clear position history to remove over-prediction
-	if (!packet.isCurrentlyTracking)
+	// If device isnt tracking, clear old position and velocity to remove over-prediction
+	if (!packet.isCurrentlyTracking && !m_resetVelocity)
 	{
-		blendedPositionHistory.clear();
+		m_resetVelocity = true;
 	}
 
 	if (packet.has_optical_measurement() && packet.isSynced)
 	{
-		const int queue_history_length = 200;
-		const float def_history_queue_hz = 30.f;
-		const int def_history_queue_length = 5;
-
-		t_high_resolution_timepoint now = std::chrono::high_resolution_clock::now();
-		t_high_resolution_duration_milli timeSinceLast = now - lastOpticalFrame;
-
-		historyQueueLenght.push_back((int)floorf(def_history_queue_length * (1000.f / def_history_queue_hz) / timeSinceLast.count()));
-		while (historyQueueLenght.size() > queue_history_length)
-		{
-			historyQueueLenght.pop_front();
-		}
-		lastOpticalFrame = now;
-
-		// Get the biggest from all the samples
-		int history_queue_length;
-		for (std::list<int>::iterator it = historyQueueLenght.begin(); it != historyQueueLenght.end(); it++)
-		{
-			history_queue_length = static_cast<int>(clampf(fmaxf(static_cast<float>(history_queue_length), static_cast<float>(*it)), 1.f, 100.f));
-		}
-
-		Eigen::Vector3f old_position_meters;
+		Eigen::Vector3f old_position_meters = m_state->position_meters;
 		Eigen::Vector3f new_position_meters;
 		Eigen::Vector3f new_position_meters_sec;
 
@@ -616,37 +558,21 @@ void PositionFilterLowPassOptical::update(
             new_position_meters = packet.get_optical_position_in_meters();
         }
 
-		// Apply basic optical prediction
-		// Add the new blend position to blend history
-		blendedPositionHistory.push_back(new_position_meters);
-		while (blendedPositionHistory.size() > history_queue_length)
+		if (m_resetVelocity)
 		{
-			blendedPositionHistory.pop_front();
-		}
+			m_resetVelocity = false;
 
-		old_position_meters = Eigen::Vector3f::Zero();
-		
-		int sampleCount = 0;
-		for (std::list<Eigen::Vector3f>::iterator it = blendedPositionHistory.begin(); it != blendedPositionHistory.end(); it++)
-		{
-			old_position_meters += *it;
-			sampleCount++;
-		}
-
-		if (sampleCount > 0)
-		{
-			new_position_meters_sec =
-				lowpass_prediction_vector3f(
-					optical_delta_time, 
-					(old_position_meters / sampleCount), 
-					new_position_meters, 
-					predict_smoothing_distance, 
-					predict_smoothing_power, 
-					k_max_optical_prediction_power);
+			new_position_meters_sec = Eigen::Vector3f::Zero();
 		}
 		else
 		{
-			new_position_meters_sec = Eigen::Vector3f::Zero();
+			Eigen::Vector3f newVel(
+				(new_position_meters.x() - old_position_meters.x()) / optical_delta_time,
+				(new_position_meters.y() - old_position_meters.y()) / optical_delta_time,
+				(new_position_meters.z() - old_position_meters.z()) / optical_delta_time
+			);
+
+			new_position_meters_sec = lowpass_filter_vector3f(k_lowpass_velocity_smoothing_factor, m_state->velocity_m_per_sec, newVel);
 		}
 
 		m_state->apply_optical_state(new_position_meters, new_position_meters_sec, timestamp, packet.isTemporary);
@@ -997,6 +923,8 @@ static Eigen::Vector3f lowpass_filter_optical_position_using_distance(
     Eigen::Vector3f diff = (packet->get_optical_position_in_meters() - state->position_meters) * k_meters_to_centimeters;
     float distance = diff.norm();
     float new_position_weight = clampf01(lerpf(smoothing_power, 1.00f, distance / (smoothing_distance * k_meters_to_centimeters)));
+
+	printf("new_position_weight - %f\n", new_position_weight);
 
     // New position is blended against the old position
     const Eigen::Vector3f &old_position = state->position_meters;
