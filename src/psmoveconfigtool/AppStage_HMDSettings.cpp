@@ -489,6 +489,15 @@ void AppStage_HMDSettings::renderUI()
 								request_offset = true;
 							}
 							ImGui::PopItemWidth();
+
+
+							if (ImGui::IsItemHovered())
+							{
+								ImGui::SetTooltip(
+									"Stabilization will reduce magnetometer and accelerometer jittering\n"
+									"when the head-mounted display is stable."
+								);
+							}
 						}
 
 						if (!settings_shown)
@@ -502,7 +511,7 @@ void AppStage_HMDSettings::renderUI()
 						{
 							hmdInfo.FilterLowPassOpticalDistance = 10.f;
 							hmdInfo.FilterLowPassOpticalSmoothing = 0.40f;
-							hmdInfo.FilterMadgwickBeta = 0.2f;
+							hmdInfo.FilterMadgwickBeta = 0.5f;
 							hmdInfo.FilterMadgwickStabilization = true;
 
 							request_offset = true;

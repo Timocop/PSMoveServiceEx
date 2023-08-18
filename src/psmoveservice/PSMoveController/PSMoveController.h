@@ -82,7 +82,7 @@ public:
 		, filter_passive_drift_correction_delay(100.f)
 		, filter_use_stabilization(false)
 		, filter_stabilization_min_scale(0.1f)
-		, filter_madgwick_beta(0.2f)
+		, filter_madgwick_beta(0.5f)
 		, filter_madgwick_stabilization(true)
     {
         magnetometer_identity.clear();

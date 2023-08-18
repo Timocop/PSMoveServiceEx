@@ -1061,6 +1061,14 @@ void AppStage_ControllerSettings::renderUI()
 													request_offset = true;
 												}
 												ImGui::PopItemWidth();
+
+												if (ImGui::IsItemHovered())
+												{
+													ImGui::SetTooltip(
+														"Stabilization will reduce magnetometer and accelerometer jittering\n"
+														"when the controller is stable."
+													);
+												}
 											}
 
 											if (!settings_shown)
@@ -1082,7 +1090,7 @@ void AppStage_ControllerSettings::renderUI()
 												controllerInfo.FilterPassiveDriftCorrectionDelay = 100.f;
 												controllerInfo.FilterUseStabilization = false;
 												controllerInfo.FilterStabilizationMinScale = 0.1f;
-												controllerInfo.FilterMadgwickBeta = 0.2f;
+												controllerInfo.FilterMadgwickBeta = 0.5f;
 												controllerInfo.FilterMadgwickStabilization = true;
 
 												request_offset = true;

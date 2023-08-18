@@ -49,7 +49,7 @@ public:
 		, tracking_color_id(eCommonTrackingColorID::Blue)
 		, filter_lowpassoptical_distance(10.f)
 		, filter_lowpassoptical_smoothing(0.40f)
-		, filter_madgwick_beta(0.2f)
+		, filter_madgwick_beta(0.5f)
 		, filter_madgwick_stabilization(true)
     {
 		offset_position.set(0.0f, 0.0f, 0.0f);
