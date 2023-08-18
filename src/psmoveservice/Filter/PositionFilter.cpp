@@ -205,13 +205,6 @@ static Eigen::Vector3f lowpass_filter_vector3f(
     const float cutoff_frequency,
     const Eigen::Vector3f &old_filtered_vector,
     const Eigen::Vector3f &new_vector);
-static Eigen::Vector3f lowpass_prediction_vector3f(
-	const float delta_time,
-	const Eigen::Vector3f &old_filtered_vector,
-	const Eigen::Vector3f &new_vector,
-	const float smoothing_distance,
-	const float smoothing_power,
-	const float prediction_power);
 static Eigen::Vector3f lowpass_filter_optical_position_using_distance(
     const PoseFilterPacket *filter_packet,
     const PositionFilterState *fusion_state,
@@ -881,31 +874,6 @@ static Eigen::Vector3f lowpass_filter_vector3f(
     const Eigen::Vector3f filtered_vector= lowpass_filter_vector3f(alpha, old_filtered_vector, new_vector);
 
     return filtered_vector;
-}
-
-static Eigen::Vector3f lowpass_prediction_vector3f(
-	const float delta_time,
-	const Eigen::Vector3f &old_filtered_vector,
-	const Eigen::Vector3f &new_vector,
-	const float smoothing_distance,
-	const float smoothing_power,
-	const float prediction_power)
-{
-	Eigen::Vector3f new_position_meters_sec;
-
-	// Apply basic optical prediction
-	// We need to convert meters to centimeters otherwise it wont work. I assume value too small for decimal point precision.
-	Eigen::Vector3f diff = (new_vector - old_filtered_vector) * k_meters_to_centimeters;
-	float distance = diff.norm();
-	float new_position_weight = clampf01(lerpf(smoothing_power, 1.00f, distance / (smoothing_distance * k_meters_to_centimeters)));
-
-	static float g_cutoff_frequency = k_accelerometer_frequency_cutoff;
-	new_position_meters_sec =
-		lowpass_filter_vector3f(
-			delta_time, g_cutoff_frequency,
-			Eigen::Vector3f::Zero(), ((new_vector - old_filtered_vector) * new_position_weight) * prediction_power);
-
-	return new_position_meters_sec;
 }
 
 static Eigen::Vector3f lowpass_filter_optical_position_using_distance(
