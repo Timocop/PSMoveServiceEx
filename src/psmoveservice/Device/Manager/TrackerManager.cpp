@@ -259,6 +259,7 @@ void TrackerManager::poll_devices()
 	//std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
 
 	int tracker_ready_count = 0;
+	int available_trackers = 0;
 	bool tracker_ready_all = true;
 
 	m_trackersSynced = false;
@@ -269,6 +270,8 @@ void TrackerManager::poll_devices()
 		const ServerTrackerViewPtr tracker = getTrackerViewPtr(i);
 		if (tracker->getIsOpen())
 		{
+			available_trackers++;
+
 			if (m_isTrackerReady[tracker->getDeviceID()])
 			{
 				tracker_ready_count++;
@@ -284,6 +287,7 @@ void TrackerManager::poll_devices()
 	{
 	case TrackerManagerConfig::TrackerSyncMode::WaitAll:
 	{
+		// Dont poll if not all trackers are ready.
 		if (!tracker_ready_all)
 		{
 			m_isTrackerPollAllowed = false;
@@ -292,7 +296,8 @@ void TrackerManager::poll_devices()
 	}
 	default:
 	{
-		if (tracker_ready_count < 2)
+		// Only poll when tehre are 2 or more trackers ready. Always poll when there is one tracker however.
+		if (available_trackers > 1 && tracker_ready_count < 2)
 		{
 			m_isTrackerPollAllowed = false;
 		}
