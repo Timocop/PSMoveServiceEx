@@ -874,37 +874,6 @@ void AppStage_ControllerSettings::renderUI()
 											bool request_offset = false;
 											bool settings_shown = false;
 
-											if (controllerInfo.PositionFilterName == "PassThru" ||
-												controllerInfo.PositionFilterName == "LowPassOptical" ||
-												controllerInfo.PositionFilterName == "LowPassExponential")
-											{
-												settings_shown = true;
-
-												ImGui::Text("Position Prediction Smoothing Distance: ");
-												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-												ImGui::PushItemWidth(120.f);
-												if (ImGui::InputFloat("##PredictionSmoothingDistance", &controllerInfo.FilterPredictionDistance, 1.f, 5.f, 2))
-												{
-													controllerInfo.FilterPredictionDistance = clampf(controllerInfo.FilterPredictionDistance, 1.0f, (1 << 16));
-
-													request_offset = true;
-												}
-												ImGui::PopItemWidth();
-
-												ImGui::Text("Position Prediction Smoothing Power (%%): ");
-												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-												ImGui::PushItemWidth(120.f);
-												float filter_predict_smoothing = (1.f - controllerInfo.FilterPredictionSmoothing) * 100.f;
-												if (ImGui::InputFloat("##PredictionSmoothingPower", &filter_predict_smoothing, 1.f, 5.f, 2))
-												{
-													controllerInfo.FilterPredictionSmoothing = clampf(1.f - (filter_predict_smoothing / 100.f), 0.1f, 1.0f);
-
-													request_offset = true;
-												}
-												ImGui::PopItemWidth();
-
-											}
-
 											if (controllerInfo.PositionFilterName == "LowPassOptical")
 											{
 												settings_shown = true;
@@ -1103,8 +1072,6 @@ void AppStage_ControllerSettings::renderUI()
 
 											if (ImGui::Button("Reset Filter Settings Defaults"))
 											{
-												controllerInfo.FilterPredictionDistance = 10.f;
-												controllerInfo.FilterPredictionSmoothing = 0.40f;
 												controllerInfo.FilterLowPassOpticalDistance = 10.f;
 												controllerInfo.FilterLowPassOpticalSmoothing = 0.40f;
 												controllerInfo.FilterEnableMagnetometer = true;
@@ -1125,8 +1092,6 @@ void AppStage_ControllerSettings::renderUI()
 											if (request_offset)
 											{
 												FilterSettings filterSettings;
-												filterSettings.filter_prediction_distance = controllerInfo.FilterPredictionDistance;
-												filterSettings.filter_prediction_smoothing = controllerInfo.FilterPredictionSmoothing;
 												filterSettings.filter_lowpassoptical_distance = controllerInfo.FilterLowPassOpticalDistance;
 												filterSettings.filter_lowpassoptical_smoothing = controllerInfo.FilterLowPassOpticalSmoothing;
 												filterSettings.filter_enable_magnetometer = controllerInfo.FilterEnableMagnetometer;
@@ -1794,8 +1759,6 @@ void AppStage_ControllerSettings::request_set_controller_filter_settings(
 		request->mutable_request_set_controller_filter_settings();
 
 	filter_settings->set_controller_id(controller_id);
-	filter_settings->set_filter_prediction_distance(filterSettings.filter_prediction_distance);
-	filter_settings->set_filter_prediction_smoothing(filterSettings.filter_prediction_smoothing);
 	filter_settings->set_filter_lowpassoptical_distance(filterSettings.filter_lowpassoptical_distance);
 	filter_settings->set_filter_lowpassoptical_smoothing(filterSettings.filter_lowpassoptical_smoothing);
 	filter_settings->set_filter_enable_magnetometer(filterSettings.filter_enable_magnetometer);
@@ -1897,8 +1860,6 @@ void AppStage_ControllerSettings::handle_controller_list_response(
 				ControllerInfo.OffsetScale.z = ControllerResponse.offset_scale().z();
 				ControllerInfo.OffsetMagnetometer = ControllerResponse.offset_magnetometer();
 
-				ControllerInfo.FilterPredictionDistance = ControllerResponse.filter_prediction_distance();
-				ControllerInfo.FilterPredictionSmoothing = ControllerResponse.filter_prediction_smoothing();
 				ControllerInfo.FilterLowPassOpticalDistance = ControllerResponse.filter_lowpassoptical_distance();
 				ControllerInfo.FilterLowPassOpticalSmoothing = ControllerResponse.filter_lowpassoptical_smoothing();
 				ControllerInfo.FilterEnableMagnetometer = ControllerResponse.filter_enable_magnetometer();

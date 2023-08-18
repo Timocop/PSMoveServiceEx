@@ -48,8 +48,6 @@ public:
 
 	struct FilterSettings
 	{
-		float filter_prediction_distance;
-		float filter_prediction_smoothing;
 		float filter_lowpassoptical_distance;
 		float filter_lowpassoptical_smoothing;
 		float filter_madgwick_beta;
@@ -74,8 +72,6 @@ public:
 		DevicePosition OffsetPosition;
 		DevicePosition OffsetScale;
 
-		float FilterPredictionDistance;
-		float FilterPredictionSmoothing;
 		float FilterLowPassOpticalDistance;
 		float FilterLowPassOpticalSmoothing;
 		float FilterMadgwickBeta;

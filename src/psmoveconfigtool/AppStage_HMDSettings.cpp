@@ -434,36 +434,6 @@ void AppStage_HMDSettings::renderUI()
 						bool request_offset = false;
 						bool settings_shown = false;
 
-						if (hmdInfo.PositionFilterName == "PassThru" ||
-							hmdInfo.PositionFilterName == "LowPassOptical" ||
-							hmdInfo.PositionFilterName == "LowPassExponential")
-						{
-							settings_shown = true;
-
-							ImGui::Text("Position Prediction Smoothing Distance: ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##PredictionSmoothingDistance", &hmdInfo.FilterPredictionDistance, 1.f, 5.f, 2))
-							{
-								hmdInfo.FilterPredictionDistance = clampf(hmdInfo.FilterPredictionDistance, 1.0f, (1 << 16));
-
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-
-							ImGui::Text("Position Prediction Smoothing Power (%%): ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							float filter_predict_smoothing = (1.f - hmdInfo.FilterPredictionSmoothing) * 100.f;
-							if (ImGui::InputFloat("##PredictionSmoothingPower", &filter_predict_smoothing, 1.f, 5.f, 2))
-							{
-								hmdInfo.FilterPredictionSmoothing = clampf(1.f - (filter_predict_smoothing / 100.f), 0.1f, 1.0f);
-
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-						}
-
 						if (hmdInfo.PositionFilterName == "LowPassOptical")
 						{
 							settings_shown = true;
@@ -530,8 +500,6 @@ void AppStage_HMDSettings::renderUI()
 
 						if (ImGui::Button("Reset Filter Settings Defaults"))
 						{
-							hmdInfo.FilterPredictionDistance = 10.f;
-							hmdInfo.FilterPredictionSmoothing = 0.40f;
 							hmdInfo.FilterLowPassOpticalDistance = 10.f;
 							hmdInfo.FilterLowPassOpticalSmoothing = 0.40f;
 							hmdInfo.FilterMadgwickBeta = 0.2f;
@@ -543,8 +511,6 @@ void AppStage_HMDSettings::renderUI()
 						if (request_offset)
 						{
 							FilterSettings filterSettings;
-							filterSettings.filter_prediction_distance = hmdInfo.FilterPredictionDistance;
-							filterSettings.filter_prediction_smoothing = hmdInfo.FilterPredictionSmoothing;
 							filterSettings.filter_lowpassoptical_distance = hmdInfo.FilterLowPassOpticalDistance;
 							filterSettings.filter_lowpassoptical_smoothing = hmdInfo.FilterLowPassOpticalSmoothing;
 							filterSettings.filter_madgwick_beta = hmdInfo.FilterMadgwickBeta;
@@ -1040,8 +1006,6 @@ void AppStage_HMDSettings::request_set_hmd_filter_settings(
 		request->mutable_request_set_hmd_filter_settings();
 
 	filter_settings->set_hmd_id(HmdID);
-	filter_settings->set_filter_prediction_distance(filterSettings.filter_prediction_distance);
-	filter_settings->set_filter_prediction_smoothing(filterSettings.filter_prediction_smoothing);
 	filter_settings->set_filter_lowpassoptical_distance(filterSettings.filter_lowpassoptical_distance);
 	filter_settings->set_filter_lowpassoptical_smoothing(filterSettings.filter_lowpassoptical_smoothing);
 	filter_settings->set_filter_madgwick_beta(filterSettings.filter_madgwick_beta);
@@ -1141,8 +1105,6 @@ void AppStage_HMDSettings::handle_hmd_list_response(
 				HmdInfo.OffsetScale.y = HmdResponse.offset_scale().y();
 				HmdInfo.OffsetScale.z = HmdResponse.offset_scale().z();
 
-				HmdInfo.FilterPredictionDistance = HmdResponse.filter_prediction_distance();
-				HmdInfo.FilterPredictionSmoothing = HmdResponse.filter_prediction_smoothing();
 				HmdInfo.FilterLowPassOpticalDistance = HmdResponse.filter_lowpassoptical_distance();
 				HmdInfo.FilterLowPassOpticalSmoothing = HmdResponse.filter_lowpassoptical_smoothing();
 				HmdInfo.FilterMadgwickBeta = HmdResponse.filter_madgwick_beta();

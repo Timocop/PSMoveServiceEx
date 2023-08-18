@@ -722,8 +722,6 @@ protected:
 
                 int gamepad_index= -1;
 
-				float filter_prediction_distance;
-				float filter_prediction_smoothing;
 				float filter_lowpassoptical_distance;
 				float filter_lowpassoptical_smoothing;
 				bool filter_enable_magnetometer;
@@ -760,8 +758,6 @@ protected:
 						offset_scale.set(config->offset_scale.x, config->offset_scale.y, config->offset_scale.z);
 						offset_magnetometer = config->offset_magnetometer_center;
 
-						filter_prediction_distance = config->filter_prediction_distance;
-						filter_prediction_smoothing = config->filter_prediction_smoothing;
 						filter_lowpassoptical_distance = config->filter_lowpassoptical_distance;
 						filter_lowpassoptical_smoothing = config->filter_lowpassoptical_smoothing;
 						filter_enable_magnetometer = config->filter_enable_magnetometer;
@@ -834,8 +830,6 @@ protected:
 						ang_prediction_time = config->ang_prediction_time;
 						controller_hand= config->hand;
 
-						filter_prediction_distance = config->filter_prediction_distance;
-						filter_prediction_smoothing = config->filter_prediction_smoothing;
 						filter_lowpassoptical_distance = config->filter_lowpassoptical_distance;
 						filter_lowpassoptical_smoothing = config->filter_lowpassoptical_smoothing;
 						filter_madgwick_beta = config->filter_madgwick_beta;
@@ -863,8 +857,6 @@ protected:
                         gamepad_index= config->gamepad_index;
 						controller_hand= config->hand;
 
-						filter_prediction_distance = config->filter_prediction_distance;
-						filter_prediction_smoothing = config->filter_prediction_smoothing;
 						filter_lowpassoptical_distance = config->filter_lowpassoptical_distance;
 						filter_lowpassoptical_smoothing = config->filter_lowpassoptical_smoothing;
 
@@ -925,8 +917,6 @@ protected:
 				else
 					controller_info->set_controller_hand(PSMoveProtocol::HAND_ANY);
 
-				controller_info->set_filter_prediction_distance(filter_prediction_distance);
-				controller_info->set_filter_prediction_smoothing(filter_prediction_smoothing);
 				controller_info->set_filter_lowpassoptical_distance(filter_lowpassoptical_distance);
 				controller_info->set_filter_lowpassoptical_smoothing(filter_lowpassoptical_smoothing);
 				controller_info->set_filter_enable_magnetometer(filter_enable_magnetometer);
@@ -3112,9 +3102,7 @@ protected:
 				PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
 				PSMoveControllerConfig config = *controller->getConfig();
 
-				if (config.filter_prediction_distance != request.filter_prediction_distance() ||
-					config.filter_prediction_smoothing != request.filter_prediction_smoothing() ||
-					config.filter_lowpassoptical_distance != request.filter_lowpassoptical_distance() ||
+				if (config.filter_lowpassoptical_distance != request.filter_lowpassoptical_distance() ||
 					config.filter_lowpassoptical_smoothing != request.filter_lowpassoptical_smoothing() ||
 					config.filter_enable_magnetometer != request.filter_enable_magnetometer() ||
 					config.filter_use_passive_drift_correction != request.filter_use_passive_drift_correction() ||
@@ -3127,8 +3115,6 @@ protected:
 					config.filter_madgwick_beta != request.filter_madgwick_beta() ||
 					config.filter_madgwick_stabilization != request.filter_madgwick_stabilization())
 				{
-					config.filter_prediction_distance = request.filter_prediction_distance();
-					config.filter_prediction_smoothing = request.filter_prediction_smoothing();
 					config.filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
 					config.filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
 					config.filter_enable_magnetometer = request.filter_enable_magnetometer();
@@ -3152,15 +3138,11 @@ protected:
 				PSDualShock4Controller *controller = ControllerView->castChecked<PSDualShock4Controller>();
 				PSDualShock4ControllerConfig config = *controller->getConfig();
 
-				if (config.filter_prediction_distance != request.filter_prediction_distance() ||
-					config.filter_prediction_smoothing != request.filter_prediction_smoothing() ||
-					config.filter_lowpassoptical_distance != request.filter_lowpassoptical_distance() ||
+				if (config.filter_lowpassoptical_distance != request.filter_lowpassoptical_distance() ||
 					config.filter_lowpassoptical_smoothing != request.filter_lowpassoptical_smoothing() ||
 					config.filter_madgwick_beta != request.filter_madgwick_beta() ||
 					config.filter_madgwick_stabilization != request.filter_madgwick_stabilization())
 				{
-					config.filter_prediction_distance = request.filter_prediction_distance();
-					config.filter_prediction_smoothing = request.filter_prediction_smoothing();
 					config.filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
 					config.filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
 					config.filter_madgwick_beta = request.filter_madgwick_beta();
@@ -3176,13 +3158,9 @@ protected:
 				VirtualController *controller = ControllerView->castChecked<VirtualController>();
 				VirtualControllerConfig *config = controller->getConfigMutable();
 				
-				if (config->filter_prediction_distance != request.filter_prediction_distance() ||
-					config->filter_prediction_smoothing != request.filter_prediction_smoothing() ||
-					config->filter_lowpassoptical_distance != request.filter_lowpassoptical_distance() ||
+				if (config->filter_lowpassoptical_distance != request.filter_lowpassoptical_distance() ||
 					config->filter_lowpassoptical_smoothing != request.filter_lowpassoptical_smoothing())
 				{
-					config->filter_prediction_distance = request.filter_prediction_distance();
-					config->filter_prediction_smoothing = request.filter_prediction_smoothing();
 					config->filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
 					config->filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
 
@@ -3320,15 +3298,11 @@ protected:
 				MorpheusHMD *hmd = HmdView->castChecked<MorpheusHMD>();
 				MorpheusHMDConfig *config = hmd->getConfigMutable();
 
-				if (config->filter_prediction_distance != request.filter_prediction_distance() ||
-					config->filter_prediction_smoothing != request.filter_prediction_smoothing() ||
-					config->filter_lowpassoptical_distance != request.filter_lowpassoptical_distance() ||
+				if (config->filter_lowpassoptical_distance != request.filter_lowpassoptical_distance() ||
 					config->filter_lowpassoptical_smoothing != request.filter_lowpassoptical_smoothing() ||
 					config->filter_madgwick_beta != request.filter_madgwick_beta() ||
 					config->filter_madgwick_stabilization != request.filter_madgwick_stabilization())
 				{
-					config->filter_prediction_distance = request.filter_prediction_distance();
-					config->filter_prediction_smoothing = request.filter_prediction_smoothing();
 					config->filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
 					config->filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
 					config->filter_madgwick_beta = request.filter_madgwick_beta();
@@ -3344,13 +3318,9 @@ protected:
 				VirtualHMD *virt = HmdView->castChecked<VirtualHMD>();
 				VirtualHMDConfig *config = virt->getConfigMutable();
 
-				if (config->filter_prediction_distance != request.filter_prediction_distance() ||
-					config->filter_prediction_smoothing != request.filter_prediction_smoothing() ||
-					config->filter_lowpassoptical_distance != request.filter_lowpassoptical_distance() ||
+				if (config->filter_lowpassoptical_distance != request.filter_lowpassoptical_distance() ||
 					config->filter_lowpassoptical_smoothing != request.filter_lowpassoptical_smoothing())
 				{
-					config->filter_prediction_distance = request.filter_prediction_distance();
-					config->filter_prediction_smoothing = request.filter_prediction_smoothing();
 					config->filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
 					config->filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
 
@@ -3668,8 +3638,6 @@ protected:
 				offset_scale.clear();
 				offset_scale.set(1.f, 1.f, 1.f);
 
-				float filter_prediction_distance;
-				float filter_prediction_smoothing;
 				float filter_lowpassoptical_distance;
 				float filter_lowpassoptical_smoothing;
 				float filter_madgwick_beta;
@@ -3692,8 +3660,6 @@ protected:
 						offset_position.set(config->offset_position.x, config->offset_position.y, config->offset_position.z);
 						offset_scale.set(config->offset_scale.x, config->offset_scale.y, config->offset_scale.z);
 
-						filter_prediction_distance = config->filter_prediction_distance;
-						filter_prediction_smoothing = config->filter_prediction_smoothing;
 						filter_lowpassoptical_distance = config->filter_lowpassoptical_distance;
 						filter_lowpassoptical_smoothing = config->filter_lowpassoptical_smoothing;
 						filter_madgwick_beta = config->filter_madgwick_beta;
@@ -3717,8 +3683,6 @@ protected:
 						offset_position.set(config->offset_position.x, config->offset_position.y, config->offset_position.z);
 						offset_scale.set(config->offset_scale.x, config->offset_scale.y, config->offset_scale.z);
 
-						filter_prediction_distance = config->filter_prediction_distance;
-						filter_prediction_smoothing = config->filter_prediction_smoothing;
 						filter_lowpassoptical_distance = config->filter_lowpassoptical_distance;
 						filter_lowpassoptical_smoothing = config->filter_lowpassoptical_smoothing;
 
@@ -3751,8 +3715,6 @@ protected:
 				mutable_offset_scale->set_y(offset_scale.y);
 				mutable_offset_scale->set_z(offset_scale.z);
 
-				hmd_info->set_filter_prediction_distance(filter_prediction_distance);
-				hmd_info->set_filter_prediction_smoothing(filter_prediction_smoothing);
 				hmd_info->set_filter_lowpassoptical_distance(filter_lowpassoptical_distance);
 				hmd_info->set_filter_lowpassoptical_smoothing(filter_lowpassoptical_smoothing);
 				hmd_info->set_filter_madgwick_beta(filter_madgwick_beta);

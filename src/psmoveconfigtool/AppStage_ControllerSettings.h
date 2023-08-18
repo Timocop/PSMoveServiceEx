@@ -54,8 +54,6 @@ public:
 
 	struct FilterSettings
 	{
-		float filter_prediction_distance;
-		float filter_prediction_smoothing;
 		float filter_lowpassoptical_distance;
 		float filter_lowpassoptical_smoothing;
 		bool filter_enable_magnetometer;
@@ -104,8 +102,6 @@ public:
 		DevicePosition OffsetScale;
 		float OffsetMagnetometer;
 
-		float FilterPredictionDistance;
-		float FilterPredictionSmoothing;
 		float FilterLowPassOpticalDistance;
 		float FilterLowPassOpticalSmoothing;
 		bool FilterEnableMagnetometer;

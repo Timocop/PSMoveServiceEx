@@ -639,33 +639,29 @@ message Request {
     // Parameters for SET_CONTROLLER_FILTER_SETTINGS
     message RequestSetControllerFilterSettings {
         int32 controller_id = 1;
-		float filter_prediction_distance = 2;
-		float filter_prediction_smoothing = 3;
-		float filter_lowpassoptical_smoothing = 4;
-		float filter_lowpassoptical_distance = 5;
-		bool filter_enable_magnetometer = 6;
-		bool filter_use_passive_drift_correction = 7;
-		int32 filter_passive_drift_correction_method = 8;
-		float filter_passive_drift_correction_deadzone = 9;
-		float filter_passive_drift_correction_gravity_deadzone = 10;
-		float filter_passive_drift_correction_delay = 11;
-		int32 filter_opticaltarget_controller_id = 12;
-		bool filter_use_stabilization = 13;
-		float filter_stabilization_min_scale = 14;
-		float filter_madgwick_beta = 15;
-		bool filter_madgwick_stabilization = 16;
+		float filter_lowpassoptical_smoothing = 2;
+		float filter_lowpassoptical_distance = 3;
+		bool filter_enable_magnetometer = 4;
+		bool filter_use_passive_drift_correction = 5;
+		int32 filter_passive_drift_correction_method = 6;
+		float filter_passive_drift_correction_deadzone = 7;
+		float filter_passive_drift_correction_gravity_deadzone = 8;
+		float filter_passive_drift_correction_delay = 9;
+		int32 filter_opticaltarget_controller_id = 10;
+		bool filter_use_stabilization = 11;
+		float filter_stabilization_min_scale = 12;
+		float filter_madgwick_beta = 13;
+		bool filter_madgwick_stabilization = 14;
     }
     RequestSetControllerFilterSettings request_set_controller_filter_settings = 55;
 	
     // Parameters for SET_HMD_FILTER_SETTINGS
     message RequestSetHmdFilterSettings {
         int32 hmd_id = 1;
-		float filter_prediction_distance = 2;
-		float filter_prediction_smoothing = 3;
-		float filter_lowpassoptical_smoothing = 4;
-		float filter_lowpassoptical_distance = 5;
-		float filter_madgwick_beta = 6;
-		bool filter_madgwick_stabilization = 7;
+		float filter_lowpassoptical_smoothing = 2;
+		float filter_lowpassoptical_distance = 3;
+		float filter_madgwick_beta = 4;
+		bool filter_madgwick_stabilization = 5;
     }
     RequestSetHmdFilterSettings request_set_hmd_filter_settings = 56;
 	
@@ -790,25 +786,23 @@ message Response {
 			Position offset_scale = 23;
 			float offset_magnetometer = 24;
 			
-			float filter_prediction_distance = 25;
-			float filter_prediction_smoothing = 26;
-			float filter_lowpassoptical_smoothing = 27;
-			float filter_lowpassoptical_distance = 28;
+			float filter_lowpassoptical_smoothing = 25;
+			float filter_lowpassoptical_distance = 26;
 			
-			bool filter_enable_magnetometer = 29;
-			bool filter_use_passive_drift_correction = 30;
-			int32 filter_passive_drift_correction_method = 31;
-			float filter_passive_drift_correction_deadzone = 32;
-			float filter_passive_drift_correction_gravity_deadzone = 33;
-			float filter_passive_drift_correction_delay = 34;
-			int32 filter_opticaltarget_controller_id = 35;
-			bool filter_use_stabilization = 36;
-			float filter_stabilization_min_scale = 37;
+			bool filter_enable_magnetometer = 27;
+			bool filter_use_passive_drift_correction = 28;
+			int32 filter_passive_drift_correction_method = 29;
+			float filter_passive_drift_correction_deadzone = 30;
+			float filter_passive_drift_correction_gravity_deadzone = 31;
+			float filter_passive_drift_correction_delay = 32;
+			int32 filter_opticaltarget_controller_id = 33;
+			bool filter_use_stabilization = 34;
+			float filter_stabilization_min_scale = 35;
 			
-            float ang_prediction_time = 38;
+            float ang_prediction_time = 36;
 			
-			float filter_madgwick_beta = 39;
-			bool filter_madgwick_stabilization = 40;
+			float filter_madgwick_beta = 37;
+			bool filter_madgwick_stabilization = 38;
         }
         repeated ControllerInfo controllers = 1;
         string host_serial = 2;
@@ -934,15 +928,13 @@ message Response {
 			Position offset_position = 10;
 			Position offset_scale = 11;
 			
-			float filter_prediction_distance = 12;
-			float filter_prediction_smoothing = 13;
-			float filter_lowpassoptical_smoothing = 14;
-			float filter_lowpassoptical_distance = 15;
+			float filter_lowpassoptical_smoothing = 12;
+			float filter_lowpassoptical_distance = 13;
 			
-            float ang_prediction_time = 16;
+            float ang_prediction_time = 14;
 			
-			float filter_madgwick_beta = 17;
-			bool filter_madgwick_stabilization = 18;
+			float filter_madgwick_beta = 15;
+			bool filter_madgwick_stabilization = 16;
         }
         repeated HMDInfo hmd_entries = 1;
     }

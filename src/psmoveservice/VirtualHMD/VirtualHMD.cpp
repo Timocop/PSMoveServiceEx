@@ -56,8 +56,6 @@ VirtualHMDConfig::config2ptree()
 	pt.put("ang_prediction_time", ang_prediction_time);
     pt.put("bulb_radius", bulb_radius);
 
-	pt.put("FilterSettings.PredictionDistance", filter_prediction_distance);
-	pt.put("FilterSettings.PredictionSmoothing", filter_prediction_smoothing);
 	pt.put("FilterSettings.LowPassOptical.Distance", filter_lowpassoptical_distance);
 	pt.put("FilterSettings.LowPassOptical.Smoothing", filter_lowpassoptical_smoothing);
 
@@ -103,8 +101,6 @@ VirtualHMDConfig::ptree2config(const boost::property_tree::ptree &pt)
         tracking_color_id = static_cast<eCommonTrackingColorID>(readTrackingColor(pt));
         bulb_radius = pt.get<float>("bulb_radius", bulb_radius);
 
-		filter_prediction_distance = pt.get<float>("FilterSettings.PredictionDistance", filter_prediction_distance);
-		filter_prediction_smoothing = pt.get<float>("FilterSettings.PredictionSmoothing", filter_prediction_smoothing);
 		filter_lowpassoptical_distance = pt.get<float>("FilterSettings.LowPassOptical.Distance", filter_lowpassoptical_distance);
 		filter_lowpassoptical_smoothing = pt.get<float>("FilterSettings.LowPassOptical.Smoothing", filter_lowpassoptical_smoothing);
     }

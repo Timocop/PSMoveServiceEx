@@ -605,8 +605,6 @@ PSMoveControllerConfig::config2ptree()
 
 	pt.put("hand", hand);
 
-	pt.put("FilterSettings.PredictionDistance", filter_prediction_distance);
-	pt.put("FilterSettings.PredictionSmoothing", filter_prediction_smoothing);
 	pt.put("FilterSettings.LowPassOptical.Distance", filter_lowpassoptical_distance);
 	pt.put("FilterSettings.LowPassOptical.Smoothing", filter_lowpassoptical_smoothing);
 	pt.put("FilterSettings.EnableMagnetometer", filter_enable_magnetometer);
@@ -730,8 +728,6 @@ PSMoveControllerConfig::ptree2config(const boost::property_tree::ptree &pt)
 
 		hand= pt.get<std::string>("hand", hand);
 
-		filter_prediction_distance = pt.get<float>("FilterSettings.PredictionDistance", filter_prediction_distance);
-		filter_prediction_smoothing = pt.get<float>("FilterSettings.PredictionSmoothing", filter_prediction_smoothing);
 		filter_lowpassoptical_distance = pt.get<float>("FilterSettings.LowPassOptical.Distance", filter_lowpassoptical_distance);
 		filter_lowpassoptical_smoothing = pt.get<float>("FilterSettings.LowPassOptical.Smoothing", filter_lowpassoptical_smoothing);
 
