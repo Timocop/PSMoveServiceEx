@@ -1094,7 +1094,7 @@ void AppStage_ControllerSettings::renderUI()
 														ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 														ImGui::PushItemWidth(120.f);
 														float filter_madgwick_stabilization_smoothing_factor = controllerInfo.FilterMadgwickStabilizationSmoothingFactor;
-														if (ImGui::InputFloat("##MadgwickFilterMinimumBeta", &filter_madgwick_stabilization_smoothing_factor, 0.01f, 0.05f, 2))
+														if (ImGui::InputFloat("##MadgwickFilterBetaSmoothingFactor", &filter_madgwick_stabilization_smoothing_factor, 0.01f, 0.05f, 2))
 														{
 															controllerInfo.FilterMadgwickStabilizationSmoothingFactor = clampf(filter_madgwick_stabilization_smoothing_factor, 0.f, 1.f);
 
