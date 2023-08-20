@@ -430,8 +430,6 @@ void OrientationFilterMadgwickARG::update(
 				const float filtered_beta = smoothing_factor * new_beta + (1.f - smoothing_factor) * m_beta;
 
 				m_beta = filtered_beta;
-
-				printf("m_beta %f\n", m_beta);
 			}
 			else
 			{
@@ -685,8 +683,6 @@ void OrientationFilterMadgwickMARG::update(
 			const float filtered_beta = smoothing_factor * new_beta + (1.f - smoothing_factor) * m_beta;
 
 			m_beta = filtered_beta;
-
-			printf("m_beta %f\n", m_beta);
 		}
 		else
 		{
