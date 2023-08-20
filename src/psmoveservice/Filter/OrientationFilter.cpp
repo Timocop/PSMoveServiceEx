@@ -424,7 +424,7 @@ void OrientationFilterMadgwickARG::update(
 				const float gyro_multi = clampf((gyro_b - k_madgwick_gyro_min_rad) / k_madgwick_gyro_max_rad, 0.0f, 1.0f);
 
 				const float min_beta = clampf(filter_madgwick_stabilization_min_beta, 0.0f, 1.0f);
-				const float smoothing_factor = clampf(filter_madgwick_stabilization_smoothing_factor, 0.0f, 1.0f);
+				const float smoothing_factor = clampf(filter_madgwick_stabilization_smoothing_factor, 0.01f, 1.0f);
 
 				const float new_beta = clampf(filter_madgwick_beta * gyro_multi, min_beta, 1.0f);
 				const float filtered_beta = smoothing_factor * new_beta + (1.f - smoothing_factor) * m_beta;
@@ -679,7 +679,7 @@ void OrientationFilterMadgwickMARG::update(
 			const float gyro_multi = clampf((gyro_b - k_madgwick_gyro_min_rad) / k_madgwick_gyro_max_rad, 0.0f, 1.0f);
 
 			const float min_beta = clampf(filter_madgwick_stabilization_min_beta, 0.0f, 1.0f);
-			const float smoothing_factor = clampf(filter_madgwick_stabilization_smoothing_factor, 0.0f, 1.0f);
+			const float smoothing_factor = clampf(filter_madgwick_stabilization_smoothing_factor, 0.01f, 1.0f);
 
 			const float new_beta = clampf(filter_madgwick_beta * gyro_multi, min_beta, 1.0f);
 			const float filtered_beta = smoothing_factor * new_beta + (1.f - smoothing_factor) * m_beta;
