@@ -3453,7 +3453,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 				cache->local_position.x = cache->new_local_position.x;
 				cache->local_position.y = cache->new_local_position.y;
 				cache->local_position.z = cache->new_local_position.z;
-				cache->paired_trackers |= (1 << orgCache.tracker_1_id) | (1 << orgCache.tracker_2_id + PSMOVESERVICE_MAX_TRACKER_COUNT);
+				cache->paired_trackers |= (1 << orgCache.tracker_1_id) | (1 << (orgCache.tracker_2_id + PSMOVESERVICE_MAX_TRACKER_COUNT));
 				cache->isValid = true;
 			}
 		}
