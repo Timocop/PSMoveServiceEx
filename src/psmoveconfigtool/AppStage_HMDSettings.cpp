@@ -498,6 +498,25 @@ void AppStage_HMDSettings::renderUI()
 									"when the head-mounted display is stable."
 								);
 							}
+
+							if (hmdInfo.FilterMadgwickStabilization)
+							{
+								ImGui::Indent();
+								{
+									ImGui::Text("Minimum Drift Correction Power (Beta): ");
+									ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+									ImGui::PushItemWidth(120.f);
+									float filter_madgwick_stabilization_min_beta = hmdInfo.FilterMadgwickStabilizationMinBeta;
+									if (ImGui::InputFloat("##MadgwickFilterMinimumBeta", &filter_madgwick_stabilization_min_beta, 0.01f, 0.05f, 2))
+									{
+										hmdInfo.FilterMadgwickStabilizationMinBeta = clampf(filter_madgwick_stabilization_min_beta, 0.f, 1.f);
+
+										request_offset = true;
+									}
+									ImGui::PopItemWidth();
+								}
+								ImGui::Unindent();
+							}
 						}
 
 						if (!settings_shown)
@@ -513,6 +532,7 @@ void AppStage_HMDSettings::renderUI()
 							hmdInfo.FilterLowPassOpticalSmoothing = 0.40f;
 							hmdInfo.FilterMadgwickBeta = 0.5f;
 							hmdInfo.FilterMadgwickStabilization = true;
+							hmdInfo.FilterMadgwickStabilizationMinBeta = 0.02f;
 
 							request_offset = true;
 						}
@@ -523,7 +543,8 @@ void AppStage_HMDSettings::renderUI()
 							filterSettings.filter_lowpassoptical_distance = hmdInfo.FilterLowPassOpticalDistance;
 							filterSettings.filter_lowpassoptical_smoothing = hmdInfo.FilterLowPassOpticalSmoothing;
 							filterSettings.filter_madgwick_beta = hmdInfo.FilterMadgwickBeta;
-							filterSettings.filter_madgwick_stabilization = hmdInfo.FilterMadgwickStabilization; 
+							filterSettings.filter_madgwick_stabilization = hmdInfo.FilterMadgwickStabilization;
+							filterSettings.filter_madgwick_stabilization_min_beta = hmdInfo.FilterMadgwickStabilizationMinBeta;
 
 							request_set_hmd_filter_settings(hmdInfo.HmdID, filterSettings);
 						}
@@ -1019,6 +1040,7 @@ void AppStage_HMDSettings::request_set_hmd_filter_settings(
 	filter_settings->set_filter_lowpassoptical_smoothing(filterSettings.filter_lowpassoptical_smoothing);
 	filter_settings->set_filter_madgwick_beta(filterSettings.filter_madgwick_beta);
 	filter_settings->set_filter_madgwick_stabilization(filterSettings.filter_madgwick_stabilization);
+	filter_settings->set_filter_madgwick_stabilization_min_beta(filterSettings.filter_madgwick_stabilization_min_beta);
 
 	PSMRequestID request_id;
 	PSM_SendOpaqueRequest(&request, &request_id);
@@ -1118,6 +1140,7 @@ void AppStage_HMDSettings::handle_hmd_list_response(
 				HmdInfo.FilterLowPassOpticalSmoothing = HmdResponse.filter_lowpassoptical_smoothing();
 				HmdInfo.FilterMadgwickBeta = HmdResponse.filter_madgwick_beta();
 				HmdInfo.FilterMadgwickStabilization = HmdResponse.filter_madgwick_stabilization();
+				HmdInfo.FilterMadgwickStabilizationMinBeta = HmdResponse.filter_madgwick_stabilization_min_beta();
 
                 if (HmdInfo.HmdType == AppStage_HMDSettings::Morpheus)
                 {

@@ -27,6 +27,7 @@
 #define k_velocity_decay 0.8f
 
 #define k_madgwick_beta 0.20f
+#define k_madgwick_stabil_min_beta 0.02f
 #define k_madgwick_gyro_min_rad 0.025f
 #define k_madgwick_gyro_max_rad 0.25f
 
@@ -291,6 +292,7 @@ void OrientationFilterMadgwickARG::update(
 
 	float filter_madgwick_beta = k_madgwick_beta;
 	bool filter_madgwick_stabilization = false;
+	float filter_madgwick_stabilization_min_beta = k_madgwick_stabil_min_beta;
 
 #if !defined(IS_TESTING_KALMAN) 
 	if (packet.controllerDeviceId > -1)
@@ -305,8 +307,9 @@ void OrientationFilterMadgwickARG::update(
 				PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
 				PSMoveControllerConfig config = *controller->getConfig();
 
-				filter_madgwick_beta = config.filter_madgwick_beta; 
-				filter_madgwick_stabilization = config.filter_madgwick_stabilization; 
+				filter_madgwick_beta = config.filter_madgwick_beta;
+				filter_madgwick_stabilization = config.filter_madgwick_stabilization;
+				filter_madgwick_stabilization_min_beta = config.filter_madgwick_stabilization_min_beta;
 
 				break;
 			}
@@ -315,8 +318,9 @@ void OrientationFilterMadgwickARG::update(
 				PSDualShock4Controller *controller = ControllerView->castChecked<PSDualShock4Controller>();
 				PSDualShock4ControllerConfig config = *controller->getConfig();
 
-				filter_madgwick_beta = config.filter_madgwick_beta; 
+				filter_madgwick_beta = config.filter_madgwick_beta;
 				filter_madgwick_stabilization = config.filter_madgwick_stabilization;
+				filter_madgwick_stabilization_min_beta = config.filter_madgwick_stabilization_min_beta;
 
 				break;
 			}
@@ -336,8 +340,9 @@ void OrientationFilterMadgwickARG::update(
 				MorpheusHMD *hmd = HmdView->castChecked<MorpheusHMD>();
 				MorpheusHMDConfig config = *hmd->getConfig();
 
-				filter_madgwick_beta = config.filter_madgwick_beta; 
+				filter_madgwick_beta = config.filter_madgwick_beta;
 				filter_madgwick_stabilization = config.filter_madgwick_stabilization;
+				filter_madgwick_stabilization_min_beta = config.filter_madgwick_stabilization_min_beta;
 
 				break;
 			}
@@ -414,7 +419,9 @@ void OrientationFilterMadgwickARG::update(
 				const float gyro_b = ((fminf(fminf(abs(current_omega.x()), abs(current_omega.y())), abs(current_omega.z()))));
 				const float gyro_multi = clampf((gyro_b - k_madgwick_gyro_min_rad) / k_madgwick_gyro_max_rad, 0.0f, 1.0f);
 
-				m_beta = clampf(filter_madgwick_beta * gyro_multi, 0.0f, 1.0f);
+				const float min_beta = clampf(filter_madgwick_stabilization_min_beta, 0.0f, 1.0f);
+
+				m_beta = clampf(filter_madgwick_beta * gyro_multi, min_beta, 1.0f);
 			}
 			else
 			{
@@ -481,6 +488,7 @@ void OrientationFilterMadgwickMARG::update(
 
 	float filter_madgwick_beta = k_madgwick_beta;
 	bool filter_madgwick_stabilization = false;
+	float filter_madgwick_stabilization_min_beta = k_madgwick_stabil_min_beta;
 
 #if !defined(IS_TESTING_KALMAN) 
 	if (packet.controllerDeviceId > -1)
@@ -497,6 +505,7 @@ void OrientationFilterMadgwickMARG::update(
 
 				filter_madgwick_beta = config.filter_madgwick_beta;
 				filter_madgwick_stabilization = config.filter_madgwick_stabilization;
+				filter_madgwick_stabilization_min_beta = config.filter_madgwick_stabilization_min_beta;
 
 				break;
 			}
@@ -507,6 +516,7 @@ void OrientationFilterMadgwickMARG::update(
 
 				filter_madgwick_beta = config.filter_madgwick_beta;
 				filter_madgwick_stabilization = config.filter_madgwick_stabilization;
+				filter_madgwick_stabilization_min_beta = config.filter_madgwick_stabilization_min_beta;
 
 				break;
 			}
@@ -528,6 +538,7 @@ void OrientationFilterMadgwickMARG::update(
 
 				filter_madgwick_beta = config.filter_madgwick_beta;
 				filter_madgwick_stabilization = config.filter_madgwick_stabilization;
+				filter_madgwick_stabilization_min_beta = config.filter_madgwick_stabilization_min_beta;
 
 				break;
 			}
@@ -653,7 +664,9 @@ void OrientationFilterMadgwickMARG::update(
 			const float gyro_b = ((fminf(fminf(abs(current_omega.x()), abs(current_omega.y())), abs(current_omega.z()))));
 			const float gyro_multi = clampf((gyro_b - k_madgwick_gyro_min_rad) / k_madgwick_gyro_max_rad, 0.0f, 1.0f);
 
-			m_beta = clampf(filter_madgwick_beta * gyro_multi, 0.0f, 1.0f);
+			const float min_beta = clampf(filter_madgwick_stabilization_min_beta, 0.0f, 1.0f);
+
+			m_beta = clampf(filter_madgwick_beta * gyro_multi, min_beta, 1.0f);
 		}
 		else
 		{

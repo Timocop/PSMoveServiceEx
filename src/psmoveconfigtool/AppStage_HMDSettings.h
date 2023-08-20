@@ -52,6 +52,7 @@ public:
 		float filter_lowpassoptical_smoothing;
 		float filter_madgwick_beta;
 		bool filter_madgwick_stabilization;
+		float filter_madgwick_stabilization_min_beta;
 	};
 
     struct HMDInfo
@@ -76,6 +77,7 @@ public:
 		float FilterLowPassOpticalSmoothing;
 		float FilterMadgwickBeta;
 		bool FilterMadgwickStabilization;
+		float FilterMadgwickStabilizationMinBeta;
     };
 
 

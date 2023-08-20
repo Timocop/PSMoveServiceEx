@@ -66,6 +66,7 @@ public:
 		float filter_stabilization_min_scale;
 		float filter_madgwick_beta;
 		bool filter_madgwick_stabilization;
+		float filter_madgwick_stabilization_min_beta;
 	};
 
 	struct ControllerInfo
@@ -114,6 +115,7 @@ public:
 		float FilterStabilizationMinScale;
 		float FilterMadgwickBeta;
 		bool FilterMadgwickStabilization;
+		float FilterMadgwickStabilizationMinBeta;
 
 		static bool ParentControllerComboItemGetter(void* userdata, int index, const char** out_string)
 		{

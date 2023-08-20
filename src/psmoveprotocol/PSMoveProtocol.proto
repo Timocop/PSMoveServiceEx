@@ -652,6 +652,7 @@ message Request {
 		float filter_stabilization_min_scale = 12;
 		float filter_madgwick_beta = 13;
 		bool filter_madgwick_stabilization = 14;
+		float filter_madgwick_stabilization_min_beta = 15;
     }
     RequestSetControllerFilterSettings request_set_controller_filter_settings = 55;
 	
@@ -662,6 +663,7 @@ message Request {
 		float filter_lowpassoptical_distance = 3;
 		float filter_madgwick_beta = 4;
 		bool filter_madgwick_stabilization = 5;
+		float filter_madgwick_stabilization_min_beta = 6;
     }
     RequestSetHmdFilterSettings request_set_hmd_filter_settings = 56;
 	
@@ -803,6 +805,7 @@ message Response {
 			
 			float filter_madgwick_beta = 37;
 			bool filter_madgwick_stabilization = 38;
+			float filter_madgwick_stabilization_min_beta = 39;
         }
         repeated ControllerInfo controllers = 1;
         string host_serial = 2;
@@ -935,6 +938,7 @@ message Response {
 			
 			float filter_madgwick_beta = 15;
 			bool filter_madgwick_stabilization = 16;
+			float filter_madgwick_stabilization_min_beta = 17;
         }
         repeated HMDInfo hmd_entries = 1;
     }

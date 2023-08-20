@@ -734,6 +734,7 @@ protected:
 				float filter_stabilization_min_scale;
 				float filter_madgwick_beta;
 				bool filter_madgwick_stabilization;
+				float filter_madgwick_stabilization_min_beta;
 
                 switch(controller_view->getControllerDeviceType())
                 {
@@ -770,6 +771,7 @@ protected:
 						filter_stabilization_min_scale = config->filter_stabilization_min_scale;
 						filter_madgwick_beta = config->filter_madgwick_beta;
 						filter_madgwick_stabilization = config->filter_madgwick_stabilization;
+						filter_madgwick_stabilization_min_beta = config->filter_madgwick_stabilization_min_beta;
 
                         controller_info->set_controller_type(PSMoveProtocol::PSMOVE);
                     }
@@ -834,6 +836,7 @@ protected:
 						filter_lowpassoptical_smoothing = config->filter_lowpassoptical_smoothing;
 						filter_madgwick_beta = config->filter_madgwick_beta;
 						filter_madgwick_stabilization = config->filter_madgwick_stabilization;
+						filter_madgwick_stabilization_min_beta = config->filter_madgwick_stabilization_min_beta;
 
 						controller_info->set_controller_type(PSMoveProtocol::PSDUALSHOCK4);
                     }
@@ -929,6 +932,7 @@ protected:
 				controller_info->set_filter_stabilization_min_scale(filter_stabilization_min_scale);
 				controller_info->set_filter_madgwick_beta(filter_madgwick_beta);
 				controller_info->set_filter_madgwick_stabilization(filter_madgwick_stabilization);
+				controller_info->set_filter_madgwick_stabilization_min_beta(filter_madgwick_stabilization_min_beta);
             }
         }
 
@@ -3113,7 +3117,8 @@ protected:
 					config.filter_use_stabilization != request.filter_use_stabilization() ||
 					config.filter_stabilization_min_scale != request.filter_stabilization_min_scale() ||
 					config.filter_madgwick_beta != request.filter_madgwick_beta() ||
-					config.filter_madgwick_stabilization != request.filter_madgwick_stabilization())
+					config.filter_madgwick_stabilization != request.filter_madgwick_stabilization() ||
+					config.filter_madgwick_stabilization_min_beta != request.filter_madgwick_stabilization_min_beta())
 				{
 					config.filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
 					config.filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
@@ -3127,6 +3132,7 @@ protected:
 					config.filter_stabilization_min_scale = request.filter_stabilization_min_scale();
 					config.filter_madgwick_beta = request.filter_madgwick_beta();
 					config.filter_madgwick_stabilization = request.filter_madgwick_stabilization();
+					config.filter_madgwick_stabilization_min_beta = request.filter_madgwick_stabilization_min_beta();
 
 					controller->setConfig(&config);
 				}
@@ -3141,12 +3147,14 @@ protected:
 				if (config.filter_lowpassoptical_distance != request.filter_lowpassoptical_distance() ||
 					config.filter_lowpassoptical_smoothing != request.filter_lowpassoptical_smoothing() ||
 					config.filter_madgwick_beta != request.filter_madgwick_beta() ||
-					config.filter_madgwick_stabilization != request.filter_madgwick_stabilization())
+					config.filter_madgwick_stabilization != request.filter_madgwick_stabilization() ||
+					config.filter_madgwick_stabilization_min_beta != request.filter_madgwick_stabilization_min_beta())
 				{
 					config.filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
 					config.filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
 					config.filter_madgwick_beta = request.filter_madgwick_beta();
 					config.filter_madgwick_stabilization = request.filter_madgwick_stabilization();
+					config.filter_madgwick_stabilization_min_beta = request.filter_madgwick_stabilization_min_beta();
 
 					controller->setConfig(&config);
 				}
@@ -3301,12 +3309,14 @@ protected:
 				if (config->filter_lowpassoptical_distance != request.filter_lowpassoptical_distance() ||
 					config->filter_lowpassoptical_smoothing != request.filter_lowpassoptical_smoothing() ||
 					config->filter_madgwick_beta != request.filter_madgwick_beta() ||
-					config->filter_madgwick_stabilization != request.filter_madgwick_stabilization())
+					config->filter_madgwick_stabilization != request.filter_madgwick_stabilization() ||
+					config->filter_madgwick_stabilization_min_beta != request.filter_madgwick_stabilization_min_beta())
 				{
 					config->filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
 					config->filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
 					config->filter_madgwick_beta = request.filter_madgwick_beta();
 					config->filter_madgwick_stabilization = request.filter_madgwick_stabilization();
+					config->filter_madgwick_stabilization_min_beta = request.filter_madgwick_stabilization_min_beta();
 
 					config->save();
 				}
@@ -3642,6 +3652,7 @@ protected:
 				float filter_lowpassoptical_smoothing;
 				float filter_madgwick_beta;
 				bool filter_madgwick_stabilization;
+				bool filter_madgwick_stabilization_min_beta;
 
                 switch (hmd_view->getHMDDeviceType())
                 {
@@ -3664,6 +3675,7 @@ protected:
 						filter_lowpassoptical_smoothing = config->filter_lowpassoptical_smoothing;
 						filter_madgwick_beta = config->filter_madgwick_beta;
 						filter_madgwick_stabilization = config->filter_madgwick_stabilization;
+						filter_madgwick_stabilization_min_beta = config->filter_madgwick_stabilization_min_beta;
 
 						hmd_info->set_hmd_type(PSMoveProtocol::Morpheus);
 
@@ -3719,6 +3731,7 @@ protected:
 				hmd_info->set_filter_lowpassoptical_smoothing(filter_lowpassoptical_smoothing);
 				hmd_info->set_filter_madgwick_beta(filter_madgwick_beta);
 				hmd_info->set_filter_madgwick_stabilization(filter_madgwick_stabilization);
+				hmd_info->set_filter_madgwick_stabilization_min_beta(filter_madgwick_stabilization_min_beta);
             }
         }
 
