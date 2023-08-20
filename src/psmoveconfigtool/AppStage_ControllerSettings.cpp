@@ -1087,6 +1087,22 @@ void AppStage_ControllerSettings::renderUI()
 														ImGui::PopItemWidth();
 													}
 													ImGui::Unindent();
+
+													ImGui::Indent();
+													{
+														ImGui::Text("Beta Smoothing Factor: ");
+														ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+														ImGui::PushItemWidth(120.f);
+														float filter_madgwick_stabilization_smoothing_factor = controllerInfo.FilterMadgwickStabilizationSmoothingFactor;
+														if (ImGui::InputFloat("##MadgwickFilterMinimumBeta", &filter_madgwick_stabilization_smoothing_factor, 0.01f, 0.05f, 2))
+														{
+															controllerInfo.FilterMadgwickStabilizationSmoothingFactor = clampf(filter_madgwick_stabilization_smoothing_factor, 0.f, 1.f);
+
+															request_offset = true;
+														}
+														ImGui::PopItemWidth();
+													}
+													ImGui::Unindent();
 												}
 											}
 
@@ -1112,6 +1128,7 @@ void AppStage_ControllerSettings::renderUI()
 												controllerInfo.FilterMadgwickBeta = 0.5f;
 												controllerInfo.FilterMadgwickStabilization = true;
 												controllerInfo.FilterMadgwickStabilizationMinBeta = 0.02f;
+												controllerInfo.FilterMadgwickStabilizationSmoothingFactor = 0.1f;
 
 												request_offset = true;
 
@@ -1133,6 +1150,7 @@ void AppStage_ControllerSettings::renderUI()
 												filterSettings.filter_madgwick_beta = controllerInfo.FilterMadgwickBeta;
 												filterSettings.filter_madgwick_stabilization = controllerInfo.FilterMadgwickStabilization;
 												filterSettings.filter_madgwick_stabilization_min_beta = controllerInfo.FilterMadgwickStabilizationMinBeta;
+												filterSettings.filter_madgwick_stabilization_smoothing_factor = controllerInfo.FilterMadgwickStabilizationSmoothingFactor;
 
 												request_set_controller_filter_settings(controllerInfo.ControllerID, filterSettings);
 											}
@@ -1801,6 +1819,7 @@ void AppStage_ControllerSettings::request_set_controller_filter_settings(
 	filter_settings->set_filter_madgwick_beta(filterSettings.filter_madgwick_beta);
 	filter_settings->set_filter_madgwick_stabilization(filterSettings.filter_madgwick_stabilization);
 	filter_settings->set_filter_madgwick_stabilization_min_beta(filterSettings.filter_madgwick_stabilization_min_beta);
+	filter_settings->set_filter_madgwick_stabilization_smoothing_factor(filterSettings.filter_madgwick_stabilization_smoothing_factor);
 
 	PSMRequestID request_id;
 	PSM_SendOpaqueRequest(&request, &request_id);
@@ -1903,6 +1922,7 @@ void AppStage_ControllerSettings::handle_controller_list_response(
 				ControllerInfo.FilterMadgwickBeta = ControllerResponse.filter_madgwick_beta();
 				ControllerInfo.FilterMadgwickStabilization = ControllerResponse.filter_madgwick_stabilization();
 				ControllerInfo.FilterMadgwickStabilizationMinBeta = ControllerResponse.filter_madgwick_stabilization_min_beta();
+				ControllerInfo.FilterMadgwickStabilizationSmoothingFactor = ControllerResponse.filter_madgwick_stabilization_smoothing_factor();
 
                 if (ControllerInfo.ControllerType == PSMController_Move)
                 {

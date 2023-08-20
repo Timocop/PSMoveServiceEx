@@ -85,6 +85,7 @@ public:
 		, filter_madgwick_beta(0.5f)
 		, filter_madgwick_stabilization(true)
 		, filter_madgwick_stabilization_min_beta(0.02f)
+		, filter_madgwick_stabilization_smoothing_factor(0.1f)
     {
         magnetometer_identity.clear();
         magnetometer_center.clear();
@@ -233,6 +234,7 @@ public:
 	float filter_madgwick_beta;
 	bool filter_madgwick_stabilization;
 	float filter_madgwick_stabilization_min_beta;
+	float filter_madgwick_stabilization_smoothing_factor;
 };
 
 struct PSMoveControllerInputState : public CommonControllerState

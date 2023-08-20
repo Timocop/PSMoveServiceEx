@@ -30,6 +30,7 @@
 #define k_madgwick_stabil_min_beta 0.02f
 #define k_madgwick_gyro_min_rad 0.025f
 #define k_madgwick_gyro_max_rad 0.25f
+#define k_madgwick_beta_smoothing_factor 0.1f
 
 // -- private definitions -----
 struct OrientationFilterState
@@ -293,6 +294,7 @@ void OrientationFilterMadgwickARG::update(
 	float filter_madgwick_beta = k_madgwick_beta;
 	bool filter_madgwick_stabilization = false;
 	float filter_madgwick_stabilization_min_beta = k_madgwick_stabil_min_beta;
+	float filter_madgwick_stabilization_smoothing_factor = k_madgwick_beta_smoothing_factor;
 
 #if !defined(IS_TESTING_KALMAN) 
 	if (packet.controllerDeviceId > -1)
@@ -321,6 +323,7 @@ void OrientationFilterMadgwickARG::update(
 				filter_madgwick_beta = config.filter_madgwick_beta;
 				filter_madgwick_stabilization = config.filter_madgwick_stabilization;
 				filter_madgwick_stabilization_min_beta = config.filter_madgwick_stabilization_min_beta;
+				filter_madgwick_stabilization_smoothing_factor = config.filter_madgwick_stabilization_smoothing_factor;
 
 				break;
 			}
@@ -343,6 +346,7 @@ void OrientationFilterMadgwickARG::update(
 				filter_madgwick_beta = config.filter_madgwick_beta;
 				filter_madgwick_stabilization = config.filter_madgwick_stabilization;
 				filter_madgwick_stabilization_min_beta = config.filter_madgwick_stabilization_min_beta;
+				filter_madgwick_stabilization_smoothing_factor = config.filter_madgwick_stabilization_smoothing_factor;
 
 				break;
 			}
@@ -420,8 +424,14 @@ void OrientationFilterMadgwickARG::update(
 				const float gyro_multi = clampf((gyro_b - k_madgwick_gyro_min_rad) / k_madgwick_gyro_max_rad, 0.0f, 1.0f);
 
 				const float min_beta = clampf(filter_madgwick_stabilization_min_beta, 0.0f, 1.0f);
+				const float smoothing_factor = clampf(filter_madgwick_stabilization_smoothing_factor, 0.0f, 1.0f);
 
-				m_beta = clampf(filter_madgwick_beta * gyro_multi, min_beta, 1.0f);
+				const float new_beta = clampf(filter_madgwick_beta * gyro_multi, min_beta, 1.0f);
+				const float filtered_beta = smoothing_factor * new_beta + (1.f - smoothing_factor) * m_beta;
+
+				m_beta = filtered_beta;
+
+				printf("m_beta %f\n", m_beta);
 			}
 			else
 			{
@@ -489,6 +499,7 @@ void OrientationFilterMadgwickMARG::update(
 	float filter_madgwick_beta = k_madgwick_beta;
 	bool filter_madgwick_stabilization = false;
 	float filter_madgwick_stabilization_min_beta = k_madgwick_stabil_min_beta;
+	float filter_madgwick_stabilization_smoothing_factor = k_madgwick_beta_smoothing_factor;
 
 #if !defined(IS_TESTING_KALMAN) 
 	if (packet.controllerDeviceId > -1)
@@ -506,6 +517,7 @@ void OrientationFilterMadgwickMARG::update(
 				filter_madgwick_beta = config.filter_madgwick_beta;
 				filter_madgwick_stabilization = config.filter_madgwick_stabilization;
 				filter_madgwick_stabilization_min_beta = config.filter_madgwick_stabilization_min_beta;
+				filter_madgwick_stabilization_smoothing_factor = config.filter_madgwick_stabilization_smoothing_factor;
 
 				break;
 			}
@@ -517,6 +529,7 @@ void OrientationFilterMadgwickMARG::update(
 				filter_madgwick_beta = config.filter_madgwick_beta;
 				filter_madgwick_stabilization = config.filter_madgwick_stabilization;
 				filter_madgwick_stabilization_min_beta = config.filter_madgwick_stabilization_min_beta;
+				filter_madgwick_stabilization_smoothing_factor = config.filter_madgwick_stabilization_smoothing_factor;
 
 				break;
 			}
@@ -539,6 +552,7 @@ void OrientationFilterMadgwickMARG::update(
 				filter_madgwick_beta = config.filter_madgwick_beta;
 				filter_madgwick_stabilization = config.filter_madgwick_stabilization;
 				filter_madgwick_stabilization_min_beta = config.filter_madgwick_stabilization_min_beta;
+				filter_madgwick_stabilization_smoothing_factor = config.filter_madgwick_stabilization_smoothing_factor;
 
 				break;
 			}
@@ -665,8 +679,14 @@ void OrientationFilterMadgwickMARG::update(
 			const float gyro_multi = clampf((gyro_b - k_madgwick_gyro_min_rad) / k_madgwick_gyro_max_rad, 0.0f, 1.0f);
 
 			const float min_beta = clampf(filter_madgwick_stabilization_min_beta, 0.0f, 1.0f);
+			const float smoothing_factor = clampf(filter_madgwick_stabilization_smoothing_factor, 0.0f, 1.0f);
 
-			m_beta = clampf(filter_madgwick_beta * gyro_multi, min_beta, 1.0f);
+			const float new_beta = clampf(filter_madgwick_beta * gyro_multi, min_beta, 1.0f);
+			const float filtered_beta = smoothing_factor * new_beta + (1.f - smoothing_factor) * m_beta;
+
+			m_beta = filtered_beta;
+
+			printf("m_beta %f\n", m_beta);
 		}
 		else
 		{

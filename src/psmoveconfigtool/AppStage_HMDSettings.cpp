@@ -516,6 +516,22 @@ void AppStage_HMDSettings::renderUI()
 									ImGui::PopItemWidth();
 								}
 								ImGui::Unindent();
+
+								ImGui::Indent();
+								{
+									ImGui::Text("Beta Smoothing Factor: ");
+									ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+									ImGui::PushItemWidth(120.f);
+									float filter_madgwick_stabilization_smoothing_factor = hmdInfo.FilterMadgwickStabilizationSmoothingFactor;
+									if (ImGui::InputFloat("##MadgwickFilterMinimumBeta", &filter_madgwick_stabilization_smoothing_factor, 0.01f, 0.05f, 2))
+									{
+										hmdInfo.FilterMadgwickStabilizationSmoothingFactor = clampf(filter_madgwick_stabilization_smoothing_factor, 0.f, 1.f);
+
+										request_offset = true;
+									}
+									ImGui::PopItemWidth();
+								}
+								ImGui::Unindent();
 							}
 						}
 
@@ -533,6 +549,7 @@ void AppStage_HMDSettings::renderUI()
 							hmdInfo.FilterMadgwickBeta = 0.5f;
 							hmdInfo.FilterMadgwickStabilization = true;
 							hmdInfo.FilterMadgwickStabilizationMinBeta = 0.02f;
+							hmdInfo.FilterMadgwickStabilizationSmoothingFactor = 0.1f;
 
 							request_offset = true;
 						}
@@ -545,6 +562,7 @@ void AppStage_HMDSettings::renderUI()
 							filterSettings.filter_madgwick_beta = hmdInfo.FilterMadgwickBeta;
 							filterSettings.filter_madgwick_stabilization = hmdInfo.FilterMadgwickStabilization;
 							filterSettings.filter_madgwick_stabilization_min_beta = hmdInfo.FilterMadgwickStabilizationMinBeta;
+							filterSettings.filter_madgwick_stabilization_smoothing_factor = hmdInfo.FilterMadgwickStabilizationSmoothingFactor;
 
 							request_set_hmd_filter_settings(hmdInfo.HmdID, filterSettings);
 						}
@@ -1041,6 +1059,7 @@ void AppStage_HMDSettings::request_set_hmd_filter_settings(
 	filter_settings->set_filter_madgwick_beta(filterSettings.filter_madgwick_beta);
 	filter_settings->set_filter_madgwick_stabilization(filterSettings.filter_madgwick_stabilization);
 	filter_settings->set_filter_madgwick_stabilization_min_beta(filterSettings.filter_madgwick_stabilization_min_beta);
+	filter_settings->set_filter_madgwick_stabilization_smoothing_factor(filterSettings.filter_madgwick_stabilization_smoothing_factor);
 
 	PSMRequestID request_id;
 	PSM_SendOpaqueRequest(&request, &request_id);
@@ -1141,6 +1160,7 @@ void AppStage_HMDSettings::handle_hmd_list_response(
 				HmdInfo.FilterMadgwickBeta = HmdResponse.filter_madgwick_beta();
 				HmdInfo.FilterMadgwickStabilization = HmdResponse.filter_madgwick_stabilization();
 				HmdInfo.FilterMadgwickStabilizationMinBeta = HmdResponse.filter_madgwick_stabilization_min_beta();
+				HmdInfo.FilterMadgwickStabilizationSmoothingFactor = HmdResponse.filter_madgwick_stabilization_smoothing_factor();
 
                 if (HmdInfo.HmdType == AppStage_HMDSettings::Morpheus)
                 {

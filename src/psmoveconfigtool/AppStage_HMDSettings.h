@@ -53,6 +53,7 @@ public:
 		float filter_madgwick_beta;
 		bool filter_madgwick_stabilization;
 		float filter_madgwick_stabilization_min_beta;
+		float filter_madgwick_stabilization_smoothing_factor;
 	};
 
     struct HMDInfo
@@ -78,6 +79,7 @@ public:
 		float FilterMadgwickBeta;
 		bool FilterMadgwickStabilization;
 		float FilterMadgwickStabilizationMinBeta;
+		float FilterMadgwickStabilizationSmoothingFactor;
     };
 
 
