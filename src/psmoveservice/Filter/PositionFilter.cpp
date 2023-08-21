@@ -561,7 +561,7 @@ void PositionFilterLowPassOptical::update(
 				(new_position_meters.z() - old_position_meters.z()) / optical_delta_time
 			);
 
-			new_position_meters_sec = lowpass_filter_vector3f(k_lowpass_velocity_smoothing_factor, m_state->velocity_m_per_sec, newVel);
+			new_position_meters_sec = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->velocity_m_per_sec, newVel);
 		}
 
 		m_state->apply_optical_state(new_position_meters, new_position_meters_sec, timestamp, packet.isTemporary);
