@@ -8,7 +8,7 @@
 
 //-- constants -----
 // The max distance between samples that we apply low pass filter on the optical position filter
-#define k_max_lowpass_smoothing_distance 10.f * k_centimeters_to_meters // meters
+#define k_max_lowpass_smoothing_distance 10.f  // cm
 
 #define k_lowpass_smoothing_power 0.40f
 
@@ -333,7 +333,7 @@ void PositionFilterPassThru::update(
 				PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
 				PSMoveControllerConfig config = *controller->getConfig();
 
-				velocity_smoothing_factor = clampf(config.filter_velocity_smoothing_factor, 0.01f, 1.0f);
+				velocity_smoothing_factor = config.filter_velocity_smoothing_factor;
 
 				break;
 			}
@@ -342,7 +342,7 @@ void PositionFilterPassThru::update(
 				PSDualShock4Controller *controller = ControllerView->castChecked<PSDualShock4Controller>();
 				PSDualShock4ControllerConfig config = *controller->getConfig();
 
-				velocity_smoothing_factor = clampf(config.filter_velocity_smoothing_factor, 0.01f, 1.0f);
+				velocity_smoothing_factor = config.filter_velocity_smoothing_factor;
 
 				break;
 			}
@@ -351,7 +351,7 @@ void PositionFilterPassThru::update(
 				VirtualController *controller = ControllerView->castChecked<VirtualController>();
 				VirtualControllerConfig *config = controller->getConfigMutable();
 
-				velocity_smoothing_factor = clampf(config->filter_velocity_smoothing_factor, 0.01f, 1.0f);
+				velocity_smoothing_factor = config->filter_velocity_smoothing_factor;
 
 				break;
 			}
@@ -370,7 +370,7 @@ void PositionFilterPassThru::update(
 				MorpheusHMD *controller = HmdView->castChecked<MorpheusHMD>();
 				MorpheusHMDConfig *config = controller->getConfigMutable();
 
-				velocity_smoothing_factor = clampf(config->filter_velocity_smoothing_factor, 0.01f, 1.0f);
+				velocity_smoothing_factor = config->filter_velocity_smoothing_factor;
 
 				break;
 			}
@@ -379,7 +379,7 @@ void PositionFilterPassThru::update(
 				VirtualHMD *controller = HmdView->castChecked<VirtualHMD>();
 				VirtualHMDConfig *config = controller->getConfigMutable();
 
-				velocity_smoothing_factor = clampf(config->filter_velocity_smoothing_factor, 0.01f, 1.0f);
+				velocity_smoothing_factor = config->filter_velocity_smoothing_factor;
 
 				break;
 			}
@@ -387,6 +387,9 @@ void PositionFilterPassThru::update(
 		}
 	}
 #endif
+
+	// Clamp everything to safety
+	velocity_smoothing_factor = clampf(velocity_smoothing_factor, 0.01f, 1.0f);
 
 	// If device isnt tracking, clear old position and velocity to remove over-prediction
 	if (!packet.isCurrentlyTracking && !m_resetVelocity)
@@ -451,9 +454,9 @@ void PositionFilterLowPassOptical::update(
 				PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
 				PSMoveControllerConfig config = *controller->getConfig();
 
-				smoothing_distance = clampf(config.filter_lowpassoptical_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
-				smoothing_power = clampf(config.filter_lowpassoptical_smoothing, 0.1f, 1.f);
-				velocity_smoothing_factor = clampf(config.filter_velocity_smoothing_factor, 0.01f, 1.0f);
+				smoothing_distance = config.filter_lowpassoptical_distance;
+				smoothing_power = config.filter_lowpassoptical_smoothing;
+				velocity_smoothing_factor = config.filter_velocity_smoothing_factor;
 
 				break;
 			}
@@ -462,9 +465,9 @@ void PositionFilterLowPassOptical::update(
 				PSDualShock4Controller *controller = ControllerView->castChecked<PSDualShock4Controller>();
 				PSDualShock4ControllerConfig config = *controller->getConfig();
 
-				smoothing_distance = clampf(config.filter_lowpassoptical_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
-				smoothing_power = clampf(config.filter_lowpassoptical_smoothing, 0.1f, 1.f);
-				velocity_smoothing_factor = clampf(config.filter_velocity_smoothing_factor, 0.01f, 1.0f);
+				smoothing_distance = config.filter_lowpassoptical_distance;
+				smoothing_power = config.filter_lowpassoptical_smoothing;
+				velocity_smoothing_factor = config.filter_velocity_smoothing_factor;
 
 				break;
 			}
@@ -473,9 +476,9 @@ void PositionFilterLowPassOptical::update(
 				VirtualController *controller = ControllerView->castChecked<VirtualController>();
 				VirtualControllerConfig *config = controller->getConfigMutable();
 
-				smoothing_distance = clampf(config->filter_lowpassoptical_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
-				smoothing_power = clampf(config->filter_lowpassoptical_smoothing, 0.1f, 1.f);
-				velocity_smoothing_factor = clampf(config->filter_velocity_smoothing_factor, 0.01f, 1.0f);
+				smoothing_distance = config->filter_lowpassoptical_distance;
+				smoothing_power = config->filter_lowpassoptical_smoothing;
+				velocity_smoothing_factor = config->filter_velocity_smoothing_factor;
 
 				break;
 			}
@@ -494,9 +497,9 @@ void PositionFilterLowPassOptical::update(
 				MorpheusHMD *controller = HmdView->castChecked<MorpheusHMD>();
 				MorpheusHMDConfig *config = controller->getConfigMutable();
 
-				smoothing_distance = clampf(config->filter_lowpassoptical_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
-				smoothing_power = clampf(config->filter_lowpassoptical_smoothing, 0.1f, 1.f);
-				velocity_smoothing_factor = clampf(config->filter_velocity_smoothing_factor, 0.01f, 1.0f);
+				smoothing_distance = config->filter_lowpassoptical_distance;
+				smoothing_power = config->filter_lowpassoptical_smoothing;
+				velocity_smoothing_factor = config->filter_velocity_smoothing_factor;
 
 				break;
 			}
@@ -505,9 +508,9 @@ void PositionFilterLowPassOptical::update(
 				VirtualHMD *controller = HmdView->castChecked<VirtualHMD>();
 				VirtualHMDConfig *config = controller->getConfigMutable();
 
-				smoothing_distance = clampf(config->filter_lowpassoptical_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
-				smoothing_power = clampf(config->filter_lowpassoptical_smoothing, 0.1f, 1.f);
-				velocity_smoothing_factor = clampf(config->filter_velocity_smoothing_factor, 0.01f, 1.0f);
+				smoothing_distance = config->filter_lowpassoptical_distance;
+				smoothing_power = config->filter_lowpassoptical_smoothing;
+				velocity_smoothing_factor = config->filter_velocity_smoothing_factor;
 
 				break;
 			}
@@ -515,6 +518,11 @@ void PositionFilterLowPassOptical::update(
 		}
 	}
 #endif
+
+	// Clamp everything to safety
+	smoothing_distance = clampf(smoothing_distance, 1.f, (1 << 16));
+	smoothing_power = clampf(smoothing_power, 0.1f, 1.f);
+	velocity_smoothing_factor = clampf(velocity_smoothing_factor, 0.01f, 1.0f);
 
 	// If device isnt tracking, clear old position and velocity to remove over-prediction
 	if (!packet.isCurrentlyTracking && !m_resetVelocity)
@@ -531,7 +539,7 @@ void PositionFilterLowPassOptical::update(
         if (m_state->bIsValid)
         {
             // New position is blended against the old position
-            new_position_meters = lowpass_filter_optical_position_using_distance(&packet, m_state, smoothing_distance, smoothing_power);
+            new_position_meters = lowpass_filter_optical_position_using_distance(&packet, m_state, smoothing_distance * k_centimeters_to_meters, smoothing_power);
         }
         else
         {
@@ -699,8 +707,8 @@ void PositionFilterLowPassExponential::update(
 				PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
 				PSMoveControllerConfig config = *controller->getConfig();
 
-				smoothing_distance = clampf(config.filter_lowpassoptical_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
-				smoothing_power = clampf(config.filter_lowpassoptical_smoothing, 0.1f, 1.f);
+				smoothing_distance = config.filter_lowpassoptical_distance;
+				smoothing_power = config.filter_lowpassoptical_smoothing;
 
 				break;
 			}
@@ -709,8 +717,8 @@ void PositionFilterLowPassExponential::update(
 				PSDualShock4Controller *controller = ControllerView->castChecked<PSDualShock4Controller>();
 				PSDualShock4ControllerConfig config = *controller->getConfig();
 
-				smoothing_distance = clampf(config.filter_lowpassoptical_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
-				smoothing_power = clampf(config.filter_lowpassoptical_smoothing, 0.1f, 1.f);
+				smoothing_distance = config.filter_lowpassoptical_distance;
+				smoothing_power = config.filter_lowpassoptical_smoothing;
 
 				break;
 			}
@@ -719,8 +727,8 @@ void PositionFilterLowPassExponential::update(
 				VirtualController *controller = ControllerView->castChecked<VirtualController>();
 				VirtualControllerConfig *config = controller->getConfigMutable();
 
-				smoothing_distance = clampf(config->filter_lowpassoptical_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
-				smoothing_power = clampf(config->filter_lowpassoptical_smoothing, 0.1f, 1.f);
+				smoothing_distance = config->filter_lowpassoptical_distance;
+				smoothing_power = config->filter_lowpassoptical_smoothing;
 
 				break;
 			}
@@ -739,8 +747,8 @@ void PositionFilterLowPassExponential::update(
 				MorpheusHMD *controller = HmdView->castChecked<MorpheusHMD>();
 				MorpheusHMDConfig *config = controller->getConfigMutable();
 
-				smoothing_distance = clampf(config->filter_lowpassoptical_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
-				smoothing_power = clampf(config->filter_lowpassoptical_smoothing, 0.1f, 1.f);
+				smoothing_distance = config->filter_lowpassoptical_distance;
+				smoothing_power = config->filter_lowpassoptical_smoothing;
 
 				break;
 			}
@@ -749,8 +757,8 @@ void PositionFilterLowPassExponential::update(
 				VirtualHMD *controller = HmdView->castChecked<VirtualHMD>();
 				VirtualHMDConfig *config = controller->getConfigMutable();
 
-				smoothing_distance = clampf(config->filter_lowpassoptical_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
-				smoothing_power = clampf(config->filter_lowpassoptical_smoothing, 0.1f, 1.f);
+				smoothing_distance = config->filter_lowpassoptical_distance;
+				smoothing_power = config->filter_lowpassoptical_smoothing;
 
 				break;
 			}
@@ -758,6 +766,10 @@ void PositionFilterLowPassExponential::update(
 		}
 	}
 #endif
+
+	// Clamp everything to safety
+	smoothing_distance = clampf(smoothing_distance, 1.f, (1 << 16));
+	smoothing_power = clampf(smoothing_power, 0.1f, 1.f);
 
 	// If device isnt tracking, clear position history to remove over-prediction
 	if (!packet.isCurrentlyTracking)
@@ -774,7 +786,7 @@ void PositionFilterLowPassExponential::update(
         {
 			// Blend the latest position against the last position in the filter state ...
             Eigen::Vector3f lowpass_position_meters = 
-				lowpass_filter_optical_position_using_distance(&packet, m_state, smoothing_distance, smoothing_power);
+				lowpass_filter_optical_position_using_distance(&packet, m_state, smoothing_distance * k_centimeters_to_meters, smoothing_power);
 
 			// ... Then blend that result with the blended position at the start of the history
 			const float k_history_blend = 0.8f;

@@ -312,6 +312,7 @@ void OrientationFilterMadgwickARG::update(
 				filter_madgwick_beta = config.filter_madgwick_beta;
 				filter_madgwick_stabilization = config.filter_madgwick_stabilization;
 				filter_madgwick_stabilization_min_beta = config.filter_madgwick_stabilization_min_beta;
+				filter_madgwick_stabilization_smoothing_factor = config.filter_madgwick_stabilization_smoothing_factor;
 
 				break;
 			}
@@ -354,6 +355,11 @@ void OrientationFilterMadgwickARG::update(
 		}
 	}
 #endif
+
+	// Clamp everything to safety
+	filter_madgwick_beta = clampf(filter_madgwick_beta, 0.0f, 1.0f);
+	filter_madgwick_stabilization_min_beta = clampf(filter_madgwick_stabilization_min_beta, 0.0f, 1.0f);
+	filter_madgwick_stabilization_smoothing_factor = clampf(filter_madgwick_stabilization_smoothing_factor, 0.01f, 1.0f);
 
 	if (packet.has_imu_measurements())
 	{
@@ -423,11 +429,8 @@ void OrientationFilterMadgwickARG::update(
 				const float gyro_b = ((fminf(fminf(abs(current_omega.x()), abs(current_omega.y())), abs(current_omega.z()))));
 				const float gyro_multi = clampf((gyro_b - k_madgwick_gyro_min_rad) / k_madgwick_gyro_max_rad, 0.0f, 1.0f);
 
-				const float min_beta = clampf(filter_madgwick_stabilization_min_beta, 0.0f, 1.0f);
-				const float smoothing_factor = clampf(filter_madgwick_stabilization_smoothing_factor, 0.01f, 1.0f);
-
-				const float new_beta = clampf(filter_madgwick_beta * gyro_multi, min_beta, 1.0f);
-				const float filtered_beta = smoothing_factor * new_beta + (1.f - smoothing_factor) * m_beta;
+				const float new_beta = clampf(filter_madgwick_beta * gyro_multi, filter_madgwick_stabilization_min_beta, 1.0f);
+				const float filtered_beta = filter_madgwick_stabilization_smoothing_factor * new_beta + (1.f - filter_madgwick_stabilization_smoothing_factor) * m_beta;
 
 				m_beta = filtered_beta;
 			}
@@ -559,6 +562,11 @@ void OrientationFilterMadgwickMARG::update(
 	}
 #endif
 
+	// Clamp everything to safety
+	filter_madgwick_beta = clampf(filter_madgwick_beta, 0.0f, 1.0f);
+	filter_madgwick_stabilization_min_beta = clampf(filter_madgwick_stabilization_min_beta, 0.0f, 1.0f);
+	filter_madgwick_stabilization_smoothing_factor = clampf(filter_madgwick_stabilization_smoothing_factor, 0.01f, 1.0f);
+
 	if (packet.has_imu_measurements())
 	{
 		if (m_reset || m_recenter)
@@ -676,11 +684,8 @@ void OrientationFilterMadgwickMARG::update(
 			const float gyro_b = ((fminf(fminf(abs(current_omega.x()), abs(current_omega.y())), abs(current_omega.z()))));
 			const float gyro_multi = clampf((gyro_b - k_madgwick_gyro_min_rad) / k_madgwick_gyro_max_rad, 0.0f, 1.0f);
 
-			const float min_beta = clampf(filter_madgwick_stabilization_min_beta, 0.0f, 1.0f);
-			const float smoothing_factor = clampf(filter_madgwick_stabilization_smoothing_factor, 0.01f, 1.0f);
-
-			const float new_beta = clampf(filter_madgwick_beta * gyro_multi, min_beta, 1.0f);
-			const float filtered_beta = smoothing_factor * new_beta + (1.f - smoothing_factor) * m_beta;
+			const float new_beta = clampf(filter_madgwick_beta * gyro_multi, filter_madgwick_stabilization_min_beta, 1.0f);
+			const float filtered_beta = filter_madgwick_stabilization_smoothing_factor * new_beta + (1.f - filter_madgwick_stabilization_smoothing_factor) * m_beta;
 
 			m_beta = filtered_beta;
 		}
@@ -1182,7 +1187,7 @@ void OrientationFilterComplementaryMARG::filter_process_stabilization(
 
 	float gyro_max = fmaxf(abs(current_omega.x()), fmaxf(abs(current_omega.y()), abs(current_omega.z()))) * k_gyro_multi;
 
-	float align_weight = lerp_clampf(0.f, k_base_earth_frame_align_weight, clampf(gyro_max, clampf01(filter_stabilization_min_scale), 1.f));
+	float align_weight = lerp_clampf(0.f, k_base_earth_frame_align_weight, clampf(gyro_max, clampf(filter_stabilization_min_scale, 0.0f, 1.0f), 1.f));
 
 	// Update the blend weight
 	// -- Exponential blend the MG weight from 1 down to k_base_earth_frame_align_weight
