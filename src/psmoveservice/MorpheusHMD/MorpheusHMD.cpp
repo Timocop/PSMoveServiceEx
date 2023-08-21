@@ -261,6 +261,8 @@ MorpheusHMDConfig::config2ptree()
 	pt.put("FilterSettings.Madgwick.StabilizationMinBeta", filter_madgwick_stabilization_min_beta);
 	pt.put("FilterSettings.Madgwick.StabilizationSmoothingFactor", filter_madgwick_stabilization_smoothing_factor);
 
+	pt.put("FilterSettings.VelocitySmoothingFactor", filter_velocity_smoothing_factor);
+
 	writeTrackingColor(pt, tracking_color_id);
 
     return pt;
@@ -340,6 +342,8 @@ MorpheusHMDConfig::ptree2config(const boost::property_tree::ptree &pt)
 		filter_madgwick_stabilization = pt.get<bool>("FilterSettings.Madgwick.Stabilization", filter_madgwick_stabilization);
 		filter_madgwick_stabilization_min_beta = pt.get<float>("FilterSettings.Madgwick.StabilizationMinBeta", filter_madgwick_stabilization_min_beta);
 		filter_madgwick_stabilization_smoothing_factor = pt.get<float>("FilterSettings.Madgwick.StabilizationSmoothingFactor", filter_madgwick_stabilization_smoothing_factor);
+	
+		filter_velocity_smoothing_factor = pt.get<float>("FilterSettings.VelocitySmoothingFactor", filter_velocity_smoothing_factor);
     }
     else
     {

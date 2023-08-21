@@ -434,6 +434,24 @@ void AppStage_HMDSettings::renderUI()
 						bool request_offset = false;
 						bool settings_shown = false;
 
+						if (hmdInfo.PositionFilterName == "PassThru" ||
+							hmdInfo.PositionFilterName == "LowPassOptical")
+						{
+							settings_shown = true;
+
+							ImGui::Text("Velocity Smoothing Factor: ");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(120.f);
+							float filter_velocity_smoothing_factor = hmdInfo.FilterVelocitySmoothingFactor;
+							if (ImGui::InputFloat("##VelocitySmoothingFactor", &filter_velocity_smoothing_factor, 0.01f, 0.05f, 2))
+							{
+								hmdInfo.FilterVelocitySmoothingFactor = clampf(filter_velocity_smoothing_factor, 0.0f, 1.0f);
+
+								request_offset = true;
+							}
+							ImGui::PopItemWidth();
+						}
+
 						if (hmdInfo.PositionFilterName == "LowPassOptical")
 						{
 							settings_shown = true;
@@ -525,7 +543,7 @@ void AppStage_HMDSettings::renderUI()
 									float filter_madgwick_stabilization_smoothing_factor = hmdInfo.FilterMadgwickStabilizationSmoothingFactor;
 									if (ImGui::InputFloat("##MadgwickFilterBetaSmoothingFactor", &filter_madgwick_stabilization_smoothing_factor, 0.01f, 0.05f, 2))
 									{
-										hmdInfo.FilterMadgwickStabilizationSmoothingFactor = clampf(filter_madgwick_stabilization_smoothing_factor, 0.f, 1.f);
+										hmdInfo.FilterMadgwickStabilizationSmoothingFactor = clampf(filter_madgwick_stabilization_smoothing_factor, 0.0f, 1.f);
 
 										request_offset = true;
 									}
@@ -550,6 +568,7 @@ void AppStage_HMDSettings::renderUI()
 							hmdInfo.FilterMadgwickStabilization = true;
 							hmdInfo.FilterMadgwickStabilizationMinBeta = 0.02f;
 							hmdInfo.FilterMadgwickStabilizationSmoothingFactor = 0.1f;
+							hmdInfo.FilterVelocitySmoothingFactor = 0.25f;
 
 							request_offset = true;
 						}
@@ -563,6 +582,7 @@ void AppStage_HMDSettings::renderUI()
 							filterSettings.filter_madgwick_stabilization = hmdInfo.FilterMadgwickStabilization;
 							filterSettings.filter_madgwick_stabilization_min_beta = hmdInfo.FilterMadgwickStabilizationMinBeta;
 							filterSettings.filter_madgwick_stabilization_smoothing_factor = hmdInfo.FilterMadgwickStabilizationSmoothingFactor;
+							filterSettings.filter_velocity_smoothing_factor = hmdInfo.FilterVelocitySmoothingFactor;
 
 							request_set_hmd_filter_settings(hmdInfo.HmdID, filterSettings);
 						}
@@ -1060,6 +1080,7 @@ void AppStage_HMDSettings::request_set_hmd_filter_settings(
 	filter_settings->set_filter_madgwick_stabilization(filterSettings.filter_madgwick_stabilization);
 	filter_settings->set_filter_madgwick_stabilization_min_beta(filterSettings.filter_madgwick_stabilization_min_beta);
 	filter_settings->set_filter_madgwick_stabilization_smoothing_factor(filterSettings.filter_madgwick_stabilization_smoothing_factor);
+	filter_settings->set_filter_velocity_smoothing_factor(filterSettings.filter_velocity_smoothing_factor);
 
 	PSMRequestID request_id;
 	PSM_SendOpaqueRequest(&request, &request_id);
@@ -1161,6 +1182,7 @@ void AppStage_HMDSettings::handle_hmd_list_response(
 				HmdInfo.FilterMadgwickStabilization = HmdResponse.filter_madgwick_stabilization();
 				HmdInfo.FilterMadgwickStabilizationMinBeta = HmdResponse.filter_madgwick_stabilization_min_beta();
 				HmdInfo.FilterMadgwickStabilizationSmoothingFactor = HmdResponse.filter_madgwick_stabilization_smoothing_factor();
+				HmdInfo.FilterVelocitySmoothingFactor = HmdResponse.filter_velocity_smoothing_factor();
 
                 if (HmdInfo.HmdType == AppStage_HMDSettings::Morpheus)
                 {

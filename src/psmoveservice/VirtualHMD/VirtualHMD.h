@@ -31,6 +31,7 @@ public:
         , bulb_radius(2.25f) // The radius of the psmove tracking bulb in cm
 		, filter_lowpassoptical_distance(10.f)
 		, filter_lowpassoptical_smoothing(0.40f)
+		, filter_velocity_smoothing_factor(0.25f)
     {
 		offset_position.set(0.0, 0.0, 0.0);
 		offset_orientation.set(0.0, 0.0, 0.0);
@@ -76,6 +77,7 @@ public:
 	// Filter settings
 	float filter_lowpassoptical_distance;
 	float filter_lowpassoptical_smoothing;
+	float filter_velocity_smoothing_factor;
 };
 
 struct VirtualHMDState : public CommonHMDState

@@ -654,6 +654,7 @@ message Request {
 		bool filter_madgwick_stabilization = 14;
 		float filter_madgwick_stabilization_min_beta = 15;
 		float filter_madgwick_stabilization_smoothing_factor = 16;
+		float filter_velocity_smoothing_factor = 17;
     }
     RequestSetControllerFilterSettings request_set_controller_filter_settings = 55;
 	
@@ -666,6 +667,7 @@ message Request {
 		bool filter_madgwick_stabilization = 5;
 		float filter_madgwick_stabilization_min_beta = 6;
 		float filter_madgwick_stabilization_smoothing_factor = 7;
+		float filter_velocity_smoothing_factor = 8;
     }
     RequestSetHmdFilterSettings request_set_hmd_filter_settings = 56;
 	
@@ -809,6 +811,7 @@ message Response {
 			bool filter_madgwick_stabilization = 38;
 			float filter_madgwick_stabilization_min_beta = 39;
 			float filter_madgwick_stabilization_smoothing_factor = 40;
+			float filter_velocity_smoothing_factor = 41;
         }
         repeated ControllerInfo controllers = 1;
         string host_serial = 2;
@@ -943,6 +946,7 @@ message Response {
 			bool filter_madgwick_stabilization = 16;
 			float filter_madgwick_stabilization_min_beta = 17;
 			float filter_madgwick_stabilization_smoothing_factor = 18;
+			float filter_velocity_smoothing_factor = 19;
         }
         repeated HMDInfo hmd_entries = 1;
     }

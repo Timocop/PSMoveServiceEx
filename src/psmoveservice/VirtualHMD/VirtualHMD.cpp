@@ -59,6 +59,8 @@ VirtualHMDConfig::config2ptree()
 	pt.put("FilterSettings.LowPassOptical.Distance", filter_lowpassoptical_distance);
 	pt.put("FilterSettings.LowPassOptical.Smoothing", filter_lowpassoptical_smoothing);
 
+	pt.put("FilterSettings.VelocitySmoothingFactor", filter_velocity_smoothing_factor);
+
     writeTrackingColor(pt, tracking_color_id);
 
     return pt;
@@ -103,6 +105,8 @@ VirtualHMDConfig::ptree2config(const boost::property_tree::ptree &pt)
 
 		filter_lowpassoptical_distance = pt.get<float>("FilterSettings.LowPassOptical.Distance", filter_lowpassoptical_distance);
 		filter_lowpassoptical_smoothing = pt.get<float>("FilterSettings.LowPassOptical.Smoothing", filter_lowpassoptical_smoothing);
+
+		filter_velocity_smoothing_factor = pt.get<float>("FilterSettings.VelocitySmoothingFactor", filter_velocity_smoothing_factor);
     }
     else
     {

@@ -28,7 +28,7 @@
 // IMU extrapolation of an unseen controller
 #define k_max_unseen_position_timeout 10000.f // ms
 
-#define k_lowpass_velocity_smoothing_factor 0.35f
+#define k_lowpass_velocity_smoothing_factor 0.25f
 
 // -- private definitions -----
 struct PositionFilterState
@@ -318,6 +318,76 @@ void PositionFilterPassThru::update(
 		imu_delta_time /= 2.0f;
 	}
 
+	float velocity_smoothing_factor = k_lowpass_velocity_smoothing_factor;
+
+#if !defined(IS_TESTING_KALMAN) 
+	if (packet.controllerDeviceId > -1)
+	{
+		ServerControllerViewPtr ControllerView = DeviceManager::getInstance()->getControllerViewPtr(packet.controllerDeviceId);
+		if (ControllerView != nullptr && ControllerView->getIsOpen())
+		{
+			switch (ControllerView->getControllerDeviceType())
+			{
+			case CommonDeviceState::PSMove:
+			{
+				PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
+				PSMoveControllerConfig config = *controller->getConfig();
+
+				velocity_smoothing_factor = clampf(config.filter_velocity_smoothing_factor, 0.01f, 1.0f);
+
+				break;
+			}
+			case CommonDeviceState::PSDualShock4:
+			{
+				PSDualShock4Controller *controller = ControllerView->castChecked<PSDualShock4Controller>();
+				PSDualShock4ControllerConfig config = *controller->getConfig();
+
+				velocity_smoothing_factor = clampf(config.filter_velocity_smoothing_factor, 0.01f, 1.0f);
+
+				break;
+			}
+			case CommonDeviceState::VirtualController:
+			{
+				VirtualController *controller = ControllerView->castChecked<VirtualController>();
+				VirtualControllerConfig *config = controller->getConfigMutable();
+
+				velocity_smoothing_factor = clampf(config->filter_velocity_smoothing_factor, 0.01f, 1.0f);
+
+				break;
+			}
+			}
+		}
+	}
+	else if (packet.hmdDeviceId > -1)
+	{
+		ServerHMDViewPtr HmdView = DeviceManager::getInstance()->getHMDViewPtr(packet.hmdDeviceId);
+		if (HmdView != nullptr && HmdView->getIsOpen())
+		{
+			switch (HmdView->getHMDDeviceType())
+			{
+			case CommonDeviceState::Morpheus:
+			{
+				MorpheusHMD *controller = HmdView->castChecked<MorpheusHMD>();
+				MorpheusHMDConfig *config = controller->getConfigMutable();
+
+				velocity_smoothing_factor = clampf(config->filter_velocity_smoothing_factor, 0.01f, 1.0f);
+
+				break;
+			}
+			case CommonDeviceState::VirtualHMD:
+			{
+				VirtualHMD *controller = HmdView->castChecked<VirtualHMD>();
+				VirtualHMDConfig *config = controller->getConfigMutable();
+
+				velocity_smoothing_factor = clampf(config->filter_velocity_smoothing_factor, 0.01f, 1.0f);
+
+				break;
+			}
+			}
+		}
+	}
+#endif
+
 	// If device isnt tracking, clear old position and velocity to remove over-prediction
 	if (!packet.isCurrentlyTracking && !m_resetVelocity)
 	{
@@ -344,7 +414,7 @@ void PositionFilterPassThru::update(
 				(new_position_meters.z() - old_position_meters.z()) / optical_delta_time
 			);
 
-			new_position_meters_sec = lowpass_filter_vector3f(k_lowpass_velocity_smoothing_factor, m_state->velocity_m_per_sec, newVel);
+			new_position_meters_sec = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->velocity_m_per_sec, newVel);
 		}
 
 		m_state->apply_optical_state(new_position_meters, new_position_meters_sec, timestamp, packet.isTemporary);
@@ -366,6 +436,7 @@ void PositionFilterLowPassOptical::update(
 
 	float smoothing_distance = k_max_lowpass_smoothing_distance;
 	float smoothing_power = k_lowpass_smoothing_power;
+	float velocity_smoothing_factor = k_lowpass_velocity_smoothing_factor;
 
 #if !defined(IS_TESTING_KALMAN) 
 	if (packet.controllerDeviceId > -1)
@@ -382,6 +453,7 @@ void PositionFilterLowPassOptical::update(
 
 				smoothing_distance = clampf(config.filter_lowpassoptical_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
 				smoothing_power = clampf(config.filter_lowpassoptical_smoothing, 0.1f, 1.f);
+				velocity_smoothing_factor = clampf(config.filter_velocity_smoothing_factor, 0.01f, 1.0f);
 
 				break;
 			}
@@ -392,6 +464,7 @@ void PositionFilterLowPassOptical::update(
 
 				smoothing_distance = clampf(config.filter_lowpassoptical_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
 				smoothing_power = clampf(config.filter_lowpassoptical_smoothing, 0.1f, 1.f);
+				velocity_smoothing_factor = clampf(config.filter_velocity_smoothing_factor, 0.01f, 1.0f);
 
 				break;
 			}
@@ -402,6 +475,7 @@ void PositionFilterLowPassOptical::update(
 
 				smoothing_distance = clampf(config->filter_lowpassoptical_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
 				smoothing_power = clampf(config->filter_lowpassoptical_smoothing, 0.1f, 1.f);
+				velocity_smoothing_factor = clampf(config->filter_velocity_smoothing_factor, 0.01f, 1.0f);
 
 				break;
 			}
@@ -422,6 +496,7 @@ void PositionFilterLowPassOptical::update(
 
 				smoothing_distance = clampf(config->filter_lowpassoptical_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
 				smoothing_power = clampf(config->filter_lowpassoptical_smoothing, 0.1f, 1.f);
+				velocity_smoothing_factor = clampf(config->filter_velocity_smoothing_factor, 0.01f, 1.0f);
 
 				break;
 			}
@@ -432,6 +507,7 @@ void PositionFilterLowPassOptical::update(
 
 				smoothing_distance = clampf(config->filter_lowpassoptical_distance, 1.f, (1 << 16)) * k_centimeters_to_meters;
 				smoothing_power = clampf(config->filter_lowpassoptical_smoothing, 0.1f, 1.f);
+				velocity_smoothing_factor = clampf(config->filter_velocity_smoothing_factor, 0.01f, 1.0f);
 
 				break;
 			}

@@ -874,6 +874,24 @@ void AppStage_ControllerSettings::renderUI()
 											bool request_offset = false;
 											bool settings_shown = false;
 
+											if (controllerInfo.PositionFilterName == "PassThru" || 
+												controllerInfo.PositionFilterName == "LowPassOptical")
+											{
+												settings_shown = true;
+
+												ImGui::Text("Velocity Smoothing Factor: ");
+												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+												ImGui::PushItemWidth(120.f);
+												float filter_velocity_smoothing_factor = controllerInfo.FilterVelocitySmoothingFactor;
+												if (ImGui::InputFloat("##VelocitySmoothingFactor", &filter_velocity_smoothing_factor, 0.01f, 0.05f, 2))
+												{
+													controllerInfo.FilterVelocitySmoothingFactor = clampf(filter_velocity_smoothing_factor, 0.0f, 1.0f);
+
+													request_offset = true;
+												}
+												ImGui::PopItemWidth();
+											}
+
 											if (controllerInfo.PositionFilterName == "LowPassOptical")
 											{
 												settings_shown = true;
@@ -1129,6 +1147,7 @@ void AppStage_ControllerSettings::renderUI()
 												controllerInfo.FilterMadgwickStabilization = true;
 												controllerInfo.FilterMadgwickStabilizationMinBeta = 0.02f;
 												controllerInfo.FilterMadgwickStabilizationSmoothingFactor = 0.1f;
+												controllerInfo.FilterVelocitySmoothingFactor = 0.25f;
 
 												request_offset = true;
 
@@ -1151,6 +1170,7 @@ void AppStage_ControllerSettings::renderUI()
 												filterSettings.filter_madgwick_stabilization = controllerInfo.FilterMadgwickStabilization;
 												filterSettings.filter_madgwick_stabilization_min_beta = controllerInfo.FilterMadgwickStabilizationMinBeta;
 												filterSettings.filter_madgwick_stabilization_smoothing_factor = controllerInfo.FilterMadgwickStabilizationSmoothingFactor;
+												filterSettings.filter_velocity_smoothing_factor = controllerInfo.FilterVelocitySmoothingFactor;
 
 												request_set_controller_filter_settings(controllerInfo.ControllerID, filterSettings);
 											}
@@ -1820,6 +1840,7 @@ void AppStage_ControllerSettings::request_set_controller_filter_settings(
 	filter_settings->set_filter_madgwick_stabilization(filterSettings.filter_madgwick_stabilization);
 	filter_settings->set_filter_madgwick_stabilization_min_beta(filterSettings.filter_madgwick_stabilization_min_beta);
 	filter_settings->set_filter_madgwick_stabilization_smoothing_factor(filterSettings.filter_madgwick_stabilization_smoothing_factor);
+	filter_settings->set_filter_velocity_smoothing_factor(filterSettings.filter_velocity_smoothing_factor);
 
 	PSMRequestID request_id;
 	PSM_SendOpaqueRequest(&request, &request_id);
@@ -1923,6 +1944,7 @@ void AppStage_ControllerSettings::handle_controller_list_response(
 				ControllerInfo.FilterMadgwickStabilization = ControllerResponse.filter_madgwick_stabilization();
 				ControllerInfo.FilterMadgwickStabilizationMinBeta = ControllerResponse.filter_madgwick_stabilization_min_beta();
 				ControllerInfo.FilterMadgwickStabilizationSmoothingFactor = ControllerResponse.filter_madgwick_stabilization_smoothing_factor();
+				ControllerInfo.FilterVelocitySmoothingFactor = ControllerResponse.filter_velocity_smoothing_factor();
 
                 if (ControllerInfo.ControllerType == PSMController_Move)
                 {

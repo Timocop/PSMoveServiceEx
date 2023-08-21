@@ -53,6 +53,7 @@ public:
 		, filter_madgwick_stabilization(true)
 		, filter_madgwick_stabilization_min_beta(0.02f)
 		, filter_madgwick_stabilization_smoothing_factor(0.1f)
+		, filter_velocity_smoothing_factor(0.25f)
     {
 		offset_position.set(0.0f, 0.0f, 0.0f);
 		offset_orientation.set(0.0f, 0.0f, 0.0f);
@@ -196,6 +197,8 @@ public:
 	bool filter_madgwick_stabilization;
 	float filter_madgwick_stabilization_min_beta;
 	float filter_madgwick_stabilization_smoothing_factor;
+
+	float filter_velocity_smoothing_factor;
 };
 
 struct MorpheusHMDSensorFrame
