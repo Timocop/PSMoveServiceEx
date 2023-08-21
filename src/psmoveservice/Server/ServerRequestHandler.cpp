@@ -3679,6 +3679,7 @@ protected:
 				bool filter_madgwick_stabilization;
 				float filter_madgwick_stabilization_min_beta;
 				float filter_madgwick_stabilization_smoothing_factor;
+				float filter_velocity_smoothing_factor;
 
                 switch (hmd_view->getHMDDeviceType())
                 {
@@ -3703,6 +3704,7 @@ protected:
 						filter_madgwick_stabilization = config->filter_madgwick_stabilization;
 						filter_madgwick_stabilization_min_beta = config->filter_madgwick_stabilization_min_beta;
 						filter_madgwick_stabilization_smoothing_factor = config->filter_madgwick_stabilization_smoothing_factor;
+						filter_velocity_smoothing_factor = config->filter_velocity_smoothing_factor;
 
 						hmd_info->set_hmd_type(PSMoveProtocol::Morpheus);
 
@@ -3724,6 +3726,7 @@ protected:
 
 						filter_lowpassoptical_distance = config->filter_lowpassoptical_distance;
 						filter_lowpassoptical_smoothing = config->filter_lowpassoptical_smoothing;
+						filter_velocity_smoothing_factor = config->filter_velocity_smoothing_factor;
 
 						hmd_info->set_hmd_type(PSMoveProtocol::VirtualHMD);
                     }
@@ -3760,6 +3763,7 @@ protected:
 				hmd_info->set_filter_madgwick_stabilization(filter_madgwick_stabilization);
 				hmd_info->set_filter_madgwick_stabilization_min_beta(filter_madgwick_stabilization_min_beta);
 				hmd_info->set_filter_madgwick_stabilization_smoothing_factor(filter_madgwick_stabilization_smoothing_factor);
+				hmd_info->set_filter_velocity_smoothing_factor(filter_velocity_smoothing_factor);
             }
         }
 
