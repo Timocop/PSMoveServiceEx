@@ -450,6 +450,16 @@ void AppStage_HMDSettings::renderUI()
 								request_offset = true;
 							}
 							ImGui::PopItemWidth();
+
+							if (ImGui::IsItemHovered())
+							{
+								ImGui::SetTooltip(
+									"The amount of velocity smoothing applied determines the reduction\n"
+									"of motion jitter when prediction is applied.\n"
+									"However, too low values (more smoothing) can lead to prediction latency and creates a rubberbanding effect.\n"
+									"Using too high values (less smoothing) can result in a rough and erratic motion."
+								);
+							}
 						}
 
 						if (hmdInfo.PositionFilterName == "LowPassOptical")
@@ -512,7 +522,7 @@ void AppStage_HMDSettings::renderUI()
 							if (ImGui::IsItemHovered())
 							{
 								ImGui::SetTooltip(
-									"Stabilization will reduce magnetometer and accelerometer jittering\n"
+									"Stabilization will reduce orientation jitter\n"
 									"when the head-mounted display is stable."
 								);
 							}
