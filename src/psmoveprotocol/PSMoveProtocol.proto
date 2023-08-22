@@ -655,6 +655,9 @@ message Request {
 		float filter_madgwick_stabilization_min_beta = 15;
 		float filter_madgwick_stabilization_smoothing_factor = 16;
 		float filter_velocity_smoothing_factor = 17;
+		float filter_angular_smoothing_factor = 18;
+		float filter_velocity_prediction_cutoff = 19;
+		float filter_angular_prediction_cutoff = 20;
     }
     RequestSetControllerFilterSettings request_set_controller_filter_settings = 55;
 	
@@ -668,6 +671,9 @@ message Request {
 		float filter_madgwick_stabilization_min_beta = 6;
 		float filter_madgwick_stabilization_smoothing_factor = 7;
 		float filter_velocity_smoothing_factor = 8;
+		float filter_angular_smoothing_factor = 9;
+		float filter_velocity_prediction_cutoff = 10;
+		float filter_angular_prediction_cutoff = 11;
     }
     RequestSetHmdFilterSettings request_set_hmd_filter_settings = 56;
 	
@@ -812,6 +818,9 @@ message Response {
 			float filter_madgwick_stabilization_min_beta = 39;
 			float filter_madgwick_stabilization_smoothing_factor = 40;
 			float filter_velocity_smoothing_factor = 41;
+			float filter_angular_smoothing_factor = 42;
+			float filter_velocity_prediction_cutoff = 43;
+			float filter_angular_prediction_cutoff = 44;
         }
         repeated ControllerInfo controllers = 1;
         string host_serial = 2;
@@ -947,6 +956,9 @@ message Response {
 			float filter_madgwick_stabilization_min_beta = 17;
 			float filter_madgwick_stabilization_smoothing_factor = 18;
 			float filter_velocity_smoothing_factor = 19;
+			float filter_angular_smoothing_factor = 20;
+			float filter_velocity_prediction_cutoff = 21;
+			float filter_angular_prediction_cutoff = 22;
         }
         repeated HMDInfo hmd_entries = 1;
     }

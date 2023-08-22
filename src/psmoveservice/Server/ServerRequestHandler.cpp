@@ -737,6 +737,9 @@ protected:
 				float filter_madgwick_stabilization_min_beta;
 				float filter_madgwick_stabilization_smoothing_factor;
 				float filter_velocity_smoothing_factor;
+				float filter_angular_smoothing_factor;
+				float filter_velocity_prediction_cutoff;
+				float filter_angular_prediction_cutoff;
 
                 switch(controller_view->getControllerDeviceType())
                 {
@@ -776,6 +779,9 @@ protected:
 						filter_madgwick_stabilization_min_beta = config->filter_madgwick_stabilization_min_beta;
 						filter_madgwick_stabilization_smoothing_factor = config->filter_madgwick_stabilization_smoothing_factor;
 						filter_velocity_smoothing_factor = config->filter_velocity_smoothing_factor;
+						filter_angular_smoothing_factor = config->filter_angular_smoothing_factor;
+						filter_velocity_prediction_cutoff = config->filter_velocity_prediction_cutoff;
+						filter_angular_prediction_cutoff = config->filter_angular_prediction_cutoff;
 
                         controller_info->set_controller_type(PSMoveProtocol::PSMOVE);
                     }
@@ -843,6 +849,9 @@ protected:
 						filter_madgwick_stabilization_min_beta = config->filter_madgwick_stabilization_min_beta;
 						filter_madgwick_stabilization_smoothing_factor = config->filter_madgwick_stabilization_smoothing_factor;
 						filter_velocity_smoothing_factor = config->filter_velocity_smoothing_factor;
+						filter_angular_smoothing_factor = config->filter_angular_smoothing_factor;
+						filter_velocity_prediction_cutoff = config->filter_velocity_prediction_cutoff;
+						filter_angular_prediction_cutoff = config->filter_angular_prediction_cutoff;
 
 						controller_info->set_controller_type(PSMoveProtocol::PSDUALSHOCK4);
                     }
@@ -869,6 +878,9 @@ protected:
 						filter_lowpassoptical_distance = config->filter_lowpassoptical_distance;
 						filter_lowpassoptical_smoothing = config->filter_lowpassoptical_smoothing;
 						filter_velocity_smoothing_factor = config->filter_velocity_smoothing_factor;
+						filter_angular_smoothing_factor = config->filter_angular_smoothing_factor;
+						filter_velocity_prediction_cutoff = config->filter_velocity_prediction_cutoff;
+						filter_angular_prediction_cutoff = config->filter_angular_prediction_cutoff;
 
 						controller_info->set_controller_type(PSMoveProtocol::VIRTUALCONTROLLER);
                     }
@@ -942,6 +954,9 @@ protected:
 				controller_info->set_filter_madgwick_stabilization_min_beta(filter_madgwick_stabilization_min_beta);
 				controller_info->set_filter_madgwick_stabilization_smoothing_factor(filter_madgwick_stabilization_smoothing_factor);
 				controller_info->set_filter_velocity_smoothing_factor(filter_velocity_smoothing_factor);
+				controller_info->set_filter_angular_smoothing_factor(filter_angular_smoothing_factor);
+				controller_info->set_filter_velocity_prediction_cutoff(filter_velocity_prediction_cutoff);
+				controller_info->set_filter_angular_prediction_cutoff(filter_angular_prediction_cutoff);
             }
         }
 
@@ -3129,7 +3144,10 @@ protected:
 					config.filter_madgwick_stabilization != request.filter_madgwick_stabilization() ||
 					config.filter_madgwick_stabilization_min_beta != request.filter_madgwick_stabilization_min_beta() ||
 					config.filter_madgwick_stabilization_smoothing_factor != request.filter_madgwick_stabilization_smoothing_factor() ||
-					config.filter_velocity_smoothing_factor != request.filter_velocity_smoothing_factor())
+					config.filter_velocity_smoothing_factor != request.filter_velocity_smoothing_factor() ||
+					config.filter_angular_smoothing_factor != request.filter_angular_smoothing_factor() ||
+					config.filter_velocity_prediction_cutoff != request.filter_velocity_prediction_cutoff() ||
+					config.filter_angular_prediction_cutoff != request.filter_angular_prediction_cutoff())
 				{
 					config.filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
 					config.filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
@@ -3146,6 +3164,9 @@ protected:
 					config.filter_madgwick_stabilization_min_beta = request.filter_madgwick_stabilization_min_beta();
 					config.filter_madgwick_stabilization_smoothing_factor = request.filter_madgwick_stabilization_smoothing_factor();
 					config.filter_velocity_smoothing_factor = request.filter_velocity_smoothing_factor();
+					config.filter_angular_smoothing_factor = request.filter_angular_smoothing_factor();
+					config.filter_velocity_prediction_cutoff = request.filter_velocity_prediction_cutoff();
+					config.filter_angular_prediction_cutoff = request.filter_angular_prediction_cutoff();
 
 					controller->setConfig(&config);
 				}
@@ -3163,7 +3184,10 @@ protected:
 					config.filter_madgwick_stabilization != request.filter_madgwick_stabilization() ||
 					config.filter_madgwick_stabilization_min_beta != request.filter_madgwick_stabilization_min_beta() ||
 					config.filter_madgwick_stabilization_smoothing_factor != request.filter_madgwick_stabilization_smoothing_factor() ||
-					config.filter_velocity_smoothing_factor != request.filter_velocity_smoothing_factor())
+					config.filter_velocity_smoothing_factor != request.filter_velocity_smoothing_factor() ||
+					config.filter_angular_smoothing_factor != request.filter_angular_smoothing_factor() ||
+					config.filter_velocity_prediction_cutoff != request.filter_velocity_prediction_cutoff() ||
+					config.filter_angular_prediction_cutoff != request.filter_angular_prediction_cutoff())
 				{
 					config.filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
 					config.filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
@@ -3172,6 +3196,9 @@ protected:
 					config.filter_madgwick_stabilization_min_beta = request.filter_madgwick_stabilization_min_beta();
 					config.filter_madgwick_stabilization_smoothing_factor = request.filter_madgwick_stabilization_smoothing_factor();
 					config.filter_velocity_smoothing_factor = request.filter_velocity_smoothing_factor();
+					config.filter_angular_smoothing_factor = request.filter_angular_smoothing_factor();
+					config.filter_velocity_prediction_cutoff = request.filter_velocity_prediction_cutoff();
+					config.filter_angular_prediction_cutoff = request.filter_angular_prediction_cutoff();
 
 					controller->setConfig(&config);
 				}
@@ -3185,11 +3212,17 @@ protected:
 				
 				if (config->filter_lowpassoptical_distance != request.filter_lowpassoptical_distance() ||
 					config->filter_lowpassoptical_smoothing != request.filter_lowpassoptical_smoothing() ||
-					config->filter_velocity_smoothing_factor != request.filter_velocity_smoothing_factor())
+					config->filter_velocity_smoothing_factor != request.filter_velocity_smoothing_factor() ||
+					config->filter_angular_smoothing_factor != request.filter_angular_smoothing_factor() ||
+					config->filter_velocity_prediction_cutoff != request.filter_velocity_prediction_cutoff() ||
+					config->filter_angular_prediction_cutoff != request.filter_angular_prediction_cutoff())
 				{
 					config->filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
 					config->filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
 					config->filter_velocity_smoothing_factor = request.filter_velocity_smoothing_factor();
+					config->filter_angular_smoothing_factor = request.filter_angular_smoothing_factor();
+					config->filter_velocity_prediction_cutoff = request.filter_velocity_prediction_cutoff();
+					config->filter_angular_prediction_cutoff = request.filter_angular_prediction_cutoff();
 
 					config->save();
 				}
@@ -3331,7 +3364,10 @@ protected:
 					config->filter_madgwick_stabilization != request.filter_madgwick_stabilization() ||
 					config->filter_madgwick_stabilization_min_beta != request.filter_madgwick_stabilization_min_beta() ||
 					config->filter_madgwick_stabilization_smoothing_factor != request.filter_madgwick_stabilization_smoothing_factor() ||
-					config->filter_velocity_smoothing_factor != request.filter_velocity_smoothing_factor())
+					config->filter_velocity_smoothing_factor != request.filter_velocity_smoothing_factor() ||
+					config->filter_angular_smoothing_factor != request.filter_angular_smoothing_factor() ||
+					config->filter_velocity_prediction_cutoff != request.filter_velocity_prediction_cutoff() ||
+					config->filter_angular_prediction_cutoff != request.filter_angular_prediction_cutoff())
 				{
 					config->filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
 					config->filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
@@ -3340,6 +3376,9 @@ protected:
 					config->filter_madgwick_stabilization_min_beta = request.filter_madgwick_stabilization_min_beta();
 					config->filter_madgwick_stabilization_smoothing_factor = request.filter_madgwick_stabilization_smoothing_factor();
 					config->filter_velocity_smoothing_factor = request.filter_velocity_smoothing_factor();
+					config->filter_angular_smoothing_factor = request.filter_angular_smoothing_factor();
+					config->filter_velocity_prediction_cutoff = request.filter_velocity_prediction_cutoff();
+					config->filter_angular_prediction_cutoff = request.filter_angular_prediction_cutoff();
 
 					config->save();
 				}
@@ -3353,11 +3392,17 @@ protected:
 
 				if (config->filter_lowpassoptical_distance != request.filter_lowpassoptical_distance() ||
 					config->filter_lowpassoptical_smoothing != request.filter_lowpassoptical_smoothing() ||
-					config->filter_velocity_smoothing_factor != request.filter_velocity_smoothing_factor())
+					config->filter_velocity_smoothing_factor != request.filter_velocity_smoothing_factor() ||
+					config->filter_angular_smoothing_factor != request.filter_angular_smoothing_factor() ||
+					config->filter_velocity_prediction_cutoff != request.filter_velocity_prediction_cutoff() ||
+					config->filter_angular_prediction_cutoff != request.filter_angular_prediction_cutoff())
 				{
 					config->filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
 					config->filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
 					config->filter_velocity_smoothing_factor = request.filter_velocity_smoothing_factor();
+					config->filter_angular_smoothing_factor = request.filter_angular_smoothing_factor();
+					config->filter_velocity_prediction_cutoff = request.filter_velocity_prediction_cutoff();
+					config->filter_angular_prediction_cutoff = request.filter_angular_prediction_cutoff();
 
 					config->save();
 				}
@@ -3680,6 +3725,9 @@ protected:
 				float filter_madgwick_stabilization_min_beta;
 				float filter_madgwick_stabilization_smoothing_factor;
 				float filter_velocity_smoothing_factor;
+				float filter_angular_smoothing_factor;
+				float filter_velocity_prediction_cutoff;
+				float filter_angular_prediction_cutoff;
 
                 switch (hmd_view->getHMDDeviceType())
                 {
@@ -3705,6 +3753,9 @@ protected:
 						filter_madgwick_stabilization_min_beta = config->filter_madgwick_stabilization_min_beta;
 						filter_madgwick_stabilization_smoothing_factor = config->filter_madgwick_stabilization_smoothing_factor;
 						filter_velocity_smoothing_factor = config->filter_velocity_smoothing_factor;
+						filter_angular_smoothing_factor = config->filter_angular_smoothing_factor;
+						filter_velocity_prediction_cutoff = config->filter_velocity_prediction_cutoff;
+						filter_angular_prediction_cutoff = config->filter_angular_prediction_cutoff;
 
 						hmd_info->set_hmd_type(PSMoveProtocol::Morpheus);
 
@@ -3727,6 +3778,9 @@ protected:
 						filter_lowpassoptical_distance = config->filter_lowpassoptical_distance;
 						filter_lowpassoptical_smoothing = config->filter_lowpassoptical_smoothing;
 						filter_velocity_smoothing_factor = config->filter_velocity_smoothing_factor;
+						filter_angular_smoothing_factor = config->filter_angular_smoothing_factor;
+						filter_velocity_prediction_cutoff = config->filter_velocity_prediction_cutoff;
+						filter_angular_prediction_cutoff = config->filter_angular_prediction_cutoff;
 
 						hmd_info->set_hmd_type(PSMoveProtocol::VirtualHMD);
                     }
@@ -3764,6 +3818,9 @@ protected:
 				hmd_info->set_filter_madgwick_stabilization_min_beta(filter_madgwick_stabilization_min_beta);
 				hmd_info->set_filter_madgwick_stabilization_smoothing_factor(filter_madgwick_stabilization_smoothing_factor);
 				hmd_info->set_filter_velocity_smoothing_factor(filter_velocity_smoothing_factor);
+				hmd_info->set_filter_angular_smoothing_factor(filter_angular_smoothing_factor);
+				hmd_info->set_filter_velocity_prediction_cutoff(filter_velocity_prediction_cutoff);
+				hmd_info->set_filter_angular_prediction_cutoff(filter_angular_prediction_cutoff);
             }
         }
 
