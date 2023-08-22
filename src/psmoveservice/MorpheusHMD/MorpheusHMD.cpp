@@ -262,6 +262,9 @@ MorpheusHMDConfig::config2ptree()
 	pt.put("FilterSettings.Madgwick.StabilizationSmoothingFactor", filter_madgwick_stabilization_smoothing_factor);
 
 	pt.put("FilterSettings.VelocitySmoothingFactor", filter_velocity_smoothing_factor);
+	pt.put("FilterSettings.AngularSmoothingFactor", filter_angular_smoothing_factor);
+	pt.put("FilterSettings.VelocityPredictionCutoff", filter_velocity_prediction_cutoff);
+	pt.put("FilterSettings.AngularPredictionCutoff", filter_angular_prediction_cutoff);
 
 	writeTrackingColor(pt, tracking_color_id);
 
@@ -342,8 +345,11 @@ MorpheusHMDConfig::ptree2config(const boost::property_tree::ptree &pt)
 		filter_madgwick_stabilization = pt.get<bool>("FilterSettings.Madgwick.Stabilization", filter_madgwick_stabilization);
 		filter_madgwick_stabilization_min_beta = pt.get<float>("FilterSettings.Madgwick.StabilizationMinBeta", filter_madgwick_stabilization_min_beta);
 		filter_madgwick_stabilization_smoothing_factor = pt.get<float>("FilterSettings.Madgwick.StabilizationSmoothingFactor", filter_madgwick_stabilization_smoothing_factor);
-	
+
 		filter_velocity_smoothing_factor = pt.get<float>("FilterSettings.VelocitySmoothingFactor", filter_velocity_smoothing_factor);
+		filter_angular_smoothing_factor = pt.get<float>("FilterSettings.AngularSmoothingFactor", filter_angular_smoothing_factor);
+		filter_velocity_prediction_cutoff = pt.get<float>("FilterSettings.VelocityPredictionCutoff", filter_velocity_prediction_cutoff);
+		filter_angular_prediction_cutoff = pt.get<float>("FilterSettings.AngularPredictionCutoff", filter_angular_prediction_cutoff);
     }
     else
     {

@@ -337,6 +337,7 @@ void PositionFilterPassThru::update(
 				PSMoveControllerConfig config = *controller->getConfig();
 
 				velocity_smoothing_factor = config.filter_velocity_smoothing_factor;
+				position_prediction_cutoff = config.filter_velocity_prediction_cutoff;
 
 				break;
 			}
@@ -346,6 +347,7 @@ void PositionFilterPassThru::update(
 				PSDualShock4ControllerConfig config = *controller->getConfig();
 
 				velocity_smoothing_factor = config.filter_velocity_smoothing_factor;
+				position_prediction_cutoff = config.filter_velocity_prediction_cutoff;
 
 				break;
 			}
@@ -355,6 +357,7 @@ void PositionFilterPassThru::update(
 				VirtualControllerConfig *config = controller->getConfigMutable();
 
 				velocity_smoothing_factor = config->filter_velocity_smoothing_factor;
+				position_prediction_cutoff = config->filter_velocity_prediction_cutoff;
 
 				break;
 			}
@@ -374,6 +377,7 @@ void PositionFilterPassThru::update(
 				MorpheusHMDConfig *config = controller->getConfigMutable();
 
 				velocity_smoothing_factor = config->filter_velocity_smoothing_factor;
+				position_prediction_cutoff = config->filter_velocity_prediction_cutoff;
 
 				break;
 			}
@@ -383,6 +387,7 @@ void PositionFilterPassThru::update(
 				VirtualHMDConfig *config = controller->getConfigMutable();
 
 				velocity_smoothing_factor = config->filter_velocity_smoothing_factor;
+				position_prediction_cutoff = config->filter_velocity_prediction_cutoff;
 
 				break;
 			}
@@ -472,6 +477,7 @@ void PositionFilterLowPassOptical::update(
 				smoothing_distance = config.filter_lowpassoptical_distance;
 				smoothing_power = config.filter_lowpassoptical_smoothing;
 				velocity_smoothing_factor = config.filter_velocity_smoothing_factor;
+				position_prediction_cutoff = config.filter_velocity_prediction_cutoff;
 
 				break;
 			}
@@ -483,6 +489,7 @@ void PositionFilterLowPassOptical::update(
 				smoothing_distance = config.filter_lowpassoptical_distance;
 				smoothing_power = config.filter_lowpassoptical_smoothing;
 				velocity_smoothing_factor = config.filter_velocity_smoothing_factor;
+				position_prediction_cutoff = config.filter_velocity_prediction_cutoff;
 
 				break;
 			}
@@ -494,6 +501,7 @@ void PositionFilterLowPassOptical::update(
 				smoothing_distance = config->filter_lowpassoptical_distance;
 				smoothing_power = config->filter_lowpassoptical_smoothing;
 				velocity_smoothing_factor = config->filter_velocity_smoothing_factor;
+				position_prediction_cutoff = config->filter_velocity_prediction_cutoff;
 
 				break;
 			}
@@ -515,6 +523,7 @@ void PositionFilterLowPassOptical::update(
 				smoothing_distance = config->filter_lowpassoptical_distance;
 				smoothing_power = config->filter_lowpassoptical_smoothing;
 				velocity_smoothing_factor = config->filter_velocity_smoothing_factor;
+				position_prediction_cutoff = config->filter_velocity_prediction_cutoff;
 
 				break;
 			}
@@ -526,6 +535,7 @@ void PositionFilterLowPassOptical::update(
 				smoothing_distance = config->filter_lowpassoptical_distance;
 				smoothing_power = config->filter_lowpassoptical_smoothing;
 				velocity_smoothing_factor = config->filter_velocity_smoothing_factor;
+				position_prediction_cutoff = config->filter_velocity_prediction_cutoff;
 
 				break;
 			}

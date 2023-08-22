@@ -325,6 +325,8 @@ void OrientationFilterMadgwickARG::update(
 				filter_madgwick_stabilization = config.filter_madgwick_stabilization;
 				filter_madgwick_stabilization_min_beta = config.filter_madgwick_stabilization_min_beta;
 				filter_madgwick_stabilization_smoothing_factor = config.filter_madgwick_stabilization_smoothing_factor;
+				velocity_smoothing_factor = config.filter_angular_smoothing_factor;
+				angular_prediction_cutoff = config.filter_angular_prediction_cutoff;
 
 				break;
 			}
@@ -337,6 +339,8 @@ void OrientationFilterMadgwickARG::update(
 				filter_madgwick_stabilization = config.filter_madgwick_stabilization;
 				filter_madgwick_stabilization_min_beta = config.filter_madgwick_stabilization_min_beta;
 				filter_madgwick_stabilization_smoothing_factor = config.filter_madgwick_stabilization_smoothing_factor;
+				velocity_smoothing_factor = config.filter_angular_smoothing_factor;
+				angular_prediction_cutoff = config.filter_angular_prediction_cutoff;
 
 				break;
 			}
@@ -360,6 +364,8 @@ void OrientationFilterMadgwickARG::update(
 				filter_madgwick_stabilization = config.filter_madgwick_stabilization;
 				filter_madgwick_stabilization_min_beta = config.filter_madgwick_stabilization_min_beta;
 				filter_madgwick_stabilization_smoothing_factor = config.filter_madgwick_stabilization_smoothing_factor;
+				velocity_smoothing_factor = config.filter_angular_smoothing_factor;
+				angular_prediction_cutoff = config.filter_angular_prediction_cutoff;
 
 				break;
 			}
@@ -549,6 +555,8 @@ void OrientationFilterMadgwickMARG::update(
 				filter_madgwick_stabilization = config.filter_madgwick_stabilization;
 				filter_madgwick_stabilization_min_beta = config.filter_madgwick_stabilization_min_beta;
 				filter_madgwick_stabilization_smoothing_factor = config.filter_madgwick_stabilization_smoothing_factor;
+				velocity_smoothing_factor = config.filter_angular_smoothing_factor;
+				angular_prediction_cutoff = config.filter_angular_prediction_cutoff;
 
 				break;
 			}
@@ -561,6 +569,8 @@ void OrientationFilterMadgwickMARG::update(
 				filter_madgwick_stabilization = config.filter_madgwick_stabilization;
 				filter_madgwick_stabilization_min_beta = config.filter_madgwick_stabilization_min_beta;
 				filter_madgwick_stabilization_smoothing_factor = config.filter_madgwick_stabilization_smoothing_factor;
+				velocity_smoothing_factor = config.filter_angular_smoothing_factor;
+				angular_prediction_cutoff = config.filter_angular_prediction_cutoff;
 
 				break;
 			}
@@ -584,6 +594,8 @@ void OrientationFilterMadgwickMARG::update(
 				filter_madgwick_stabilization = config.filter_madgwick_stabilization;
 				filter_madgwick_stabilization_min_beta = config.filter_madgwick_stabilization_min_beta;
 				filter_madgwick_stabilization_smoothing_factor = config.filter_madgwick_stabilization_smoothing_factor;
+				velocity_smoothing_factor = config.filter_angular_smoothing_factor;
+				angular_prediction_cutoff = config.filter_angular_prediction_cutoff;
 
 				break;
 			}
@@ -985,6 +997,9 @@ void OrientationFilterComplementaryMARG::update(
 
 					filter_use_stabilization = config.filter_use_stabilization;
 					filter_stabilization_min_scale = config.filter_stabilization_min_scale;
+
+					velocity_smoothing_factor = config.filter_angular_smoothing_factor;
+					angular_prediction_cutoff = config.filter_angular_prediction_cutoff;
 
 					break;
 				}

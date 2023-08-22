@@ -439,6 +439,19 @@ void OrientationFilterExternal::update(
 					PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
 					PSMoveControllerConfig config = *controller->getConfig();
 
+					velocity_smoothing_factor = config.filter_angular_smoothing_factor;
+					angular_prediction_cutoff = config.filter_angular_prediction_cutoff;
+
+					break;
+				}
+				case CommonDeviceState::VirtualController:
+				{
+					VirtualController *controller = ControllerView->castChecked<VirtualController>();
+					VirtualControllerConfig config = *controller->getConfig();
+
+					velocity_smoothing_factor = config.filter_angular_smoothing_factor;
+					angular_prediction_cutoff = config.filter_angular_prediction_cutoff;
+
 					break;
 				}
 				}
