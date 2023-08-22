@@ -647,7 +647,7 @@ void AppStage_HMDSettings::renderUI()
 							hmdInfo.FilterMadgwickStabilization = true;
 							hmdInfo.FilterMadgwickStabilizationMinBeta = 0.02f;
 							hmdInfo.FilterMadgwickStabilizationSmoothingFactor = 0.1f;
-							hmdInfo.FilterVelocitySmoothingFactor = 0.25f;
+							hmdInfo.FilterVelocitySmoothingFactor = 0.1f;
 							hmdInfo.FilterAngularSmoothingFactor = 0.25f;
 							hmdInfo.FilterVelocityPredictionCutoff = 0.5f;
 							hmdInfo.FilterAngularPredictionCutoff = 0.25f;

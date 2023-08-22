@@ -1227,7 +1227,7 @@ void AppStage_ControllerSettings::renderUI()
 												controllerInfo.FilterMadgwickStabilization = true;
 												controllerInfo.FilterMadgwickStabilizationMinBeta = 0.02f;
 												controllerInfo.FilterMadgwickStabilizationSmoothingFactor = 0.1f;
-												controllerInfo.FilterVelocitySmoothingFactor = 0.25f;
+												controllerInfo.FilterVelocitySmoothingFactor = 0.1f;
 												controllerInfo.FilterAngularSmoothingFactor = 0.25f;
 												controllerInfo.FilterVelocityPredictionCutoff = 0.5f;
 												controllerInfo.FilterAngularPredictionCutoff = 0.25f;
