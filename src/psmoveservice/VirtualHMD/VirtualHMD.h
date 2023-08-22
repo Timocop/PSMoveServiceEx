@@ -31,7 +31,7 @@ public:
         , bulb_radius(2.25f) // The radius of the psmove tracking bulb in cm
 		, filter_lowpassoptical_distance(1.f)
 		, filter_lowpassoptical_smoothing(0.40f)
-		, filter_velocity_smoothing_factor(0.1f)
+		, filter_velocity_smoothing_factor(0.25f)
 		, filter_angular_smoothing_factor(0.25f)
 		, filter_velocity_prediction_cutoff(1.0f)
 		, filter_angular_prediction_cutoff(0.25f)

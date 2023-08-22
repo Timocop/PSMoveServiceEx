@@ -86,7 +86,7 @@ public:
 		, filter_madgwick_stabilization(true)
 		, filter_madgwick_stabilization_min_beta(0.02f)
 		, filter_madgwick_stabilization_smoothing_factor(0.1f)
-		, filter_velocity_smoothing_factor(0.1f)
+		, filter_velocity_smoothing_factor(0.25f)
 		, filter_angular_smoothing_factor(0.25f)
 		, filter_velocity_prediction_cutoff(1.0f)
 		, filter_angular_prediction_cutoff(0.25f)
