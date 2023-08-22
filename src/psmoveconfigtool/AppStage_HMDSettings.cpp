@@ -434,18 +434,21 @@ void AppStage_HMDSettings::renderUI()
 						bool request_offset = false;
 						bool settings_shown = false;
 
+						ImGui::TextDisabled("Position Filter Settings:");
+						ImGui::Spacing();
+
 						if (hmdInfo.PositionFilterName == "PassThru" ||
 							hmdInfo.PositionFilterName == "LowPassOptical")
 						{
 							settings_shown = true;
 
-							ImGui::Text("Velocity Smoothing Factor: ");
+							ImGui::Text("Velocity Smoothing Factor (%%): ");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(120.f);
-							float filter_velocity_smoothing_factor = hmdInfo.FilterVelocitySmoothingFactor;
-							if (ImGui::InputFloat("##VelocitySmoothingFactor", &filter_velocity_smoothing_factor, 0.01f, 0.05f, 2))
+							float filter_velocity_smoothing_factor = (1.f - hmdInfo.FilterVelocitySmoothingFactor) * 100.f; ;
+							if (ImGui::InputFloat("##VelocitySmoothingFactor", &filter_velocity_smoothing_factor, 1.f, 5.f, 2))
 							{
-								hmdInfo.FilterVelocitySmoothingFactor = clampf(filter_velocity_smoothing_factor, 0.0f, 1.0f);
+								hmdInfo.FilterVelocitySmoothingFactor = clampf(1.f - (filter_velocity_smoothing_factor / 100.f), 0.0f, 1.0f);
 
 								request_offset = true;
 							}
@@ -454,12 +457,25 @@ void AppStage_HMDSettings::renderUI()
 							if (ImGui::IsItemHovered())
 							{
 								ImGui::SetTooltip(
-									"The amount of velocity smoothing applied determines the reduction\n"
+									"The amount of velocity smoothing determines the reduction\n"
 									"of motion jitter when prediction is applied.\n"
-									"However, too low values (more smoothing) can lead to prediction latency and creates a rubberbanding effect.\n"
-									"Using too high values (less smoothing) can result in a rough and erratic motion."
+									"Higher values means more smoothing, lower values less.\n"
+									"However, too high values can lead to increased motion latency and may cause a rubberbanding effect.\n"
+									"Using too low values can result in faster responsiveness but also rough and erratic motion."
 								);
 							}
+
+							ImGui::Text("Velocity Prediction Cutoff (cm/s): ");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(120.f);
+							float filter_velocity_prediction_cutoff = hmdInfo.FilterVelocityPredictionCutoff;
+							if (ImGui::InputFloat("##VelocityPredictionCutoff", &filter_velocity_prediction_cutoff, 0.01f, 0.05f, 2))
+							{
+								hmdInfo.FilterVelocityPredictionCutoff = clampf(filter_velocity_prediction_cutoff, 0.0f, (1 << 16));
+
+								request_offset = true;
+							}
+							ImGui::PopItemWidth();
 						}
 
 						if (hmdInfo.PositionFilterName == "LowPassOptical")
@@ -484,6 +500,58 @@ void AppStage_HMDSettings::renderUI()
 							if (ImGui::InputFloat("##LowPassOpticalSmoothingPower", &filter_lowpassoptical_smoothing, 1.f, 5.f, 2))
 							{
 								hmdInfo.FilterLowPassOpticalSmoothing = clampf(1.f - (filter_lowpassoptical_smoothing / 100.f), 0.1f, 1.0f);
+
+								request_offset = true;
+							}
+							ImGui::PopItemWidth();
+						}
+
+						if (!settings_shown)
+						{
+							ImGui::Text("There are no settings for these filters.");
+						}
+
+						ImGui::Separator();
+						ImGui::TextDisabled("Orientation Filter Settings:");
+						ImGui::Spacing();
+
+						settings_shown = false;
+
+						if (hmdInfo.OrientationFilterName == "ComplementaryMARG" ||
+							hmdInfo.OrientationFilterName == "MadgwickMARG" ||
+							hmdInfo.OrientationFilterName == "MadgwickARG" ||
+							hmdInfo.OrientationFilterName == "OrientationExternal")
+						{
+							ImGui::Text("Angular Smoothing Factor (%%): ");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(120.f);
+							float filter_angular_smoothing_factor = (1.f - hmdInfo.FilterAngularSmoothingFactor) * 100.f; ;
+							if (ImGui::InputFloat("##AngularSmoothingFactor", &filter_angular_smoothing_factor, 1.f, 5.f, 2))
+							{
+								hmdInfo.FilterAngularSmoothingFactor = clampf(1.f - (filter_angular_smoothing_factor / 100.f), 0.0f, 1.0f);
+
+								request_offset = true;
+							}
+							ImGui::PopItemWidth();
+
+							if (ImGui::IsItemHovered())
+							{
+								ImGui::SetTooltip(
+									"The amount of angular smoothing determines the reduction\n"
+									"of motion jitter when prediction is applied.\n"
+									"Higher values means more smoothing, lower values less.\n"
+									"However, too high values can lead to increased motion latency and may cause a rubberbanding effect.\n"
+									"Using too low values can result in faster responsiveness but also rough and erratic motion."
+								);
+							}
+
+							ImGui::Text("Angular Prediction Cutoff (rad/s): ");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(120.f);
+							float filter_angular_prediction_cutoff = hmdInfo.FilterAngularPredictionCutoff;
+							if (ImGui::InputFloat("##AngularPredictionCutoff", &filter_angular_prediction_cutoff, 0.01f, 0.05f, 2))
+							{
+								hmdInfo.FilterAngularPredictionCutoff = clampf(filter_angular_prediction_cutoff, 0.0f, (1 << 16));
 
 								request_offset = true;
 							}
@@ -579,6 +647,9 @@ void AppStage_HMDSettings::renderUI()
 							hmdInfo.FilterMadgwickStabilizationMinBeta = 0.02f;
 							hmdInfo.FilterMadgwickStabilizationSmoothingFactor = 0.1f;
 							hmdInfo.FilterVelocitySmoothingFactor = 0.25f;
+							hmdInfo.FilterAngularSmoothingFactor = 0.25f;
+							hmdInfo.FilterVelocityPredictionCutoff = 0.5f;
+							hmdInfo.FilterAngularPredictionCutoff = 0.25f;
 
 							request_offset = true;
 						}
@@ -593,6 +664,9 @@ void AppStage_HMDSettings::renderUI()
 							filterSettings.filter_madgwick_stabilization_min_beta = hmdInfo.FilterMadgwickStabilizationMinBeta;
 							filterSettings.filter_madgwick_stabilization_smoothing_factor = hmdInfo.FilterMadgwickStabilizationSmoothingFactor;
 							filterSettings.filter_velocity_smoothing_factor = hmdInfo.FilterVelocitySmoothingFactor;
+							filterSettings.filter_angular_smoothing_factor = hmdInfo.FilterAngularSmoothingFactor;
+							filterSettings.filter_velocity_prediction_cutoff = hmdInfo.FilterVelocityPredictionCutoff;
+							filterSettings.filter_angular_prediction_cutoff = hmdInfo.FilterAngularPredictionCutoff;
 
 							request_set_hmd_filter_settings(hmdInfo.HmdID, filterSettings);
 						}
@@ -1091,6 +1165,9 @@ void AppStage_HMDSettings::request_set_hmd_filter_settings(
 	filter_settings->set_filter_madgwick_stabilization_min_beta(filterSettings.filter_madgwick_stabilization_min_beta);
 	filter_settings->set_filter_madgwick_stabilization_smoothing_factor(filterSettings.filter_madgwick_stabilization_smoothing_factor);
 	filter_settings->set_filter_velocity_smoothing_factor(filterSettings.filter_velocity_smoothing_factor);
+	filter_settings->set_filter_angular_smoothing_factor(filterSettings.filter_angular_smoothing_factor);
+	filter_settings->set_filter_velocity_prediction_cutoff(filterSettings.filter_velocity_prediction_cutoff);
+	filter_settings->set_filter_angular_prediction_cutoff(filterSettings.filter_angular_prediction_cutoff);
 
 	PSMRequestID request_id;
 	PSM_SendOpaqueRequest(&request, &request_id);
@@ -1193,6 +1270,9 @@ void AppStage_HMDSettings::handle_hmd_list_response(
 				HmdInfo.FilterMadgwickStabilizationMinBeta = HmdResponse.filter_madgwick_stabilization_min_beta();
 				HmdInfo.FilterMadgwickStabilizationSmoothingFactor = HmdResponse.filter_madgwick_stabilization_smoothing_factor();
 				HmdInfo.FilterVelocitySmoothingFactor = HmdResponse.filter_velocity_smoothing_factor();
+				HmdInfo.FilterAngularSmoothingFactor = HmdResponse.filter_angular_smoothing_factor();
+				HmdInfo.FilterVelocityPredictionCutoff = HmdResponse.filter_velocity_prediction_cutoff();
+				HmdInfo.FilterAngularPredictionCutoff = HmdResponse.filter_angular_prediction_cutoff();
 
                 if (HmdInfo.HmdType == AppStage_HMDSettings::Morpheus)
                 {

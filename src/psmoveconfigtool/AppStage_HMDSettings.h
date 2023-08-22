@@ -55,6 +55,9 @@ public:
 		float filter_madgwick_stabilization_min_beta;
 		float filter_madgwick_stabilization_smoothing_factor;
 		float filter_velocity_smoothing_factor;
+		float filter_angular_smoothing_factor;
+		float filter_velocity_prediction_cutoff;
+		float filter_angular_prediction_cutoff;
 	};
 
     struct HMDInfo
@@ -82,6 +85,9 @@ public:
 		float FilterMadgwickStabilizationMinBeta;
 		float FilterMadgwickStabilizationSmoothingFactor;
 		float FilterVelocitySmoothingFactor;
+		float FilterAngularSmoothingFactor;
+		float FilterVelocityPredictionCutoff;
+		float FilterAngularPredictionCutoff;
     };
 
 

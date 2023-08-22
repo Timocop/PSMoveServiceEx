@@ -874,18 +874,21 @@ void AppStage_ControllerSettings::renderUI()
 											bool request_offset = false;
 											bool settings_shown = false;
 
+											ImGui::TextDisabled("Position Filter Settings:");
+											ImGui::Spacing();
+
 											if (controllerInfo.PositionFilterName == "PassThru" || 
 												controllerInfo.PositionFilterName == "LowPassOptical")
 											{
 												settings_shown = true;
 
-												ImGui::Text("Velocity Smoothing Factor: ");
+												ImGui::Text("Velocity Smoothing Factor (%%): ");
 												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 												ImGui::PushItemWidth(120.f);
-												float filter_velocity_smoothing_factor = controllerInfo.FilterVelocitySmoothingFactor;
-												if (ImGui::InputFloat("##VelocitySmoothingFactor", &filter_velocity_smoothing_factor, 0.01f, 0.05f, 2))
+												float filter_velocity_smoothing_factor = (1.f - controllerInfo.FilterVelocitySmoothingFactor) * 100.f; ;
+												if (ImGui::InputFloat("##VelocitySmoothingFactor", &filter_velocity_smoothing_factor, 1.f, 5.f, 2))
 												{
-													controllerInfo.FilterVelocitySmoothingFactor = clampf(filter_velocity_smoothing_factor, 0.0f, 1.0f);
+													controllerInfo.FilterVelocitySmoothingFactor = clampf(1.f - (filter_velocity_smoothing_factor / 100.f), 0.0f, 1.0f);
 
 													request_offset = true;
 												}
@@ -894,12 +897,25 @@ void AppStage_ControllerSettings::renderUI()
 												if (ImGui::IsItemHovered())
 												{
 													ImGui::SetTooltip(
-														"The amount of velocity smoothing applied determines the reduction\n"
+														"The amount of velocity smoothing determines the reduction\n"
 														"of motion jitter when prediction is applied.\n"
-														"However, too low values (more smoothing) can lead to prediction latency and creates a rubberbanding effect.\n"
-														"Using too high values (less smoothing) can result in a rough and erratic motion."
+														"Higher values means more smoothing, lower values less.\n"
+														"However, too high values can lead to increased motion latency and may cause a rubberbanding effect.\n"
+														"Using too low values can result in faster responsiveness but also rough and erratic motion."
 													);
 												}
+
+												ImGui::Text("Velocity Prediction Cutoff (cm/s): ");
+												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+												ImGui::PushItemWidth(120.f);
+												float filter_velocity_prediction_cutoff = controllerInfo.FilterVelocityPredictionCutoff;
+												if (ImGui::InputFloat("##VelocityPredictionCutoff", &filter_velocity_prediction_cutoff, 0.01f, 0.05f, 2))
+												{
+													controllerInfo.FilterVelocityPredictionCutoff = clampf(filter_velocity_prediction_cutoff, 0.0f, (1 << 16));
+
+													request_offset = true;
+												}
+												ImGui::PopItemWidth();
 											}
 
 											if (controllerInfo.PositionFilterName == "LowPassOptical")
@@ -924,6 +940,59 @@ void AppStage_ControllerSettings::renderUI()
 												if (ImGui::InputFloat("##LowPassOpticalSmoothingPower", &filter_lowpassoptical_smoothing, 1.f, 5.f, 2))
 												{
 													controllerInfo.FilterLowPassOpticalSmoothing = clampf(1.f - (filter_lowpassoptical_smoothing / 100.f), 0.1f, 1.0f);
+
+													request_offset = true;
+												}
+												ImGui::PopItemWidth();
+											}
+
+											if (!settings_shown)
+											{
+												ImGui::Text("There are no settings for these filters.");
+											}
+
+											ImGui::Separator();
+											ImGui::TextDisabled("Orientation Filter Settings:");
+											ImGui::Spacing();
+
+											settings_shown = false;
+
+											if (controllerInfo.OrientationFilterName == "ComplementaryMARG" || 
+												controllerInfo.OrientationFilterName == "MadgwickMARG" ||
+												controllerInfo.OrientationFilterName == "MadgwickARG" ||
+												controllerInfo.OrientationFilterName == "OrientationExternal" ||
+												controllerInfo.ControllerType == PSMController_Virtual)
+											{
+												ImGui::Text("Angular Smoothing Factor (%%): ");
+												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+												ImGui::PushItemWidth(120.f);
+												float filter_angular_smoothing_factor = (1.f - controllerInfo.FilterAngularSmoothingFactor) * 100.f; ;
+												if (ImGui::InputFloat("##AngularSmoothingFactor", &filter_angular_smoothing_factor, 1.f, 5.f, 2))
+												{
+													controllerInfo.FilterAngularSmoothingFactor = clampf(1.f - (filter_angular_smoothing_factor / 100.f), 0.0f, 1.0f);
+
+													request_offset = true;
+												}
+												ImGui::PopItemWidth();
+
+												if (ImGui::IsItemHovered())
+												{
+													ImGui::SetTooltip(
+														"The amount of angular smoothing determines the reduction\n"
+														"of motion jitter when prediction is applied.\n"
+														"Higher values means more smoothing, lower values less.\n"
+														"However, too high values can lead to increased motion latency and may cause a rubberbanding effect.\n"
+														"Using too low values can result in faster responsiveness but also rough and erratic motion."
+													);
+												}
+
+												ImGui::Text("Angular Prediction Cutoff (rad/s): ");
+												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+												ImGui::PushItemWidth(120.f);
+												float filter_angular_prediction_cutoff = controllerInfo.FilterAngularPredictionCutoff;
+												if (ImGui::InputFloat("##AngularPredictionCutoff", &filter_angular_prediction_cutoff, 0.01f, 0.05f, 2))
+												{
+													controllerInfo.FilterAngularPredictionCutoff = clampf(filter_angular_prediction_cutoff, 0.0f, (1 << 16));
 
 													request_offset = true;
 												}
@@ -1158,6 +1227,9 @@ void AppStage_ControllerSettings::renderUI()
 												controllerInfo.FilterMadgwickStabilizationMinBeta = 0.02f;
 												controllerInfo.FilterMadgwickStabilizationSmoothingFactor = 0.1f;
 												controllerInfo.FilterVelocitySmoothingFactor = 0.25f;
+												controllerInfo.FilterAngularSmoothingFactor = 0.25f;
+												controllerInfo.FilterVelocityPredictionCutoff = 0.5f;
+												controllerInfo.FilterAngularPredictionCutoff = 0.25f;
 
 												request_offset = true;
 
@@ -1181,6 +1253,9 @@ void AppStage_ControllerSettings::renderUI()
 												filterSettings.filter_madgwick_stabilization_min_beta = controllerInfo.FilterMadgwickStabilizationMinBeta;
 												filterSettings.filter_madgwick_stabilization_smoothing_factor = controllerInfo.FilterMadgwickStabilizationSmoothingFactor;
 												filterSettings.filter_velocity_smoothing_factor = controllerInfo.FilterVelocitySmoothingFactor;
+												filterSettings.filter_angular_smoothing_factor = controllerInfo.FilterAngularSmoothingFactor;
+												filterSettings.filter_velocity_prediction_cutoff = controllerInfo.FilterVelocityPredictionCutoff;
+												filterSettings.filter_angular_prediction_cutoff = controllerInfo.FilterAngularPredictionCutoff;
 
 												request_set_controller_filter_settings(controllerInfo.ControllerID, filterSettings);
 											}
@@ -1851,6 +1926,9 @@ void AppStage_ControllerSettings::request_set_controller_filter_settings(
 	filter_settings->set_filter_madgwick_stabilization_min_beta(filterSettings.filter_madgwick_stabilization_min_beta);
 	filter_settings->set_filter_madgwick_stabilization_smoothing_factor(filterSettings.filter_madgwick_stabilization_smoothing_factor);
 	filter_settings->set_filter_velocity_smoothing_factor(filterSettings.filter_velocity_smoothing_factor);
+	filter_settings->set_filter_angular_smoothing_factor(filterSettings.filter_angular_smoothing_factor);
+	filter_settings->set_filter_velocity_prediction_cutoff(filterSettings.filter_velocity_prediction_cutoff);
+	filter_settings->set_filter_angular_prediction_cutoff(filterSettings.filter_angular_prediction_cutoff);
 
 	PSMRequestID request_id;
 	PSM_SendOpaqueRequest(&request, &request_id);
@@ -1955,6 +2033,9 @@ void AppStage_ControllerSettings::handle_controller_list_response(
 				ControllerInfo.FilterMadgwickStabilizationMinBeta = ControllerResponse.filter_madgwick_stabilization_min_beta();
 				ControllerInfo.FilterMadgwickStabilizationSmoothingFactor = ControllerResponse.filter_madgwick_stabilization_smoothing_factor();
 				ControllerInfo.FilterVelocitySmoothingFactor = ControllerResponse.filter_velocity_smoothing_factor();
+				ControllerInfo.FilterAngularSmoothingFactor = ControllerResponse.filter_angular_smoothing_factor();
+				ControllerInfo.FilterVelocityPredictionCutoff = ControllerResponse.filter_velocity_prediction_cutoff();
+				ControllerInfo.FilterAngularPredictionCutoff = ControllerResponse.filter_angular_prediction_cutoff();
 
                 if (ControllerInfo.ControllerType == PSMController_Move)
                 {
