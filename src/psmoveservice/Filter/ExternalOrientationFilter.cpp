@@ -470,20 +470,17 @@ void OrientationFilterExternal::update(
 
 		new_angular_velocity = angularVelocity.transpose();
 
+		// Smooth angular velocity
+		new_angular_velocity = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->angular_velocity, new_angular_velocity);
+
 		// Do adapting prediction and smoothing
 		if (angular_prediction_cutoff > k_real_epsilon)
 		{
-			const Eigen::Vector3f filtered_new_velocity = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->angular_velocity, new_angular_velocity);
-			const float velocity_speed_sec = filtered_new_velocity.norm();
+			const float velocity_speed_sec = new_angular_velocity.norm();
 			const float adaptive_time_scale = clampf(velocity_speed_sec / angular_prediction_cutoff, 0.0f, 1.0f);
 			
-			printf("adaptive_time_scale %f\n", adaptive_time_scale);
-
 			new_angular_velocity = new_angular_velocity * adaptive_time_scale;
 		}
-
-		// Smooth angular velocity
-		new_angular_velocity = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->angular_velocity, new_angular_velocity);
 
 		const Eigen::Vector3f new_angular_acceleration = (new_angular_velocity - m_state->angular_velocity) / imu_delta_time;
 
