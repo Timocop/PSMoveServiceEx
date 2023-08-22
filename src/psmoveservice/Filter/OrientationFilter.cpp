@@ -481,9 +481,6 @@ void OrientationFilterMadgwickARG::update(
 			const Eigen::Quaternionf &new_orientation = SEq_new;
 			Eigen::Vector3f new_angular_velocity= current_omega;
 
-			// Smooth angular velocity
-			new_angular_velocity = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->angular_velocity, new_angular_velocity);
-
 			// Do adapting prediction and smoothing
 			if (angular_prediction_cutoff > k_real_epsilon)
 			{
@@ -493,6 +490,9 @@ void OrientationFilterMadgwickARG::update(
 
 				new_angular_velocity = new_angular_velocity * adaptive_time_scale;
 			}
+
+			// Smooth angular velocity
+			new_angular_velocity = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->angular_velocity, new_angular_velocity);
 
 			const Eigen::Vector3f new_angular_acceleration = (current_omega - m_state->angular_velocity) / imu_delta_time;
 
@@ -755,9 +755,6 @@ void OrientationFilterMadgwickMARG::update(
 			const Eigen::Quaternionf &new_orientation = SEq_new;
 			Eigen::Vector3f new_angular_velocity = Eigen::Vector3f(corrected_omega.x(), corrected_omega.y(), corrected_omega.z());
 
-			// Smooth angular velocity
-			new_angular_velocity = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->angular_velocity, new_angular_velocity);
-
 			// Do adapting prediction and smoothing
 			if (angular_prediction_cutoff > k_real_epsilon)
 			{
@@ -767,6 +764,9 @@ void OrientationFilterMadgwickMARG::update(
 
 				new_angular_velocity = new_angular_velocity * adaptive_time_scale;
 			}
+
+			// Smooth angular velocity
+			new_angular_velocity = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->angular_velocity, new_angular_velocity);
 
 			const Eigen::Vector3f new_angular_acceleration = (new_angular_velocity - m_state->angular_velocity) / imu_delta_time;
 
@@ -1119,9 +1119,6 @@ void OrientationFilterComplementaryMARG::update(
 				eigen_quaternion_normalized_lerp(ar_orientation, mg_orientation, mg_weight);
 			Eigen::Vector3f new_angular_velocity = current_omega;
 
-			// Smooth angular velocity
-			new_angular_velocity = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->angular_velocity, new_angular_velocity);
-
 			// Do adapting prediction and smoothing
 			if (angular_prediction_cutoff > k_real_epsilon)
 			{
@@ -1129,8 +1126,13 @@ void OrientationFilterComplementaryMARG::update(
 				const float velocity_speed_sec = filtered_new_velocity.norm();
 				const float adaptive_time_scale = clampf(velocity_speed_sec / angular_prediction_cutoff, 0.0f, 1.0f);
 
+				printf("adaptive_time_scale %f\n", adaptive_time_scale);
+
 				new_angular_velocity = new_angular_velocity * adaptive_time_scale;
 			}
+
+			// Smooth angular velocity
+			new_angular_velocity = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->angular_velocity, new_angular_velocity);
 
 			const Eigen::Vector3f new_angular_acceleration = (current_omega - m_state->angular_velocity) / imu_delta_time;
 
