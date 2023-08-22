@@ -905,7 +905,7 @@ void AppStage_ControllerSettings::renderUI()
 													);
 												}
 
-												ImGui::Text("Velocity Prediction Cutoff (cm/s): ");
+												ImGui::Text("Velocity Prediction Cutoff (m/s): ");
 												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 												ImGui::PushItemWidth(120.f);
 												float filter_velocity_prediction_cutoff = controllerInfo.FilterVelocityPredictionCutoff;
@@ -987,7 +987,7 @@ void AppStage_ControllerSettings::renderUI()
 													);
 												}
 
-												ImGui::Text("Angular Prediction Cutoff (rad/s): ");
+												ImGui::Text("Angular Prediction Cutoff (deg/s): ");
 												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 												ImGui::PushItemWidth(120.f);
 												float filter_angular_prediction_cutoff = controllerInfo.FilterAngularPredictionCutoff;

@@ -465,7 +465,7 @@ void AppStage_HMDSettings::renderUI()
 								);
 							}
 
-							ImGui::Text("Velocity Prediction Cutoff (cm/s): ");
+							ImGui::Text("Velocity Prediction Cutoff (m/s): ");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(120.f);
 							float filter_velocity_prediction_cutoff = hmdInfo.FilterVelocityPredictionCutoff;
@@ -546,7 +546,7 @@ void AppStage_HMDSettings::renderUI()
 								);
 							}
 
-							ImGui::Text("Angular Prediction Cutoff (rad/s): ");
+							ImGui::Text("Angular Prediction Cutoff (deg/s): ");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(120.f);
 							float filter_angular_prediction_cutoff = hmdInfo.FilterAngularPredictionCutoff;
