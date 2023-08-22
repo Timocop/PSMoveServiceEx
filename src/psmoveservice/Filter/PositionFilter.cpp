@@ -208,6 +208,7 @@ static Eigen::Vector3f lowpass_filter_vector3f(
     const Eigen::Vector3f &old_filtered_vector,
     const Eigen::Vector3f &new_vector);
 static Eigen::Vector3f lowpass_filter_optical_position_using_distance(
+	const float delta_time,
     const PoseFilterPacket *filter_packet,
     const PositionFilterState *fusion_state,
 	const float smoothing_distance,
@@ -426,17 +427,16 @@ void PositionFilterPassThru::update(
 				(new_position_meters.z() - old_position_meters.z()) / optical_delta_time
 			);
 
-			float adaptive_time_scale = 1.f;
+			new_position_meters_sec = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->velocity_m_per_sec, new_velocity);
 
 			if (position_prediction_cutoff > k_real_epsilon)
 			{
 				// Do adapting prediction and smoothing
-				const Eigen::Vector3f filtered_new_velocity = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->velocity_m_per_sec, new_velocity);
-				const float velocity_speed_sec = filtered_new_velocity.norm();
-				adaptive_time_scale = clampf(velocity_speed_sec / position_prediction_cutoff, 0.0f, 1.0f);
-			}
+				const float velocity_speed_sec = new_position_meters_sec.norm();
+				const float adaptive_time_scale = clampf(velocity_speed_sec / position_prediction_cutoff, 0.0f, 1.0f);
 
-			new_position_meters_sec = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->velocity_m_per_sec, new_velocity * adaptive_time_scale);
+				new_position_meters_sec = new_position_meters_sec * adaptive_time_scale;
+			}
 		}
 
 		m_state->apply_optical_state(new_position_meters, new_position_meters_sec, timestamp, packet.isTemporary);
@@ -565,7 +565,11 @@ void PositionFilterLowPassOptical::update(
         if (m_state->bIsValid)
         {
             // New position is blended against the old position
-            new_position_meters = lowpass_filter_optical_position_using_distance(&packet, m_state, smoothing_distance * k_centimeters_to_meters, smoothing_power);
+            new_position_meters = lowpass_filter_optical_position_using_distance(
+				optical_delta_time, 
+				&packet, 
+				m_state, 
+				smoothing_distance, smoothing_power);
         }
         else
         {
@@ -587,17 +591,16 @@ void PositionFilterLowPassOptical::update(
 				(new_position_meters.z() - old_position_meters.z()) / optical_delta_time
 			);
 
-			float adaptive_time_scale = 1.f;
+			new_position_meters_sec = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->velocity_m_per_sec, new_velocity);
 
 			if (position_prediction_cutoff > k_real_epsilon)
 			{
 				// Do adapting prediction and smoothing
-				const Eigen::Vector3f filtered_new_velocity = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->velocity_m_per_sec, new_velocity);
-				const float velocity_speed_sec = filtered_new_velocity.norm();
-				adaptive_time_scale = clampf(velocity_speed_sec / position_prediction_cutoff, 0.0f, 1.0f);
-			}
+				const float velocity_speed_sec = new_position_meters_sec.norm();
+				const float adaptive_time_scale = clampf(velocity_speed_sec / position_prediction_cutoff, 0.0f, 1.0f);
 
-			new_position_meters_sec = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->velocity_m_per_sec, new_velocity * adaptive_time_scale);
+				new_position_meters_sec = new_position_meters_sec * adaptive_time_scale;
+			}
 		}
 
 		m_state->apply_optical_state(new_position_meters, new_position_meters_sec, timestamp, packet.isTemporary);
@@ -822,7 +825,12 @@ void PositionFilterLowPassExponential::update(
         {
 			// Blend the latest position against the last position in the filter state ...
             Eigen::Vector3f lowpass_position_meters = 
-				lowpass_filter_optical_position_using_distance(&packet, m_state, smoothing_distance * k_centimeters_to_meters, smoothing_power);
+				lowpass_filter_optical_position_using_distance(
+					optical_delta_time,
+					&packet, 
+					m_state, 
+					smoothing_distance, 
+					smoothing_power);
 
 			// ... Then blend that result with the blended position at the start of the history
 			const float k_history_blend = 0.8f;
@@ -913,6 +921,7 @@ static Eigen::Vector3f lowpass_filter_vector3f(
 }
 
 static Eigen::Vector3f lowpass_filter_optical_position_using_distance(
+	float optical_delta_time,
     const PoseFilterPacket *packet,
     const PositionFilterState *state,
 	const float smoothing_distance,
@@ -925,7 +934,7 @@ static Eigen::Vector3f lowpass_filter_optical_position_using_distance(
     // Traveling 0+noise cm in one frame should have 60% smoothing
 	// We need to convert meters to centimeters otherwise it wont work. I assume value too small for decimal point precision.
     Eigen::Vector3f diff = (packet->get_optical_position_in_meters() - state->position_meters) * k_meters_to_centimeters;
-    float distance = diff.norm();
+    float distance = diff.norm() / optical_delta_time;
     float new_position_weight = clampf01(lerpf(smoothing_power, 1.00f, distance / (smoothing_distance * k_meters_to_centimeters)));
 
     // New position is blended against the old position
