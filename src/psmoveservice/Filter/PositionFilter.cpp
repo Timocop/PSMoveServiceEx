@@ -598,7 +598,7 @@ void PositionFilterLowPassOptical::update(
 				// Do adapting prediction and smoothing
 				const float velocity_speed_sec = new_position_meters_sec.norm();
 				const float adaptive_time_scale = clampf(velocity_speed_sec / position_prediction_cutoff, 0.0f, 1.0f);
-
+				
 				new_position_meters_sec = new_position_meters_sec * adaptive_time_scale;
 			}
 		}

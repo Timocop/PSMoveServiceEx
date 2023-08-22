@@ -649,7 +649,7 @@ void AppStage_HMDSettings::renderUI()
 							hmdInfo.FilterMadgwickStabilizationSmoothingFactor = 0.1f;
 							hmdInfo.FilterVelocitySmoothingFactor = 0.1f;
 							hmdInfo.FilterAngularSmoothingFactor = 0.25f;
-							hmdInfo.FilterVelocityPredictionCutoff = 0.5f;
+							hmdInfo.FilterVelocityPredictionCutoff = 1.0f;
 							hmdInfo.FilterAngularPredictionCutoff = 0.25f;
 
 							request_offset = true;

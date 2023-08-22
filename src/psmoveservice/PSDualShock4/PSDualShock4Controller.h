@@ -79,7 +79,7 @@ public:
 		, filter_madgwick_stabilization_smoothing_factor(0.1f)
 		, filter_velocity_smoothing_factor(0.1f)
 		, filter_angular_smoothing_factor(0.25f)
-		, filter_velocity_prediction_cutoff(0.5f)
+		, filter_velocity_prediction_cutoff(1.0f)
 		, filter_angular_prediction_cutoff(0.25f)
     {
 		offset_position.set(0.0f, 0.0f, 0.0f);
