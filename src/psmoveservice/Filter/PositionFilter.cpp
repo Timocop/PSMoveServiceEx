@@ -30,6 +30,8 @@
 
 #define k_lowpass_velocity_smoothing_factor 0.25f
 
+#define k_velocity_adaptive_prediction_cutoff 0.5f
+
 // -- private definitions -----
 struct PositionFilterState
 {
@@ -319,6 +321,7 @@ void PositionFilterPassThru::update(
 	}
 
 	float velocity_smoothing_factor = k_lowpass_velocity_smoothing_factor;
+	float position_prediction_cutoff = k_velocity_adaptive_prediction_cutoff;
 
 #if !defined(IS_TESTING_KALMAN) 
 	if (packet.controllerDeviceId > -1)
@@ -390,6 +393,7 @@ void PositionFilterPassThru::update(
 
 	// Clamp everything to safety
 	velocity_smoothing_factor = clampf(velocity_smoothing_factor, 0.01f, 1.0f);
+	position_prediction_cutoff = clampf(position_prediction_cutoff, 0.0f, (1 << 16));
 
 	// If device isnt tracking, clear old position and velocity to remove over-prediction
 	if (!packet.isCurrentlyTracking && !m_resetVelocity)
@@ -411,13 +415,23 @@ void PositionFilterPassThru::update(
 		}
 		else
 		{
-			Eigen::Vector3f newVel(
+			Eigen::Vector3f new_velocity(
 				(new_position_meters.x() - old_position_meters.x()) / optical_delta_time,
 				(new_position_meters.y() - old_position_meters.y()) / optical_delta_time,
 				(new_position_meters.z() - old_position_meters.z()) / optical_delta_time
 			);
 
-			new_position_meters_sec = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->velocity_m_per_sec, newVel);
+			float adaptive_time_scale = 1.f;
+
+			if (position_prediction_cutoff > k_real_epsilon)
+			{
+				// Do adapting prediction and smoothing
+				const Eigen::Vector3f filtered_new_velocity = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->velocity_m_per_sec, new_velocity);
+				const float velocity_speed_sec = filtered_new_velocity.norm();
+				adaptive_time_scale = clampf(velocity_speed_sec / position_prediction_cutoff, 0.0f, 1.0f);
+			}
+
+			new_position_meters_sec = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->velocity_m_per_sec, new_velocity * adaptive_time_scale);
 		}
 
 		m_state->apply_optical_state(new_position_meters, new_position_meters_sec, timestamp, packet.isTemporary);
@@ -440,6 +454,7 @@ void PositionFilterLowPassOptical::update(
 	float smoothing_distance = k_max_lowpass_smoothing_distance;
 	float smoothing_power = k_lowpass_smoothing_power;
 	float velocity_smoothing_factor = k_lowpass_velocity_smoothing_factor;
+	float position_prediction_cutoff = k_velocity_adaptive_prediction_cutoff;
 
 #if !defined(IS_TESTING_KALMAN) 
 	if (packet.controllerDeviceId > -1)
@@ -523,6 +538,7 @@ void PositionFilterLowPassOptical::update(
 	smoothing_distance = clampf(smoothing_distance, 1.f, (1 << 16));
 	smoothing_power = clampf(smoothing_power, 0.1f, 1.f);
 	velocity_smoothing_factor = clampf(velocity_smoothing_factor, 0.01f, 1.0f);
+	position_prediction_cutoff = clampf(position_prediction_cutoff, 0.0f, (1 << 16));
 
 	// If device isnt tracking, clear old position and velocity to remove over-prediction
 	if (!packet.isCurrentlyTracking && !m_resetVelocity)
@@ -555,13 +571,23 @@ void PositionFilterLowPassOptical::update(
 		}
 		else
 		{
-			Eigen::Vector3f newVel(
+			Eigen::Vector3f new_velocity(
 				(new_position_meters.x() - old_position_meters.x()) / optical_delta_time,
 				(new_position_meters.y() - old_position_meters.y()) / optical_delta_time,
 				(new_position_meters.z() - old_position_meters.z()) / optical_delta_time
 			);
 
-			new_position_meters_sec = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->velocity_m_per_sec, newVel);
+			float adaptive_time_scale = 1.f;
+
+			if (position_prediction_cutoff > k_real_epsilon)
+			{
+				// Do adapting prediction and smoothing
+				const Eigen::Vector3f filtered_new_velocity = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->velocity_m_per_sec, new_velocity);
+				const float velocity_speed_sec = filtered_new_velocity.norm();
+				adaptive_time_scale = clampf(velocity_speed_sec / position_prediction_cutoff, 0.0f, 1.0f);
+			}
+
+			new_position_meters_sec = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->velocity_m_per_sec, new_velocity * adaptive_time_scale);
 		}
 
 		m_state->apply_optical_state(new_position_meters, new_position_meters_sec, timestamp, packet.isTemporary);
