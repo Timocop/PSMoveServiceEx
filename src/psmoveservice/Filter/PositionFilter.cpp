@@ -930,12 +930,17 @@ static Eigen::Vector3f lowpass_filter_optical_position_using_distance(
     assert(state->bIsValid);
 	assert(packet->has_optical_measurement());
 
-    // Traveling k_max_lowpass_smoothing_distance in one frame should have 0 smoothing
-    // Traveling 0+noise cm in one frame should have 60% smoothing
-	// We need to convert meters to centimeters otherwise it wont work. I assume value too small for decimal point precision.
-    Eigen::Vector3f diff = (packet->get_optical_position_in_meters() - state->position_meters) * k_meters_to_centimeters;
-    float distance = diff.norm() / optical_delta_time;
-    float new_position_weight = clampf01(lerpf(smoothing_power, 1.00f, distance / (smoothing_distance * k_meters_to_centimeters)));
+	float new_position_weight = 1.f;
+
+	if (smoothing_distance > k_real_epsilon)
+	{
+		// Traveling k_max_lowpass_smoothing_distance in one frame should have 0 smoothing
+		// Traveling 0+noise cm in one frame should have 60% smoothing
+		// We need to convert meters to centimeters otherwise it wont work. I assume value too small for decimal point precision.
+		Eigen::Vector3f diff = (packet->get_optical_position_in_meters() - state->position_meters) * k_meters_to_centimeters;
+		float distance = diff.norm() / optical_delta_time;
+		new_position_weight = clampf01(lerpf(smoothing_power, 1.00f, distance / (smoothing_distance * k_meters_to_centimeters)));
+	}
 
     // New position is blended against the old position
     const Eigen::Vector3f &old_position = state->position_meters;

@@ -72,7 +72,7 @@ public:
 		, offset_magnetometer_center(0.f)
 		, tracking_color_id(eCommonTrackingColorID::INVALID_COLOR)
 		, hand("Any")
-		, filter_lowpassoptical_distance(10.f)
+		, filter_lowpassoptical_distance(1.f)
 		, filter_lowpassoptical_smoothing(0.40f)
 		, filter_enable_magnetometer(true)
 		, filter_use_passive_drift_correction(false)

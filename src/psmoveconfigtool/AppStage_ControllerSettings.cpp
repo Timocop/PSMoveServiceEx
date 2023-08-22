@@ -922,12 +922,13 @@ void AppStage_ControllerSettings::renderUI()
 											{
 												settings_shown = true;
 
-												ImGui::Text("Position Smoothing Distance: ");
+												ImGui::Text("Position Smoothing Cutoff (m/s): ");
 												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 												ImGui::PushItemWidth(120.f);
-												if (ImGui::InputFloat("##LowPassOpticalSmoothingDistance", &controllerInfo.FilterLowPassOpticalDistance, 1.f, 5.f, 2))
+												float filter_lowpassoptical_distance = controllerInfo.FilterLowPassOpticalDistance;
+												if (ImGui::InputFloat("##LowPassOpticalSmoothingDistance", &filter_lowpassoptical_distance, 0.05f, 0.10f, 2))
 												{
-													controllerInfo.FilterLowPassOpticalDistance = clampf(controllerInfo.FilterLowPassOpticalDistance, 1.0f, (1 << 16));
+													controllerInfo.FilterLowPassOpticalDistance = clampf(filter_lowpassoptical_distance, 0.0f, (1 << 16));
 
 													request_offset = true;
 												}
@@ -1212,7 +1213,7 @@ void AppStage_ControllerSettings::renderUI()
 
 											if (ImGui::Button("Reset Filter Settings Defaults"))
 											{
-												controllerInfo.FilterLowPassOpticalDistance = 10.f;
+												controllerInfo.FilterLowPassOpticalDistance = 1.f;
 												controllerInfo.FilterLowPassOpticalSmoothing = 0.40f;
 												controllerInfo.FilterEnableMagnetometer = true;
 												controllerInfo.FilterUsePassiveDriftCorrection = false;

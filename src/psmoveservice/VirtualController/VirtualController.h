@@ -35,7 +35,7 @@ public:
 		, tracking_color_id(eCommonTrackingColorID::Blue)
         , bulb_radius(2.25f) // The radius of the psmove tracking bulb in cm
 		, hand("Any")
-		, filter_lowpassoptical_distance(10.f)
+		, filter_lowpassoptical_distance(1.f)
 		, filter_lowpassoptical_smoothing(0.40f)
 		, filter_velocity_smoothing_factor(0.25f)
 		, filter_angular_smoothing_factor(0.25f)

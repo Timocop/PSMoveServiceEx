@@ -47,7 +47,7 @@ public:
 		, prediction_time(0.f)
 		, ang_prediction_time(0.f)
 		, tracking_color_id(eCommonTrackingColorID::Blue)
-		, filter_lowpassoptical_distance(10.f)
+		, filter_lowpassoptical_distance(1.f)
 		, filter_lowpassoptical_smoothing(0.40f)
 		, filter_madgwick_beta(0.5f)
 		, filter_madgwick_stabilization(true)

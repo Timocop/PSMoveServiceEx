@@ -482,12 +482,13 @@ void AppStage_HMDSettings::renderUI()
 						{
 							settings_shown = true;
 
-							ImGui::Text("Position Smoothing Distance: ");
+							ImGui::Text("Position Smoothing Cutoff (m/s): ");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##LowPassOpticalSmoothingDistance", &hmdInfo.FilterLowPassOpticalDistance, 1.f, 5.f, 2))
+							float filter_lowpassoptical_distance = hmdInfo.FilterLowPassOpticalDistance;
+							if (ImGui::InputFloat("##LowPassOpticalSmoothingDistance", &filter_lowpassoptical_distance, 0.05f, 0.10f, 2))
 							{
-								hmdInfo.FilterLowPassOpticalDistance = clampf(hmdInfo.FilterLowPassOpticalDistance, 1.0f, (1 << 16));
+								hmdInfo.FilterLowPassOpticalDistance = clampf(filter_lowpassoptical_distance, 0.0f, (1 << 16));
 
 								request_offset = true;
 							}
@@ -640,7 +641,7 @@ void AppStage_HMDSettings::renderUI()
 
 						if (ImGui::Button("Reset Filter Settings Defaults"))
 						{
-							hmdInfo.FilterLowPassOpticalDistance = 10.f;
+							hmdInfo.FilterLowPassOpticalDistance = 1.f;
 							hmdInfo.FilterLowPassOpticalSmoothing = 0.40f;
 							hmdInfo.FilterMadgwickBeta = 0.5f;
 							hmdInfo.FilterMadgwickStabilization = true;

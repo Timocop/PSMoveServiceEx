@@ -71,7 +71,7 @@ public:
 		, orientation_variance_exp_fit_b(-0.00267515215f)
 		, tracking_color_id(eCommonTrackingColorID::INVALID_COLOR)
 		, hand("Any")
-		, filter_lowpassoptical_distance(10.f)
+		, filter_lowpassoptical_distance(1.f)
 		, filter_lowpassoptical_smoothing(0.40f)
 		, filter_madgwick_beta(0.5f)
 		, filter_madgwick_stabilization(true)
