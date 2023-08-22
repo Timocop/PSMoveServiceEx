@@ -32,6 +32,10 @@
 #define k_madgwick_gyro_max_rad 0.25f
 #define k_madgwick_beta_smoothing_factor 0.1f
 
+#define k_lowpass_velocity_smoothing_factor 0.25f
+
+#define k_adaptive_prediction_cutoff 0.25f
+
 // -- private definitions -----
 struct OrientationFilterState
 {
@@ -150,6 +154,12 @@ struct OrientationFilterState
         bIsValid= true;
     }
 };
+
+// -- private methods -----
+static Eigen::Vector3f lowpass_filter_vector3f(
+	const float alpha,
+	const Eigen::Vector3f &old_filtered_vector,
+	const Eigen::Vector3f &new_vector);
 
 // -- public interface -----
 //-- Orientation Filter --
@@ -295,6 +305,8 @@ void OrientationFilterMadgwickARG::update(
 	bool filter_madgwick_stabilization = false;
 	float filter_madgwick_stabilization_min_beta = k_madgwick_stabil_min_beta;
 	float filter_madgwick_stabilization_smoothing_factor = k_madgwick_beta_smoothing_factor;
+	float velocity_smoothing_factor = k_lowpass_velocity_smoothing_factor;
+	float angular_prediction_cutoff = k_adaptive_prediction_cutoff;
 
 #if !defined(IS_TESTING_KALMAN) 
 	if (packet.controllerDeviceId > -1)
@@ -360,6 +372,8 @@ void OrientationFilterMadgwickARG::update(
 	filter_madgwick_beta = clampf(filter_madgwick_beta, 0.0f, 1.0f);
 	filter_madgwick_stabilization_min_beta = clampf(filter_madgwick_stabilization_min_beta, 0.0f, 1.0f);
 	filter_madgwick_stabilization_smoothing_factor = clampf(filter_madgwick_stabilization_smoothing_factor, 0.01f, 1.0f);
+	velocity_smoothing_factor = clampf(velocity_smoothing_factor, 0.01f, 1.0f);
+	angular_prediction_cutoff = clampf(angular_prediction_cutoff, 0.0f, (1 << 16));
 
 	if (packet.has_imu_measurements())
 	{
@@ -459,8 +473,22 @@ void OrientationFilterMadgwickARG::update(
 		// Derive the second derivative
 		{
 			const Eigen::Quaternionf &new_orientation = SEq_new;
-			const Eigen::Vector3f new_angular_velocity= current_omega;
-			const Eigen::Vector3f new_angular_acceleration= (current_omega - m_state->angular_velocity) / imu_delta_time;
+			Eigen::Vector3f new_angular_velocity= current_omega;
+
+			// Smooth angular velocity
+			new_angular_velocity = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->angular_velocity, new_angular_velocity);
+
+			// Do adapting prediction and smoothing
+			if (angular_prediction_cutoff > k_real_epsilon)
+			{
+				const Eigen::Vector3f filtered_new_velocity = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->angular_velocity, new_angular_velocity);
+				const float velocity_speed_sec = filtered_new_velocity.norm();
+				const float adaptive_time_scale = clampf(velocity_speed_sec / angular_prediction_cutoff, 0.0f, 1.0f);
+
+				new_angular_velocity = new_angular_velocity * adaptive_time_scale;
+			}
+
+			const Eigen::Vector3f new_angular_acceleration = (current_omega - m_state->angular_velocity) / imu_delta_time;
 
 			m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, timestamp, packet.isTemporary);
 		}
@@ -501,6 +529,8 @@ void OrientationFilterMadgwickMARG::update(
 	bool filter_madgwick_stabilization = false;
 	float filter_madgwick_stabilization_min_beta = k_madgwick_stabil_min_beta;
 	float filter_madgwick_stabilization_smoothing_factor = k_madgwick_beta_smoothing_factor;
+	float velocity_smoothing_factor = k_lowpass_velocity_smoothing_factor;
+	float angular_prediction_cutoff = k_adaptive_prediction_cutoff;
 
 #if !defined(IS_TESTING_KALMAN) 
 	if (packet.controllerDeviceId > -1)
@@ -566,6 +596,8 @@ void OrientationFilterMadgwickMARG::update(
 	filter_madgwick_beta = clampf(filter_madgwick_beta, 0.0f, 1.0f);
 	filter_madgwick_stabilization_min_beta = clampf(filter_madgwick_stabilization_min_beta, 0.0f, 1.0f);
 	filter_madgwick_stabilization_smoothing_factor = clampf(filter_madgwick_stabilization_smoothing_factor, 0.01f, 1.0f);
+	velocity_smoothing_factor = clampf(velocity_smoothing_factor, 0.01f, 1.0f);
+	angular_prediction_cutoff = clampf(angular_prediction_cutoff, 0.0f, (1 << 16));
 
 	if (packet.has_imu_measurements())
 	{
@@ -709,7 +741,21 @@ void OrientationFilterMadgwickMARG::update(
 		// Derive the second derivative
 		{
 			const Eigen::Quaternionf &new_orientation = SEq_new;
-			const Eigen::Vector3f new_angular_velocity = Eigen::Vector3f(corrected_omega.x(), corrected_omega.y(), corrected_omega.z());
+			Eigen::Vector3f new_angular_velocity = Eigen::Vector3f(corrected_omega.x(), corrected_omega.y(), corrected_omega.z());
+
+			// Smooth angular velocity
+			new_angular_velocity = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->angular_velocity, new_angular_velocity);
+
+			// Do adapting prediction and smoothing
+			if (angular_prediction_cutoff > k_real_epsilon)
+			{
+				const Eigen::Vector3f filtered_new_velocity = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->angular_velocity, new_angular_velocity);
+				const float velocity_speed_sec = filtered_new_velocity.norm();
+				const float adaptive_time_scale = clampf(velocity_speed_sec / angular_prediction_cutoff, 0.0f, 1.0f);
+
+				new_angular_velocity = new_angular_velocity * adaptive_time_scale;
+			}
+
 			const Eigen::Vector3f new_angular_acceleration = (new_angular_velocity - m_state->angular_velocity) / imu_delta_time;
 
 			m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, timestamp, packet.isTemporary);
@@ -911,6 +957,9 @@ void OrientationFilterComplementaryMARG::update(
 	bool filter_use_stabilization = false;
 	float filter_stabilization_min_scale = 0.1f;
 
+	float velocity_smoothing_factor = k_lowpass_velocity_smoothing_factor;
+	float angular_prediction_cutoff = k_adaptive_prediction_cutoff;
+
 #if !defined(IS_TESTING_KALMAN) 
 	if (!ignoreSettings)
 	{
@@ -944,6 +993,14 @@ void OrientationFilterComplementaryMARG::update(
 		}
 	}
 #endif
+
+	// Clamp everything to safety
+	filter_passive_drift_correction_deadzone = clampf(filter_passive_drift_correction_deadzone, 0.0f, (1 << 16));
+	filter_passive_drift_correction_gravity_deadzone = clampf(filter_passive_drift_correction_gravity_deadzone, 0.0f, 1.0f);
+	filter_passive_drift_correction_delay = clampf(filter_passive_drift_correction_delay, 1.0f, (1 << 16));
+	filter_stabilization_min_scale = clampf(filter_stabilization_min_scale, 0.0f, 1.0f);
+	velocity_smoothing_factor = clampf(velocity_smoothing_factor, 0.01f, 1.0f);
+	angular_prediction_cutoff = clampf(angular_prediction_cutoff, 0.0f, (1 << 16));
 
 	if (packet.has_imu_measurements())
 	{
@@ -1045,7 +1102,21 @@ void OrientationFilterComplementaryMARG::update(
 			// The final rotation is a blend between the integrated orientation and absolute rotation from the earth-frame
 			const Eigen::Quaternionf new_orientation =
 				eigen_quaternion_normalized_lerp(ar_orientation, mg_orientation, mg_weight);
-			const Eigen::Vector3f new_angular_velocity = current_omega;
+			Eigen::Vector3f new_angular_velocity = current_omega;
+
+			// Smooth angular velocity
+			new_angular_velocity = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->angular_velocity, new_angular_velocity);
+
+			// Do adapting prediction and smoothing
+			if (angular_prediction_cutoff > k_real_epsilon)
+			{
+				const Eigen::Vector3f filtered_new_velocity = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->angular_velocity, new_angular_velocity);
+				const float velocity_speed_sec = filtered_new_velocity.norm();
+				const float adaptive_time_scale = clampf(velocity_speed_sec / angular_prediction_cutoff, 0.0f, 1.0f);
+
+				new_angular_velocity = new_angular_velocity * adaptive_time_scale;
+			}
+
 			const Eigen::Vector3f new_angular_acceleration = (current_omega - m_state->angular_velocity) / imu_delta_time;
 
 			m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, timestamp, packet.isTemporary);

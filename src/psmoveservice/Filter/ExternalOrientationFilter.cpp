@@ -6,6 +6,10 @@
 #include <map>
 #include <vector>
 
+#define k_lowpass_velocity_smoothing_factor 0.25f
+
+#define k_adaptive_prediction_cutoff 0.25f
+
 // -- private definitions -----
 struct ExternalOrientationFilterState
 {
@@ -124,6 +128,12 @@ struct ExternalOrientationFilterState
 		bIsValid = true;
 	}
 };
+
+// -- private methods -----
+static Eigen::Vector3f lowpass_filter_vector3f(
+	const float alpha,
+	const Eigen::Vector3f &old_filtered_vector,
+	const Eigen::Vector3f &new_vector);
 
 // -- public interface -----
 //-- Orientation Filter --
@@ -413,19 +423,68 @@ void OrientationFilterExternal::update(
 
 	if (isValid && eigen_quaternion_is_valid(new_orientation))
 	{
+		float velocity_smoothing_factor = k_lowpass_velocity_smoothing_factor;
+		float angular_prediction_cutoff = k_adaptive_prediction_cutoff;
+
+#if !defined(IS_TESTING_KALMAN) 
+		if (packet.controllerDeviceId > -1)
+		{
+			ServerControllerViewPtr ControllerView = DeviceManager::getInstance()->getControllerViewPtr(packet.controllerDeviceId);
+			if (ControllerView != nullptr && ControllerView->getIsOpen())
+			{
+				switch (ControllerView->getControllerDeviceType())
+				{
+				case CommonDeviceState::PSMove:
+				{
+					PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
+					PSMoveControllerConfig config = *controller->getConfig();
+
+					break;
+				}
+				}
+			}
+		}
+#endif
+
+		// Clamp everything to safety
+		velocity_smoothing_factor = clampf(velocity_smoothing_factor, 0.01f, 1.0f);
+		angular_prediction_cutoff = clampf(angular_prediction_cutoff, 0.0f, (1 << 16));
+
 		Eigen::Quaternionf deltaRotation = m_state->orientation.conjugate() * new_orientation;
 		Eigen::AngleAxisf axisAngle(deltaRotation);
 
 		Eigen::Vector3f angularVelocity = axisAngle.axis() * (axisAngle.angle() / imu_delta_time);
 
-		// Smooth angular velocity, otherwise its too jittery
-		const float alpha = 0.2f;
-		Eigen::Vector3f angVel = angularVelocity.transpose();
-		new_angular_velocity = ((1.f - alpha) * m_state->angular_velocity + alpha * angVel);
+		new_angular_velocity = angularVelocity.transpose();
+
+		// Smooth angular velocity
+		new_angular_velocity = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->angular_velocity, new_angular_velocity);
+
+		// Do adapting prediction and smoothing
+		if (angular_prediction_cutoff > k_real_epsilon)
+		{
+			const Eigen::Vector3f filtered_new_velocity = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->angular_velocity, new_angular_velocity);
+			const float velocity_speed_sec = filtered_new_velocity.norm();
+			const float adaptive_time_scale = clampf(velocity_speed_sec / angular_prediction_cutoff, 0.0f, 1.0f);
+			
+			printf("adaptive_time_scale %f\n", adaptive_time_scale);
+
+			new_angular_velocity = new_angular_velocity * adaptive_time_scale;
+		}
 
 		const Eigen::Vector3f new_angular_acceleration = (new_angular_velocity - m_state->angular_velocity) / imu_delta_time;
 
 		m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, timestamp, packet.isTemporary);
 	}
 #endif
+}
+
+static Eigen::Vector3f lowpass_filter_vector3f(
+	const float alpha,
+	const Eigen::Vector3f &old_filtered_vector,
+	const Eigen::Vector3f &new_vector)
+{
+	const Eigen::Vector3f filtered_vector = alpha*new_vector + (1.f - alpha)*old_filtered_vector;
+
+	return filtered_vector;
 }
