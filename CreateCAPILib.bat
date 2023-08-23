@@ -23,6 +23,9 @@ copy /Y ".\src\psmoveprotocol\SharedConstants.h" ".\release\PSMoveClient_CAPI\in
 :: Move libs.
 copy /Y ".\build\src\psmoveclient\Release\*.lib" ".\release\PSMoveClient_CAPI\lib\"
 
+:: Copy LICENSE.
+copy /Y ".\LICENSE" ".\release\PSMoveClient_CAPI\LICENSE.txt"
+
 pause
 goto exit
 

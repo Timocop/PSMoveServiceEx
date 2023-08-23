@@ -22,6 +22,9 @@ xcopy /S /I /Y ".\src\psmoveconfigtool\assets" ".\release\PSMoveService\assets"
 copy /Y ".\build\src\psmoveclient\Release\*.dll" ".\release\PSMoveService\testing\"
 copy /Y ".\build\src\tests\Release\*.exe" ".\release\PSMoveService\testing\"
 
+:: Copy LICENSE.
+copy /Y ".\LICENSE" ".\release\PSMoveService\LICENSE.txt"
+
 pause
 goto exit
 
