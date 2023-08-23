@@ -442,7 +442,7 @@ void AppStage_HMDSettings::renderUI()
 						{
 							settings_shown = true;
 
-							ImGui::Text("Velocity Smoothing Factor (%%): ");
+							ImGui::Text("Velocity Smoothing Power (%%): ");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(120.f);
 							float filter_velocity_smoothing_factor = (1.f - hmdInfo.FilterVelocitySmoothingFactor) * 100.f; ;
@@ -523,10 +523,10 @@ void AppStage_HMDSettings::renderUI()
 							hmdInfo.OrientationFilterName == "MadgwickARG" ||
 							hmdInfo.OrientationFilterName == "OrientationExternal")
 						{
-							ImGui::Text("Angular Smoothing Factor (%%): ");
+							ImGui::Text("Angular Smoothing Power (%%): ");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(120.f);
-							float filter_angular_smoothing_factor = (1.f - hmdInfo.FilterAngularSmoothingFactor) * 100.f; ;
+							float filter_angular_smoothing_factor = (1.f - hmdInfo.FilterAngularSmoothingFactor) * 100.f;
 							if (ImGui::InputFloat("##AngularSmoothingFactor", &filter_angular_smoothing_factor, 1.f, 5.f, 2))
 							{
 								hmdInfo.FilterAngularSmoothingFactor = clampf(1.f - (filter_angular_smoothing_factor / 100.f), 0.0f, 1.0f);
@@ -616,13 +616,13 @@ void AppStage_HMDSettings::renderUI()
 
 								ImGui::Indent();
 								{
-									ImGui::Text("Beta Smoothing Factor: ");
+									ImGui::Text("Beta Smoothing Power: ");
 									ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 									ImGui::PushItemWidth(120.f);
-									float filter_madgwick_stabilization_smoothing_factor = hmdInfo.FilterMadgwickStabilizationSmoothingFactor;
+									float filter_madgwick_stabilization_smoothing_factor = (1.f - hmdInfo.FilterMadgwickStabilizationSmoothingFactor) * 100.f;
 									if (ImGui::InputFloat("##MadgwickFilterBetaSmoothingFactor", &filter_madgwick_stabilization_smoothing_factor, 0.01f, 0.05f, 2))
 									{
-										hmdInfo.FilterMadgwickStabilizationSmoothingFactor = clampf(filter_madgwick_stabilization_smoothing_factor, 0.0f, 1.f);
+										hmdInfo.FilterMadgwickStabilizationSmoothingFactor = clampf(1.f - (filter_madgwick_stabilization_smoothing_factor / 100.f), 0.0f, 1.f);
 
 										request_offset = true;
 									}

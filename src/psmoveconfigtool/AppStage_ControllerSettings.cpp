@@ -882,7 +882,7 @@ void AppStage_ControllerSettings::renderUI()
 											{
 												settings_shown = true;
 
-												ImGui::Text("Velocity Smoothing Factor (%%): ");
+												ImGui::Text("Velocity Smoothing Power (%%): ");
 												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 												ImGui::PushItemWidth(120.f);
 												float filter_velocity_smoothing_factor = (1.f - controllerInfo.FilterVelocitySmoothingFactor) * 100.f; ;
@@ -964,7 +964,7 @@ void AppStage_ControllerSettings::renderUI()
 												controllerInfo.OrientationFilterName == "OrientationExternal" ||
 												controllerInfo.ControllerType == PSMController_Virtual)
 											{
-												ImGui::Text("Angular Smoothing Factor (%%): ");
+												ImGui::Text("Angular Smoothing Power (%%): ");
 												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 												ImGui::PushItemWidth(120.f);
 												float filter_angular_smoothing_factor = (1.f - controllerInfo.FilterAngularSmoothingFactor) * 100.f; ;
@@ -1188,13 +1188,13 @@ void AppStage_ControllerSettings::renderUI()
 
 													ImGui::Indent();
 													{
-														ImGui::Text("Beta Smoothing Factor: ");
+														ImGui::Text("Beta Smoothing Power: ");
 														ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 														ImGui::PushItemWidth(120.f);
-														float filter_madgwick_stabilization_smoothing_factor = controllerInfo.FilterMadgwickStabilizationSmoothingFactor;
+														float filter_madgwick_stabilization_smoothing_factor = (1.f - controllerInfo.FilterMadgwickStabilizationSmoothingFactor) * 100.f;
 														if (ImGui::InputFloat("##MadgwickFilterBetaSmoothingFactor", &filter_madgwick_stabilization_smoothing_factor, 0.01f, 0.05f, 2))
 														{
-															controllerInfo.FilterMadgwickStabilizationSmoothingFactor = clampf(filter_madgwick_stabilization_smoothing_factor, 0.f, 1.f);
+															controllerInfo.FilterMadgwickStabilizationSmoothingFactor = clampf(1.f - (filter_madgwick_stabilization_smoothing_factor / 100.f), 0.0f, 1.f);
 
 															request_offset = true;
 														}
