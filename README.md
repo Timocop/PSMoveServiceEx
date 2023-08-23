@@ -1,11 +1,11 @@
-# PSMoveServiceEx
+# ℹ️ PSMoveServiceEx
 This fork has been created to expand the PSMoveSerivce lifespan with fixes, optimizations and new features.
 Please use the original PSMoveService Wiki for now until i added my own.
 
-# PSMoveService
+# ℹ️ PSMoveService
 A background service that manages multiple PSMove Controllers and PS3 Eye Cameras. Clients connect to the service and stream PSMove Controller state (position, orientation and button presses). A visual client front-end is used for controller/tracker configuration. The [FAQ](https://github.com/psmoveservice/PSMoveService/wiki/Frequently-Asked-Questions) is a good starting point for any specific questions you may have about the project. 
 
- # PSMoveServiceEx with SteamVR
+ # 🔗 PSMoveServiceEx with SteamVR
 ℹ️ *Requires [PSMoveServiceEx - Virtual Device Manager](https://github.com/Timocop/PSMoveServiceEx-Virtual-Device-Manager/tree/master)*
 
 <a href="https://youtu.be/8pwCMh_Z4ko" title="">
@@ -14,13 +14,18 @@ A background service that manages multiple PSMove Controllers and PS3 Eye Camera
   </p>
 </a>
 
-# Documentation
+# 📖 Documentation
 * General setup guides, troubleshooting and design docs can be found on the [wiki](https://github.com/psmoveservice/PSMoveService/wiki)
 
-# Getting Help
-Please start with the wiki. If you can't find help with your problem then please search through the issues (especially the closed ones) to see if your problem has been addressed already. If you still find no previous mention of your problem then you have one of two options:
+# ❓ Getting Help
+Please start with the wiki. If you can't find help with your problem then please search through the issues (especially the closed ones) to see if your problem has been addressed already. 
+If you still find no previous mention of your problem then you have these options:
+- Join the official [PSMoveServiceEx Discord Server](https://discord.gg/CXPnUanhZT).
+- Use the [GitHub Discussions](https://github.com/Timocop/PSMoveServiceEx/discussions).
+- Create an issue if you think you found a bug or if you have a problem with the program.
+  - *⚠️ The ``Issues`` page should not be used for regular questions!*
 
-# Attribution and Thanks
+# 💙 Attribution and Thanks
 Special thanks to the following people who helped make this project possible:
 * HipsterSloth for maintaining PSMoveService for so long ♥️
 * Thomas Perl and his [psmoveapi](https://github.com/thp/psmoveapi) project which laid the groundwork for this project.
