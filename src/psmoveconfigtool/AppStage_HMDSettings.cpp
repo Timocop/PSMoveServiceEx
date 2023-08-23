@@ -616,7 +616,7 @@ void AppStage_HMDSettings::renderUI()
 
 								ImGui::Indent();
 								{
-									ImGui::Text("Beta Smoothing Power: ");
+									ImGui::Text("Beta Smoothing Power (%%): ");
 									ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 									ImGui::PushItemWidth(120.f);
 									float filter_madgwick_stabilization_smoothing_factor = (1.f - hmdInfo.FilterMadgwickStabilizationSmoothingFactor) * 100.f;
