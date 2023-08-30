@@ -32,7 +32,7 @@ public:
         : PSMoveConfig(fnamebase)
 		, is_valid(false)
 		, version(CONFIG_VERSION)
-		, disable_command_interface(true)
+		, disable_command_interface(false)
 		, position_filter_type("LowPassOptical")
 		, orientation_filter_type("MadgwickARG")
 		, raw_accelerometer_variance(0.f)
