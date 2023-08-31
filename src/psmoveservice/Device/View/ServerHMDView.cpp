@@ -1451,11 +1451,6 @@ update_filters_for_morpheus_hmd(
 				filterPacket.hmdDeviceId = hmd->getDeviceID();
 				filterPacket.isCurrentlyTracking = hmd->getIsCurrentlyTracking();
 				filterPacket.isSynced = DeviceManager::getInstance()->m_tracker_manager->trackersSynced();
-				filterPacket.stateLookBack = state_look_back;
-				filterPacket.isHalfFrame = true;
-
-				// Dont save timestamp in filter yet, wait until we are at the second frame.
-				filterPacket.isTemporary = (frame == 0);
 
 				// Create a filter input packet from the sensor data 
 				// and the filter's previous orientation and position
@@ -1517,7 +1512,6 @@ update_filters_for_virtual_hmd(
 			filterPacket.hmdDeviceId = hmd->getDeviceID();
 			filterPacket.isCurrentlyTracking = hmd->getIsCurrentlyTracking();
 			filterPacket.isSynced = DeviceManager::getInstance()->m_tracker_manager->trackersSynced();
-			filterPacket.stateLookBack = state_look_back;
 
 			// Create a filter input packet from the sensor data 
 			// and the filter's previous orientation and position

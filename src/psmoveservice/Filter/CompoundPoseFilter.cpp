@@ -182,8 +182,7 @@ void CompoundPoseFilter::update(
 		m_orientation_filter->update(timestamp, orientation_filter_packet);
         filtered_orientation= m_orientation_filter->getOrientation();
 
-		if(!orientation_filter_packet.isTemporary)
-			last_imu_timestamp = timestamp;
+		last_imu_timestamp = timestamp;
     }
 
     if (m_position_filter != nullptr)
@@ -194,8 +193,7 @@ void CompoundPoseFilter::update(
 
 		m_position_filter->update(timestamp, position_filter_packet);
 
-		if (!orientation_filter_packet.isTemporary)
-			last_optical_timestamp = timestamp;
+		last_optical_timestamp = timestamp;
 	}
 }
 

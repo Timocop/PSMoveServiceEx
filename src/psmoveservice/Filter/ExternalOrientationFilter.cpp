@@ -70,8 +70,7 @@ struct ExternalOrientationFilterState
 		const Eigen::Quaternionf &new_orientation,
 		const Eigen::Vector3f &new_angular_velocity,
 		const Eigen::Vector3f &new_angular_acceleration,
-		const t_high_resolution_timepoint timestamp,
-		const bool isTemporary)
+		const t_high_resolution_timepoint timestamp)
 	{
 		if (eigen_quaternion_is_valid(new_orientation))
 		{
@@ -100,8 +99,7 @@ struct ExternalOrientationFilterState
 			SERVER_LOG_WARNING("OrientationFilter") << "Angular Acceleration is NaN!";
 		}
 
-		if(!isTemporary)
-			last_imu_timestamp = timestamp;
+		last_imu_timestamp = timestamp;
 
 		// state is valid now that we have had an update
 		bIsValid = true;
@@ -109,8 +107,7 @@ struct ExternalOrientationFilterState
 
 	void apply_optical_state(
 		const Eigen::Quaternionf &new_orientation,
-		const t_high_resolution_timepoint timestamp,
-		const bool isTemporary)
+		const t_high_resolution_timepoint timestamp)
 	{
 		if (eigen_quaternion_is_valid(new_orientation))
 		{
@@ -121,8 +118,7 @@ struct ExternalOrientationFilterState
 			SERVER_LOG_WARNING("OrientationFilter") << "Orientation is NaN!";
 		}
 
-		if (!isTemporary)
-			last_optical_timestamp = timestamp;
+		last_optical_timestamp = timestamp;
 
 		// state is valid now that we have had an update
 		bIsValid = true;
@@ -267,13 +263,8 @@ void OrientationFilterExternal::update(
 	const PoseFilterPacket &packet)
 {
 #ifdef WIN32
-	float optical_delta_time = (m_state->getOpticalTime(timestamp) / static_cast<float>(packet.stateLookBack));
-	float imu_delta_time = (m_state->getImuTime(timestamp) / static_cast<float>(packet.stateLookBack));
-	if (packet.isHalfFrame)
-	{
-		optical_delta_time /= 2.0f;
-		imu_delta_time /= 2.0f;
-	}
+	float optical_delta_time = m_state->getOpticalTime(timestamp);
+	float imu_delta_time = m_state->getImuTime(timestamp);
 
 	if (packet.controllerDeviceId < 0)
 		return;
@@ -484,7 +475,7 @@ void OrientationFilterExternal::update(
 
 		const Eigen::Vector3f new_angular_acceleration = (new_angular_velocity - m_state->angular_velocity) / imu_delta_time;
 
-		m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, timestamp, packet.isTemporary);
+		m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, timestamp);
 	}
 #endif
 }

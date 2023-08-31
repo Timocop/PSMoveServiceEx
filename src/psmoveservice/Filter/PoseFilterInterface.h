@@ -116,10 +116,6 @@ struct PoseFilterPacket : PoseSensorPacket
 	int hmdDeviceId;
 	bool isCurrentlyTracking;
 
-	int stateLookBack;
-	bool isHalfFrame;
-	bool isTemporary;
-
 	bool isSynced = false;
 
     /// The current orientation of the controller
@@ -149,9 +145,6 @@ struct PoseFilterPacket : PoseSensorPacket
 		current_linear_velocity_cm_s= Eigen::Vector3f::Zero();
 		current_linear_acceleration_cm_s2= Eigen::Vector3f::Zero();
 		world_accelerometer= Eigen::Vector3f::Zero();
-		stateLookBack = 1;
-		isHalfFrame = false;
-		isTemporary = false;
 	}
 
 	inline Eigen::Vector3f get_current_position_in_meters() const

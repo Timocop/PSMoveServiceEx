@@ -82,8 +82,7 @@ struct ExternalAttachmentPositionFilterState
 		const Eigen::Vector3f &new_acceleration_m_per_sec_sqr,
 		const Eigen::Vector3f &new_accelerometer_g_units,
 		const Eigen::Vector3f &new_accelerometer_derivative_g_per_sec,
-		const t_high_resolution_timepoint timestamp,
-		const bool isTemporary)
+		const t_high_resolution_timepoint timestamp)
 	{
 		if (eigen_vector3f_is_valid(new_position_m))
 		{
@@ -130,8 +129,7 @@ struct ExternalAttachmentPositionFilterState
 			SERVER_LOG_WARNING("PositionExternalAttachmentFilter") << "AccelerometerDerivative is NaN!";
 		}
 
-		if(!isTemporary)
-			last_imu_timestamp = timestamp;
+		last_imu_timestamp = timestamp;
 
         // state is valid now that we have had an update
         bIsValid= true;
@@ -139,17 +137,15 @@ struct ExternalAttachmentPositionFilterState
 
 	void apply_optical_state(
 		const Eigen::Vector3f &new_position_m,
-		const t_high_resolution_timepoint timestamp,
-		const bool isTemporary)
+		const t_high_resolution_timepoint timestamp)
 	{
-		apply_optical_state(new_position_m, Eigen::Vector3f::Zero(), timestamp, isTemporary);
+		apply_optical_state(new_position_m, Eigen::Vector3f::Zero(), timestamp);
 	}
 
 	void apply_optical_state(
 		const Eigen::Vector3f &new_position_m,
 		const Eigen::Vector3f &new_velocity_m_per_sec,
-		const t_high_resolution_timepoint timestamp,
-		const bool isTemporary)
+		const t_high_resolution_timepoint timestamp)
 	{
 		if (eigen_vector3f_is_valid(new_position_m))
 		{
@@ -169,8 +165,7 @@ struct ExternalAttachmentPositionFilterState
 			SERVER_LOG_WARNING("PositionExternalAttachmentFilter") << "Velocity is NaN!";
 		}
 
-		if(!isTemporary)
-			last_optical_timestamp = timestamp;
+		last_optical_timestamp = timestamp;
 
         // state is valid now that we have had an update
         bIsValid= true;
@@ -566,7 +561,7 @@ void PositionFilterExternalAttachment::update(
 		Eigen::Vector3f new_position_meters = (tracker_position + prime) * k_centimeters_to_meters;
 
 		Eigen::Vector3f new_position_meters_sec = Eigen::Vector3f::Zero();
-		m_state->apply_optical_state(new_position_meters, new_position_meters_sec, timestamp, packet.isTemporary);
+		m_state->apply_optical_state(new_position_meters, new_position_meters_sec, timestamp);
 	}
 
 #endif

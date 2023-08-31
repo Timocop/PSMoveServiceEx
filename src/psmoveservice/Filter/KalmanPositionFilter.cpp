@@ -392,19 +392,15 @@ public:
 	}
 
 	void applyOpticalTimestamp(
-		const t_high_resolution_timepoint timestamp,
-		const bool isTemporary)
+		const t_high_resolution_timepoint timestamp)
 	{
-		if (!isTemporary)
-			last_optical_timestamp = timestamp;
+		last_optical_timestamp = timestamp;
 	}
 
 	void applyImuTimestamp(
-		const t_high_resolution_timepoint timestamp,
-		const bool isTemporary)
+		const t_high_resolution_timepoint timestamp)
 	{
-		if (!isTemporary)
-			last_imu_timestamp = timestamp;
+		last_imu_timestamp = timestamp;
 	}
 
     virtual void init(const PositionFilterConstants &constants)
@@ -496,13 +492,8 @@ void KalmanPositionFilter::update(
 {
     if (m_filter->bIsValid)
     {
-		float optical_delta_time = (m_filter->getOpticalTime(timestamp) / static_cast<float>(packet.stateLookBack));
-		float imu_delta_time = (m_filter->getImuTime(timestamp) / static_cast<float>(packet.stateLookBack));
-		if (packet.isHalfFrame)
-		{
-			optical_delta_time /= 2.0f;
-			imu_delta_time /= 2.0f;
-		}
+		float optical_delta_time = m_filter->getOpticalTime(timestamp);
+		float imu_delta_time = m_filter->getImuTime(timestamp);
 
 		// Adjust the amount we trust the optical state based on the tracking projection area
 		m_filter->system_model.update_process_noise(
@@ -585,7 +576,7 @@ void KalmanPositionFilter::update(
         // Update UKF
         m_filter->ukf.update(measurement_model, measurement);
 
-		m_filter->applyOpticalTimestamp(timestamp, packet.isTemporary);
+		m_filter->applyOpticalTimestamp(timestamp);
     }
     else
     {

@@ -794,19 +794,15 @@ public:
 	}
 
 	void applyOpticalTimestamp(
-		const t_high_resolution_timepoint timestamp,
-		const bool isTemporary)
+		const t_high_resolution_timepoint timestamp)
 	{
-		if (!isTemporary)
-			last_optical_timestamp = timestamp;
+		last_optical_timestamp = timestamp;
 	}
 
 	void applyImuTimestamp(
-		const t_high_resolution_timepoint timestamp,
-		const bool isTemporary)
+		const t_high_resolution_timepoint timestamp)
 	{
-		if (!isTemporary)
-			last_imu_timestamp = timestamp;
+		last_imu_timestamp = timestamp;
 	}
 
     virtual void init(const PoseFilterConstants &constants)
@@ -1219,13 +1215,8 @@ void KalmanPoseFilterPointCloud::update(
         PointCloudKalmanPoseFilterImpl *filter = static_cast<PointCloudKalmanPoseFilterImpl *>(m_filter);
 		PoseOrientationMeasurementModel &optical_measurement_model = filter->optical_measurement_model;
 
-		float optical_delta_time = (filter->getOpticalTime(timestamp) / static_cast<float>(packet.stateLookBack));
-		float imu_delta_time = (filter->getImuTime(timestamp) / static_cast<float>(packet.stateLookBack));
-		if (packet.isHalfFrame)
-		{
-			optical_delta_time /= 2.0f;
-			imu_delta_time /= 2.0f;
-		}
+		float optical_delta_time = filter->getOpticalTime(timestamp);
+		float imu_delta_time = filter->getImuTime(timestamp);
 
         // Adjust the amount we trust the process model based on the total tracking projection area
         filter->system_model.update_process_noise(
@@ -1312,7 +1303,7 @@ void KalmanPoseFilterPointCloud::update(
         // Zero out the error in the UKF state vector.
         filter->apply_error_to_world_quaternion();
 
-		filter->applyOpticalTimestamp(timestamp, packet.isTemporary);
+		filter->applyOpticalTimestamp(timestamp);
     }
     else
     {
@@ -1358,13 +1349,8 @@ void KalmanPoseFilterMorpheus::update(
 		PoseOrientationMeasurementModel &optical_measurement_model = filter->optical_measurement_model;
 		PoseGravMeasurementModel &imu_measurement_model= filter->imu_measurement_model;
 
-		float optical_delta_time = (filter->getOpticalTime(timestamp) / static_cast<float>(packet.stateLookBack));
-		float imu_delta_time = (filter->getImuTime(timestamp) / static_cast<float>(packet.stateLookBack));
-		if (packet.isHalfFrame)
-		{
-			optical_delta_time /= 2.0f;
-			imu_delta_time /= 2.0f;
-		}
+		float optical_delta_time = filter->getOpticalTime(timestamp);
+		float imu_delta_time = filter->getImuTime(timestamp);
 
 		// Adjust the amount we trust the process model based on the tracking projection area
 		filter->system_model.update_process_noise(
@@ -1462,7 +1448,7 @@ void KalmanPoseFilterMorpheus::update(
 		// Zero out the error in the UKF state vector.
 		filter->apply_error_to_world_quaternion();
 
-		filter->applyOpticalTimestamp(timestamp, packet.isTemporary);
+		filter->applyOpticalTimestamp(timestamp);
 	}
 	else
 	{
@@ -1509,13 +1495,8 @@ void KalmanPoseFilterDS4::update(
 		PoseOrientationMeasurementModel &optical_measurement_model = filter->optical_measurement_model;
 		PoseGravMeasurementModel &imu_measurement_model= filter->imu_measurement_model;
 
-		float optical_delta_time = (filter->getOpticalTime(timestamp) / static_cast<float>(packet.stateLookBack));
-		float imu_delta_time = (filter->getImuTime(timestamp) / static_cast<float>(packet.stateLookBack));
-		if (packet.isHalfFrame)
-		{
-			optical_delta_time /= 2.0f;
-			imu_delta_time /= 2.0f;
-		}
+		float optical_delta_time = filter->getOpticalTime(timestamp);
+		float imu_delta_time = filter->getImuTime(timestamp);
 
 		// Adjust the amount we trust the process model based on the tracking projection area
 		filter->system_model.update_process_noise(
@@ -1586,7 +1567,7 @@ void KalmanPoseFilterDS4::update(
 		// Zero out the error in the UKF state vector.
 		filter->apply_error_to_world_quaternion();
 
-		filter->applyOpticalTimestamp(timestamp, packet.isTemporary);
+		filter->applyOpticalTimestamp(timestamp);
 	}
 	else
 	{
@@ -1633,13 +1614,8 @@ void KalmanPoseFilterPSMove::update(
 		PoseOrientationMeasurementModel &optical_measurement_model = filter->optical_measurement_model;
 		PoseMagGravMeasurementModel &imu_measurement_model= filter->imu_measurement_model;
 
-		float optical_delta_time = (filter->getOpticalTime(timestamp) / static_cast<float>(packet.stateLookBack));
-		float imu_delta_time = (filter->getImuTime(timestamp) / static_cast<float>(packet.stateLookBack));
-		if (packet.isHalfFrame)
-		{
-			optical_delta_time /= 2.0f;
-			imu_delta_time /= 2.0f;
-		}
+		float optical_delta_time = filter->getOpticalTime(timestamp);
+		float imu_delta_time = filter->getImuTime(timestamp);
 
 		// Adjust the amount we trust the process model based on the tracking projection area
 		filter->system_model.update_process_noise(
@@ -1711,7 +1687,7 @@ void KalmanPoseFilterPSMove::update(
 		// Zero out the error in the UKF state vector.
 		filter->apply_error_to_world_quaternion();
 
-		filter->applyOpticalTimestamp(timestamp, packet.isTemporary);
+		filter->applyOpticalTimestamp(timestamp);
 	}
 	else
 	{

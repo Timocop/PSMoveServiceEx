@@ -100,8 +100,7 @@ struct PositionFilterState
 		const Eigen::Vector3f &new_acceleration_m_per_sec_sqr,
 		const Eigen::Vector3f &new_accelerometer_g_units,
 		const Eigen::Vector3f &new_accelerometer_derivative_g_per_sec,
-		const t_high_resolution_timepoint timestamp,
-		const bool isTemporary)
+		const t_high_resolution_timepoint timestamp)
 	{
 		if (eigen_vector3f_is_valid(new_position_m))
 		{
@@ -148,8 +147,7 @@ struct PositionFilterState
 			SERVER_LOG_WARNING("PositionFilter") << "AccelerometerDerivative is NaN!";
 		}
 
-		if (!isTemporary)
-			last_imu_timestamp = timestamp;
+		last_imu_timestamp = timestamp;
 
         // state is valid now that we have had an update
         bIsValid= true;
@@ -157,17 +155,15 @@ struct PositionFilterState
 
 	void apply_optical_state(
 		const Eigen::Vector3f &new_position_m,
-		const t_high_resolution_timepoint timestamp,
-		const bool isTemporary)
+		const t_high_resolution_timepoint timestamp)
 	{
-		apply_optical_state(new_position_m, Eigen::Vector3f::Zero(), timestamp, isTemporary);
+		apply_optical_state(new_position_m, Eigen::Vector3f::Zero(), timestamp);
 	}
 
 	void apply_optical_state(
 		const Eigen::Vector3f &new_position_m,
 		const Eigen::Vector3f &new_velocity_m_per_sec,
-		const t_high_resolution_timepoint timestamp,
-		const bool isTemporary)
+		const t_high_resolution_timepoint timestamp)
 	{
 		if (eigen_vector3f_is_valid(new_position_m))
 		{
@@ -187,8 +183,7 @@ struct PositionFilterState
 			SERVER_LOG_WARNING("PositionFilter") << "Velocity is NaN!";
 		}
 
-		if (!isTemporary)
-			last_optical_timestamp = timestamp;
+		last_optical_timestamp = timestamp;
 
         // state is valid now that we have had an update
         bIsValid= true;
@@ -313,13 +308,8 @@ void PositionFilterPassThru::update(
 	const t_high_resolution_timepoint timestamp,
 	const PoseFilterPacket &packet)
 {
-	float optical_delta_time = (m_state->getOpticalTime(timestamp) / static_cast<float>(packet.stateLookBack));
-	float imu_delta_time = (m_state->getImuTime(timestamp) / static_cast<float>(packet.stateLookBack));
-	if (packet.isHalfFrame)
-	{
-		optical_delta_time /= 2.0f;
-		imu_delta_time /= 2.0f;
-	}
+	float optical_delta_time = m_state->getOpticalTime(timestamp);
+	float imu_delta_time = m_state->getImuTime(timestamp);
 
 	float velocity_smoothing_factor = k_lowpass_velocity_smoothing_factor;
 	float position_prediction_cutoff = k_velocity_adaptive_prediction_cutoff;
@@ -439,7 +429,7 @@ void PositionFilterPassThru::update(
 			}
 		}
 
-		m_state->apply_optical_state(new_position_meters, new_position_meters_sec, timestamp, packet.isTemporary);
+		m_state->apply_optical_state(new_position_meters, new_position_meters_sec, timestamp);
 	}
 }
 
@@ -448,13 +438,8 @@ void PositionFilterLowPassOptical::update(
 	const t_high_resolution_timepoint timestamp,
 	const PoseFilterPacket &packet)
 {
-	float optical_delta_time = (m_state->getOpticalTime(timestamp) / static_cast<float>(packet.stateLookBack));
-	float imu_delta_time = (m_state->getImuTime(timestamp) / static_cast<float>(packet.stateLookBack));
-	if (packet.isHalfFrame)
-	{
-		optical_delta_time /= 2.0f;
-		imu_delta_time /= 2.0f;
-	}
+	float optical_delta_time = m_state->getOpticalTime(timestamp);
+	float imu_delta_time = m_state->getImuTime(timestamp);
 
 	float smoothing_distance = k_max_lowpass_smoothing_distance;
 	float smoothing_power = k_lowpass_smoothing_power;
@@ -603,7 +588,7 @@ void PositionFilterLowPassOptical::update(
 			}
 		}
 
-		m_state->apply_optical_state(new_position_meters, new_position_meters_sec, timestamp, packet.isTemporary);
+		m_state->apply_optical_state(new_position_meters, new_position_meters_sec, timestamp);
     }
 }
 
@@ -612,20 +597,15 @@ void PositionFilterLowPassIMU::update(
 	const t_high_resolution_timepoint timestamp,
 	const PoseFilterPacket &packet)
 {
-	float optical_delta_time = (m_state->getOpticalTime(timestamp) / static_cast<float>(packet.stateLookBack));
-	float imu_delta_time = (m_state->getImuTime(timestamp) / static_cast<float>(packet.stateLookBack));
-	if (packet.isHalfFrame)
-	{
-		optical_delta_time /= 2.0f;
-		imu_delta_time /= 2.0f;
-	}
+	float optical_delta_time = m_state->getOpticalTime(timestamp);
+	float imu_delta_time = m_state->getImuTime(timestamp);
 
 	if (packet.has_optical_measurement() && packet.isSynced)
 	{
 		// Use the raw optical position unfiltered
 		const Eigen::Vector3f new_position_meters= packet.get_optical_position_in_meters();
 
-		m_state->apply_optical_state(new_position_meters, timestamp, packet.isTemporary);
+		m_state->apply_optical_state(new_position_meters, timestamp);
     }
 
     if (packet.has_imu_measurements() && m_state->bIsValid)
@@ -645,7 +625,7 @@ void PositionFilterLowPassIMU::update(
 			new_state.acceleration_m_per_sec_sqr,
 			new_state.accelerometer_g_units, 
 			new_state.accelerometer_derivative_g_per_sec,
-			timestamp, packet.isTemporary);
+			timestamp);
     }
 }
 
@@ -654,13 +634,8 @@ void PositionFilterComplimentaryOpticalIMU::update(
 	const t_high_resolution_timepoint timestamp,
 	const PoseFilterPacket &packet)
 {
-	float optical_delta_time = (m_state->getOpticalTime(timestamp) / static_cast<float>(packet.stateLookBack));
-	float imu_delta_time = (m_state->getImuTime(timestamp) / static_cast<float>(packet.stateLookBack));
-	if (packet.isHalfFrame)
-	{
-		optical_delta_time /= 2.0f;
-		imu_delta_time /= 2.0f;
-	}
+	float optical_delta_time = m_state->getOpticalTime(timestamp);
+	float imu_delta_time = m_state->getImuTime(timestamp);
 
 	static float g_max_unseen_position_timeout= k_max_unseen_position_timeout;
 
@@ -684,7 +659,7 @@ void PositionFilterComplimentaryOpticalIMU::update(
 			new_position_meters= packet.get_optical_position_in_meters();
 		}
 
-		m_state->apply_optical_state(new_position_meters, timestamp, packet.isTemporary);
+		m_state->apply_optical_state(new_position_meters, timestamp);
 		lastOpticalFrame = now;
     }
 
@@ -710,7 +685,7 @@ void PositionFilterComplimentaryOpticalIMU::update(
 				new_imu_state.acceleration_m_per_sec_sqr,
 				new_imu_state.accelerometer_g_units, 
 				new_imu_state.accelerometer_derivative_g_per_sec,
-				timestamp, packet.isTemporary);
+				timestamp);
 		}
 	}
 }
@@ -720,13 +695,8 @@ void PositionFilterLowPassExponential::update(
 	const t_high_resolution_timepoint timestamp,
 	const PoseFilterPacket &packet)
 {
-	float optical_delta_time = (m_state->getOpticalTime(timestamp) / static_cast<float>(packet.stateLookBack));
-	float imu_delta_time = (m_state->getImuTime(timestamp) / static_cast<float>(packet.stateLookBack));
-	if (packet.isHalfFrame)
-	{
-		optical_delta_time /= 2.0f;
-		imu_delta_time /= 2.0f;
-	}
+	float optical_delta_time = m_state->getOpticalTime(timestamp);
+	float imu_delta_time = m_state->getImuTime(timestamp);
 
 	const int history_queue_length = 20;
 
@@ -874,7 +844,7 @@ void PositionFilterLowPassExponential::update(
             new_position_meters = packet.get_optical_position_in_meters();
         }
 
-		m_state->apply_optical_state(new_position_meters, new_velocity_m_per_sec, timestamp, packet.isTemporary);
+		m_state->apply_optical_state(new_position_meters, new_velocity_m_per_sec, timestamp);
     }
 }
 

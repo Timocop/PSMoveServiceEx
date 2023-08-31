@@ -71,8 +71,7 @@ struct OpticalOrientationFilterState
 		const Eigen::Quaternionf &new_orientation,
 		const Eigen::Vector3f &new_angular_velocity,
 		const Eigen::Vector3f &new_angular_acceleration,
-		const t_high_resolution_timepoint timestamp,
-		const bool isTemporary)
+		const t_high_resolution_timepoint timestamp)
 	{
 		if (eigen_quaternion_is_valid(new_orientation))
 		{
@@ -101,8 +100,7 @@ struct OpticalOrientationFilterState
 			SERVER_LOG_WARNING("OrientationFilter") << "Angular Acceleration is NaN!";
 		}
 
-		if (!isTemporary)
-			last_imu_timestamp = timestamp;
+		last_imu_timestamp = timestamp;
 
 		// state is valid now that we have had an update
 		bIsValid = true;
@@ -110,8 +108,7 @@ struct OpticalOrientationFilterState
 
 	void apply_optical_state(
 		const Eigen::Quaternionf &new_orientation,
-		const t_high_resolution_timepoint timestamp,
-		const bool isTemporary)
+		const t_high_resolution_timepoint timestamp)
 	{
 		if (eigen_quaternion_is_valid(new_orientation))
 		{
@@ -122,8 +119,7 @@ struct OpticalOrientationFilterState
 			SERVER_LOG_WARNING("OrientationFilter") << "Orientation is NaN!";
 		}
 
-		if(!isTemporary)
-			last_optical_timestamp = timestamp;
+		last_optical_timestamp = timestamp;
 
 		// state is valid now that we have had an update
 		bIsValid = true;
@@ -269,13 +265,8 @@ void OrientationTargetOpticalARG::UpdateComplementaryMARG(
 	const t_high_resolution_timepoint timestamp, 
 	const PoseFilterPacket &packet)
 {
-	float optical_delta_time = (m_state->getOpticalTime(timestamp) / static_cast<float>(packet.stateLookBack));
-	float imu_delta_time = (m_state->getImuTime(timestamp) / static_cast<float>(packet.stateLookBack));
-	if (packet.isHalfFrame)
-	{
-		optical_delta_time /= 2.0f;
-		imu_delta_time /= 2.0f;
-	}
+	float optical_delta_time = m_state->getOpticalTime(timestamp);
+	float imu_delta_time = m_state->getImuTime(timestamp);
 
 	if (packet.has_imu_measurements())
 	{
@@ -333,7 +324,7 @@ void OrientationTargetOpticalARG::UpdateComplementaryMARG(
 			const Eigen::Vector3f new_angular_velocity = current_omega;
 			const Eigen::Vector3f new_angular_acceleration = (current_omega - m_state->angular_velocity) / imu_delta_time;
 
-			m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, timestamp, packet.isTemporary);
+			m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, timestamp);
 		}
 
 		// Update the blend weight
@@ -348,13 +339,8 @@ void OrientationTargetOpticalARG::UpdateOpticalTarget(
 	const PoseFilterPacket &packet)
 {
 #if !defined(IS_TESTING_KALMAN)
-	float optical_delta_time = (m_state->getOpticalTime(timestamp) / static_cast<float>(packet.stateLookBack));
-	float imu_delta_time = (m_state->getImuTime(timestamp) / static_cast<float>(packet.stateLookBack));
-	if (packet.isHalfFrame)
-	{
-		optical_delta_time /= 2.0f;
-		imu_delta_time /= 2.0f;
-	}
+	float optical_delta_time = m_state->getOpticalTime(timestamp);
+	float imu_delta_time = m_state->getImuTime(timestamp);
 
 	if (packet.has_imu_measurements())
 	{
@@ -384,7 +370,7 @@ void OrientationTargetOpticalARG::UpdateOpticalTarget(
 
 				Eigen::Quaternionf forwardQuat_inv = forwardQuat.inverse();
 
-				m_state->apply_optical_state(forwardQuat_inv, timestamp, packet.isTemporary);
+				m_state->apply_optical_state(forwardQuat_inv, timestamp);
 			}
 		}
 	}
