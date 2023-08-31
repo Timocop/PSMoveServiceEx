@@ -2,13 +2,25 @@
 #define SERVER_HMD_VIEW_H
 
 //-- includes -----
+#include "DeviceInterface.h"
 #include "ServerDeviceView.h"
+#include "PoseFilterInterface.h"
 #include "PSMoveProtocolInterface.h"
 #include "TrackerManager.h"
+
 #include <cstring>
+#include <atomic>
+#include <chrono>
+#include <deque>
+#include <vector>
+
+#include "readerwriterqueue.h" // lockfree queue
 
 // -- pre-declarations -----
 class TrackerManager;
+
+using t_hmd_pose_sensor_queue = moodycamel::ReaderWriterQueue<PoseSensorPacket, 1024>;
+using t_hmd_pose_optical_queue = std::deque<PoseSensorPacket>;
 
 // -- declarations -----
 struct HMDOpticalPoseEstimation
@@ -55,7 +67,7 @@ struct HMDOpticalPoseEstimation
 	}
 };
 
-class ServerHMDView : public ServerDeviceView
+class ServerHMDView : public ServerDeviceView, public IHMDListener
 {
 public:
     ServerHMDView(const int device_id);
@@ -141,6 +153,9 @@ public:
 		return getIsTrackingEnabled() ? m_multicam_pose_estimation->bCurrentlyTracking : false;
 	}
 
+	// Incoming device data callbacks
+	void notifySensorDataReceived(const CommonDeviceState *sensor_state) override;
+
 protected:
 	void set_tracking_enabled_internal(bool bEnabled);
     bool allocate_device_interface(const class DeviceEnumerator *enumerator) override;
@@ -161,6 +176,14 @@ private:
 
 	// Device State
     IHMDInterface *m_device;
+
+	// Filter State (IMU Thread)
+	std::chrono::time_point<std::chrono::high_resolution_clock> m_lastSensorDataTimestamp;
+	bool m_bIsLastSensorDataTimestampValid;
+
+	// Filter State (Shared)
+	t_hmd_pose_sensor_queue m_PoseSensorIMUPacketQueue;
+	t_hmd_pose_optical_queue m_PoseSensorOpticalPacketQueue; // TODO: Currently on main thread
 
 	// Filter state
 	HMDOpticalPoseEstimation *m_tracker_pose_estimations; // array of size TrackerManager::k_max_devices

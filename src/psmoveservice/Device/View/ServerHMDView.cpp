@@ -26,6 +26,18 @@ static IPoseFilter *pose_filter_factory(
 	const CommonDeviceState::eDeviceType deviceType,
 	const std::string &position_filter_type, const std::string &orientation_filter_type,
 	const PoseFilterConstants &constants);
+static void post_imu_filter_packets_for_morpheus(
+	const MorpheusHMD *hmd,
+	const MorpheusHMDState *hmdState,
+	const t_high_resolution_timepoint now,
+	const t_high_resolution_duration duration_since_last_update,
+	t_hmd_pose_sensor_queue *pose_filter_queue);
+static void post_imu_filter_packets_for_virtual(
+	const VirtualHMD *hmd,
+	const VirtualHMDState *hmdState,
+	const t_high_resolution_timepoint now,
+	const t_high_resolution_duration duration_since_last_update,
+	t_hmd_pose_sensor_queue *pose_filter_queue);
 static void update_filters_for_morpheus_hmd(
 	const ServerHMDView *hmd,
 	const MorpheusHMD *morpheusHMD, const MorpheusHMDState *morpheusHMDState,
@@ -103,6 +115,8 @@ bool ServerHMDView::allocate_device_interface(const class DeviceEnumerator *enum
     case CommonDeviceState::Morpheus:
         {
             m_device = new MorpheusHMD();
+			m_device->setHmdListener(this); // Listen for IMU packets
+
 			m_pose_filter = nullptr; // no pose filter until the device is opened
 
 			m_tracker_pose_estimations = new HMDOpticalPoseEstimation[TrackerManager::k_max_devices];
@@ -117,6 +131,8 @@ bool ServerHMDView::allocate_device_interface(const class DeviceEnumerator *enum
     case CommonDeviceState::VirtualHMD:
         {
             m_device = new VirtualHMD();
+			m_device->setHmdListener(this); // Listen for IMU packets
+
 			m_pose_filter = nullptr; // no pose filter until the device is opened
 
 			m_tracker_pose_estimations = new HMDOpticalPoseEstimation[TrackerManager::k_max_devices];
@@ -626,67 +642,75 @@ void ServerHMDView::updateOpticalPoseEstimation(TrackerManager* tracker_manager)
 
 void ServerHMDView::updateStateAndPredict()
 {
-	if (!getHasUnpublishedState())
+	std::vector<PoseSensorPacket> timeSortedPackets;
+
+	// Drain the packet queues filled by the threads
+	PoseSensorPacket packet;
+	while (m_PoseSensorIMUPacketQueue.try_dequeue(packet))
 	{
-		return;
+		timeSortedPackets.push_back(packet);
 	}
 
-	// Look backward in time to find the first HMD update state with a poll sequence number 
-	// newer than the last sequence number we've processed.
-	int firstLookBackIndex = -1;
-	int testLookBack = 0;
-	const CommonHMDState *state = getState(testLookBack);
-	while (state != nullptr && state->PollSequenceNumber > m_lastPollSeqNumProcessed)
+	//TODO: m_PoseSensorOpticalPacketQueue is currently getting filled on the main thread by
+	// updateOpticalPoseEstimation() when triangulating the optical pose estimates.
+	// Eventually this work will move to it's own camera processing thread 
+	// this line will read from a lock-less queue just like the IMU packet queue.
+	while (m_PoseSensorOpticalPacketQueue.size() > 0)
 	{
-		firstLookBackIndex = testLookBack;
-		testLookBack++;
-		state = getState(testLookBack);
+		timeSortedPackets.push_back(m_PoseSensorOpticalPacketQueue.front());
+		m_PoseSensorOpticalPacketQueue.pop_front();
 	}
-	assert(firstLookBackIndex >= 0);
 
-	// Process the polled hmd states forward in time
-	// computing the new orientation along the way.
-	for (int lookBackIndex = firstLookBackIndex; lookBackIndex >= 0; --lookBackIndex)
+	// Sort the packets in order of ascending time
+	if (timeSortedPackets.size() > 1)
 	{
-		const CommonHMDState *hmdState = getState(lookBackIndex);
-
-		switch (hmdState->DeviceType)
+		std::sort(
+			timeSortedPackets.begin(), timeSortedPackets.end(),
+			[](const PoseSensorPacket & a, const PoseSensorPacket & b) -> bool
 		{
-		case CommonHMDState::Morpheus:
-		    {
-			    const MorpheusHMD *morpheusHMD = this->castCheckedConst<MorpheusHMD>();
-			    const MorpheusHMDState *morpheusHMDState = static_cast<const MorpheusHMDState *>(hmdState);
+			return a.timestamp < b.timestamp;
+		});
 
-				update_filters_for_morpheus_hmd(
-					this,
-					morpheusHMD, morpheusHMDState,
-					std::chrono::high_resolution_clock::now(),
-					(firstLookBackIndex + 1),
-					m_multicam_pose_estimation,
-					m_pose_filter_space,
-					m_pose_filter);
+		t_high_resolution_duration duration =
+			timeSortedPackets[timeSortedPackets.size() - 1].timestamp - timeSortedPackets[0].timestamp;
+		std::chrono::duration<float, std::milli> milli_duration = duration;
 
-		    } break;
-		case CommonHMDState::VirtualHMD:
-		    {
-			    const VirtualHMD *virtualHMD = this->castCheckedConst<VirtualHMD>();
-			    const VirtualHMDState *virtualHMDState = static_cast<const VirtualHMDState *>(hmdState);
+		const size_t k_max_process_count = 100;
+		if (timeSortedPackets.size() > k_max_process_count)
+		{
+			const size_t excess = timeSortedPackets.size() - k_max_process_count;
 
-				update_filters_for_virtual_hmd(
-					this,
-					virtualHMD, virtualHMDState,
-					std::chrono::high_resolution_clock::now(),
-					(firstLookBackIndex + 1),
-					m_multicam_pose_estimation,
-					m_pose_filter_space,
-					m_pose_filter);
-		    } break;
-		default:
-			assert(0 && "Unhandled HMD type");
+			SERVER_LOG_WARNING("updatePoseFilter()") << "Incoming packet count: " << timeSortedPackets.size() << " (" << milli_duration.count() << "ms)" << ", trimming: " << excess;
+			timeSortedPackets.erase(timeSortedPackets.begin(), timeSortedPackets.begin() + excess);
 		}
+		else
+		{
+			//SERVER_LOG_DEBUG("updatePoseFilter()") << "Incoming packet count: " << timeSortedPackets.size() << " (" << milli_duration.count() << "ms)";
+		}
+	}
 
-		// Consider this hmd state sequence num processed
-		m_lastPollSeqNumProcessed = hmdState->PollSequenceNumber;
+	// Process the sensor packets from oldest to newest
+	for (const PoseSensorPacket &sensorPacket : timeSortedPackets)
+	{
+		PoseFilterPacket filter_packet;
+		filter_packet.clear();
+
+		filter_packet.hmdDeviceId = this->getDeviceID();
+		filter_packet.isCurrentlyTracking = this->getIsCurrentlyTracking();
+		filter_packet.isSynced = DeviceManager::getInstance()->m_tracker_manager->trackersSynced();
+
+		// Create a filter input packet from the sensor data 
+		// and the filter's previous orientation and position
+		m_pose_filter_space->createFilterPacket(
+			sensorPacket,
+			m_pose_filter,
+			filter_packet);
+
+		// Process the filter packet
+		m_pose_filter->update(sensorPacket.timestamp, filter_packet);
+
+		// Flag the state as unpublished, which will trigger an update to the client
+		markStateAsUnpublished();
 	}
 }
 
@@ -919,6 +943,54 @@ void ServerHMDView::stopTracking()
 	{
 		set_tracking_enabled_internal(false);
 	}
+}
+
+void ServerHMDView::notifySensorDataReceived(const CommonDeviceState * sensor_state)
+{
+	// Compute the time in seconds since the last update
+	const t_high_resolution_timepoint now = std::chrono::high_resolution_clock::now();
+	t_high_resolution_duration durationSinceLastUpdate = t_high_resolution_duration::zero();
+
+	if (m_bIsLastSensorDataTimestampValid)
+	{
+		durationSinceLastUpdate = now - m_lastSensorDataTimestamp;
+	}
+	m_lastSensorDataTimestamp = now;
+	m_bIsLastSensorDataTimestampValid = true;
+
+	// Apply device specific filtering
+	switch (sensor_state->DeviceType)
+	{
+	case CommonDeviceState::Morpheus:
+	{
+		const MorpheusHMD *hmd = this->castCheckedConst<MorpheusHMD>();
+		const MorpheusHMDState *hmdState =
+			static_cast<const MorpheusHMDState *>(sensor_state);
+
+		// Only update the position filter when tracking is enabled
+		post_imu_filter_packets_for_morpheus(
+			hmd, hmdState,
+			now, durationSinceLastUpdate,
+			&m_PoseSensorIMUPacketQueue);
+	} break;
+	case CommonDeviceState::VirtualHMD:
+	{
+		const VirtualHMD *hmd = this->castCheckedConst<VirtualHMD>();
+		const VirtualHMDState *hmdState =
+			static_cast<const VirtualHMDState *>(sensor_state);
+
+		// Only update the position filter when tracking is enabled
+		post_imu_filter_packets_for_virtual(
+			hmd, hmdState,
+			now, durationSinceLastUpdate,
+			&m_PoseSensorIMUPacketQueue);
+	} break;
+	default:
+		assert(0 && "Unhandled Controller Type");
+	}
+
+	// Consider this HMD state sequence num processed
+	m_lastPollSeqNumProcessed = sensor_state->PollSequenceNumber;
 }
 
 void ServerHMDView::set_tracking_enabled_internal(bool bEnabled)
@@ -1229,6 +1301,81 @@ pose_filter_factory(
 	assert(filter != nullptr);
 
 	return filter;
+}
+
+
+static void post_imu_filter_packets_for_morpheus(
+	const MorpheusHMD *hmd,
+	const MorpheusHMDState *hmdState,
+	const t_high_resolution_timepoint now,
+	const t_high_resolution_duration duration_since_last_update,
+	t_hmd_pose_sensor_queue *pose_filter_queue)
+{
+	const MorpheusHMDConfig *config = hmd->getConfig();
+
+	PoseSensorPacket sensor_packet;
+
+	sensor_packet.clear();
+
+	// Don't bother with the earlier frame if this is the very first IMU packet 
+	// (since we have no previous timestamp to use)
+	int start_frame_index = 0;
+	if (duration_since_last_update == t_high_resolution_duration::zero())
+	{
+		start_frame_index = 1;
+	}
+
+	const t_high_resolution_timepoint prev_timestamp = now - (duration_since_last_update / 2);
+	t_high_resolution_timepoint timestamps[2] = { prev_timestamp, now };
+
+	// Each state update contains two readings (one earlier and one later) of accelerometer and gyro data
+	for (int frame = start_frame_index; frame < 2; ++frame)
+	{
+		sensor_packet.timestamp = timestamps[frame];
+
+		sensor_packet.raw_imu_accelerometer = {
+			hmdState->SensorFrames[frame].RawAccel.i,
+			hmdState->SensorFrames[frame].RawAccel.j,
+			hmdState->SensorFrames[frame].RawAccel.k };
+		sensor_packet.imu_accelerometer_g_units =
+			Eigen::Vector3f(
+				hmdState->SensorFrames[frame].CalibratedAccel.i,
+				hmdState->SensorFrames[frame].CalibratedAccel.j,
+				hmdState->SensorFrames[frame].CalibratedAccel.k);
+		sensor_packet.has_accelerometer_measurement = true;
+
+		sensor_packet.raw_imu_gyroscope = {
+			hmdState->SensorFrames[frame].RawGyro.i,
+			hmdState->SensorFrames[frame].RawGyro.j,
+			hmdState->SensorFrames[frame].RawGyro.k };
+		sensor_packet.imu_gyroscope_rad_per_sec =
+			Eigen::Vector3f(
+				hmdState->SensorFrames[frame].CalibratedGyro.i,
+				hmdState->SensorFrames[frame].CalibratedGyro.j,
+				hmdState->SensorFrames[frame].CalibratedGyro.k);
+		sensor_packet.has_gyroscope_measurement = true;
+
+		pose_filter_queue->enqueue(sensor_packet);
+	}
+}
+
+
+static void post_imu_filter_packets_for_virtual(
+	const VirtualHMD *hmd,
+	const VirtualHMDState *hmdState,
+	const t_high_resolution_timepoint now,
+	const t_high_resolution_duration duration_since_last_update,
+	t_hmd_pose_sensor_queue *pose_filter_queue)
+{
+	const VirtualHMDConfig *config = hmd->getConfig();
+
+	PoseSensorPacket sensor_packet;
+
+	sensor_packet.clear();
+
+	sensor_packet.timestamp = now;
+
+	pose_filter_queue->enqueue(sensor_packet);
 }
 
 static void

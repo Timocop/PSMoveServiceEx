@@ -127,10 +127,11 @@ VirtualHMD::VirtualHMD()
     : cfg()
     , NextPollSequenceNumber(0)
     , bIsOpen(false)
-    , HMDStates()
     , bIsTracking(false)
+	, m_hmdListener(nullptr)
 {
-    HMDStates.clear();
+
+	memset(&m_cachedState, 0, sizeof(VirtualHMDState));
 }
 
 VirtualHMD::~VirtualHMD()
@@ -261,13 +262,12 @@ VirtualHMD::poll()
         newState.PollSequenceNumber = NextPollSequenceNumber;
         ++NextPollSequenceNumber;
 
-        // Make room for new entry if at the max queue size
-        if (HMDStates.size() >= VIRTUAL_HMD_STATE_BUFFER_MAX)
-        {
-            HMDStates.erase(HMDStates.begin(), HMDStates.begin() + HMDStates.size() - VIRTUAL_HMD_STATE_BUFFER_MAX);
-        }
+		m_cachedState = newState;
 
-        HMDStates.push_back(newState);
+		if (m_hmdListener != nullptr)
+		{
+			m_hmdListener->notifySensorDataReceived(&newState);
+		}
     }
 
     return result;
@@ -296,6 +296,11 @@ VirtualHMD::setTrackingColorID(const eCommonTrackingColorID tracking_color_id)
     return bSuccess;
 }
 
+void VirtualHMD::setHmdListener(IHMDListener * listener)
+{
+	m_hmdListener = listener;
+}
+
 bool 
 VirtualHMD::getTrackingColorID(eCommonTrackingColorID &out_tracking_color_id) const
 {
@@ -319,11 +324,7 @@ const CommonDeviceState *
 VirtualHMD::getState(
     int lookBack) const
 {
-    const int queueSize = static_cast<int>(HMDStates.size());
-    const CommonDeviceState * result =
-        (lookBack < queueSize) ? &HMDStates.at(queueSize - lookBack - 1) : nullptr;
-
-    return result;
+    return &m_cachedState;
 }
 
 long VirtualHMD::getMaxPollFailureCount() const

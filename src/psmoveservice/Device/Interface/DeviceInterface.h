@@ -497,6 +497,14 @@ public:
 	virtual void notifySensorDataReceived(const CommonDeviceState *sensor_state) = 0;
 };
 
+/// Interface class for HMD events. Implemented HMD Server View
+class IHMDListener
+{
+public:
+	// Called when new sensor state has been read from the controller
+	virtual void notifySensorDataReceived(const CommonDeviceState *sensor_state) = 0;
+};
+
 /// Abstract class for controller interface. Implemented in PSMoveController.cpp
 class IControllerInterface : public IDeviceInterface
 {
@@ -667,6 +675,9 @@ public:
 
 	// Sets the tracking color enum of the controller
 	virtual bool setTrackingColorID(const eCommonTrackingColorID tracking_color_id) = 0;
+
+	// Assign an HMD listener to send HMD events to
+	virtual void setHmdListener(IHMDListener *listener) = 0;
 
 	// Get the tracking color enum of the controller
 	virtual bool getTrackingColorID(eCommonTrackingColorID &out_tracking_color_id) const = 0;

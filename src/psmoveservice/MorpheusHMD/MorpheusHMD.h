@@ -15,6 +15,17 @@
 // i.e. where what we consider the "identity" pose
 #define MORPHEUS_ACCELEROMETER_IDENTITY_PITCH_DEGREES 0.0f
 
+#define G_SCALE_125DPS (0.00381f * (k_real_pi / 180.f))
+#define G_SCALE_250DPS (G_SCALE_125DPS * 2.f)
+#define G_SCALE_500DPS (G_SCALE_250DPS * 2.f)
+#define G_SCALE_1000DPS (G_SCALE_500DPS * 2.f)
+#define G_SCALE_2000DPS (G_SCALE_1000DPS * 2.f)
+
+#define A_SCALE_2G (2.0f / 2048.f)
+#define A_SCALE_4G (4.0f / 2048.f)
+#define A_SCALE_8G (8.0f / 2048.f)
+#define A_SCALE_16G (16.0f / 2048.f)
+
 class MorpheusHMDConfig : public PSMoveConfig
 {
 public:
@@ -79,9 +90,9 @@ public:
 		// see http://stackoverflow.com/questions/19161872/meaning-of-lsb-unit-and-unit-lsb
 
 		// Accelerometer configured at ±2g, 1024 LSB/g
-		accelerometer_gain.i = 1.f / (1024.f);
-		accelerometer_gain.j = 1.f / (1024.f);
-		accelerometer_gain.k = 1.f / (1024.f);
+		accelerometer_gain.i = A_SCALE_2G;
+		accelerometer_gain.j = A_SCALE_2G;
+		accelerometer_gain.k = A_SCALE_2G;
 
 		// Assume no bias until calibration says otherwise
 		raw_accelerometer_bias.i = 0.f;
@@ -90,9 +101,9 @@ public:
 
 		// Gyroscope configured at ±1000°/s, 32.8 LSB/(°/s)
 		// but we want the calibrated gyro value in radians/s so add in a deg->rad conversion as well
-		gyro_gain.i = 1.f / (32.8f / k_degrees_to_radians);
-		gyro_gain.j = 1.f / (32.8f / k_degrees_to_radians);
-		gyro_gain.k = 1.f / (32.8f / k_degrees_to_radians);
+		gyro_gain.i = G_SCALE_2000DPS;
+		gyro_gain.j = G_SCALE_2000DPS;
+		gyro_gain.k = G_SCALE_2000DPS;
 
 		// Assume no bias until calibration says otherwise
 		raw_gyro_bias.i = 0.f;
@@ -277,6 +288,7 @@ public:
     std::string getUSBDevicePath() const override;
 	void getTrackingShape(CommonDeviceTrackingShape &outTrackingShape) const override;
 	bool setTrackingColorID(const eCommonTrackingColorID tracking_color_id) override;
+	void setHmdListener(IHMDListener *listener) override;
 	bool getTrackingColorID(eCommonTrackingColorID &out_tracking_color_id) const override;
 	float getPredictionTime() const override;
 	float getOrientationPredictionTime() const override;
@@ -303,10 +315,12 @@ private:
 
     // Read HMD State
     int NextPollSequenceNumber;
-    struct MorpheusSensorData *InData;                        // Buffer to hold most recent MorpheusAPI tracking state
-    std::deque<MorpheusHMDState> HMDStates;
 
 	bool bIsTracking;
+
+	MorpheusHMDState m_cachedState;
+	class MorpheusHIDSensorProcessor* m_HIDPacketProcessor;
+	IHMDListener* m_hmdListener;
 };
 
 #endif // MORPHEUS_HMD_H

@@ -132,6 +132,7 @@ public:
     std::string getUSBDevicePath() const override;
 	void getTrackingShape(CommonDeviceTrackingShape &outTrackingShape) const override;
 	bool setTrackingColorID(const eCommonTrackingColorID tracking_color_id) override;
+	void setHmdListener(IHMDListener *listener) override;
 	bool getTrackingColorID(eCommonTrackingColorID &out_tracking_color_id) const override;
 	float getPredictionTime() const override;
 	float getOrientationPredictionTime() const override;
@@ -157,9 +158,10 @@ private:
 
     // Read HMD State
     int NextPollSequenceNumber;
-    std::deque<VirtualHMDState> HMDStates;
 
 	bool bIsTracking;
+	VirtualHMDState m_cachedState;
+	IHMDListener* m_hmdListener;
 };
 
 #endif // VIRTUAL_HMD_H
