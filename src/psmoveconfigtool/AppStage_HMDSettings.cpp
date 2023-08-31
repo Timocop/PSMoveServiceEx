@@ -349,7 +349,7 @@ void AppStage_HMDSettings::renderUI()
 							if (ImGui::InputFloat("Angular Prediction Time (ms)##AngPredictionTime", &hmdInfo.AngPredictionTime, 0.005f, 0.025f, 3))
 							{
 								hmdInfo.AngPredictionTime = clampf(hmdInfo.AngPredictionTime, 0.f, k_max_hmd_prediction_time);
-								request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.AngPredictionTime);
+								request_set_hmd_angular_prediction(hmdInfo.HmdID, hmdInfo.AngPredictionTime);
 							}
 							ImGui::PopItemWidth();
 
