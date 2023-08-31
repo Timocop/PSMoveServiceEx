@@ -203,8 +203,6 @@ MorpheusHMDConfig::config2ptree()
 	pt.put("is_valid", is_valid);
 	pt.put("version", MorpheusHMDConfig::CONFIG_VERSION);
 
-	pt.put("disable_command_interface", disable_command_interface);
-
 	pt.put("Calibration.Accel.X.k", accelerometer_gain.i);
 	pt.put("Calibration.Accel.Y.k", accelerometer_gain.j);
 	pt.put("Calibration.Accel.Z.k", accelerometer_gain.k);
@@ -279,8 +277,6 @@ MorpheusHMDConfig::ptree2config(const boost::property_tree::ptree &pt)
     if (version == MorpheusHMDConfig::CONFIG_VERSION)
     {
 		is_valid = pt.get<bool>("is_valid", false);
-
-		disable_command_interface= pt.get<bool>("disable_command_interface", disable_command_interface);
 
 		prediction_time = pt.get<float>("prediction_time", prediction_time);
 		ang_prediction_time = pt.get<float>("ang_prediction_time", ang_prediction_time);
@@ -487,26 +483,34 @@ bool MorpheusHMD::open(
 		// If we started sending control transfer requests for the sensor data in the main thread at the same time
 		// it can lead to a crash. It shouldn't, but this was a problem previously setting video feed properties
 		// from the color config tool while a video feed was running.
-		if (!cfg.disable_command_interface)
-		{
-			morpheus_open_usb_device(USBContext);
-		}
-		else
-		{
-			SERVER_LOG_WARNING("MorpheusHMD::open") << "Morpheus command interface is flagged as DISABLED.";
-		}
+		morpheus_open_usb_device(USBContext);
 
         if (getIsOpen())  // Controller was opened and has an index
         {
-			if (USBContext->usb_device_handle != nullptr)
+			if (morpheus_set_headset_power(USBContext, true))
 			{
-				if (morpheus_set_headset_power(USBContext, true))
+				if (morpheus_enable_tracking(USBContext))
 				{
-					if (morpheus_enable_tracking(USBContext))
-					{
-						morpheus_set_led_brightness(USBContext, _MorpheusLED_ALL, 0);
-					}
+					morpheus_set_led_brightness(USBContext, _MorpheusLED_ALL, 0);
 				}
+			}
+
+			std::string identifier = "Morpheus_";
+
+			char usb_port_path[128];
+			if (getUSBPortPath(usb_port_path, sizeof(usb_port_path)))
+			{
+				identifier.append(usb_port_path);
+
+				// Load the config file
+				cfg = MorpheusHMDConfig(identifier);
+				cfg.load();
+			}
+			else
+			{
+				// Load the config file
+				cfg = MorpheusHMDConfig();
+				cfg.load();
 			}
 
 			// Always save the config back out in case some defaults changed
@@ -738,6 +742,54 @@ void MorpheusHMD::setTrackingEnabled(bool bEnable)
 			bIsTracking = false;
 		}
 	}
+}
+
+#define MAX_USB_DEVICE_PORT_PATH 7
+
+bool MorpheusHMD::getUSBPortPath(char *out_identifier, size_t max_identifier_length) const
+{
+	bool success = false;
+
+	if (getIsOpen())
+	{
+		uint8_t port_numbers[MAX_USB_DEVICE_PORT_PATH];
+
+		memset(out_identifier, 0, max_identifier_length);
+
+		memset(port_numbers, 0, sizeof(port_numbers));
+
+		libusb_device *device = libusb_get_device(USBContext->usb_device_handle);
+
+		int port_count = libusb_get_port_numbers(device, port_numbers, MAX_USB_DEVICE_PORT_PATH);
+		int bus_id = libusb_get_bus_number(device);
+
+		snprintf(out_identifier, max_identifier_length, "b%d", bus_id);
+		if (port_count > 0)
+		{
+			success = true;
+
+			for (int port_index = 0; port_index < port_count; ++port_index)
+			{
+				uint8_t port_number = port_numbers[port_index];
+				char port_string[8];
+
+				snprintf(port_string, sizeof(port_string), (port_index == 0) ? "_p%d" : ".%d", port_number);
+				port_string[sizeof(port_string) - 1] = '0';
+
+				if (strlen(out_identifier) + strlen(port_string) + 1 <= max_identifier_length)
+				{
+					std::strcat(out_identifier, port_string);
+				}
+				else
+				{
+					success = false;
+					break;
+				}
+			}
+		}
+	}
+
+	return success;
 }
 
 //-- private morpheus commands ---
