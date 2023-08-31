@@ -618,7 +618,7 @@ bool MorpheusHMD::open(
 				SERVER_LOG_ERROR("MorpheusHMD::open") << "... failed!";
 			}
 
-			std::string identifier = "Morpheus_";
+			/*std::string identifier = "Morpheus_";
 
 			char usb_port_path[128];
 			if (getUSBPortPath(usb_port_path, sizeof(usb_port_path)))
@@ -636,7 +636,11 @@ bool MorpheusHMD::open(
 				// Load the config file
 				cfg = MorpheusHMDConfig();
 				cfg.load();
-			}
+			}*/
+
+			// Load the config file
+			cfg = MorpheusHMDConfig();
+			cfg.load();
 
 			// Create the sensor processor thread
 			m_HIDPacketProcessor = new MorpheusHIDSensorProcessor(cfg);
