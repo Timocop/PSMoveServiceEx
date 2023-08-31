@@ -60,7 +60,9 @@ enum eMorpheusLED
 	_MorpheusLED_H= 1 << 7,
 	_MorpheusLED_I= 1 << 8,
 
-	_MorpheusLED_ALL= 0x1FF
+	_MorpheusLED_ALL = 0x1FF,
+	_MorpheusLED_FRONT = _MorpheusLED_A|_MorpheusLED_B|_MorpheusLED_C|_MorpheusLED_D|_MorpheusLED_E|_MorpheusLED_F|_MorpheusLED_G,
+	_MorpheusLED_BACK = _MorpheusLED_H|_MorpheusLED_I
 };
 
 // -- private definitions -----
@@ -593,12 +595,36 @@ bool MorpheusHMD::open(
 
         if (getIsOpen())  // Controller was opened and has an index
         {
+			SERVER_LOG_INFO("MorpheusHMD::open") << "Turning on MorpheusHMD power.";
 			if (morpheus_set_headset_power(USBContext, true))
 			{
+				SERVER_LOG_INFO("MorpheusHMD::open") << "Turning on MorpheusHMD tracking.";
 				if (morpheus_enable_tracking(USBContext))
 				{
-					morpheus_set_led_brightness(USBContext, _MorpheusLED_ALL, 0);
+					//morpheus_enable_tracking() resets morpheus_set_led_brightness() LED settings?
+					//Lets just wait a bit.
+					std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+					
+					morpheus_set_led_brightness(USBContext, _MorpheusLED_FRONT, 0);
+					morpheus_set_led_brightness(USBContext, _MorpheusLED_BACK, 50);
+
+					std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+
+					//morpheus_enable_tracking() Does not seem to enable VR-mode by default.
+					SERVER_LOG_INFO("MorpheusHMD::open") << "Change MorpheusHMD to VR-Mode.";
+					if (!morpheus_set_vr_mode(USBContext, true))
+					{
+						SERVER_LOG_ERROR("MorpheusHMD::open") << "... failed!";
+					}
 				}
+				else
+				{
+					SERVER_LOG_ERROR("MorpheusHMD::open") << "... failed!";
+				}
+			}
+			else
+			{
+				SERVER_LOG_ERROR("MorpheusHMD::open") << "... failed!";
 			}
 
 			std::string identifier = "Morpheus_";
@@ -614,6 +640,8 @@ bool MorpheusHMD::open(
 			}
 			else
 			{
+				SERVER_LOG_ERROR("MorpheusHMD::open") << "getUSBPortPath() failed!";
+
 				// Load the config file
 				cfg = MorpheusHMDConfig();
 				cfg.load();
@@ -811,7 +839,8 @@ void MorpheusHMD::setTrackingEnabled(bool bEnable)
 		}
 		else if (bIsTracking && !bEnable)
 		{
-			morpheus_set_led_brightness(USBContext, _MorpheusLED_ALL, 0);
+			morpheus_set_led_brightness(USBContext, _MorpheusLED_FRONT, 0);
+			morpheus_set_led_brightness(USBContext, _MorpheusLED_BACK, 50);
 			bIsTracking = false;
 		}
 	}
