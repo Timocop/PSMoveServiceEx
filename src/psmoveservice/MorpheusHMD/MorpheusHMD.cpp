@@ -607,15 +607,6 @@ bool MorpheusHMD::open(
 					
 					morpheus_set_led_brightness(USBContext, _MorpheusLED_FRONT, 0);
 					morpheus_set_led_brightness(USBContext, _MorpheusLED_BACK, 50);
-
-					std::this_thread::sleep_for(std::chrono::milliseconds(1500));
-
-					//morpheus_enable_tracking() Does not seem to enable VR-mode by default.
-					SERVER_LOG_INFO("MorpheusHMD::open") << "Change MorpheusHMD to VR-Mode.";
-					if (!morpheus_set_vr_mode(USBContext, true))
-					{
-						SERVER_LOG_ERROR("MorpheusHMD::open") << "... failed!";
-					}
 				}
 				else
 				{
