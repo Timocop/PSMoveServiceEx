@@ -50,15 +50,15 @@ enum eMorpheusRequestType
 
 enum eMorpheusLED
 {
-	_MorpheusLED_A= 1 << 0,
-	_MorpheusLED_B= 1 << 1,
-	_MorpheusLED_C= 1 << 2,
-	_MorpheusLED_D= 1 << 3,
-	_MorpheusLED_E= 1 << 4,
-	_MorpheusLED_F= 1 << 5,
-	_MorpheusLED_G= 1 << 6,
-	_MorpheusLED_H= 1 << 7,
-	_MorpheusLED_I= 1 << 8,
+	_MorpheusLED_A = 1 << 0, // Front-Bottom-Right
+	_MorpheusLED_B = 1 << 1, // Front-Bottom-Left
+	_MorpheusLED_C = 1 << 2, // Front-Top-Right
+	_MorpheusLED_D = 1 << 3, // Front-Top-Left
+	_MorpheusLED_E = 1 << 4, // Front-Middle-Center
+	_MorpheusLED_F = 1 << 5, // Front-Middle-Right
+	_MorpheusLED_G = 1 << 6, // Front-Middle-Left
+	_MorpheusLED_H = 1 << 7, // Rear-Right
+	_MorpheusLED_I = 1 << 8, // Rear-Left
 
 	_MorpheusLED_ALL = 0x1FF,
 	_MorpheusLED_FRONT = _MorpheusLED_A|_MorpheusLED_B|_MorpheusLED_C|_MorpheusLED_D|_MorpheusLED_E|_MorpheusLED_F|_MorpheusLED_G,
