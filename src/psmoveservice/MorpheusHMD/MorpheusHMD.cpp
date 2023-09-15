@@ -62,7 +62,8 @@ enum eMorpheusLED
 
 	_MorpheusLED_ALL = 0x1FF,
 	_MorpheusLED_FRONT = _MorpheusLED_A|_MorpheusLED_B|_MorpheusLED_C|_MorpheusLED_D|_MorpheusLED_E|_MorpheusLED_F|_MorpheusLED_G,
-	_MorpheusLED_BACK = _MorpheusLED_H|_MorpheusLED_I
+	_MorpheusLED_BACK = _MorpheusLED_H|_MorpheusLED_I,
+	_MorpheusLED_FONTTOPTRI = _MorpheusLED_C|_MorpheusLED_D|_MorpheusLED_E
 };
 
 // -- private definitions -----
@@ -829,7 +830,8 @@ void MorpheusHMD::setTrackingEnabled(bool bEnable)
 	{
 		if (!bIsTracking && bEnable)
 		{
-			morpheus_set_led_brightness(USBContext, _MorpheusLED_ALL, 50);
+			morpheus_set_led_brightness(USBContext, _MorpheusLED_ALL, 0);
+			morpheus_set_led_brightness(USBContext, _MorpheusLED_FONTTOPTRI, 50);
 			bIsTracking = true;
 		}
 		else if (bIsTracking && !bEnable)
@@ -1133,6 +1135,10 @@ static bool morpheus_send_command(
 				command_length,
 				&transferredByteCount,
 				0);
+
+
+		// $TODO Workaround for swallowing bulk request.
+		std::this_thread::sleep_for(std::chrono::milliseconds(30));
 
 		return result == LIBUSB_SUCCESS && transferredByteCount == command_length;
 	}
