@@ -38,6 +38,8 @@
 #define MORPHEUS_HMD_STATE_BUFFER_MAX 4
 #define METERS_TO_CENTIMETERS 100
 
+#define HID_READ_TIMEOUT			  100 /* timeout in ms */
+
 enum eMorpheusRequestType
 {
 	Morpheus_Req_EnableTracking= 0x11,
@@ -229,7 +231,7 @@ protected:
 
 		// Attempt to read the next sensor update packet from the HMD
 		memcpy(&m_previousRawHIDPacket, &m_currentRawHIDPacket, sizeof(MorpheusSensorData));
-		int res = hid_read_timeout(m_hidDevice, (unsigned char*)&m_currentRawHIDPacket, sizeof(MorpheusSensorData), 1000);
+		int res = hid_read_timeout(m_hidDevice, (unsigned char*)&m_currentRawHIDPacket, sizeof(MorpheusSensorData), HID_READ_TIMEOUT);
 
 		if (res > 0)
 		{
@@ -581,7 +583,7 @@ bool MorpheusHMD::open(
 		USBContext->sensor_device_handle = hid_open_path(USBContext->sensor_device_path.c_str());
 		if (USBContext->sensor_device_handle != nullptr)
 		{
-			hid_set_nonblocking(USBContext->sensor_device_handle, 1);
+			hid_set_nonblocking(USBContext->sensor_device_handle, 0);
 		}
 
 		// Open the command interface using libusb.
