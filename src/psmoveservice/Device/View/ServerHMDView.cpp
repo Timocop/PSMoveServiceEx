@@ -38,18 +38,16 @@ static void post_imu_filter_packets_for_virtual(
 	const t_high_resolution_timepoint now,
 	const t_high_resolution_duration duration_since_last_update,
 	t_hmd_pose_sensor_queue *pose_filter_queue);
-static void update_filters_for_morpheus_hmd(
-	const ServerHMDView *hmd,
-	const MorpheusHMD *morpheusHMD, const MorpheusHMDState *morpheusHMDState,
-	const t_high_resolution_timepoint timestamp,
-	const int state_look_back,
-	const HMDOpticalPoseEstimation *poseEstimation, const PoseFilterSpace *poseFilterSpace, IPoseFilter *poseFilter);
-static void update_filters_for_virtual_hmd(
-	const ServerHMDView *hmd,
-	const VirtualHMD *virtualHMD, const VirtualHMDState *virtualHMDState,
-	const t_high_resolution_timepoint timestamp,
-	const int state_look_back,
-	const HMDOpticalPoseEstimation *poseEstimation, const PoseFilterSpace *poseFilterSpace, IPoseFilter *poseFilter);
+static void post_optical_filter_packet_for_morpheus_hmd(
+	const MorpheusHMD * hmd,
+	const t_high_resolution_timepoint now, 
+	const HMDOpticalPoseEstimation * pose_estimation,
+	t_hmd_pose_optical_queue * pose_filter_queue);
+static void post_optical_filter_packet_for_virtual_hmd(
+	const VirtualHMD * hmd, 
+	const t_high_resolution_timepoint now, 
+	const HMDOpticalPoseEstimation * pose_estimation,
+	t_hmd_pose_optical_queue * pose_filter_queue);
 static void generate_morpheus_hmd_data_frame_for_stream(
     const ServerHMDView *hmd_view, const HMDStreamInfo *stream_info,
     DeviceOutputDataFramePtr &data_frame);
@@ -638,6 +636,39 @@ void ServerHMDView::updateOpticalPoseEstimation(TrackerManager* tracker_manager)
         m_multicam_pose_estimation->last_update_timestamp = now;
         m_multicam_pose_estimation->bValidTimestamps = true;
     }
+
+	// Update the filter if we have a valid optically tracked pose
+	// TODO: These packets will eventually get posted from the notifyTrackerDataReceived()
+	// callback function which will be called by camera processing threads as new video
+	// frames are received.
+	if (m_multicam_pose_estimation->bCurrentlyTracking)
+	{
+		switch (getHMDDeviceType())
+		{
+		case CommonDeviceState::Morpheus:
+		{
+			const MorpheusHMD *hmd = this->castCheckedConst<MorpheusHMD>();
+
+			post_optical_filter_packet_for_morpheus_hmd(
+				hmd,
+				now,
+				m_multicam_pose_estimation,
+				&m_PoseSensorOpticalPacketQueue);
+		} break;
+		case CommonDeviceState::VirtualHMD:
+		{
+			const VirtualHMD *hmd = this->castCheckedConst<VirtualHMD>();
+
+			post_optical_filter_packet_for_virtual_hmd(
+				hmd,
+				now,
+				m_multicam_pose_estimation,
+				&m_PoseSensorOpticalPacketQueue);
+		} break;
+		default:
+			assert(0 && "Unhandled HMD Type");
+		}
+	}
 }
 
 void ServerHMDView::updateStateAndPredict()
@@ -1378,148 +1409,67 @@ static void post_imu_filter_packets_for_virtual(
 	pose_filter_queue->enqueue(sensor_packet);
 }
 
-static void
-update_filters_for_morpheus_hmd(
-	const ServerHMDView *hmd,
-    const MorpheusHMD *morpheusHMD,
-    const MorpheusHMDState *morpheusHMDState,
-	const t_high_resolution_timepoint timestamp,
-	const int state_look_back,
-	const HMDOpticalPoseEstimation *poseEstimation,
-	const PoseFilterSpace *poseFilterSpace,
-	IPoseFilter *poseFilter)
+static void post_optical_filter_packet_for_morpheus_hmd(
+	const MorpheusHMD *hmd,
+	const t_high_resolution_timepoint now,
+	const HMDOpticalPoseEstimation *pose_estimation,
+	t_hmd_pose_optical_queue *pose_filter_queue)
 {
-    const MorpheusHMDConfig *config = morpheusHMD->getConfig();
+	const MorpheusHMDConfig *config = hmd->getConfig();
+	PoseSensorPacket sensor_packet;
 
-	// Update the orientation filter
-	if (poseFilter != nullptr)
+	sensor_packet.clear();
+	sensor_packet.timestamp = now;
+
+	if (pose_estimation->bOrientationValid)
 	{
-		PoseSensorPacket sensorPacket;
-
-		sensorPacket.imu_magnetometer_unit = Eigen::Vector3f::Zero();
-
-		if (poseEstimation->bOrientationValid)
-		{
-			sensorPacket.optical_orientation =
-				Eigen::Quaternionf(
-					poseEstimation->orientation.w,
-					poseEstimation->orientation.x,
-					poseEstimation->orientation.y,
-					poseEstimation->orientation.z);
-		}
-		else
-		{
-			sensorPacket.optical_orientation = Eigen::Quaternionf::Identity();
-		}
-
-		if (poseEstimation->bCurrentlyTracking)
-		{
-			sensorPacket.optical_position_cm =
-				Eigen::Vector3f(
-					poseEstimation->position_cm.x,
-					poseEstimation->position_cm.y,
-					poseEstimation->position_cm.z);
-			sensorPacket.tracking_projection_area_px_sqr = poseEstimation->projection.screen_area;
-		}
-		else
-		{
-			sensorPacket.optical_position_cm = Eigen::Vector3f::Zero();
-			sensorPacket.tracking_projection_area_px_sqr = 0.f;
-		}
-
-		// Each state update contains two readings (one earlier and one later) of accelerometer and gyro data
-		for (int frame = 0; frame < 2; ++frame)
-		{
-			const MorpheusHMDSensorFrame &sensorFrame= morpheusHMDState->SensorFrames[frame];
-
-			sensorPacket.imu_accelerometer_g_units =
-				Eigen::Vector3f(
-					sensorFrame.CalibratedAccel.i,
-					sensorFrame.CalibratedAccel.j,
-					sensorFrame.CalibratedAccel.k);
-			sensorPacket.imu_gyroscope_rad_per_sec =
-				Eigen::Vector3f(
-					sensorFrame.CalibratedGyro.i,
-					sensorFrame.CalibratedGyro.j,
-					sensorFrame.CalibratedGyro.k);
-			sensorPacket.imu_magnetometer_unit = Eigen::Vector3f::Zero();
-
-			{
-				PoseFilterPacket filterPacket;
-				filterPacket.clear();
-
-				filterPacket.hmdDeviceId = hmd->getDeviceID();
-				filterPacket.isCurrentlyTracking = hmd->getIsCurrentlyTracking();
-				filterPacket.isSynced = DeviceManager::getInstance()->m_tracker_manager->trackersSynced();
-
-				// Create a filter input packet from the sensor data 
-				// and the filter's previous orientation and position
-				poseFilterSpace->createFilterPacket(
-					sensorPacket,
-					poseFilter,
-					filterPacket);
-
-				poseFilter->update(timestamp, filterPacket);
-			}
-		}
+		sensor_packet.optical_orientation =
+			Eigen::Quaternionf(
+				pose_estimation->orientation.w,
+				pose_estimation->orientation.x,
+				pose_estimation->orientation.y,
+				pose_estimation->orientation.z);
 	}
+
+	// HMD does have an optical position
+	if (pose_estimation->bCurrentlyTracking)
+	{
+		sensor_packet.optical_position_cm =
+			Eigen::Vector3f(
+				pose_estimation->position_cm.x,
+				pose_estimation->position_cm.y,
+				pose_estimation->position_cm.z);
+		sensor_packet.tracking_projection_area_px_sqr = pose_estimation->projection.screen_area;
+	}
+
+	pose_filter_queue->push_back(sensor_packet);
 }
 
-static void
-update_filters_for_virtual_hmd(
-	const ServerHMDView *hmd,
-    const VirtualHMD *virtualHMD,
-    const VirtualHMDState *virtualHMDState,
-	const t_high_resolution_timepoint timestamp,
-	const int state_look_back,
-	const HMDOpticalPoseEstimation *poseEstimation,
-	const PoseFilterSpace *poseFilterSpace,
-	IPoseFilter *poseFilter)
+
+static void post_optical_filter_packet_for_virtual_hmd(
+	const VirtualHMD *hmd,
+	const t_high_resolution_timepoint now,
+	const HMDOpticalPoseEstimation *pose_estimation,
+	t_hmd_pose_optical_queue *pose_filter_queue)
 {
-    const VirtualHMDConfig *config = virtualHMD->getConfig();
+	const VirtualHMDConfig *config = hmd->getConfig();
+	PoseSensorPacket sensor_packet;
 
-	// Update the orientation filter
-	if (poseFilter != nullptr)
+	sensor_packet.clear();
+	sensor_packet.timestamp = now;
+
+	// HMD does have an optical position
+	if (pose_estimation->bCurrentlyTracking)
 	{
-		PoseSensorPacket sensorPacket;
-
-		sensorPacket.imu_magnetometer_unit = Eigen::Vector3f::Zero();
-		sensorPacket.optical_orientation = Eigen::Quaternionf::Identity();
-
-		if (poseEstimation->bCurrentlyTracking)
-		{
-			sensorPacket.optical_position_cm =
-				Eigen::Vector3f(
-					poseEstimation->position_cm.x,
-					poseEstimation->position_cm.y,
-					poseEstimation->position_cm.z);
-			sensorPacket.tracking_projection_area_px_sqr = poseEstimation->projection.screen_area;
-		}
-		else
-		{
-			sensorPacket.optical_position_cm = Eigen::Vector3f::Zero();
-			sensorPacket.tracking_projection_area_px_sqr = 0.f;
-		}
-
-		sensorPacket.imu_accelerometer_g_units = Eigen::Vector3f::Zero();
-		sensorPacket.imu_gyroscope_rad_per_sec = Eigen::Vector3f::Zero();
-		sensorPacket.imu_magnetometer_unit = Eigen::Vector3f::Zero();
-
-		{
-			PoseFilterPacket filterPacket;
-			filterPacket.clear();
-
-			filterPacket.hmdDeviceId = hmd->getDeviceID();
-			filterPacket.isCurrentlyTracking = hmd->getIsCurrentlyTracking();
-			filterPacket.isSynced = DeviceManager::getInstance()->m_tracker_manager->trackersSynced();
-
-			// Create a filter input packet from the sensor data 
-			// and the filter's previous orientation and position
-			poseFilterSpace->createFilterPacket(sensorPacket, poseFilter, filterPacket);
-
-			poseFilter->update(timestamp, filterPacket);
-		}
+		sensor_packet.optical_position_cm =
+			Eigen::Vector3f(
+				pose_estimation->position_cm.x,
+				pose_estimation->position_cm.y,
+				pose_estimation->position_cm.z);
+		sensor_packet.tracking_projection_area_px_sqr = pose_estimation->projection.screen_area;
 	}
+
+	pose_filter_queue->push_back(sensor_packet);
 }
 
 static void generate_morpheus_hmd_data_frame_for_stream(
