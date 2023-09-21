@@ -15,16 +15,16 @@
 // i.e. where what we consider the "identity" pose
 #define MORPHEUS_ACCELEROMETER_IDENTITY_PITCH_DEGREES 0.0f
 
-#define G_SCALE_125DPS (0.00381f * (k_real_pi / 180.f))
+#define G_SCALE_125DPS ((125.f / 32768.0) * k_degrees_to_radians) //124.87?
 #define G_SCALE_250DPS (G_SCALE_125DPS * 2.f)
 #define G_SCALE_500DPS (G_SCALE_250DPS * 2.f)
 #define G_SCALE_1000DPS (G_SCALE_500DPS * 2.f)
 #define G_SCALE_2000DPS (G_SCALE_1000DPS * 2.f)
 
 #define A_SCALE_2G (2.0f / 2048.f)
-#define A_SCALE_4G (4.0f / 2048.f)
-#define A_SCALE_8G (8.0f / 2048.f)
-#define A_SCALE_16G (16.0f / 2048.f)
+#define A_SCALE_4G (A_SCALE_2G * 2.f)
+#define A_SCALE_8G (A_SCALE_4G * 2.f)
+#define A_SCALE_16G (A_SCALE_8G * 2.f)
 
 class MorpheusHMDConfig : public PSMoveConfig
 {
