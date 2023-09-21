@@ -33,7 +33,7 @@ const int k_desired_scale_sample_count = 1000;
 struct GyroscopeNoiseSamples
 {
 	PSMVector3i raw_gyro_samples[k_desired_noise_sample_count];
-    PSMVector3f calibrated_omega_samples[k_desired_noise_sample_count];
+    PSMVector3f raw_omega_samples[k_desired_noise_sample_count];
     PSMVector3f drift_rotation;
     std::chrono::time_point<std::chrono::high_resolution_clock> sampleStartTime;
     int sample_count;
@@ -74,7 +74,7 @@ struct GyroscopeNoiseSamples
         PSMVector3f mean_omega_error= *k_psm_float_vector3_zero;
         for (int sample_index = 0; sample_index < sample_count; sample_index++)
         {
-            PSMVector3f error_sample= PSM_Vector3fAbs(&calibrated_omega_samples[sample_index]);
+            PSMVector3f error_sample= PSM_Vector3fAbs(&raw_omega_samples[sample_index]);
 
             mean_omega_error= PSM_Vector3fAdd(&mean_omega_error, &error_sample);
         }
@@ -84,7 +84,7 @@ struct GyroscopeNoiseSamples
         PSMVector3f var_omega= *k_psm_float_vector3_zero;
         for (int sample_index = 0; sample_index < sample_count; sample_index++)
         {
-            PSMVector3f error_sample= PSM_Vector3fAbs(&calibrated_omega_samples[sample_index]);
+            PSMVector3f error_sample= PSM_Vector3fAbs(&raw_omega_samples[sample_index]);
             PSMVector3f diff_from_mean= PSM_Vector3fSubtract(&error_sample, &mean_omega_error);
             PSMVector3f diff_from_mean_sqrd= PSM_Vector3fSquare(&diff_from_mean);
 
@@ -284,15 +284,16 @@ void AppStage_GyroscopeCalibration::update()
 					// Accumulate the drift total
 					if (deltaTimeSeconds > 0.f)
 					{
+						PSMVector3f lastRawGyro = PSM_Vector3iCastToFloat(&m_lastRawGyroscope);
 						m_gyroNoiseSamples->drift_rotation =
-							PSM_Vector3fScaleAndAdd(&m_lastCalibratedGyroscope, deltaTimeSeconds, &m_gyroNoiseSamples->drift_rotation);
+							PSM_Vector3fScaleAndAdd(&lastRawGyro, deltaTimeSeconds, &m_gyroNoiseSamples->drift_rotation);
 					}
 
 					// Record the next noise sample
 					if (m_gyroNoiseSamples->sample_count < k_desired_noise_sample_count)
 					{
 						m_gyroNoiseSamples->raw_gyro_samples[m_gyroNoiseSamples->sample_count] = m_lastRawGyroscope;
-						m_gyroNoiseSamples->calibrated_omega_samples[m_gyroNoiseSamples->sample_count] = m_lastCalibratedGyroscope;
+						m_gyroNoiseSamples->raw_omega_samples[m_gyroNoiseSamples->sample_count] = PSM_Vector3iCastToFloat(&m_lastRawGyroscope);
 						++m_gyroNoiseSamples->sample_count;
 					}
 					else
