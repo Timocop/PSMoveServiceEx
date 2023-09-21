@@ -1627,7 +1627,14 @@ bool ServerTrackerView::computeProjectionForHMD(
     const bool bRoiDisabled = tracked_hmd->getIsROIDisabled() || trackerMgrConfig.disable_roi;
 
 	// Exclude Morpheus HMD because the pixel cloud needs bigger projection areas
-	const bool bRoiOptimized = (trackerMgrConfig.optimized_roi && tracked_hmd->getHMDDeviceType() != CommonDeviceState::eDeviceType::Morpheus);
+	bool bOptimizedTrackingShape = false;
+	CommonDeviceTrackingShape trackingShape;
+	if (tracked_hmd->getTrackingShape(trackingShape) && trackingShape.shape_type != eCommonTrackingShapeType::PointCloud)
+	{
+		bOptimizedTrackingShape = true;
+	}
+
+	const bool bRoiOptimized = (trackerMgrConfig.optimized_roi && bOptimizedTrackingShape);
 	const int iRoiEdgeOffset = static_cast<int>(std::fmax(0, std::fmin(64, trackerMgrConfig.roi_edge_offset)));
 
     const HMDOpticalPoseEstimation *priorPoseEst= 
