@@ -67,6 +67,7 @@ public:
 		, filter_angular_smoothing_factor(0.25f)
 		, filter_velocity_prediction_cutoff(1.0f)
 		, filter_angular_prediction_cutoff(0.25f)
+		, use_custom_optical_tracking(true)
     {
 		offset_position.set(0.0f, 0.0f, 0.0f);
 		offset_orientation.set(0.0f, 0.0f, 0.0f);
@@ -212,6 +213,8 @@ public:
 	float filter_angular_smoothing_factor;
 	float filter_velocity_prediction_cutoff;
 	float filter_angular_prediction_cutoff;
+
+	bool use_custom_optical_tracking;
 };
 
 struct MorpheusHMDSensorFrame

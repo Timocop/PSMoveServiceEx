@@ -371,6 +371,8 @@ MorpheusHMDConfig::config2ptree()
 	pt.put("FilterSettings.VelocityPredictionCutoff", filter_velocity_prediction_cutoff);
 	pt.put("FilterSettings.AngularPredictionCutoff", filter_angular_prediction_cutoff);
 
+	pt.put("use_custom_optical_tracking", use_custom_optical_tracking);
+
 	writeTrackingColor(pt, tracking_color_id);
 
     return pt;
@@ -453,6 +455,8 @@ MorpheusHMDConfig::ptree2config(const boost::property_tree::ptree &pt)
 		filter_angular_smoothing_factor = pt.get<float>("FilterSettings.AngularSmoothingFactor", filter_angular_smoothing_factor);
 		filter_velocity_prediction_cutoff = pt.get<float>("FilterSettings.VelocityPredictionCutoff", filter_velocity_prediction_cutoff);
 		filter_angular_prediction_cutoff = pt.get<float>("FilterSettings.AngularPredictionCutoff", filter_angular_prediction_cutoff);
+
+		use_custom_optical_tracking = pt.get<bool>("use_custom_optical_tracking", use_custom_optical_tracking);
     }
     else
     {
@@ -769,19 +773,30 @@ MorpheusHMD::poll()
 void
 MorpheusHMD::getTrackingShape(CommonDeviceTrackingShape &outTrackingShape) const
 {
-	outTrackingShape.shape_type = eCommonTrackingShapeType::PointCloud;
-	//###HipsterSloth TODO: These are just me eye balling the LED centers with a ruler
-	// This should really be computed using the calibration tool
-	outTrackingShape.shape.point_cloud.point[0] = { 0.00f, 0.00f, 0.00f }; // 0
-	outTrackingShape.shape.point_cloud.point[1] = { 7.25f, 4.05f, 3.75f }; // 1
-	outTrackingShape.shape.point_cloud.point[2] = { 9.05f, 0.00f, 9.65f }; // 2
-	outTrackingShape.shape.point_cloud.point[3] = { 7.25f, -4.05f, 3.75f }; // 3
-	outTrackingShape.shape.point_cloud.point[4] = { -7.25f, 4.05f, 3.75f }; // 4
-	outTrackingShape.shape.point_cloud.point[5] = { -9.05f, 0.00f, 9.65f }; // 5
-	outTrackingShape.shape.point_cloud.point[6] = { -7.25f, -4.05f, 3.75f }; // 6
-	outTrackingShape.shape.point_cloud.point[7] = { 5.65f, -1.07f, 27.53f }; // 7
-	outTrackingShape.shape.point_cloud.point[8] = { -5.65f, -1.07f, 27.53f }; // 8
-	outTrackingShape.shape.point_cloud.point_count = 9;
+	if (getConfig()->use_custom_optical_tracking)
+	{
+		outTrackingShape.shape_type = eCommonTrackingShapeType::Sphere;
+		outTrackingShape.shape.sphere.radius_cm = 2.25f;
+		outTrackingShape.shape.sphere.center_cm.x = 0.f;
+		outTrackingShape.shape.sphere.center_cm.y = 0.f;
+		outTrackingShape.shape.sphere.center_cm.z = 0.f;
+	}
+	else
+	{
+		outTrackingShape.shape_type = eCommonTrackingShapeType::PointCloud;
+		//###HipsterSloth TODO: These are just me eye balling the LED centers with a ruler
+		// This should really be computed using the calibration tool
+		outTrackingShape.shape.point_cloud.point[0] = { 0.00f, 0.00f, 0.00f }; // 0
+		outTrackingShape.shape.point_cloud.point[1] = { 7.25f, 4.05f, 3.75f }; // 1
+		outTrackingShape.shape.point_cloud.point[2] = { 9.05f, 0.00f, 9.65f }; // 2
+		outTrackingShape.shape.point_cloud.point[3] = { 7.25f, -4.05f, 3.75f }; // 3
+		outTrackingShape.shape.point_cloud.point[4] = { -7.25f, 4.05f, 3.75f }; // 4
+		outTrackingShape.shape.point_cloud.point[5] = { -9.05f, 0.00f, 9.65f }; // 5
+		outTrackingShape.shape.point_cloud.point[6] = { -7.25f, -4.05f, 3.75f }; // 6
+		outTrackingShape.shape.point_cloud.point[7] = { 5.65f, -1.07f, 27.53f }; // 7
+		outTrackingShape.shape.point_cloud.point[8] = { -5.65f, -1.07f, 27.53f }; // 8
+		outTrackingShape.shape.point_cloud.point_count = 9;
+	}
 }
 
 bool 
@@ -832,14 +847,24 @@ void MorpheusHMD::setTrackingEnabled(bool bEnable)
 	{
 		if (!bIsTracking && bEnable)
 		{
-			morpheus_set_led_brightness(USBContext, _MorpheusLED_ALL, 0);
-			morpheus_set_led_brightness(USBContext, _MorpheusLED_FONTTOPTRI, 50);
+			if (getConfig()->use_custom_optical_tracking)
+			{
+				// We are using a custom bulb. Disable all LEDs.
+				morpheus_set_led_brightness(USBContext, _MorpheusLED_ALL, 0);
+			}
+			else
+			{
+				morpheus_set_led_brightness(USBContext, _MorpheusLED_ALL, 0);
+				morpheus_set_led_brightness(USBContext, _MorpheusLED_FONTTOPTRI, 50);
+			}
+
 			bIsTracking = true;
 		}
 		else if (bIsTracking && !bEnable)
 		{
 			morpheus_set_led_brightness(USBContext, _MorpheusLED_FRONT, 0);
 			morpheus_set_led_brightness(USBContext, _MorpheusLED_BACK, 50);
+
 			bIsTracking = false;
 		}
 	}
