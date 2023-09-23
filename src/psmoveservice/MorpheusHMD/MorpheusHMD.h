@@ -311,6 +311,8 @@ public:
 
 	bool getUSBPortPath(char * out_identifier, size_t max_identifier_length) const;
 
+	void setConfig(const MorpheusHMDConfig * config);
+
 private:
     // Constant while the HMD is open
     MorpheusHMDConfig cfg;

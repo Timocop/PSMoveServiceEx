@@ -192,16 +192,22 @@ class MorpheusHIDSensorProcessor : public WorkerThread
 public:
 	MorpheusHIDSensorProcessor(const MorpheusHMDConfig &cfg)
 		: WorkerThread("MorpheusSensorProcessor")
-		, m_cfg(cfg)
 		, m_hidDevice(nullptr)
 		, m_nextPollSequenceNumber(0)
 	{
+		setConfig(cfg);
+
 		memset(&m_previousRawHIDPacket, 0, sizeof(MorpheusSensorData));
 		memset(&m_currentRawHIDPacket, 0, sizeof(MorpheusSensorData));
 	}
 
 	virtual ~MorpheusHIDSensorProcessor()
 	{
+	}
+
+	void setConfig(const MorpheusHMDConfig &cfg)
+	{
+		m_cfg.storeValue(cfg);
 	}
 
 	void fetchLatestInputData(MorpheusHMDState &input_state)
@@ -229,6 +235,9 @@ protected:
 	{
 		bool bWorking = true;
 
+		MorpheusHMDConfig cfg;
+		m_cfg.fetchValue(cfg);
+
 		// Attempt to read the next sensor update packet from the HMD
 		memcpy(&m_previousRawHIDPacket, &m_currentRawHIDPacket, sizeof(MorpheusSensorData));
 		int res = hid_read_timeout(m_hidDevice, (unsigned char*)&m_currentRawHIDPacket, sizeof(MorpheusSensorData), HID_READ_TIMEOUT);
@@ -243,7 +252,7 @@ protected:
 			++m_nextPollSequenceNumber;
 
 			// Processes the IMU data
-			newState.parse_data_input(&m_cfg, &m_currentRawHIDPacket);
+			newState.parse_data_input(&cfg, &m_currentRawHIDPacket);
 
 			// Store a copy of the parsed input date for functions
 			// that want to query input state off of the worker thread
@@ -273,7 +282,6 @@ protected:
 	}
 
 	// Multithreaded state
-	const MorpheusHMDConfig m_cfg;
 	hid_device *m_hidDevice;
 	IHMDListener *m_hmdListener;
 
@@ -283,6 +291,7 @@ protected:
 	MorpheusSensorData m_currentRawHIDPacket;
 
 	AtomicObject<MorpheusHMDState> m_currentState;
+	AtomicObject<MorpheusHMDConfig> m_cfg;
 };
 
 // -- private methods
@@ -916,6 +925,19 @@ bool MorpheusHMD::getUSBPortPath(char *out_identifier, size_t max_identifier_len
 	}
 
 	return success;
+}
+
+// Setters
+void MorpheusHMD::setConfig(const MorpheusHMDConfig *config)
+{
+	cfg = *config;
+
+	if (m_HIDPacketProcessor != nullptr)
+	{
+		m_HIDPacketProcessor->setConfig(*config);
+	}
+
+	cfg.save();
 }
 
 //-- private morpheus commands ---

@@ -1476,13 +1476,13 @@ protected:
 
                 bool bChanged = false;
 
-                if (request.drift() > 0.f)
+                if (config.gyro_drift != request.drift())
                 {
                     config.gyro_drift= request.drift();
                     bChanged = true;
                 }
 
-                if (request.variance() > 0.f)
+                if (config.gyro_variance != request.variance())
                 {
                     config.gyro_variance= request.variance();
                     bChanged = true;
@@ -1495,28 +1495,53 @@ protected:
                     // https://ae-bst.resource.bosch.com/media/_tech/media/datasheets/BST-BMI055-DS000-08.pdf
                     if (gyro_gain_setting == "125deg/s")
                     {
-                        config.gyro_gain = 1.f / (262.4f / k_degrees_to_radians);
-                        bChanged = true;
+						float newGain = 1.f / (262.4f / k_degrees_to_radians);
+
+						if (config.gyro_gain != newGain)
+						{
+							config.gyro_gain = newGain;
+							bChanged = true;
+						}
                     }
                     if (gyro_gain_setting == "250deg/s")
                     {
-                        config.gyro_gain = 1.f / (131.2f / k_degrees_to_radians);
-                        bChanged = true;
+						float newGain = 1.f / (131.2f / k_degrees_to_radians);
+
+						if (config.gyro_gain != newGain)
+						{
+							config.gyro_gain = newGain;
+							bChanged = true;
+						}
                     }
                     if (gyro_gain_setting == "500deg/s")
                     {
-                        config.gyro_gain = 1.f / (65.6f / k_degrees_to_radians);
-                        bChanged = true;
+						float newGain = 1.f / (65.6f / k_degrees_to_radians);
+
+						if (config.gyro_gain != newGain)
+						{
+							config.gyro_gain = newGain;
+							bChanged = true;
+						}
                     }
                     else if (gyro_gain_setting == "1000deg/s")
                     {
-                        config.gyro_gain = 1.f / (32.8f / k_degrees_to_radians);
-                        bChanged = true;
+						float newGain = 1.f / (32.8f / k_degrees_to_radians);
+
+						if (config.gyro_gain != newGain)
+						{
+							config.gyro_gain = newGain;
+							bChanged = true;
+						}
                     }
                     else if (gyro_gain_setting == "2000deg/s")
                     {
-                        config.gyro_gain = 1.f / (16.4f / k_degrees_to_radians);
-                        bChanged = true;
+						float newGain = 1.f / (16.4f / k_degrees_to_radians);
+
+						if (config.gyro_gain != newGain)
+						{
+							config.gyro_gain = newGain;
+							bChanged = true;
+						}
                     }
                 }
 
@@ -1544,13 +1569,13 @@ protected:
 					bChanged = true;
 				}
 
-                if (request.drift() > 0.f)
+                if (config.gyro_drift != request.drift())
                 {
                     config.gyro_drift= request.drift();
                     bChanged = true;
                 }
 
-                if (request.variance() > 0.f)
+                if (config.gyro_variance != request.variance())
                 {
                     config.gyro_variance= request.variance();
                     bChanged = true;
@@ -4000,8 +4025,7 @@ protected:
         if (HMDView && HMDView->getHMDDeviceType() == CommonDeviceState::Morpheus)
         {
             MorpheusHMD *hmd = HMDView->castChecked<MorpheusHMD>();
-            IPoseFilter *poseFilter = HMDView->getPoseFilterMutable();
-            MorpheusHMDConfig *config = hmd->getConfigMutable();
+			MorpheusHMDConfig config = *hmd->getConfig();
 
             const auto &request = context.request->set_hmd_accelerometer_calibration_request();
 
@@ -4011,16 +4035,17 @@ protected:
             float length = sqrtf(measured_g.i*measured_g.i + measured_g.j*measured_g.j + measured_g.k*measured_g.k);
             if (length > k_real_epsilon)
             {
-                config->raw_accelerometer_bias.i = measured_g.i * (1.f - 1.f / (length*config->accelerometer_gain.i));
-                config->raw_accelerometer_bias.j = measured_g.j * (1.f - 1.f / (length*config->accelerometer_gain.j));
-                config->raw_accelerometer_bias.k = measured_g.k * (1.f - 1.f / (length*config->accelerometer_gain.k));
+                config.raw_accelerometer_bias.i = measured_g.i * (1.f - 1.f / (length*config.accelerometer_gain.i));
+                config.raw_accelerometer_bias.j = measured_g.j * (1.f - 1.f / (length*config.accelerometer_gain.j));
+                config.raw_accelerometer_bias.k = measured_g.k * (1.f - 1.f / (length*config.accelerometer_gain.k));
             }
 
-            config->raw_accelerometer_variance = request.raw_variance();
-            config->save();
+            config.raw_accelerometer_variance = request.raw_variance();
 
-            // Reset the orientation filter state the calibration changed
-            poseFilter->resetState();
+			hmd->setConfig(&config);
+
+			// Reset the orientation filter state the calibration changed
+			HMDView->resetPoseFilter();
 
             response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
         }
@@ -4040,18 +4065,42 @@ protected:
 
         if (HMDView && HMDView->getHMDDeviceType() == CommonDeviceState::Morpheus)
         {
-            MorpheusHMD *hmd = HMDView->castChecked<MorpheusHMD>();
-            MorpheusHMDConfig *config = hmd->getConfigMutable();
+			MorpheusHMD *hmd = HMDView->castChecked<MorpheusHMD>();
+			MorpheusHMDConfig config = *hmd->getConfig();
 
             const auto &request = context.request->set_hmd_gyroscope_calibration_request();
 
-            set_config_vector(request.raw_bias(), config->raw_gyro_bias);
-            config->raw_gyro_variance = request.raw_variance();
-            config->raw_gyro_drift = request.raw_drift();
-            config->save();
+			bool bChanged = false;
 
-            // Reset the orientation filter state the calibration changed
-            HMDView->getPoseFilterMutable()->resetState();
+			if (config.raw_gyro_bias.i != request.raw_bias().i() ||
+				config.raw_gyro_bias.j != request.raw_bias().j() ||
+				config.raw_gyro_bias.k != request.raw_bias().k())
+			{
+				set_config_vector(request.raw_bias(), config.raw_gyro_bias);
+				bChanged = true;
+			}
+
+			if (config.raw_gyro_variance != request.raw_variance())
+			{
+				config.raw_gyro_variance = request.raw_variance();
+				bChanged = true;
+			}
+
+			if (config.raw_gyro_drift != request.raw_drift())
+			{
+				config.raw_gyro_drift = request.raw_drift();
+				bChanged = true;
+			}
+
+			if (bChanged)
+			{
+				config.save();
+			}
+
+			hmd->setConfig(&config);
+
+			// Reset the orientation filter state the calibration changed
+			HMDView->resetPoseFilter();
 
             response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
         }
