@@ -979,7 +979,7 @@ void ServerControllerView::updateStateAndPredict()
 			timeSortedPackets[timeSortedPackets.size()-1].timestamp - timeSortedPackets[0].timestamp;
 		std::chrono::duration<float, std::milli> milli_duration= duration;
 
-		const size_t k_max_process_count= 100;
+		const size_t k_max_process_count= 1000;
 		if (timeSortedPackets.size() > k_max_process_count)
 		{
 			const size_t excess= timeSortedPackets.size() - k_max_process_count;
