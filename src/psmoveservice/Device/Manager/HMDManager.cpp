@@ -15,6 +15,7 @@ const int HMDManagerConfig::CONFIG_VERSION = 1;
 HMDManagerConfig::HMDManagerConfig(const std::string &fnamebase)
     : PSMoveConfig(fnamebase)
     , virtual_hmd_count(0)
+	, enable_morpheus(true)
 {
 
 };
@@ -25,7 +26,8 @@ HMDManagerConfig::config2ptree()
     boost::property_tree::ptree pt;
 
     pt.put("version", HMDManagerConfig::CONFIG_VERSION);
-    pt.put("virtual_hmd_count", virtual_hmd_count);
+	pt.put("virtual_hmd_count", virtual_hmd_count);
+	pt.put("enable_morpheus", enable_morpheus);
 
     return pt;
 }
@@ -37,7 +39,8 @@ HMDManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
 
     if (version == HMDManagerConfig::CONFIG_VERSION)
     {
-        virtual_hmd_count = pt.get<int>("virtual_hmd_count", 0);
+		virtual_hmd_count = pt.get<int>("virtual_hmd_count", virtual_hmd_count);
+		enable_morpheus = pt.get<bool>("enable_morpheus", enable_morpheus);
     }
     else
     {

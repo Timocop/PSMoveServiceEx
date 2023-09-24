@@ -5,6 +5,7 @@
 #include "DeviceManager.h"
 #include "HMDDeviceEnumerator.h"
 #include "HidHMDDeviceEnumerator.h"
+#include "HMDManager.h"
 #include "MathUtility.h"
 #include "ServerLog.h"
 #include "ServerUtility.h"
@@ -587,94 +588,102 @@ bool MorpheusHMD::open(
     }
     else
     {
-		SERVER_LOG_INFO("MorpheusHMD::open") << "Opening MorpheusHMD(" << cur_dev_path << ").";
-
-		USBContext->device_identifier = cur_dev_path;
-
-		// Open the sensor interface using HIDAPI
-		USBContext->sensor_device_path = pEnum->get_hid_hmd_enumerator()->get_interface_path(MORPHEUS_SENSOR_INTERFACE);
-		USBContext->sensor_device_handle = hid_open_path(USBContext->sensor_device_path.c_str());
-		if (USBContext->sensor_device_handle != nullptr)
+		HMDManagerConfig hmdCfg = DeviceManager::getInstance()->m_hmd_manager->getConfig();
+		if (hmdCfg.enable_morpheus)
 		{
-			hid_set_nonblocking(USBContext->sensor_device_handle, 0);
-		}
+			SERVER_LOG_INFO("MorpheusHMD::open") << "Opening MorpheusHMD(" << cur_dev_path << ").";
 
-		// Open the command interface using libusb.
-		// NOTE: Ideally we would use one usb library for both interfaces, but there are some complications.
-		// A) The command interface uses the bulk transfer endpoint and HIDApi doesn't support that endpoint.
-		// B) In Windows, libusb doesn't handle a high frequency of requests coming from two different threads well.
-		// In this case, PS3EyeDriver is constantly sending bulk transfer requests in its own thread to get video frames.
-		// If we started sending control transfer requests for the sensor data in the main thread at the same time
-		// it can lead to a crash. It shouldn't, but this was a problem previously setting video feed properties
-		// from the color config tool while a video feed was running.
-		morpheus_open_usb_device(USBContext);
+			USBContext->device_identifier = cur_dev_path;
 
-        if (getIsOpen())  // Controller was opened and has an index
-        {
-			SERVER_LOG_INFO("MorpheusHMD::open") << "Turning on MorpheusHMD power.";
-			if (morpheus_set_headset_power(USBContext, true))
+			// Open the sensor interface using HIDAPI
+			USBContext->sensor_device_path = pEnum->get_hid_hmd_enumerator()->get_interface_path(MORPHEUS_SENSOR_INTERFACE);
+			USBContext->sensor_device_handle = hid_open_path(USBContext->sensor_device_path.c_str());
+			if (USBContext->sensor_device_handle != nullptr)
 			{
-				SERVER_LOG_INFO("MorpheusHMD::open") << "Turning on MorpheusHMD tracking.";
-				if (morpheus_enable_tracking(USBContext))
+				hid_set_nonblocking(USBContext->sensor_device_handle, 0);
+			}
+
+			// Open the command interface using libusb.
+			// NOTE: Ideally we would use one usb library for both interfaces, but there are some complications.
+			// A) The command interface uses the bulk transfer endpoint and HIDApi doesn't support that endpoint.
+			// B) In Windows, libusb doesn't handle a high frequency of requests coming from two different threads well.
+			// In this case, PS3EyeDriver is constantly sending bulk transfer requests in its own thread to get video frames.
+			// If we started sending control transfer requests for the sensor data in the main thread at the same time
+			// it can lead to a crash. It shouldn't, but this was a problem previously setting video feed properties
+			// from the color config tool while a video feed was running.
+			morpheus_open_usb_device(USBContext);
+
+			if (getIsOpen())  // Controller was opened and has an index
+			{
+				SERVER_LOG_INFO("MorpheusHMD::open") << "Turning on MorpheusHMD power.";
+				if (morpheus_set_headset_power(USBContext, true))
 				{
-					//morpheus_enable_tracking() resets morpheus_set_led_brightness() LED settings?
-					//Lets just wait a bit.
-					std::this_thread::sleep_for(std::chrono::milliseconds(1500));
-					
-					morpheus_set_led_brightness(USBContext, _MorpheusLED_FRONT, 0);
-					morpheus_set_led_brightness(USBContext, _MorpheusLED_BACK, 50);
+					SERVER_LOG_INFO("MorpheusHMD::open") << "Turning on MorpheusHMD tracking.";
+					if (morpheus_enable_tracking(USBContext))
+					{
+						//morpheus_enable_tracking() resets morpheus_set_led_brightness() LED settings?
+						//Lets just wait a bit.
+						std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+
+						morpheus_set_led_brightness(USBContext, _MorpheusLED_FRONT, 0);
+						morpheus_set_led_brightness(USBContext, _MorpheusLED_BACK, 50);
+					}
+					else
+					{
+						SERVER_LOG_ERROR("MorpheusHMD::open") << "... failed!";
+					}
 				}
 				else
 				{
 					SERVER_LOG_ERROR("MorpheusHMD::open") << "... failed!";
 				}
-			}
-			else
-			{
-				SERVER_LOG_ERROR("MorpheusHMD::open") << "... failed!";
-			}
 
-			/*std::string identifier = "Morpheus_";
+				/*std::string identifier = "Morpheus_";
 
-			char usb_port_path[128];
-			if (getUSBPortPath(usb_port_path, sizeof(usb_port_path)))
-			{
+				char usb_port_path[128];
+				if (getUSBPortPath(usb_port_path, sizeof(usb_port_path)))
+				{
 				identifier.append(usb_port_path);
 
 				// Load the config file
 				cfg = MorpheusHMDConfig(identifier);
 				cfg.load();
-			}
-			else
-			{
+				}
+				else
+				{
 				SERVER_LOG_ERROR("MorpheusHMD::open") << "getUSBPortPath() failed!";
 
 				// Load the config file
 				cfg = MorpheusHMDConfig();
 				cfg.load();
-			}*/
+				}*/
 
-			// Load the config file
-			cfg = MorpheusHMDConfig();
-			cfg.load();
+				// Load the config file
+				cfg = MorpheusHMDConfig();
+				cfg.load();
 
-			// Create the sensor processor thread
-			m_HIDPacketProcessor = new MorpheusHIDSensorProcessor(cfg);
-			m_HIDPacketProcessor->start(USBContext, m_hmdListener);
+				// Create the sensor processor thread
+				m_HIDPacketProcessor = new MorpheusHIDSensorProcessor(cfg);
+				m_HIDPacketProcessor->start(USBContext, m_hmdListener);
 
-			// Always save the config back out in case some defaults changed
-			cfg.save();
+				// Always save the config back out in case some defaults changed
+				cfg.save();
 
-            // Reset the polling sequence counter
-            NextPollSequenceNumber = 0;
+				// Reset the polling sequence counter
+				NextPollSequenceNumber = 0;
 
-			success = true;
-        }
-        else
-        {
-            SERVER_LOG_ERROR("MorpheusHMD::open") << "Failed to open MorpheusHMD(" << cur_dev_path << ")";
-			close();
-        }
+				success = true;
+			}
+			else
+			{
+				SERVER_LOG_ERROR("MorpheusHMD::open") << "Failed to open MorpheusHMD(" << cur_dev_path << ")";
+				close();
+			}
+		}
+		else 
+		{
+			SERVER_LOG_ERROR("MorpheusHMD::open") << "Failed to open MorpheusHMD(" << cur_dev_path << "). MorpheusHMD is disabled.";
+		}
     }
 
     return success;

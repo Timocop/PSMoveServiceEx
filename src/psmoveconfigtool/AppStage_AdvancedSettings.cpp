@@ -320,6 +320,7 @@ HMDConfig::config2ptree()
 	}
 
 	pt.put("virtual_hmd_count", virtual_hmd_count);
+	pt.put("enable_morpheus", enable_morpheus);
 
 	return pt;
 }
@@ -330,6 +331,7 @@ HMDConfig::ptree2config(const boost::property_tree::ptree &pt)
 	map_flatten(pt, "");
 
 	virtual_hmd_count = pt.get<int>("virtual_hmd_count", virtual_hmd_count);
+	enable_morpheus = pt.get<bool>("enable_morpheus", enable_morpheus);
 }
 
 const boost::property_tree::ptree
@@ -953,7 +955,7 @@ void AppStage_AdvancedSettings::renderUI()
 						ImGui::SetTooltip(
 							"The number of controllers emulated in PSMoveServiceEx.\n"
 							"Useful if you want to add your custom controllers that are not related to PlayStation Move."
-						);
+						); 
 				}
 
 				// HMD Manager Config
@@ -972,6 +974,18 @@ void AppStage_AdvancedSettings::renderUI()
 						ImGui::SetTooltip(
 							"The number of head mount devices emulated in PSMoveServiceEx.\n"
 							"Useful if you want to add your custom head mount devices that are not related to PlayStation Move."
+						);
+
+					ImGui::Text("Enable Morpheus HMD:");
+					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+					ImGui::PushItemWidth(100.f);
+					ImGui::Checkbox("##EnableMorpheusHMD", &cfg_hmd.enable_morpheus);
+					ImGui::PopItemWidth();
+
+					if (ImGui::IsItemHovered())
+						ImGui::SetTooltip(
+							"Enables the Morpheus Head-Mounted Display in PSMoveServiceEx.\n"
+							"If you use other programs that use the Head-Mounted Display disable this setting to avoid conflicts."
 						);
 				}
 

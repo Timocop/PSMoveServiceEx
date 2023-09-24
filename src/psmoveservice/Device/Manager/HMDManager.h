@@ -29,6 +29,7 @@ public:
 
     int version;
     int virtual_hmd_count;
+	bool enable_morpheus;
 };
 
 class HMDManager : public DeviceTypeManager

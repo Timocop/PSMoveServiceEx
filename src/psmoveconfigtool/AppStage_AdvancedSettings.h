@@ -122,6 +122,7 @@ public:
 		isLoaded = false;
 
 		virtual_hmd_count = 0;
+		enable_morpheus = true;
 	};
 
 	virtual const boost::property_tree::ptree config2ptree();
@@ -130,6 +131,7 @@ public:
 	bool isLoaded;
 
 	int virtual_hmd_count;
+	bool enable_morpheus;
 };
 
 class DeviceConfig : public PSMoveConfig
