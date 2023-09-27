@@ -523,6 +523,8 @@ void AppStage_HMDSettings::renderUI()
 							hmdInfo.OrientationFilterName == "MadgwickARG" ||
 							hmdInfo.OrientationFilterName == "OrientationExternal")
 						{
+							settings_shown = true;
+
 							ImGui::Text("Angular Smoothing Power (%%): ");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(120.f);

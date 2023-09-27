@@ -964,6 +964,8 @@ void AppStage_ControllerSettings::renderUI()
 												controllerInfo.OrientationFilterName == "OrientationExternal" ||
 												controllerInfo.ControllerType == PSMController_Virtual)
 											{
+												settings_shown = true;
+
 												ImGui::Text("Angular Smoothing Power (%%): ");
 												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 												ImGui::PushItemWidth(120.f);
