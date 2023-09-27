@@ -24,6 +24,7 @@
 #endif
 
 #define k_tracker_target_exposure (256.f - 8.f)
+#define k_tracker_target_gain (128.f - 8.f)
 
 //-- statics ----
 const char *AppStage_TestTracker::APP_STAGE_NAME = "TestTracker";
@@ -42,8 +43,10 @@ AppStage_TestTracker::AppStage_TestTracker(App *app)
 	, m_streamFps(0)
 	, m_displayFps(0)
 	, m_bChangedExposure(false)
+	, m_bChangedGain(false)
 	, m_trackerFrameRate(0)
 	, m_trackerExposure(0)
+	, m_trackerGain(0)
 { }
 
 void AppStage_TestTracker::enter()
@@ -60,6 +63,7 @@ void AppStage_TestTracker::enter()
 	m_tracker_view = PSM_GetTracker(trackerInfo->tracker_id);
 
 	assert(!m_bChangedExposure);
+	assert(!m_bChangedGain);
 
     assert(!m_bStreamIsActive);
     request_tracker_start_stream();
@@ -89,6 +93,27 @@ void AppStage_TestTracker::update()
 			}
         }
     }
+
+
+	switch (m_menuState)
+	{
+	case eTrackerMenuState::pendingTrackerResetExposureGain:
+	{
+		if (!m_bChangedExposure && !m_bChangedGain)
+		{
+			request_tracker_stop_stream();
+		}
+		break;
+	}
+	case eTrackerMenuState::pendingTrackerSetExposureGain:
+	{
+		if (m_bChangedExposure && m_bChangedGain)
+		{
+			m_menuState = AppStage_TestTracker::idle;
+		}
+		break;
+	}
+	}
 }
 
 void AppStage_TestTracker::render()
@@ -147,7 +172,7 @@ void AppStage_TestTracker::renderUI()
 
         if (ImGui::Button("Return to Tracker Settings"))
         {
-			request_tracker_reset_exposure();
+			request_tracker_reset_exposure_gain();
         }              
 
         ImGui::End();
@@ -155,8 +180,7 @@ void AppStage_TestTracker::renderUI()
 
 	case eTrackerMenuState::pendingTrackerStartStreamRequest:
 	case eTrackerMenuState::pendingTrackerGetSettings:
-	case eTrackerMenuState::pendingTrackerGetExposure:
-	case eTrackerMenuState::pendingTrackerSetExposure:
+	case eTrackerMenuState::pendingTrackerSetExposureGain:
     {
         ImGui::SetNextWindowPosCenter();
         ImGui::SetNextWindowSize(ImVec2(k_panel_width, 50));
@@ -169,8 +193,7 @@ void AppStage_TestTracker::renderUI()
 
 	case eTrackerMenuState::failedTrackerStartStreamRequest:
 	case eTrackerMenuState::failedTrackerGetSettings:
-	case eTrackerMenuState::failedTrackerGetExposure:
-	case eTrackerMenuState::failedTrackerSetExposure:
+	case eTrackerMenuState::failedTrackerSetExposureGain:
     {
         ImGui::SetNextWindowPosCenter();
         ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
@@ -180,14 +203,14 @@ void AppStage_TestTracker::renderUI()
 
         if (ImGui::Button("Return to Tracker Settings"))
         {
-			request_tracker_reset_exposure();
+			request_tracker_reset_exposure_gain();
         }
 
         ImGui::End();
     } break;
 
     case eTrackerMenuState::pendingTrackerStopStreamRequest:
-	case eTrackerMenuState::pendingTrackerResetExposure:
+	case eTrackerMenuState::pendingTrackerResetExposureGain:
     {
         ImGui::SetNextWindowPosCenter();
         ImGui::SetNextWindowSize(ImVec2(k_panel_width, 50));
@@ -199,7 +222,7 @@ void AppStage_TestTracker::renderUI()
     } break;
 
 	case eTrackerMenuState::failedTrackerStopStreamRequest:
-	case eTrackerMenuState::failedTrackerResetExposure:
+	case eTrackerMenuState::failedTrackerResetExposureGain:
     {
         ImGui::SetNextWindowPosCenter();
         ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
@@ -209,7 +232,7 @@ void AppStage_TestTracker::renderUI()
 
         if (ImGui::Button("Return to Tracker Settings"))
         {
-			request_tracker_reset_exposure();
+			request_tracker_reset_exposure_gain();
         }
 
         ImGui::End();
@@ -220,28 +243,65 @@ void AppStage_TestTracker::renderUI()
     }
 }
 
+void AppStage_TestTracker::request_tracker_reset_exposure_gain()
+{
+	if (m_menuState != AppStage_TestTracker::pendingTrackerResetExposureGain) 
+	{
+		m_menuState = AppStage_TestTracker::pendingTrackerResetExposureGain;
+
+		request_tracker_reset_exposure();
+		request_tracker_reset_gain();
+	}
+}
+
 void AppStage_TestTracker::request_tracker_reset_exposure()
 {
-	if (!m_bChangedExposure)
+	// Tell the psmove service that we want to change exposure.
+	RequestPtr request(new PSMoveProtocol::Request());
+	request->set_type(PSMoveProtocol::Request_RequestType_SET_TRACKER_EXPOSURE);
+	request->mutable_request_set_tracker_exposure()->set_tracker_id(m_tracker_view->tracker_info.tracker_id);
+	request->mutable_request_set_tracker_exposure()->set_value(m_trackerExposure);
+	request->mutable_request_set_tracker_exposure()->set_save_setting(false);
+
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_RegisterCallback(request_id, AppStage_TestTracker::handle_tracker_reset_exposure_response, this);
+}
+
+void AppStage_TestTracker::request_tracker_reset_gain()
+{
+	// Tell the psmove service that we want to change exposure.
+	RequestPtr request(new PSMoveProtocol::Request());
+	request->set_type(PSMoveProtocol::Request_RequestType_SET_TRACKER_GAIN);
+	request->mutable_request_set_tracker_gain()->set_tracker_id(m_tracker_view->tracker_info.tracker_id);
+	request->mutable_request_set_tracker_gain()->set_value(m_trackerGain);
+	request->mutable_request_set_tracker_gain()->set_save_setting(false);
+
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_RegisterCallback(request_id, AppStage_TestTracker::handle_tracker_reset_gain_response, this);
+}
+
+void AppStage_TestTracker::handle_tracker_reset_gain_response(
+	const PSMResponseMessage *response,
+	void *userdata)
+{
+	PSMResult ResultCode = response->result_code;
+	PSMResponseHandle response_handle = response->opaque_response_handle;
+	AppStage_TestTracker *thisPtr = static_cast<AppStage_TestTracker *>(userdata);
+
+	switch (ResultCode)
 	{
-		request_tracker_stop_stream();
-		return;
-	}
-
-	if (m_menuState != AppStage_TestTracker::pendingTrackerResetExposure)
+	case PSMResult_Success:
 	{
-		m_menuState = AppStage_TestTracker::pendingTrackerResetExposure;
-
-		// Tell the psmove service that we want to change exposure.
-		RequestPtr request(new PSMoveProtocol::Request());
-		request->set_type(PSMoveProtocol::Request_RequestType_SET_TRACKER_EXPOSURE);
-		request->mutable_request_set_tracker_exposure()->set_tracker_id(m_tracker_view->tracker_info.tracker_id);
-		request->mutable_request_set_tracker_exposure()->set_value(m_trackerExposure);
-		request->mutable_request_set_tracker_exposure()->set_save_setting(false);
-
-		PSMRequestID request_id;
-		PSM_SendOpaqueRequest(&request, &request_id);
-		PSM_RegisterCallback(request_id, AppStage_TestTracker::handle_tracker_reset_exposure_response, this);
+		thisPtr->m_bChangedGain = false;
+	} break;
+	case PSMResult_Error:
+	case PSMResult_Canceled:
+	case PSMResult_Timeout:
+	{
+		thisPtr->m_menuState = AppStage_TestTracker::failedTrackerResetExposureGain;
+	} break;
 	}
 }
 
@@ -253,19 +313,17 @@ void AppStage_TestTracker::handle_tracker_reset_exposure_response(
 	PSMResponseHandle response_handle = response->opaque_response_handle;
 	AppStage_TestTracker *thisPtr = static_cast<AppStage_TestTracker *>(userdata);
 
-	thisPtr->m_bChangedExposure = false;
-
 	switch (ResultCode)
 	{
 	case PSMResult_Success:
 	{
-		thisPtr->request_tracker_stop_stream();
+		thisPtr->m_bChangedExposure = false;
 	} break;
 	case PSMResult_Error:
 	case PSMResult_Canceled:
 	case PSMResult_Timeout:
 	{
-		thisPtr->m_menuState = AppStage_TestTracker::failedTrackerResetExposure;
+		thisPtr->m_menuState = AppStage_TestTracker::failedTrackerResetExposureGain;
 	} break;
 	}
 }
@@ -358,9 +416,16 @@ void AppStage_TestTracker::handle_tracker_get_settings_response(
 	{
 		const PSMoveProtocol::Response *response = GET_PSMOVEPROTOCOL_RESPONSE(response_handle);
 		thisPtr->m_trackerExposure = response->result_tracker_settings().exposure();
+		thisPtr->m_trackerGain = response->result_tracker_settings().gain();
 		thisPtr->m_trackerFrameRate = response->result_tracker_settings().frame_rate();
 
-		thisPtr->request_tracker_set_exposure();
+		if (thisPtr->m_menuState != AppStage_TestTracker::pendingTrackerSetExposureGain)
+		{
+			thisPtr->m_menuState = AppStage_TestTracker::pendingTrackerSetExposureGain;
+
+			thisPtr->request_tracker_set_exposure();
+			thisPtr->request_tracker_set_gain();
+		}
 	} break;
 	case PSMResult_Error:
 	case PSMResult_Canceled:
@@ -373,27 +438,52 @@ void AppStage_TestTracker::handle_tracker_get_settings_response(
 
 void AppStage_TestTracker::request_tracker_set_exposure()
 {
-	// No need to change if sometihng else changed the exposure already.
-	if (m_trackerExposure >= k_tracker_target_exposure)
+	// Tell the psmove service that we want to change exposure.
+	RequestPtr request(new PSMoveProtocol::Request());
+	request->set_type(PSMoveProtocol::Request_RequestType_SET_TRACKER_EXPOSURE);
+	request->mutable_request_set_tracker_exposure()->set_tracker_id(m_tracker_view->tracker_info.tracker_id);
+	request->mutable_request_set_tracker_exposure()->set_value(k_tracker_target_exposure);
+	request->mutable_request_set_tracker_exposure()->set_save_setting(false);
+
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_RegisterCallback(request_id, AppStage_TestTracker::handle_tracker_set_exposure_response, this);
+}
+
+void AppStage_TestTracker::request_tracker_set_gain()
+{
+	// Tell the psmove service that we want to change exposure.
+	RequestPtr request(new PSMoveProtocol::Request());
+	request->set_type(PSMoveProtocol::Request_RequestType_SET_TRACKER_GAIN);
+	request->mutable_request_set_tracker_gain()->set_tracker_id(m_tracker_view->tracker_info.tracker_id);
+	request->mutable_request_set_tracker_gain()->set_value(k_tracker_target_gain);
+	request->mutable_request_set_tracker_gain()->set_save_setting(false);
+
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_RegisterCallback(request_id, AppStage_TestTracker::handle_tracker_set_gain_response, this);
+}
+
+void AppStage_TestTracker::handle_tracker_set_gain_response(
+	const PSMResponseMessage *response,
+	void *userdata)
+{
+	PSMResult ResultCode = response->result_code;
+	PSMResponseHandle response_handle = response->opaque_response_handle;
+	AppStage_TestTracker *thisPtr = static_cast<AppStage_TestTracker *>(userdata);
+
+	switch (ResultCode)
 	{
-		m_menuState = AppStage_TestTracker::idle;
-		return;
-	}
-
-	if (m_menuState != AppStage_TestTracker::pendingTrackerSetExposure)
+	case PSMResult_Success:
 	{
-		m_menuState = AppStage_TestTracker::pendingTrackerSetExposure;
-
-		// Tell the psmove service that we want to change exposure.
-		RequestPtr request(new PSMoveProtocol::Request());
-		request->set_type(PSMoveProtocol::Request_RequestType_SET_TRACKER_EXPOSURE);
-		request->mutable_request_set_tracker_exposure()->set_tracker_id(m_tracker_view->tracker_info.tracker_id);
-		request->mutable_request_set_tracker_exposure()->set_value(k_tracker_target_exposure);
-		request->mutable_request_set_tracker_exposure()->set_save_setting(false);
-
-		PSMRequestID request_id;
-		PSM_SendOpaqueRequest(&request, &request_id);
-		PSM_RegisterCallback(request_id, AppStage_TestTracker::handle_tracker_set_exposure_response, this);
+		thisPtr->m_bChangedGain = true;
+	} break;
+	case PSMResult_Error:
+	case PSMResult_Canceled:
+	case PSMResult_Timeout:
+	{
+		thisPtr->m_menuState = AppStage_TestTracker::failedTrackerSetExposureGain;
+	} break;
 	}
 }
 
@@ -410,14 +500,12 @@ void AppStage_TestTracker::handle_tracker_set_exposure_response(
 	case PSMResult_Success:
 	{
 		thisPtr->m_bChangedExposure = true;
-
-		thisPtr->m_menuState = AppStage_TestTracker::idle;
 	} break;
 	case PSMResult_Error:
 	case PSMResult_Canceled:
 	case PSMResult_Timeout:
 	{
-		thisPtr->m_menuState = AppStage_TestTracker::failedTrackerSetExposure;
+		thisPtr->m_menuState = AppStage_TestTracker::failedTrackerSetExposureGain;
 	} break;
 	}
 }

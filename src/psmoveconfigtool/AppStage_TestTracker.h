@@ -29,18 +29,28 @@ protected:
     static void handle_tracker_start_stream_response(
         const PSMResponseMessage *response,
         void *userdata);
-    void open_shared_memory_stream();
 
     static void handle_tracker_stop_stream_response(
         const PSMResponseMessage *response,
         void *userdata);
 
 	void request_tracker_set_exposure();
+	void request_tracker_set_gain();
+
+	static void handle_tracker_set_gain_response(
+		const PSMResponseMessage * response, 
+		void * userdata);
 	static void handle_tracker_set_exposure_response(
 		const PSMResponseMessage * response, 
 		void * userdata);
 
+	void request_tracker_reset_exposure_gain();
 	void request_tracker_reset_exposure();
+	void request_tracker_reset_gain();
+
+	static void handle_tracker_reset_gain_response(
+		const PSMResponseMessage * response, 
+		void * userdata);
 	static void handle_tracker_reset_exposure_response(
 		const PSMResponseMessage * response, 
 		void * userdata);
@@ -50,8 +60,6 @@ protected:
 		const PSMResponseMessage * response, 
 		void * userdata);
 
-    void close_shared_memory_stream();
-    
 private:
     enum eTrackerMenuState
     {
@@ -64,14 +72,11 @@ private:
 		pendingTrackerGetSettings,
 		failedTrackerGetSettings,
 
-		pendingTrackerGetExposure,
-		failedTrackerGetExposure,
+		pendingTrackerSetExposureGain,
+		failedTrackerSetExposureGain,
 
-		pendingTrackerSetExposure,
-		failedTrackerSetExposure,
-
-		pendingTrackerResetExposure,
-		failedTrackerResetExposure,
+		pendingTrackerResetExposureGain,
+		failedTrackerResetExposureGain,
 
         pendingTrackerStopStreamRequest,
         failedTrackerStopStreamRequest,
@@ -80,12 +85,14 @@ private:
     eTrackerMenuState m_menuState;
     bool m_bStreamIsActive;
 	bool m_bChangedExposure;
+	bool m_bChangedGain;
     PSMTracker *m_tracker_view;
     class TextureAsset *m_video_texture;
 	int m_streamFps;
 	int m_displayFps;
 	std::chrono::time_point<std::chrono::high_resolution_clock> m_lastStreamFps;
 	float m_trackerExposure;
+	float m_trackerGain;
 	float m_trackerFrameRate;
 };
 
