@@ -58,6 +58,9 @@ void AppStage_TestTracker::enter()
 
     m_app->setCameraType(_cameraFixed);
 
+	tracker_count = trackerSettings->get_tracker_count();
+	tracker_index = trackerSettings->get_tracker_Index();
+
     assert(m_tracker_view == nullptr);
 	PSM_AllocateTrackerListener(trackerInfo->tracker_id, trackerInfo);
 	m_tracker_view = PSM_GetTracker(trackerInfo->tracker_id);
@@ -119,15 +122,15 @@ void AppStage_TestTracker::update()
 void AppStage_TestTracker::render()
 {
     // If there is a video frame available to render, show it
-    if (m_video_texture != nullptr)
-    {
-        unsigned int texture_id = m_video_texture->texture_id;
+	if (m_video_texture != nullptr)
+	{
+		unsigned int texture_id = m_video_texture->texture_id;
 
-        if (texture_id != 0)
-        {
-            drawFullscreenTexture(texture_id);
-        }
-    }
+		if (texture_id != 0)
+		{
+			drawFullscreenTexture(texture_id);
+		}
+	}
 }
 
 void AppStage_TestTracker::renderUI()
@@ -157,6 +160,25 @@ void AppStage_TestTracker::renderUI()
 			m_streamFps = 0;
 			m_lastStreamFps = now;
 		}
+
+		if (ImGui::Button(" < ##TrackerIndex"))
+		{
+			m_app->getAppStage<AppStage_TrackerSettings>()->set_selectedTrackerIndex(((tracker_index + tracker_count) - 1) % tracker_count);
+			m_app->getAppStage<AppStage_TrackerSettings>()->gotoVideoTest(true);
+
+			// Goes back to tracker settings.
+			request_tracker_reset_exposure_gain();
+		}
+		ImGui::SameLine();
+		if (ImGui::Button(" > ##TrackerIndex"))
+		{
+			m_app->getAppStage<AppStage_TrackerSettings>()->set_selectedTrackerIndex(((tracker_index + tracker_count) + 1) % tracker_count);
+			m_app->getAppStage<AppStage_TrackerSettings>()->gotoVideoTest(true);
+
+			// Goes back to tracker settings.
+			request_tracker_reset_exposure_gain();
+		}
+		ImGui::SameLine();
 		ImGui::Text("Tracker: #%d", m_tracker_view->tracker_info.tracker_id);
 
 		if (m_displayFps < m_trackerFrameRate - 7.5f)

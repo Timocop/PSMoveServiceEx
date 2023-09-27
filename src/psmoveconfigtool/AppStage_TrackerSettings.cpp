@@ -31,7 +31,8 @@ AppStage_TrackerSettings::AppStage_TrackerSettings(App *app)
     , m_selectedTrackerIndex(-1)
     , m_selectedControllerIndex(-1)
     , m_selectedHmdIndex(-1)
-    , m_gotoControllerColorCalib(false)
+	, m_gotoVideoTest(false)
+	, m_gotoControllerColorCalib(false)
     , m_gotoHMDColorCalib(false)
     , m_gotoTestControllerTracking(false)
     , m_gotoTrackingControllerVideo(false)
@@ -429,8 +430,10 @@ void AppStage_TrackerSettings::renderUI()
 
 						if (m_app->getIsLocalServer())
 						{
-							if (ImGui::Button("Test Video Feed"))
+							if (ImGui::Button("Test Video Feed") || m_gotoVideoTest)
 							{
+								m_gotoVideoTest = false;
+
 								m_app->setAppStage(AppStage_TestTracker::APP_STAGE_NAME);
 							}
 

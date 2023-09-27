@@ -57,6 +57,7 @@ public:
 
     static const char *APP_STAGE_NAME;
 
+	void gotoVideoTest(bool value = false) { m_gotoVideoTest = value; }
 	void gotoControllerColorCalib(bool value = false) { m_gotoControllerColorCalib = value; }
     void gotoHMDColorCalib(bool value = false) { m_gotoHMDColorCalib = value; }
 	void gotoTestControllerTracking(bool value = false) { m_gotoTestControllerTracking = value; }
@@ -139,6 +140,7 @@ protected:
 	int m_selectedControllerIndex;
 	int m_selectedHmdIndex;
 
+	bool m_gotoVideoTest;
 	bool m_gotoControllerColorCalib;
     bool m_gotoHMDColorCalib;
 	bool m_gotoTestControllerTracking;

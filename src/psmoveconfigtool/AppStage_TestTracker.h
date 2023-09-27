@@ -82,6 +82,9 @@ private:
         failedTrackerStopStreamRequest,
     };
 
+	int tracker_count;
+	int tracker_index;
+
     eTrackerMenuState m_menuState;
     bool m_bStreamIsActive;
 	bool m_bChangedExposure;
