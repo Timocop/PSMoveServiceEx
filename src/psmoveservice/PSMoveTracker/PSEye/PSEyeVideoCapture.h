@@ -44,12 +44,13 @@ public:
     \param camindex The index of the camera (0-based). To specify an API
     pass in the index + API. e.g., PSEyeVideoCapture(0 + PSEYE_CAP_CLMULTI)
     */
-    PSEyeVideoCapture(int camindex, eVideoCaptureType videoCaptureType)
-        : m_index(-1) 
+    PSEyeVideoCapture(int apiIndex, int asignIndex, eVideoCaptureType videoCaptureType)
+        : m_api_index(-1) 
+		, m_asign_index(asignIndex)
 		, m_iVideoCaptureType(eVideoCaptureType::CaptureType_ALL)
 	{
 		m_iVideoCaptureType = videoCaptureType;
-		open(camindex);
+		open(apiIndex);
 	} // Constructor is same as base class
     
     /// Attempts to open a device using different drivers in the order outlined above.
@@ -66,11 +67,14 @@ public:
 
 	int getIndex() const;
 
+	int getApiIndex() const;
+
     /// Get the unique identifier for the camera
     std::string getUniqueIndentifier() const;
     
 protected:
-    int m_index; /**< Keep track of index. Necessary for PSEYE_CLEYE_DRIVER */
+	int m_api_index; /**< Keep track of index. Necessary for PSEYE_CLEYE_DRIVER */
+	int m_asign_index; 
 	eVideoCaptureType m_iVideoCaptureType;
     std::string m_indentifier; /**< Filled in when the tracker is opened */
 

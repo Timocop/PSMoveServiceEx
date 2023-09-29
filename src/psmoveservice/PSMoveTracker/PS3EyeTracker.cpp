@@ -349,13 +349,15 @@ bool PS3EyeTracker::open(const DeviceEnumerator *enumerator)
     {
         const int camera_index = tracker_enumerator->get_camera_index();
 
-        SERVER_LOG_INFO("PS3EyeTracker::open") << "Opening PS3EyeTracker(" << cur_dev_path << ", camera_index=" << camera_index << ")";
-
 		switch (tracker_enumerator->get_device_type())
 		{
 			case CommonDeviceState::eDeviceType::PS3EYE:
 			{
-				VideoCapture = new PSEyeVideoCapture(camera_index, PSEyeVideoCapture::eVideoCaptureType::CaptureType_HID);
+				const int camera_hid_index = tracker_enumerator->get_camera_hid_index();
+
+				SERVER_LOG_INFO("PS3EyeTracker::open") << "Opening PSEyeVideoCapture(" << cur_dev_path << ", camera_hid_index=" << camera_hid_index << ", camera_index=" << camera_index << ")";
+
+				VideoCapture = new PSEyeVideoCapture(camera_hid_index, camera_index, PSEyeVideoCapture::eVideoCaptureType::CaptureType_HID);
 
 				if (VideoCapture->isOpened())
 				{
@@ -365,7 +367,7 @@ bool PS3EyeTracker::open(const DeviceEnumerator *enumerator)
 				}
 				else
 				{
-					SERVER_LOG_ERROR("PS3EyeTracker::open") << "Failed to open PS3EyeTracker(" << cur_dev_path << ", camera_index=" << camera_index << ")";
+					SERVER_LOG_ERROR("PS3EyeTracker::open") << "Failed to open PS3EyeTracker(" << cur_dev_path << ", camera_hid_index=" << camera_hid_index << ", camera_index=" << camera_index << ")";
 
 					close();
 				}
@@ -373,7 +375,11 @@ bool PS3EyeTracker::open(const DeviceEnumerator *enumerator)
 			}
 			case CommonDeviceState::eDeviceType::VirtualTracker:
 			{
-				VideoCapture = new PSEyeVideoCapture(camera_index, PSEyeVideoCapture::eVideoCaptureType::CaptureType_VIRTUAL);
+				const int camera_virt_index = tracker_enumerator->get_camera_virt_index();
+
+				SERVER_LOG_INFO("PS3EyeTracker::open") << "Opening PSEyeVideoCapture(" << cur_dev_path << ", camera_virt_index=" << camera_virt_index << ", camera_index=" << camera_index << ")";
+
+				VideoCapture = new PSEyeVideoCapture(camera_virt_index, camera_index, PSEyeVideoCapture::eVideoCaptureType::CaptureType_VIRTUAL);
 
 				if (VideoCapture->isOpened())
 				{
@@ -383,7 +389,7 @@ bool PS3EyeTracker::open(const DeviceEnumerator *enumerator)
 				}
 				else
 				{
-					SERVER_LOG_ERROR("PS3EyeTracker::open") << "Failed to open PS3EyeTracker(" << cur_dev_path << ", camera_index=" << camera_index << ")";
+					SERVER_LOG_ERROR("PS3EyeTracker::open") << "Failed to open PS3EyeTracker(" << cur_dev_path << ", camera_virt_index=" << camera_virt_index << ", camera_index=" << camera_index << ")";
 
 					close();
 				}

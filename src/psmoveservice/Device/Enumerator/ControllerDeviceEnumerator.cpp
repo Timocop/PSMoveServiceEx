@@ -7,6 +7,11 @@
 #include "assert.h"
 #include "string.h"
 
+#define ENUM_INDEX_VIRTUAL 0
+#define ENUM_INDEX_HID 1
+#define ENUM_INDEX_USB 2
+#define ENUM_INDEX_GAMEPAD 3
+
 // -- globals -----
 
 // -- ControllerDeviceEnumerator -----
@@ -35,12 +40,17 @@ ControllerDeviceEnumerator::ControllerDeviceEnumerator(
 		enumerators[0] = new ControllerGamepadEnumerator;
 		enumerator_count = 1;
 		break;
+	case eAPIType::CommunicationType_VIRTUAL:
+		enumerators = new DeviceEnumerator *[1];
+		enumerators[0] = new VirtualControllerEnumerator;
+		enumerator_count = 1;
+		break;
 	case eAPIType::CommunicationType_ALL:
 		enumerators = new DeviceEnumerator *[4];
-		enumerators[0] = new ControllerHidDeviceEnumerator;
-		enumerators[1] = new ControllerUSBDeviceEnumerator;
-		enumerators[2] = new ControllerGamepadEnumerator;
-        enumerators[3] = new VirtualControllerEnumerator;
+		enumerators[ENUM_INDEX_VIRTUAL] = new VirtualControllerEnumerator;
+		enumerators[ENUM_INDEX_HID] = new ControllerHidDeviceEnumerator;
+		enumerators[ENUM_INDEX_USB] = new ControllerUSBDeviceEnumerator;
+		enumerators[ENUM_INDEX_GAMEPAD] = new ControllerGamepadEnumerator;
 		enumerator_count = 4;
 		break;
 	}
@@ -135,7 +145,7 @@ bool ControllerDeviceEnumerator::get_serial_number(char *out_mb_serial, const si
     bool success = false;
 
     if ((api_type == eAPIType::CommunicationType_HID) ||
-		(api_type == eAPIType::CommunicationType_ALL && enumerator_index == 0))
+		(api_type == eAPIType::CommunicationType_ALL && enumerator_index == ENUM_INDEX_HID))
     {
 		ControllerHidDeviceEnumerator *hid_enumerator = static_cast<ControllerHidDeviceEnumerator *>(enumerators[enumerator_index]);
 
@@ -168,17 +178,17 @@ ControllerDeviceEnumerator::eAPIType ControllerDeviceEnumerator::get_api_type() 
 		{
 			switch (enumerator_index)
 			{
-			case 0:
+			case ENUM_INDEX_VIRTUAL:
+				result = ControllerDeviceEnumerator::CommunicationType_VIRTUAL;
+				break;
+			case ENUM_INDEX_HID:
 				result = ControllerDeviceEnumerator::CommunicationType_HID;
 				break;
-			case 1:
+			case ENUM_INDEX_USB:
 				result = ControllerDeviceEnumerator::CommunicationType_USB;
 				break;
-			case 2:
+			case ENUM_INDEX_GAMEPAD:
 				result = ControllerDeviceEnumerator::CommunicationType_GAMEPAD;
-				break;
-			case 3:
-				result = ControllerDeviceEnumerator::CommunicationType_VIRTUAL;
 				break;
 			default:
 				result = ControllerDeviceEnumerator::CommunicationType_INVALID;
@@ -216,7 +226,7 @@ const ControllerHidDeviceEnumerator *ControllerDeviceEnumerator::get_hid_control
 	case eAPIType::CommunicationType_ALL:
 		if (enumerator_index < enumerator_count)
 		{
-			enumerator = (enumerator_index == 0) ? static_cast<ControllerHidDeviceEnumerator *>(enumerators[0]) : nullptr;
+			enumerator = (enumerator_index == ENUM_INDEX_HID) ? static_cast<ControllerHidDeviceEnumerator *>(enumerators[ENUM_INDEX_HID]) : nullptr;
 		}
 		else
 		{
@@ -249,7 +259,7 @@ const ControllerUSBDeviceEnumerator *ControllerDeviceEnumerator::get_usb_control
 	case eAPIType::CommunicationType_ALL:
 		if (enumerator_index < enumerator_count)
 		{
-			enumerator = (enumerator_index == 1) ? static_cast<ControllerUSBDeviceEnumerator *>(enumerators[1]) : nullptr;
+			enumerator = (enumerator_index == ENUM_INDEX_USB) ? static_cast<ControllerUSBDeviceEnumerator *>(enumerators[ENUM_INDEX_USB]) : nullptr;
 		}
 		else
 		{
@@ -282,7 +292,7 @@ const ControllerGamepadEnumerator *ControllerDeviceEnumerator::get_gamepad_contr
 	case eAPIType::CommunicationType_ALL:
 		if (enumerator_index < enumerator_count)
 		{
-			enumerator = (enumerator_index == 2) ? static_cast<ControllerGamepadEnumerator *>(enumerators[2]) : nullptr;
+			enumerator = (enumerator_index == ENUM_INDEX_GAMEPAD) ? static_cast<ControllerGamepadEnumerator *>(enumerators[ENUM_INDEX_GAMEPAD]) : nullptr;
 		}
 		else
 		{
@@ -315,7 +325,7 @@ const VirtualControllerEnumerator *ControllerDeviceEnumerator::get_virtual_contr
 	case eAPIType::CommunicationType_ALL:
 		if (enumerator_index < enumerator_count)
 		{
-			enumerator = (enumerator_index == 3) ? static_cast<VirtualControllerEnumerator *>(enumerators[3]) : nullptr;
+			enumerator = (enumerator_index == ENUM_INDEX_VIRTUAL) ? static_cast<VirtualControllerEnumerator *>(enumerators[ENUM_INDEX_VIRTUAL]) : nullptr;
 		}
 		else
 		{

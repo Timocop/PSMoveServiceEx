@@ -878,8 +878,8 @@ bool PSEyeVideoCapture::open(int index)
 		// non -1 m_index is used as a CL Eye Driver check elsewhere.
 		if (usingCLEyeDriver())
 		{
-			m_index = index;
-			std::cout << "CL Eye Driver being used with native DShow. Setting m_index to " << m_index << std::endl;
+			m_api_index = index;
+			std::cout << "CL Eye Driver being used with native DShow. Setting m_index to " << m_api_index << std::endl;
 
 			if (!isOpened())
 			{
@@ -907,7 +907,7 @@ bool PSEyeVideoCapture::open(int index)
 #ifdef WIN32
 		icap = cv::makePtr<PSEYECaptureCAM_VIRTUAL>(index);
 		m_indentifier = icap.dynamicCast<PSEYECaptureCAM_VIRTUAL>()->getUniqueIndentifier();
-		m_index = index;
+		m_api_index = index;
 
 		return (!icap.empty());
 #else
@@ -1009,7 +1009,12 @@ std::string PSEyeVideoCapture::getUniqueIndentifier() const
 
 int PSEyeVideoCapture::getIndex() const
 {
-	return m_index;
+	return m_asign_index;
+}
+
+int PSEyeVideoCapture::getApiIndex() const
+{
+	return m_api_index;
 }
 
 cv::Ptr<cv::IVideoCapture> PSEyeVideoCapture::pseyeVideoCapture_create(int index)
@@ -1072,7 +1077,7 @@ cv::Ptr<cv::IVideoCapture> PSEyeVideoCapture::pseyeVideoCapture_create(int index
                 {
                     capture = cv::makePtr<PSEYECaptureCAM_PS3EYE>(index);
                     m_indentifier = capture.dynamicCast<PSEYECaptureCAM_PS3EYE>()->getUniqueIndentifier();
-					m_index = index;
+					m_api_index = index;
                 }
                 break;
 #endif

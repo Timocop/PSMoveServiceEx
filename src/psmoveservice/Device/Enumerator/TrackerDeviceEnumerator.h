@@ -34,7 +34,9 @@ public:
 	int get_vendor_id() const override;
 	int get_product_id() const override;
     const char *get_path() const override;
-    inline int get_camera_index() const { return m_cameraIndex; }
+	inline int get_camera_index() const { return m_cameraIndex; }
+	inline int get_camera_hid_index() const { return m_cameraHidIndex; }
+	inline int get_camera_virt_index() const { return m_cameraVirtIndex; }
 	const class USBDeviceEnumerator *get_hid_tracker_enumerator() const;
 	const class VirtualTrackerEnumerator *get_virtual_tracker_enumerator() const;
 
@@ -47,7 +49,9 @@ private:
 	std::vector<AnyDeviceEnumerator> enumerators;
 	int enumerator_count;
 	int enumerator_index;
-    int m_cameraIndex;
+	int m_cameraIndex;
+	int m_cameraHidIndex;
+	int m_cameraVirtIndex;
 };
 
 #endif // TRACKER_DEVICE_ENUMERATOR_H

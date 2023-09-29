@@ -64,7 +64,7 @@ int main(int, char**)
     // Open all available cameras (up to PSMOVESERVICE_MAX_TRACKER_COUNT max)
 	for (int camera_index = 0; camera_index < PSMOVESERVICE_MAX_TRACKER_COUNT; ++camera_index)
 	{
-        PSEyeVideoCapture *camera = new PSEyeVideoCapture(camera_index, PSEyeVideoCapture::eVideoCaptureType::CaptureType_ALL);
+        PSEyeVideoCapture *camera = new PSEyeVideoCapture(camera_index, camera_index, PSEyeVideoCapture::eVideoCaptureType::CaptureType_ALL);
 
         if (camera->isOpened())
         {

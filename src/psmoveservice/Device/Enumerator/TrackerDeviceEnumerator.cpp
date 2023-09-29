@@ -7,6 +7,9 @@
 #include "assert.h"
 #include "string.h"
 
+#define ENUM_INDEX_VIRTUAL 0
+#define ENUM_INDEX_HID 1
+
 // -- private definitions -----
 #ifdef _MSC_VER
 #pragma warning (disable: 4996) // 'This function or variable may be unsafe': snprintf
@@ -33,7 +36,9 @@ TrackerDeviceEnumerator::TrackerDeviceEnumerator(
 	, api_type(_apiType)
 	, enumerator_count(0)
 	, enumerator_index(0)
-    , m_cameraIndex(-1)
+	, m_cameraIndex(-1)
+	, m_cameraHidIndex(-1)
+	, m_cameraVirtIndex(-1)
 {
 	switch (_apiType)
 	{
@@ -63,14 +68,14 @@ TrackerDeviceEnumerator::TrackerDeviceEnumerator(
 	{
 		{
 			AnyDeviceEnumerator _enumerator;
-			_enumerator.m_usb_enumerator = usb_device_enumerator_allocate();
-			_enumerator.enumerator = nullptr;
+			_enumerator.m_usb_enumerator = nullptr;
+			_enumerator.enumerator = new VirtualTrackerEnumerator();
 			enumerators.push_back(_enumerator);
 		}
 		{
 			AnyDeviceEnumerator _enumerator;
-			_enumerator.m_usb_enumerator = nullptr;
-			_enumerator.enumerator = new VirtualTrackerEnumerator();
+			_enumerator.m_usb_enumerator = usb_device_enumerator_allocate();
+			_enumerator.enumerator = nullptr;
 			enumerators.push_back(_enumerator);
 		}
 		enumerator_count = 2;
@@ -79,11 +84,26 @@ TrackerDeviceEnumerator::TrackerDeviceEnumerator(
 	}
 
 	m_deviceType = CommonDeviceState::SUPPORTED_CAMERA_TYPE_COUNT; // invalid
-
-	int index = 0;
+	 
 	bool success = false;
 
-	if (!success && index < enumerator_count && enumerators[index].m_usb_enumerator != nullptr)
+	if (!success && enumerator_index < enumerator_count && enumerators[enumerator_index].enumerator != nullptr)
+	{
+		success = true;
+
+		if (is_valid())
+		{
+			m_deviceType = enumerators[enumerator_index].enumerator->get_device_type();
+			m_cameraIndex = 0;
+			m_cameraVirtIndex = 0;
+		}
+		else
+		{
+			next();
+		}
+	}
+				
+	if (!success && enumerator_index < enumerator_count && enumerators[enumerator_index].m_usb_enumerator != nullptr)
 	{
 		success = true;
 
@@ -92,23 +112,7 @@ TrackerDeviceEnumerator::TrackerDeviceEnumerator(
 		{
 			m_deviceType = CommonDeviceState::PS3EYE;
 			m_cameraIndex = 0;
-		}
-		else
-		{
-			next();
-		}
-	}
-
-	index = 1;
-
-	if (!success && index < enumerator_count && enumerators[index].enumerator != nullptr)
-	{
-		success = true;
-
-		if (is_valid())
-		{
-			m_deviceType = enumerators[index].enumerator->get_device_type();
-			m_cameraIndex = 0;
+			m_cameraHidIndex = 0;
 		}
 		else
 		{
@@ -222,7 +226,7 @@ const USBDeviceEnumerator *TrackerDeviceEnumerator::get_hid_tracker_enumerator()
 	case eAPIType::CommunicationType_ALL:
 		if (enumerator_index < enumerator_count)
 		{
-			enumerator = (enumerator_index == 0) ? static_cast<USBDeviceEnumerator *>(enumerators[0].m_usb_enumerator) : nullptr;
+			enumerator = (enumerator_index == ENUM_INDEX_HID) ? static_cast<USBDeviceEnumerator *>(enumerators[ENUM_INDEX_HID].m_usb_enumerator) : nullptr;
 		}
 		else
 		{
@@ -249,7 +253,7 @@ const VirtualTrackerEnumerator *TrackerDeviceEnumerator::get_virtual_tracker_enu
 	case eAPIType::CommunicationType_ALL:
 		if (enumerator_index < enumerator_count)
 		{
-			enumerator = (enumerator_index == 1) ? static_cast<VirtualTrackerEnumerator *>(enumerators[1].enumerator) : nullptr;
+			enumerator = (enumerator_index == ENUM_INDEX_VIRTUAL) ? static_cast<VirtualTrackerEnumerator *>(enumerators[ENUM_INDEX_VIRTUAL].enumerator) : nullptr;
 		}
 		else
 		{
@@ -283,65 +287,73 @@ bool TrackerDeviceEnumerator::next()
 	bool foundValid = false;
 	bool prevFailed = false;
 
-	while (!foundValid && enumerator_index < enumerator_count && enumerators[enumerator_index].m_usb_enumerator != nullptr)
-	{
-		while (is_valid() && !foundValid)
-		{
-			usb_device_enumerator_next(enumerators[enumerator_index].m_usb_enumerator);
-
-			if (testUSBEnumerator())
-			{
-				foundValid = true;
-			}
-		}
-
-		if (foundValid)
-		{
-			m_deviceType = CommonDeviceState::PS3EYE;
-			++m_cameraIndex;
-		}
-		else
-		{
-			++enumerator_index;
-			prevFailed = true;
-		}
-	}
-
-	while (!foundValid && enumerator_index < enumerator_count && enumerators[enumerator_index].enumerator != nullptr)
+	while (!foundValid && enumerator_index < enumerator_count)
 	{
 		if (prevFailed)
 		{
 			prevFailed = false;
 
-			if (enumerator_index < enumerator_count)
+			if (enumerators[enumerator_index].enumerator != nullptr)
 			{
 				foundValid = enumerators[enumerator_index].enumerator->is_valid();
 			}
+			else if (enumerators[enumerator_index].m_usb_enumerator != nullptr)
+			{
+				foundValid = testUSBEnumerator();
+			}
 		}
 
-		while (!foundValid && enumerator_index < enumerator_count)
+		if (foundValid)
+			break;
+
+		if (enumerators[enumerator_index].enumerator != nullptr)
 		{
 			if (enumerators[enumerator_index].enumerator->is_valid())
 			{
 				enumerators[enumerator_index].enumerator->next();
 				foundValid = enumerators[enumerator_index].enumerator->is_valid();
 			}
-			else
+
+			if (!foundValid)
 			{
 				++enumerator_index;
 				prevFailed = true;
 			}
 		}
+		else if (enumerators[enumerator_index].m_usb_enumerator != nullptr)
+		{
+			while (is_valid() && !foundValid)
+			{
+				usb_device_enumerator_next(enumerators[enumerator_index].m_usb_enumerator);
+				foundValid = testUSBEnumerator();
+			}
 
-		if (foundValid)
+			if (!foundValid)
+			{
+				++enumerator_index;
+				prevFailed = true;
+			}
+		}
+	}
+
+	if (foundValid)
+	{
+		++m_cameraIndex;
+
+		if (enumerators[enumerator_index].enumerator != nullptr)
 		{
+			++m_cameraVirtIndex;
 			m_deviceType = enumerators[enumerator_index].enumerator->get_device_type();
-			++m_cameraIndex;
 		}
-		else
+		else if (enumerators[enumerator_index].m_usb_enumerator != nullptr)
 		{
-			m_deviceType = CommonDeviceState::SUPPORTED_CONTROLLER_TYPE_COUNT; // invalid
+			++m_cameraHidIndex;;
+			m_deviceType = CommonDeviceState::PS3EYE;
 		}
+	}
+	else
+	{
+		m_deviceType = CommonDeviceState::SUPPORTED_CONTROLLER_TYPE_COUNT; // invalid
 	}
 
 	return foundValid;

@@ -5,6 +5,9 @@
 #include "assert.h"
 #include "string.h"
 
+#define ENUM_INDEX_VIRTUAL 0
+#define ENUM_INDEX_HID 1
+
 // -- globals -----
 
 // -- HMDDeviceEnumerator -----
@@ -30,8 +33,8 @@ HMDDeviceEnumerator::HMDDeviceEnumerator(
 		break;
 	case eAPIType::CommunicationType_ALL:
 		enumerators = new DeviceEnumerator *[2];
-		enumerators[0] = new HidHMDDeviceEnumerator;
-		enumerators[1] = new VirtualHMDDeviceEnumerator;
+		enumerators[ENUM_INDEX_VIRTUAL] = new VirtualHMDDeviceEnumerator;
+		enumerators[ENUM_INDEX_HID] = new HidHMDDeviceEnumerator;
 		enumerator_count = 2;
 		break;
 	}
@@ -87,11 +90,11 @@ HMDDeviceEnumerator::eAPIType HMDDeviceEnumerator::get_api_type() const
 		{
 			switch (enumerator_index)
 			{
-			case 0:
-				result = HMDDeviceEnumerator::CommunicationType_HID;
-				break;
-			case 1:
+			case ENUM_INDEX_VIRTUAL:
 				result = HMDDeviceEnumerator::CommunicationType_VIRTUAL;
+				break;
+			case ENUM_INDEX_HID:
+				result = HMDDeviceEnumerator::CommunicationType_HID;
 				break;
 			default:
 				result = HMDDeviceEnumerator::CommunicationType_INVALID;
@@ -123,7 +126,7 @@ const HidHMDDeviceEnumerator *HMDDeviceEnumerator::get_hid_hmd_enumerator() cons
 	case eAPIType::CommunicationType_ALL:
 		if (enumerator_index < enumerator_count)
 		{
-			enumerator = (enumerator_index == 0) ? static_cast<HidHMDDeviceEnumerator *>(enumerators[0]) : nullptr;
+			enumerator = (enumerator_index == ENUM_INDEX_HID) ? static_cast<HidHMDDeviceEnumerator *>(enumerators[ENUM_INDEX_HID]) : nullptr;
 		}
 		else
 		{
@@ -150,7 +153,7 @@ const VirtualHMDDeviceEnumerator *HMDDeviceEnumerator::get_virtual_hmd_enumerato
 	case eAPIType::CommunicationType_ALL:
 		if (enumerator_index < enumerator_count)
 		{
-			enumerator = (enumerator_index == 1) ? static_cast<VirtualHMDDeviceEnumerator *>(enumerators[1]) : nullptr;
+			enumerator = (enumerator_index == ENUM_INDEX_VIRTUAL) ? static_cast<VirtualHMDDeviceEnumerator *>(enumerators[ENUM_INDEX_VIRTUAL]) : nullptr;
 		}
 		else
 		{
