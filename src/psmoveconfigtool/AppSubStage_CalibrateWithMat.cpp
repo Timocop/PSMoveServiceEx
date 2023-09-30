@@ -806,7 +806,7 @@ void AppSubStage_CalibrateWithMat::renderUI()
     case AppSubStage_CalibrateWithMat::eMenuState::calibrationStepRecordHMD:
         {
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 275));
+            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 300));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             if (m_menuState == AppSubStage_CalibrateWithMat::eMenuState::calibrationStepRecordController)
@@ -820,10 +820,16 @@ void AppSubStage_CalibrateWithMat::renderUI()
                     m_sampleLocationIndex + 1, k_sample_location_names[m_sampleLocationIndex]);
             }
 
+			int samples_count = 0;
+			int samples_total = 0;
+
             bool bAnyTrackersSampling = false;
             for (int tracker_index = 0; tracker_index < m_parentStage->get_tracker_count(); ++tracker_index)
             {
                 const int sampleCount = m_deviceTrackerPoseStats[tracker_index]->sampleCount;
+
+				samples_count += sampleCount;
+				samples_total += k_mat_calibration_sample_count;
 
                 if (sampleCount < k_mat_calibration_sample_count)
                 {
@@ -847,6 +853,17 @@ void AppSubStage_CalibrateWithMat::renderUI()
                     ImGui::Text("Location sampling complete. Please pick up the HMD.");
                 }
             }
+			else
+			{
+				if (samples_total > 0)
+				{
+					const float fraction = clampf01(static_cast<float>(samples_count) / static_cast<float>(samples_total));
+
+					ImGui::Separator();
+					ImGui::Text("Sampling progress:");
+					ImGui::ProgressBar(fraction);
+				}
+			}
 
             ImGui::Separator();
 
