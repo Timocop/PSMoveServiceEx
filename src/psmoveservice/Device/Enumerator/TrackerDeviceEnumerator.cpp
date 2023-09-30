@@ -66,17 +66,31 @@ TrackerDeviceEnumerator::TrackerDeviceEnumerator(
 	}
 	case eAPIType::CommunicationType_ALL:
 	{
+		for (int i = 0; i < 2; i++)
 		{
-			AnyDeviceEnumerator _enumerator;
-			_enumerator.m_usb_enumerator = nullptr;
-			_enumerator.enumerator = new VirtualTrackerEnumerator();
-			enumerators.push_back(_enumerator);
-		}
-		{
-			AnyDeviceEnumerator _enumerator;
-			_enumerator.m_usb_enumerator = usb_device_enumerator_allocate();
-			_enumerator.enumerator = nullptr;
-			enumerators.push_back(_enumerator);
+			switch (i)
+			{
+			case ENUM_INDEX_VIRTUAL:
+			{
+				AnyDeviceEnumerator _enumerator;
+				_enumerator.m_usb_enumerator = nullptr;
+				_enumerator.enumerator = new VirtualTrackerEnumerator();
+				enumerators.push_back(_enumerator);
+				break;
+			}
+			case ENUM_INDEX_HID:
+			{
+				AnyDeviceEnumerator _enumerator;
+				_enumerator.m_usb_enumerator = usb_device_enumerator_allocate();
+				_enumerator.enumerator = nullptr;
+				enumerators.push_back(_enumerator);
+				break;
+			}
+			default:
+			{
+				assert(0 && "unreachable");
+			}
+			}
 		}
 		enumerator_count = 2;
 		break;
