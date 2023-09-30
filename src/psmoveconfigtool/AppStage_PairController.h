@@ -48,6 +48,21 @@ protected:
         void *userdata);
 
 private:
+	enum ePairingStatus
+	{
+		start,
+		setupBluetoothRadio,
+		deviceScan,
+		authenticateDevice,
+		attemptConnection,
+		patchRegistry,
+		verifyConnection,
+
+		k_total_steps,
+		success = k_total_steps,
+		failed,
+	};
+
     enum eControllerMenuState
     {
         inactive,

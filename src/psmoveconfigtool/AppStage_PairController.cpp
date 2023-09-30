@@ -106,15 +106,13 @@ void AppStage_PairController::renderUI()
     case eControllerMenuState::pendingControllerPairRequest:
         {
 			ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(400, 300));
+            ImGui::SetNextWindowSize(ImVec2(400, 200));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             // Show progress
             if (m_pair_steps_total > 0)
             {
                 const float fraction= clampf01(static_cast<float>(m_pair_steps_completed) / static_cast<float>(m_pair_steps_total));
-                std::stringstream progress_label;
-                progress_label << "Step " << m_pair_steps_completed << "/" << m_pair_steps_total;
 
 				if (m_controllerType == PSMController_DualShock4)
 				{
@@ -136,7 +134,58 @@ void AppStage_PairController::renderUI()
 						"Repeat this until the status LED finally remains lit.");
 				}
 
-                ImGui::ProgressBar(fraction, ImVec2(300, 40), progress_label.str().c_str());
+				ImGui::Spacing();
+
+				switch (m_pair_steps_completed)
+				{
+				case ePairingStatus::start:
+				{
+					ImGui::Text("Starting pairing process...");
+					break;
+				}
+				case ePairingStatus::setupBluetoothRadio:
+				{
+					ImGui::Text("Setting up bluetooth radio...");
+					break;
+				}
+				case ePairingStatus::deviceScan:
+				{
+					ImGui::Text("Searching for device...");
+					break;
+				}
+				case ePairingStatus::authenticateDevice:
+				{
+					ImGui::Text("Authenticate device...");
+					break;
+				}
+				case ePairingStatus::attemptConnection:
+				{
+					ImGui::Text("Attempt connection to device...");
+					break;
+				}
+				case ePairingStatus::patchRegistry:
+				{
+					ImGui::Text("Patching registry...");
+					break;
+				}
+				case ePairingStatus::verifyConnection:
+				{
+					ImGui::Text("Verifying connection to device...");
+					break;
+				}
+				case ePairingStatus::success:
+				{
+					ImGui::Text("Success!");
+					break;
+				}
+				case ePairingStatus::failed:
+				{
+					ImGui::Text("Failed!");
+					break;
+				}
+				}
+
+                ImGui::ProgressBar(fraction, ImVec2(-1, 0), " ");
             }
             else
             {
