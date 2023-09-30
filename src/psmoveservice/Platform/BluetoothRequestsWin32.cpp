@@ -998,7 +998,7 @@ AsyncBluetoothPairDeviceRequest__authenticateDevice(
 	else
 	{
 		SERVER_MT_LOG_INFO("AsyncBluetoothPairDeviceRequest") << "Already authenticated.";
-		nextSubStatus= BluetoothPairDeviceState::deviceScan;
+		nextSubStatus= BluetoothPairDeviceState::attemptConnection;
 	}
 
 	Sleep(SLEEP_BETWEEN_SCANS);
