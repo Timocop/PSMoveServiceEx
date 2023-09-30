@@ -399,6 +399,9 @@ void AppSubStage_CalibrateWithMat::update()
                             PSMRequestID requestId;
                             PSM_SetControllerDataStreamTrackerIndexAsync(ControllerView->ControllerID, m_sampleTrackerId, &requestId);
                             PSM_EatResponse(requestId);
+
+							// Change render to next tracker.
+							m_parentStage->go_to_tracker(m_sampleTrackerId);
                         }
                     }
                     else
@@ -561,6 +564,9 @@ void AppSubStage_CalibrateWithMat::update()
                             PSMRequestID requestId;
                             PSM_SetHmdDataStreamTrackerIndexAsync(HmdView->HmdID, m_sampleTrackerId, &requestId);
                             PSM_EatResponse(requestId);
+
+							// Change render to next tracker.
+							m_parentStage->go_to_tracker(m_sampleTrackerId);
                         }
                     }
                     else
@@ -986,6 +992,9 @@ void AppSubStage_CalibrateWithMat::onEnterState(
 
                 PSM_SetControllerDataStreamTrackerIndexAsync(ControllerView->ControllerID, 0, &requestId);
                 PSM_EatResponse(requestId);
+
+				// Change render to next tracker.
+				m_parentStage->go_to_tracker(0);
             }
             else if (newState == AppSubStage_CalibrateWithMat::eMenuState::calibrationStepPlaceHMD)
             {
@@ -994,6 +1003,9 @@ void AppSubStage_CalibrateWithMat::onEnterState(
 
                 PSM_SetHmdDataStreamTrackerIndexAsync(HmdView->HmdID, 0, &requestId);
                 PSM_EatResponse(requestId);
+
+				// Change render to next tracker.
+				m_parentStage->go_to_tracker(0);
             }
         } break;
     case AppSubStage_CalibrateWithMat::eMenuState::calibrationStepRecordController:

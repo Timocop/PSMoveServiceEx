@@ -119,6 +119,7 @@ protected:
 
     void update_tracker_video();
     void render_tracker_video();
+	void go_to_tracker(PSMTrackerID tracker_id);
     void go_next_tracker();
     void go_previous_tracker();
     int get_tracker_count() const;

@@ -1356,23 +1356,42 @@ void AppStage_ComputeTrackerPoses::render_tracker_video()
     }
 }
 
+void AppStage_ComputeTrackerPoses::go_to_tracker(PSMTrackerID tracker_id)
+{
+	const int trackerCount = static_cast<int>(m_trackerViews.size());
+
+	if (trackerCount > 1 && tracker_id > -1)
+	{
+		m_renderTrackerIndex = tracker_id % trackerCount;
+
+		// Find the tracker iterator that corresponds to the render index we want to show
+		for (t_tracker_state_map_iterator iter = m_trackerViews.begin(); iter != m_trackerViews.end(); ++iter)
+		{
+			if (iter->second.listIndex == m_renderTrackerIndex)
+			{
+				m_renderTrackerIter = iter;
+			}
+		}
+	}
+}
+
 void AppStage_ComputeTrackerPoses::go_next_tracker()
 {
-    const int trackerCount = static_cast<int>(m_trackerViews.size());
+	const int trackerCount = static_cast<int>(m_trackerViews.size());
 
-    if (trackerCount > 1)
-    {
-        m_renderTrackerIndex = (m_renderTrackerIndex + 1) % trackerCount;
+	if (trackerCount > 1)
+	{
+		m_renderTrackerIndex = (m_renderTrackerIndex + 1) % trackerCount;
 
-        // Find the tracker iterator that corresponds to the render index we want to show
-        for (t_tracker_state_map_iterator iter = m_trackerViews.begin(); iter != m_trackerViews.end(); ++iter)
-        {
-            if (iter->second.listIndex == m_renderTrackerIndex)
-            {
-                m_renderTrackerIter = iter;
-            }
-        }
-    }
+		// Find the tracker iterator that corresponds to the render index we want to show
+		for (t_tracker_state_map_iterator iter = m_trackerViews.begin(); iter != m_trackerViews.end(); ++iter)
+		{
+			if (iter->second.listIndex == m_renderTrackerIndex)
+			{
+				m_renderTrackerIter = iter;
+			}
+		}
+	}
 }
 
 void AppStage_ComputeTrackerPoses::go_previous_tracker()
