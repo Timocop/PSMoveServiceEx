@@ -1,12 +1,15 @@
 @echo off
 
+:: Abort if theres no build available.
 IF NOT EXIST build goto no_build
 
+:: Remove old zip and temp folder file.
+IF EXIST ".\release\PSMoveService.zip" del /S /Q ".\release\PSMoveService.zip"
 IF EXIST ".\release\PSMoveService\" rmdir /S /Q ".\release\PSMoveService\"
 
+:: Create temp folders.
 IF NOT EXIST ".\release\PSMoveService\" mkdir ".\release\PSMoveService\"
 IF NOT EXIST ".\release\PSMoveService\testing\" mkdir ".\release\PSMoveService\testing\"
-
 IF NOT EXIST ".\release\PSMoveService\assets\calibration\" mkdir ".\release\PSMoveService\assets\calibration\"
 
 :: Copy misc calibration files to psmoveconfigtool.
@@ -24,6 +27,9 @@ copy /Y ".\build\src\tests\Release\*.exe" ".\release\PSMoveService\testing\"
 
 :: Copy LICENSE.
 copy /Y ".\LICENSE" ".\release\PSMoveService\LICENSE.txt"
+
+:: Create zip file
+.\7zip\7za.exe a -tzip ".\release\PSMoveService.zip" -w ".\release\PSMoveService" 
 
 pause
 goto exit
