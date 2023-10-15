@@ -618,8 +618,11 @@ bool MorpheusHMD::open(
 				SERVER_LOG_INFO("MorpheusHMD::open") << "Turning on MorpheusHMD power.";
 				if (morpheus_set_headset_power(USBContext, true))
 				{
-					SERVER_LOG_INFO("MorpheusHMD::open") << "Turning on MorpheusHMD tracking.";
-					if (morpheus_enable_tracking(USBContext))
+					SERVER_LOG_INFO("MorpheusHMD::open") << "Turning on MorpheusHMD VR-Mode.";
+					
+					// Apparently the first generation morpheus dislikes morpheus_enable_tracking() and causes infinite loading.
+					// morpheus_set_vr_mode() seems to work just fine.
+					if (morpheus_set_vr_mode(USBContext, true))
 					{
 						//morpheus_enable_tracking() resets morpheus_set_led_brightness() LED settings?
 						//Lets just wait a bit.
