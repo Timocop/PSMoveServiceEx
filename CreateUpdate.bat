@@ -7,6 +7,9 @@ IF NOT EXIST build goto no_build
 set /p version= "Please input a new version (e.g: 1.2.3.4 or 1.0) :" 
 echo Generating new app_version.txt file with version: '%version%'.
 
+:: Write version to file.
+echo %version% > ".\updater\app_version.txt"
+
 :: Remove old zip and temp folder file.
 IF EXIST ".\updater\PSMoveServiceUpdateSFX.dat" del /S /Q ".\updater\PSMoveServiceUpdateSFX.dat"
 IF EXIST ".\updater\PSMoveService\" rmdir /S /Q ".\updater\PSMoveService\"
