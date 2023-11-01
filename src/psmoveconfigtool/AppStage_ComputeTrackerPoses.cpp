@@ -1118,7 +1118,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
 		case eMenuState::showControllerOffsets:
 		{
 			ImGui::SetNextWindowPos(ImVec2(20.f, 20.f));
-			ImGui::SetNextWindowSize(ImVec2(k_panel_width, 275));
+			ImGui::SetNextWindowSize(ImVec2(k_panel_width, 300));
 			ImGui::Begin(k_window_title, nullptr, window_flags);
 
 			if (ImGui::Button(" < ##Previous Tracker"))
@@ -1155,18 +1155,52 @@ void AppStage_ComputeTrackerPoses::renderUI()
 				PSMVector3f bounds_size;
 				get_points_bounds(box_min, box_max, bounds_size);
 
-				float distance = 1.f - fmaxf(fabsf(bounds_size.x), fmaxf(fabsf(bounds_size.y), fabsf(bounds_size.z))) / 15.f;
+				PSMVector3f center_box;
+				center_box.x = (0.5 * (box_min.x + box_max.x));
+				center_box.y = (0.5 * (box_min.y + box_max.y));
+				center_box.z = (0.5 * (box_min.z + box_max.z));
+
+				float distance = 1.f - (fmaxf(fabsf(bounds_size.x), fmaxf(fabsf(bounds_size.y), fabsf(bounds_size.z))) / 15.f);
+				float center_distance = fmaxf(fabsf(center_box.x), fmaxf(fabsf(center_box.y), fabsf(center_box.z)));
 
 				ImGui::Text("Triangulation Quality:");
 
-				if(distance > 0.75f)
-					ImGui::ProgressBar(distance, ImVec2(-1, 0), "Perfect");
-				else if (distance > 0.5f)
-					ImGui::ProgressBar(distance, ImVec2(-1, 0), "Good");
-				else if (distance > 0.25f)
-					ImGui::ProgressBar(distance, ImVec2(-1, 0), "Poor");
+				// Should be more than 100cm away for measure
+				if (center_distance > 100.f)
+				{
+					if (m_triangInfo.size() > 1)
+					{
+						if (distance > 0.75f) {
+							ImGui::ProgressBar(distance, ImVec2(-1, 0), "Perfect");
+						}
+						else if (distance > 0.5f) {
+							ImGui::ProgressBar(distance, ImVec2(-1, 0), "Good");
+						}
+						else if (distance > 0.25f) {
+							ImGui::ProgressBar(distance, ImVec2(-1, 0), "Poor");
+						}
+						else {
+							ImGui::ProgressBar(distance, ImVec2(-1, 0), "Terrible");
+						}
+					}
+					else
+					{
+						ImGui::ProgressBar(0.0f, ImVec2(-1, 0), "Failed");
+						ImGui::Bullet();
+						ImGui::SameLine();
+						ImGui::TextDisabled(
+							"More than 2 triangulation points\n"
+							"are required."
+						);
+					}
+				}
 				else
-					ImGui::ProgressBar(distance, ImVec2(-1, 0), "Terrible");
+				{
+					ImGui::ProgressBar(0.0f, ImVec2(-1, 0), "Failed");
+					ImGui::Bullet();
+					ImGui::SameLine();
+					ImGui::TextDisabled("Too close to playspace center.");
+				}
 			}
 
 			ImGui::Separator();
