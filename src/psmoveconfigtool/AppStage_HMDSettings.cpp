@@ -525,11 +525,11 @@ void AppStage_HMDSettings::renderUI()
 						{
 							settings_shown = true;
 
-							ImGui::Text("Angular Smoothing Power (%%): ");
+							ImGui::Text("Angular Velocity Smoothing Power (%%): ");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(120.f);
 							float filter_angular_smoothing_factor = (1.f - hmdInfo.FilterAngularSmoothingFactor) * 100.f;
-							if (ImGui::InputFloat("##AngularSmoothingFactor", &filter_angular_smoothing_factor, 1.f, 5.f, 2))
+							if (ImGui::InputFloat("##AngularVelocitySmoothingFactor", &filter_angular_smoothing_factor, 1.f, 5.f, 2))
 							{
 								hmdInfo.FilterAngularSmoothingFactor = clampf(1.f - (filter_angular_smoothing_factor / 100.f), 0.0f, 1.0f);
 
