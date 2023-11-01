@@ -644,8 +644,8 @@ void AppStage_HMDSettings::renderUI()
 						if (ImGui::Button("Reset Filter Settings Defaults"))
 						{
 							hmdInfo.FilterLowPassOpticalDistance = 1.f;
-							hmdInfo.FilterLowPassOpticalSmoothing = 0.40f;
-							hmdInfo.FilterMadgwickBeta = 0.5f;
+							hmdInfo.FilterLowPassOpticalSmoothing = 0.10f;
+							hmdInfo.FilterMadgwickBeta = 0.1f;
 							hmdInfo.FilterMadgwickStabilization = true;
 							hmdInfo.FilterMadgwickStabilizationMinBeta = 0.02f;
 							hmdInfo.FilterMadgwickStabilizationSmoothingFactor = 0.1f;
