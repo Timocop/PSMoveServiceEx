@@ -1172,7 +1172,7 @@ void AppStage_ControllerSettings::renderUI()
 												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 												ImGui::PushItemWidth(120.f);
 												float filter_madgwick_beta = controllerInfo.FilterMadgwickBeta;
-												if (ImGui::InputFloat("##MadgwickFilterMadgwickBeta", &filter_madgwick_beta, 0.01f, 0.05f, 2))
+												if (ImGui::InputFloat("##MadgwickFilterMadgwickBeta", &filter_madgwick_beta, 1.f, 5.f, 2))
 												{
 													controllerInfo.FilterMadgwickBeta = clampf(filter_madgwick_beta, 0.0f, 1.0f);
 
