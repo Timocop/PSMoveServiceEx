@@ -1570,6 +1570,24 @@ void AppStage_ControllerSettings::renderUI()
 											ImGui::Separator();
 										}
 
+										if (ImGui::Button("Set Forward View Horizontal Left"))
+										{
+											controllerInfo.OffsetOrientation.x = -90.f;
+											controllerInfo.OffsetOrientation.y = -90.f;
+											controllerInfo.OffsetOrientation.z = 0.f;
+
+											request_offset = true;
+										}
+
+										if (ImGui::Button("Set Forward View Horizontal Right"))
+										{
+											controllerInfo.OffsetOrientation.x = -90.f;
+											controllerInfo.OffsetOrientation.y = 90.f;
+											controllerInfo.OffsetOrientation.z = 0.f;
+
+											request_offset = true;
+										}
+
 										if (ImGui::Button("Reset All"))
 										{
 											controllerInfo.OffsetOrientation.x = 0.f;
