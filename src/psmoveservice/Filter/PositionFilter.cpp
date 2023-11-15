@@ -36,7 +36,7 @@
 #define k_kalman_position_error 10.f
 
 // Kalman process noise
-#define k_kalman_position_noise 200.0f
+#define k_kalman_position_noise 300.0f
 
 // -- private definitions -----
 struct PositionFilterState
@@ -865,6 +865,7 @@ void PositionFilterKalman::update(
 	float position_prediction_cutoff = k_velocity_adaptive_prediction_cutoff;
 	float kalman_position_error = k_kalman_position_error;
 	float kalman_position_noise = k_kalman_position_noise;
+	bool kalman_position_noise_disable_cutoff = true;
 
 
 #if !defined(IS_TESTING_KALMAN) 
@@ -884,6 +885,7 @@ void PositionFilterKalman::update(
 				position_prediction_cutoff = config.filter_velocity_prediction_cutoff;
 				kalman_position_error = config.filter_position_kalman_error;
 				kalman_position_noise = config.filter_position_kalman_noise;
+				kalman_position_noise_disable_cutoff = config.filter_position_kalman_disable_cutoff;
 
 				break;
 			}
@@ -896,6 +898,7 @@ void PositionFilterKalman::update(
 				position_prediction_cutoff = config.filter_velocity_prediction_cutoff;
 				kalman_position_error = config.filter_position_kalman_error;
 				kalman_position_noise = config.filter_position_kalman_noise;
+				kalman_position_noise_disable_cutoff = config.filter_position_kalman_disable_cutoff;
 
 				break;
 			}
@@ -908,6 +911,7 @@ void PositionFilterKalman::update(
 				position_prediction_cutoff = config->filter_velocity_prediction_cutoff;
 				kalman_position_error = config->filter_position_kalman_error;
 				kalman_position_noise = config->filter_position_kalman_noise;
+				kalman_position_noise_disable_cutoff = config->filter_position_kalman_disable_cutoff;
 
 				break;
 			}
@@ -930,6 +934,7 @@ void PositionFilterKalman::update(
 				position_prediction_cutoff = config->filter_velocity_prediction_cutoff;
 				kalman_position_error = config->filter_position_kalman_error;
 				kalman_position_noise = config->filter_position_kalman_noise;
+				kalman_position_noise_disable_cutoff = config->filter_position_kalman_disable_cutoff;
 
 				break;
 			}
@@ -942,6 +947,7 @@ void PositionFilterKalman::update(
 				position_prediction_cutoff = config->filter_velocity_prediction_cutoff;
 				kalman_position_error = config->filter_position_kalman_error;
 				kalman_position_noise = config->filter_position_kalman_noise;
+				kalman_position_noise_disable_cutoff = config->filter_position_kalman_disable_cutoff;
 
 				break;
 			}
@@ -1010,7 +1016,7 @@ void PositionFilterKalman::update(
 
 			new_position_meters_sec = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->velocity_m_per_sec, new_velocity);
 
-			if (position_prediction_cutoff > k_real_epsilon)
+			if (!kalman_position_noise_disable_cutoff && position_prediction_cutoff > k_real_epsilon)
 			{
 				// Do adapting prediction and smoothing
 				const float velocity_speed_sec = new_position_meters_sec.norm();

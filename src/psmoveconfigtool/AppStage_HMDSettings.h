@@ -60,6 +60,7 @@ public:
 		float filter_angular_prediction_cutoff;
 		float filter_position_kalman_error;
 		float filter_position_kalman_noise;
+		bool filter_position_kalman_disable_cutoff;
 	};
 
     struct HMDInfo
@@ -92,6 +93,7 @@ public:
 		float FilterAngularPredictionCutoff;
 		float FilterPositionKalmanError;
 		float FilterPositionKalmanNoise;
+		bool FilterPositionKalmanDisableCutoff;
     };
 
 

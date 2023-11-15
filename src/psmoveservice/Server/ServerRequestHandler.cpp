@@ -742,6 +742,7 @@ protected:
 				float filter_angular_prediction_cutoff;
 				float filter_position_kalman_error;
 				float filter_position_kalman_noise;
+				bool filter_position_kalman_disable_cutoff;
 
                 switch(controller_view->getControllerDeviceType())
                 {
@@ -786,6 +787,7 @@ protected:
 						filter_angular_prediction_cutoff = config->filter_angular_prediction_cutoff;
 						filter_position_kalman_error = config->filter_position_kalman_error;
 						filter_position_kalman_noise = config->filter_position_kalman_noise;
+						filter_position_kalman_disable_cutoff = config->filter_position_kalman_disable_cutoff;
 
                         controller_info->set_controller_type(PSMoveProtocol::PSMOVE);
                     }
@@ -858,6 +860,7 @@ protected:
 						filter_angular_prediction_cutoff = config->filter_angular_prediction_cutoff;
 						filter_position_kalman_error = config->filter_position_kalman_error;
 						filter_position_kalman_noise = config->filter_position_kalman_noise;
+						filter_position_kalman_disable_cutoff = config->filter_position_kalman_disable_cutoff;
 
 						controller_info->set_controller_type(PSMoveProtocol::PSDUALSHOCK4);
                     }
@@ -889,6 +892,7 @@ protected:
 						filter_angular_prediction_cutoff = config->filter_angular_prediction_cutoff;
 						filter_position_kalman_error = config->filter_position_kalman_error;
 						filter_position_kalman_noise = config->filter_position_kalman_noise;
+						filter_position_kalman_disable_cutoff = config->filter_position_kalman_disable_cutoff;
 
 						controller_info->set_controller_type(PSMoveProtocol::VIRTUALCONTROLLER);
                     }
@@ -967,6 +971,7 @@ protected:
 				controller_info->set_filter_angular_prediction_cutoff(filter_angular_prediction_cutoff);
 				controller_info->set_filter_position_kalman_error(filter_position_kalman_error);
 				controller_info->set_filter_position_kalman_noise(filter_position_kalman_noise);
+				controller_info->set_filter_position_kalman_disable_cutoff(filter_position_kalman_disable_cutoff);
             }
         }
 

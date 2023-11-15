@@ -466,17 +466,21 @@ void AppStage_HMDSettings::renderUI()
 								);
 							}
 
-							ImGui::Text("Velocity Prediction Cutoff (m/s): ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							float filter_velocity_prediction_cutoff = hmdInfo.FilterVelocityPredictionCutoff;
-							if (ImGui::InputFloat("##VelocityPredictionCutoff", &filter_velocity_prediction_cutoff, 0.01f, 0.05f, 2))
+							bool hidePredictionCutoff = (hmdInfo.PositionFilterName == "PositionKalman" && hmdInfo.FilterPositionKalmanDisableCutoff);
+							if (!hidePredictionCutoff)
 							{
-								hmdInfo.FilterVelocityPredictionCutoff = clampf(filter_velocity_prediction_cutoff, 0.0f, (1 << 16));
+								ImGui::Text("Velocity Prediction Cutoff (m/s): ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								float filter_velocity_prediction_cutoff = hmdInfo.FilterVelocityPredictionCutoff;
+								if (ImGui::InputFloat("##VelocityPredictionCutoff", &filter_velocity_prediction_cutoff, 0.01f, 0.05f, 2))
+								{
+									hmdInfo.FilterVelocityPredictionCutoff = clampf(filter_velocity_prediction_cutoff, 0.0f, (1 << 16));
 
-								request_offset = true;
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
 							}
-							ImGui::PopItemWidth();
 						}
 
 						if (hmdInfo.PositionFilterName == "LowPassOptical")
@@ -544,6 +548,15 @@ void AppStage_HMDSettings::renderUI()
 									"Too low values can also lead to increased motion latency."
 								);
 							}
+
+							ImGui::Text("Disable Velocity Prediction Cutoff: ");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(120.f);
+							if (ImGui::Checkbox("##DisableVelocityPredictionCutoff", &hmdInfo.FilterPositionKalmanDisableCutoff))
+							{
+								request_offset = true;
+							}
+							ImGui::PopItemWidth();
 						}
 
 						if (!settings_shown)
@@ -694,6 +707,7 @@ void AppStage_HMDSettings::renderUI()
 							hmdInfo.FilterAngularPredictionCutoff = 0.25f;
 							hmdInfo.FilterPositionKalmanError = 10.f;
 							hmdInfo.FilterPositionKalmanNoise = 200.f;
+							hmdInfo.FilterPositionKalmanDisableCutoff = true;
 
 							request_offset = true;
 						}
@@ -713,6 +727,7 @@ void AppStage_HMDSettings::renderUI()
 							filterSettings.filter_angular_prediction_cutoff = hmdInfo.FilterAngularPredictionCutoff;
 							filterSettings.filter_position_kalman_error = hmdInfo.FilterPositionKalmanError;
 							filterSettings.filter_position_kalman_noise = hmdInfo.FilterPositionKalmanNoise;
+							filterSettings.filter_position_kalman_disable_cutoff = hmdInfo.FilterPositionKalmanDisableCutoff;
 
 							request_set_hmd_filter_settings(hmdInfo.HmdID, filterSettings);
 						}
@@ -1216,6 +1231,7 @@ void AppStage_HMDSettings::request_set_hmd_filter_settings(
 	filter_settings->set_filter_angular_prediction_cutoff(filterSettings.filter_angular_prediction_cutoff);
 	filter_settings->set_filter_position_kalman_error(filterSettings.filter_position_kalman_error);
 	filter_settings->set_filter_position_kalman_noise(filterSettings.filter_position_kalman_noise);
+	filter_settings->set_filter_position_kalman_disable_cutoff(filterSettings.filter_position_kalman_disable_cutoff);
 
 	PSMRequestID request_id;
 	PSM_SendOpaqueRequest(&request, &request_id);
@@ -1322,7 +1338,8 @@ void AppStage_HMDSettings::handle_hmd_list_response(
 				HmdInfo.FilterVelocityPredictionCutoff = HmdResponse.filter_velocity_prediction_cutoff();
 				HmdInfo.FilterAngularPredictionCutoff = HmdResponse.filter_angular_prediction_cutoff();
 				HmdInfo.FilterPositionKalmanError = HmdResponse.filter_position_kalman_error();
-				HmdInfo.FilterPositionKalmanNoise= HmdResponse.filter_position_kalman_noise();
+				HmdInfo.FilterPositionKalmanNoise = HmdResponse.filter_position_kalman_noise();
+				HmdInfo.FilterPositionKalmanDisableCutoff = HmdResponse.filter_position_kalman_disable_cutoff();
 
                 if (HmdInfo.HmdType == AppStage_HMDSettings::Morpheus)
                 {

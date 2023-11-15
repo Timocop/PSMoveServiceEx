@@ -385,6 +385,7 @@ MorpheusHMDConfig::config2ptree()
 
 	pt.put("FilterSettings.PositionKalman.Error", filter_position_kalman_error);
 	pt.put("FilterSettings.PositionKalman.ProcessNoise", filter_position_kalman_noise);
+	pt.put("FilterSettings.PositionKalman.DisableCutoff", filter_position_kalman_disable_cutoff);
 
 	writeTrackingColor(pt, tracking_color_id);
 
@@ -473,6 +474,7 @@ MorpheusHMDConfig::ptree2config(const boost::property_tree::ptree &pt)
 
 		filter_position_kalman_error = pt.get<float>("FilterSettings.PositionKalman.Error", filter_position_kalman_error);
 		filter_position_kalman_noise = pt.get<float>("FilterSettings.PositionKalman.ProcessNoise", filter_position_kalman_noise);
+		filter_position_kalman_disable_cutoff = pt.get<bool>("FilterSettings.PositionKalman.DisableCutoff", filter_position_kalman_disable_cutoff);
     }
     else
     {

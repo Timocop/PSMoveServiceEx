@@ -37,6 +37,7 @@ public:
 		, filter_angular_prediction_cutoff(0.25f)
 		, filter_position_kalman_error(10.f)
 		, filter_position_kalman_noise(200.f)
+		, filter_position_kalman_disable_cutoff(true)
     {
 		offset_position.set(0.0, 0.0, 0.0);
 		offset_orientation.set(0.0, 0.0, 0.0);
@@ -90,6 +91,7 @@ public:
 
 	float filter_position_kalman_error;
 	float filter_position_kalman_noise;
+	bool filter_position_kalman_disable_cutoff;
 };
 
 struct VirtualHMDState : public CommonHMDState

@@ -92,6 +92,7 @@ public:
 		, filter_angular_prediction_cutoff(0.25f)
 		, filter_position_kalman_error(10.f)
 		, filter_position_kalman_noise(300.f)
+		, filter_position_kalman_disable_cutoff(true)
     {
         magnetometer_identity.clear();
         magnetometer_center.clear();
@@ -249,6 +250,7 @@ public:
 
 	float filter_position_kalman_error;
 	float filter_position_kalman_noise;
+	bool filter_position_kalman_disable_cutoff;
 };
 
 struct PSMoveControllerInputState : public CommonControllerState

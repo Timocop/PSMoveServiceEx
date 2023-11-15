@@ -660,6 +660,7 @@ message Request {
 		float filter_angular_prediction_cutoff = 20;
 		float filter_position_kalman_error = 21;
 		float filter_position_kalman_noise = 22;
+		bool filter_position_kalman_disable_cutoff = 23;
     }
     RequestSetControllerFilterSettings request_set_controller_filter_settings = 55;
 	
@@ -678,6 +679,7 @@ message Request {
 		float filter_angular_prediction_cutoff = 11;
 		float filter_position_kalman_error = 12;
 		float filter_position_kalman_noise = 13;
+		bool filter_position_kalman_disable_cutoff = 14;
     }
     RequestSetHmdFilterSettings request_set_hmd_filter_settings = 56;
 	
@@ -827,6 +829,7 @@ message Response {
 			float filter_angular_prediction_cutoff = 44;
 			float filter_position_kalman_error = 45;
 			float filter_position_kalman_noise = 46;
+			bool filter_position_kalman_disable_cutoff = 47;
         }
         repeated ControllerInfo controllers = 1;
         string host_serial = 2;
@@ -967,6 +970,7 @@ message Response {
 			float filter_angular_prediction_cutoff = 22;
 			float filter_position_kalman_error = 23;
 			float filter_position_kalman_noise = 24;
+			bool filter_position_kalman_disable_cutoff = 25;
         }
         repeated HMDInfo hmd_entries = 1;
     }

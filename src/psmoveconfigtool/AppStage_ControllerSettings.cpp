@@ -906,17 +906,21 @@ void AppStage_ControllerSettings::renderUI()
 													);
 												}
 
-												ImGui::Text("Velocity Prediction Cutoff (m/s): ");
-												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-												ImGui::PushItemWidth(120.f);
-												float filter_velocity_prediction_cutoff = controllerInfo.FilterVelocityPredictionCutoff;
-												if (ImGui::InputFloat("##VelocityPredictionCutoff", &filter_velocity_prediction_cutoff, 0.01f, 0.05f, 2))
+												bool hidePredictionCutoff = (controllerInfo.PositionFilterName == "PositionKalman" && controllerInfo.FilterPositionKalmanDisableCutoff);
+												if (!hidePredictionCutoff)
 												{
-													controllerInfo.FilterVelocityPredictionCutoff = clampf(filter_velocity_prediction_cutoff, 0.0f, (1 << 16));
+													ImGui::Text("Velocity Prediction Cutoff (m/s): ");
+													ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+													ImGui::PushItemWidth(120.f);
+													float filter_velocity_prediction_cutoff = controllerInfo.FilterVelocityPredictionCutoff;
+													if (ImGui::InputFloat("##VelocityPredictionCutoff", &filter_velocity_prediction_cutoff, 0.01f, 0.05f, 2))
+													{
+														controllerInfo.FilterVelocityPredictionCutoff = clampf(filter_velocity_prediction_cutoff, 0.0f, (1 << 16));
 
-													request_offset = true;
+														request_offset = true;
+													}
+													ImGui::PopItemWidth();
 												}
-												ImGui::PopItemWidth();
 											}
 
 											if (controllerInfo.PositionFilterName == "LowPassOptical")
@@ -984,6 +988,15 @@ void AppStage_ControllerSettings::renderUI()
 														"Too low values can also lead to increased motion latency."
 													);
 												}
+
+												ImGui::Text("Disable Velocity Prediction Cutoff: ");
+												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+												ImGui::PushItemWidth(120.f);
+												if (ImGui::Checkbox("##DisableVelocityPredictionCutoff", &controllerInfo.FilterPositionKalmanDisableCutoff))
+												{
+													request_offset = true;
+												}
+												ImGui::PopItemWidth();
 											}
 
 											if (!settings_shown)
@@ -1274,6 +1287,7 @@ void AppStage_ControllerSettings::renderUI()
 												controllerInfo.FilterAngularPredictionCutoff = 0.25f;
 												controllerInfo.FilterPositionKalmanError = 10.f;
 												controllerInfo.FilterPositionKalmanNoise = 300.f;
+												controllerInfo.FilterPositionKalmanDisableCutoff = true;
 
 												request_offset = true;
 
@@ -1302,6 +1316,7 @@ void AppStage_ControllerSettings::renderUI()
 												filterSettings.filter_angular_prediction_cutoff = controllerInfo.FilterAngularPredictionCutoff;
 												filterSettings.filter_position_kalman_error = controllerInfo.FilterPositionKalmanError;
 												filterSettings.filter_position_kalman_noise = controllerInfo.FilterPositionKalmanNoise;
+												filterSettings.filter_position_kalman_disable_cutoff = controllerInfo.FilterPositionKalmanDisableCutoff;
 
 												request_set_controller_filter_settings(controllerInfo.ControllerID, filterSettings);
 											}
@@ -1977,6 +1992,7 @@ void AppStage_ControllerSettings::request_set_controller_filter_settings(
 	filter_settings->set_filter_angular_prediction_cutoff(filterSettings.filter_angular_prediction_cutoff);
 	filter_settings->set_filter_position_kalman_error(filterSettings.filter_position_kalman_error);
 	filter_settings->set_filter_position_kalman_noise(filterSettings.filter_position_kalman_noise);
+	filter_settings->set_filter_position_kalman_disable_cutoff(filterSettings.filter_position_kalman_disable_cutoff);
 
 	PSMRequestID request_id;
 	PSM_SendOpaqueRequest(&request, &request_id);
@@ -2086,6 +2102,7 @@ void AppStage_ControllerSettings::handle_controller_list_response(
 				ControllerInfo.FilterAngularPredictionCutoff = ControllerResponse.filter_angular_prediction_cutoff();
 				ControllerInfo.FilterPositionKalmanError = ControllerResponse.filter_position_kalman_error();
 				ControllerInfo.FilterPositionKalmanNoise = ControllerResponse.filter_position_kalman_noise();
+				ControllerInfo.FilterPositionKalmanDisableCutoff = ControllerResponse.filter_position_kalman_disable_cutoff();
 
                 if (ControllerInfo.ControllerType == PSMController_Move)
                 {
