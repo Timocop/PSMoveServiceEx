@@ -535,6 +535,15 @@ void AppStage_HMDSettings::renderUI()
 								request_offset = true;
 							}
 							ImGui::PopItemWidth();
+
+							if (ImGui::IsItemHovered())
+							{
+								ImGui::SetTooltip(
+									"The amount of noise filtered.\n"
+									"Lower values filter out noise more, higher values less.\n"
+									"Too low values can also lead to increased motion latency."
+								);
+							}
 						}
 
 						if (!settings_shown)
