@@ -740,6 +740,8 @@ protected:
 				float filter_angular_smoothing_factor;
 				float filter_velocity_prediction_cutoff;
 				float filter_angular_prediction_cutoff;
+				float filter_position_kalman_error;
+				float filter_position_kalman_noise;
 
                 switch(controller_view->getControllerDeviceType())
                 {
@@ -782,6 +784,8 @@ protected:
 						filter_angular_smoothing_factor = config->filter_angular_smoothing_factor;
 						filter_velocity_prediction_cutoff = config->filter_velocity_prediction_cutoff;
 						filter_angular_prediction_cutoff = config->filter_angular_prediction_cutoff;
+						filter_position_kalman_error = config->filter_position_kalman_error;
+						filter_position_kalman_noise = config->filter_position_kalman_noise;
 
                         controller_info->set_controller_type(PSMoveProtocol::PSMOVE);
                     }
@@ -852,6 +856,8 @@ protected:
 						filter_angular_smoothing_factor = config->filter_angular_smoothing_factor;
 						filter_velocity_prediction_cutoff = config->filter_velocity_prediction_cutoff;
 						filter_angular_prediction_cutoff = config->filter_angular_prediction_cutoff;
+						filter_position_kalman_error = config->filter_position_kalman_error;
+						filter_position_kalman_noise = config->filter_position_kalman_noise;
 
 						controller_info->set_controller_type(PSMoveProtocol::PSDUALSHOCK4);
                     }
@@ -881,6 +887,8 @@ protected:
 						filter_angular_smoothing_factor = config->filter_angular_smoothing_factor;
 						filter_velocity_prediction_cutoff = config->filter_velocity_prediction_cutoff;
 						filter_angular_prediction_cutoff = config->filter_angular_prediction_cutoff;
+						filter_position_kalman_error = config->filter_position_kalman_error;
+						filter_position_kalman_noise = config->filter_position_kalman_noise;
 
 						controller_info->set_controller_type(PSMoveProtocol::VIRTUALCONTROLLER);
                     }
@@ -957,6 +965,8 @@ protected:
 				controller_info->set_filter_angular_smoothing_factor(filter_angular_smoothing_factor);
 				controller_info->set_filter_velocity_prediction_cutoff(filter_velocity_prediction_cutoff);
 				controller_info->set_filter_angular_prediction_cutoff(filter_angular_prediction_cutoff);
+				controller_info->set_filter_position_kalman_error(filter_position_kalman_error);
+				controller_info->set_filter_position_kalman_noise(filter_position_kalman_noise);
             }
         }
 
@@ -3172,7 +3182,9 @@ protected:
 					config.filter_velocity_smoothing_factor != request.filter_velocity_smoothing_factor() ||
 					config.filter_angular_smoothing_factor != request.filter_angular_smoothing_factor() ||
 					config.filter_velocity_prediction_cutoff != request.filter_velocity_prediction_cutoff() ||
-					config.filter_angular_prediction_cutoff != request.filter_angular_prediction_cutoff())
+					config.filter_angular_prediction_cutoff != request.filter_angular_prediction_cutoff() ||
+					config.filter_position_kalman_error != request.filter_position_kalman_error() ||
+					config.filter_position_kalman_noise != request.filter_position_kalman_noise())
 				{
 					config.filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
 					config.filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
@@ -3192,6 +3204,8 @@ protected:
 					config.filter_angular_smoothing_factor = request.filter_angular_smoothing_factor();
 					config.filter_velocity_prediction_cutoff = request.filter_velocity_prediction_cutoff();
 					config.filter_angular_prediction_cutoff = request.filter_angular_prediction_cutoff();
+					config.filter_position_kalman_error = request.filter_position_kalman_error();
+					config.filter_position_kalman_noise = request.filter_position_kalman_noise();
 
 					controller->setConfig(&config);
 				}
@@ -3212,7 +3226,9 @@ protected:
 					config.filter_velocity_smoothing_factor != request.filter_velocity_smoothing_factor() ||
 					config.filter_angular_smoothing_factor != request.filter_angular_smoothing_factor() ||
 					config.filter_velocity_prediction_cutoff != request.filter_velocity_prediction_cutoff() ||
-					config.filter_angular_prediction_cutoff != request.filter_angular_prediction_cutoff())
+					config.filter_angular_prediction_cutoff != request.filter_angular_prediction_cutoff() ||
+					config.filter_position_kalman_error != request.filter_position_kalman_error() ||
+					config.filter_position_kalman_noise != request.filter_position_kalman_noise())
 				{
 					config.filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
 					config.filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
@@ -3224,6 +3240,8 @@ protected:
 					config.filter_angular_smoothing_factor = request.filter_angular_smoothing_factor();
 					config.filter_velocity_prediction_cutoff = request.filter_velocity_prediction_cutoff();
 					config.filter_angular_prediction_cutoff = request.filter_angular_prediction_cutoff();
+					config.filter_position_kalman_error = request.filter_position_kalman_error();
+					config.filter_position_kalman_noise = request.filter_position_kalman_noise();
 
 					controller->setConfig(&config);
 				}
@@ -3240,7 +3258,9 @@ protected:
 					config->filter_velocity_smoothing_factor != request.filter_velocity_smoothing_factor() ||
 					config->filter_angular_smoothing_factor != request.filter_angular_smoothing_factor() ||
 					config->filter_velocity_prediction_cutoff != request.filter_velocity_prediction_cutoff() ||
-					config->filter_angular_prediction_cutoff != request.filter_angular_prediction_cutoff())
+					config->filter_angular_prediction_cutoff != request.filter_angular_prediction_cutoff() ||
+					config->filter_position_kalman_error != request.filter_position_kalman_error() ||
+					config->filter_position_kalman_noise != request.filter_position_kalman_noise())
 				{
 					config->filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
 					config->filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
@@ -3248,6 +3268,8 @@ protected:
 					config->filter_angular_smoothing_factor = request.filter_angular_smoothing_factor();
 					config->filter_velocity_prediction_cutoff = request.filter_velocity_prediction_cutoff();
 					config->filter_angular_prediction_cutoff = request.filter_angular_prediction_cutoff();
+					config->filter_position_kalman_error = request.filter_position_kalman_error();
+					config->filter_position_kalman_noise = request.filter_position_kalman_noise();
 
 					config->save();
 				}
@@ -3392,7 +3414,9 @@ protected:
 					config->filter_velocity_smoothing_factor != request.filter_velocity_smoothing_factor() ||
 					config->filter_angular_smoothing_factor != request.filter_angular_smoothing_factor() ||
 					config->filter_velocity_prediction_cutoff != request.filter_velocity_prediction_cutoff() ||
-					config->filter_angular_prediction_cutoff != request.filter_angular_prediction_cutoff())
+					config->filter_angular_prediction_cutoff != request.filter_angular_prediction_cutoff() ||
+					config->filter_position_kalman_error != request.filter_position_kalman_error() ||
+					config->filter_position_kalman_noise != request.filter_position_kalman_noise())
 				{
 					config->filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
 					config->filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
@@ -3404,6 +3428,8 @@ protected:
 					config->filter_angular_smoothing_factor = request.filter_angular_smoothing_factor();
 					config->filter_velocity_prediction_cutoff = request.filter_velocity_prediction_cutoff();
 					config->filter_angular_prediction_cutoff = request.filter_angular_prediction_cutoff();
+					config->filter_position_kalman_error = request.filter_position_kalman_error();
+					config->filter_position_kalman_noise = request.filter_position_kalman_noise();
 
 					config->save();
 				}
@@ -3420,7 +3446,9 @@ protected:
 					config->filter_velocity_smoothing_factor != request.filter_velocity_smoothing_factor() ||
 					config->filter_angular_smoothing_factor != request.filter_angular_smoothing_factor() ||
 					config->filter_velocity_prediction_cutoff != request.filter_velocity_prediction_cutoff() ||
-					config->filter_angular_prediction_cutoff != request.filter_angular_prediction_cutoff())
+					config->filter_angular_prediction_cutoff != request.filter_angular_prediction_cutoff() ||
+					config->filter_position_kalman_error != request.filter_position_kalman_error() ||
+					config->filter_position_kalman_noise != request.filter_position_kalman_noise())
 				{
 					config->filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
 					config->filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
@@ -3428,6 +3456,8 @@ protected:
 					config->filter_angular_smoothing_factor = request.filter_angular_smoothing_factor();
 					config->filter_velocity_prediction_cutoff = request.filter_velocity_prediction_cutoff();
 					config->filter_angular_prediction_cutoff = request.filter_angular_prediction_cutoff();
+					config->filter_position_kalman_error = request.filter_position_kalman_error();
+					config->filter_position_kalman_noise = request.filter_position_kalman_noise();
 
 					config->save();
 				}
@@ -3753,6 +3783,8 @@ protected:
 				float filter_angular_smoothing_factor;
 				float filter_velocity_prediction_cutoff;
 				float filter_angular_prediction_cutoff;
+				float filter_position_kalman_error;
+				float filter_position_kalman_noise;
 
                 switch (hmd_view->getHMDDeviceType())
                 {
@@ -3781,6 +3813,8 @@ protected:
 						filter_angular_smoothing_factor = config->filter_angular_smoothing_factor;
 						filter_velocity_prediction_cutoff = config->filter_velocity_prediction_cutoff;
 						filter_angular_prediction_cutoff = config->filter_angular_prediction_cutoff;
+						filter_position_kalman_error = config->filter_position_kalman_error;
+						filter_position_kalman_noise = config->filter_position_kalman_noise;
 
 						hmd_info->set_hmd_type(PSMoveProtocol::Morpheus);
 
@@ -3806,6 +3840,8 @@ protected:
 						filter_angular_smoothing_factor = config->filter_angular_smoothing_factor;
 						filter_velocity_prediction_cutoff = config->filter_velocity_prediction_cutoff;
 						filter_angular_prediction_cutoff = config->filter_angular_prediction_cutoff;
+						filter_position_kalman_error = config->filter_position_kalman_error;
+						filter_position_kalman_noise = config->filter_position_kalman_noise;
 
 						hmd_info->set_hmd_type(PSMoveProtocol::VirtualHMD);
                     }
@@ -3846,6 +3882,8 @@ protected:
 				hmd_info->set_filter_angular_smoothing_factor(filter_angular_smoothing_factor);
 				hmd_info->set_filter_velocity_prediction_cutoff(filter_velocity_prediction_cutoff);
 				hmd_info->set_filter_angular_prediction_cutoff(filter_angular_prediction_cutoff);
+				hmd_info->set_filter_position_kalman_error(filter_position_kalman_error);
+				hmd_info->set_filter_position_kalman_noise(filter_position_kalman_noise);
             }
         }
 

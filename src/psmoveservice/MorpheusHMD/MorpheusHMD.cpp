@@ -383,6 +383,9 @@ MorpheusHMDConfig::config2ptree()
 
 	pt.put("use_custom_optical_tracking", use_custom_optical_tracking);
 
+	pt.put("FilterSettings.PositionKalman.Error", filter_position_kalman_error);
+	pt.put("FilterSettings.PositionKalman.ProcessNoise", filter_position_kalman_noise);
+
 	writeTrackingColor(pt, tracking_color_id);
 
     return pt;
@@ -467,6 +470,9 @@ MorpheusHMDConfig::ptree2config(const boost::property_tree::ptree &pt)
 		filter_angular_prediction_cutoff = pt.get<float>("FilterSettings.AngularPredictionCutoff", filter_angular_prediction_cutoff);
 
 		use_custom_optical_tracking = pt.get<bool>("use_custom_optical_tracking", use_custom_optical_tracking);
+
+		filter_position_kalman_error = pt.get<float>("FilterSettings.PositionKalman.Error", filter_position_kalman_error);
+		filter_position_kalman_noise = pt.get<float>("FilterSettings.PositionKalman.ProcessNoise", filter_position_kalman_noise);
     }
     else
     {

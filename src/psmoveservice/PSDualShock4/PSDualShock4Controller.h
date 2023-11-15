@@ -81,6 +81,8 @@ public:
 		, filter_angular_smoothing_factor(0.25f)
 		, filter_velocity_prediction_cutoff(1.0f)
 		, filter_angular_prediction_cutoff(0.25f)
+		, filter_position_kalman_error(10.f)
+		, filter_position_kalman_noise(200.f)
     {
 		offset_position.set(0.0f, 0.0f, 0.0f);
 		offset_orientation.set(0.0f, 0.0f, 0.0f);
@@ -221,6 +223,9 @@ public:
 	float filter_angular_smoothing_factor;
 	float filter_velocity_prediction_cutoff;
 	float filter_angular_prediction_cutoff;
+
+	float filter_position_kalman_error;
+	float filter_position_kalman_noise;
 };
 
 struct DualShock4ControllerInputState : public CommonControllerState

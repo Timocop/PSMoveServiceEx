@@ -537,6 +537,9 @@ PSDualShock4ControllerConfig::config2ptree()
 	pt.put("FilterSettings.VelocityPredictionCutoff", filter_velocity_prediction_cutoff);
 	pt.put("FilterSettings.AngularPredictionCutoff", filter_angular_prediction_cutoff);
 
+	pt.put("FilterSettings.PositionKalman.Error", filter_position_kalman_error);
+	pt.put("FilterSettings.PositionKalman.ProcessNoise", filter_position_kalman_noise);
+
 	writeTrackingColor(pt, tracking_color_id);
 
     return pt;
@@ -622,6 +625,9 @@ PSDualShock4ControllerConfig::ptree2config(const boost::property_tree::ptree &pt
 		filter_angular_smoothing_factor = pt.get<float>("FilterSettings.AngularSmoothingFactor", filter_angular_smoothing_factor);
 		filter_velocity_prediction_cutoff = pt.get<float>("FilterSettings.VelocityPredictionCutoff", filter_velocity_prediction_cutoff);
 		filter_angular_prediction_cutoff = pt.get<float>("FilterSettings.AngularPredictionCutoff", filter_angular_prediction_cutoff);
+
+		filter_position_kalman_error = pt.get<float>("FilterSettings.PositionKalman.Error", filter_position_kalman_error);
+		filter_position_kalman_noise = pt.get<float>("FilterSettings.PositionKalman.ProcessNoise", filter_position_kalman_noise);
 	}
     else
     {

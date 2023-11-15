@@ -877,8 +877,9 @@ void AppStage_ControllerSettings::renderUI()
 											ImGui::TextDisabled("Position Filter Settings:");
 											ImGui::Spacing();
 
-											if (controllerInfo.PositionFilterName == "PassThru" || 
-												controllerInfo.PositionFilterName == "LowPassOptical")
+											if (controllerInfo.PositionFilterName == "PassThru" ||
+												controllerInfo.PositionFilterName == "LowPassOptical" ||
+												controllerInfo.PositionFilterName == "PositionKalman")
 											{
 												settings_shown = true;
 
@@ -941,6 +942,35 @@ void AppStage_ControllerSettings::renderUI()
 												if (ImGui::InputFloat("##LowPassOpticalSmoothingPower", &filter_lowpassoptical_smoothing, 1.f, 5.f, 2))
 												{
 													controllerInfo.FilterLowPassOpticalSmoothing = clampf(1.f - (filter_lowpassoptical_smoothing / 100.f), 0.1f, 1.0f);
+
+													request_offset = true;
+												}
+												ImGui::PopItemWidth();
+											}
+
+											if (controllerInfo.PositionFilterName == "PositionKalman")
+											{
+												settings_shown = true;
+
+												ImGui::Text("Measurement Error (cm): ");
+												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+												ImGui::PushItemWidth(120.f);
+												float filter_position_kalman_error = controllerInfo.FilterPositionKalmanError;
+												if (ImGui::InputFloat("##PositionKalmanError", &filter_position_kalman_error, 0.05f, 0.10f, 2))
+												{
+													controllerInfo.FilterPositionKalmanError = clampf(filter_position_kalman_error, 0.0f, (1 << 16));
+
+													request_offset = true;
+												}
+												ImGui::PopItemWidth();
+
+												ImGui::Text("Process Noise: ");
+												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+												ImGui::PushItemWidth(120.f);
+												float filter_position_kalman_noise = controllerInfo.FilterPositionKalmanNoise;
+												if (ImGui::InputFloat("##PositionKalmanNoise", &filter_position_kalman_noise, 0.05f, 0.10f, 2))
+												{
+													controllerInfo.FilterPositionKalmanNoise = clampf(filter_position_kalman_noise, 0.0f, (1 << 16));
 
 													request_offset = true;
 												}
@@ -1233,6 +1263,8 @@ void AppStage_ControllerSettings::renderUI()
 												controllerInfo.FilterAngularSmoothingFactor = 0.25f;
 												controllerInfo.FilterVelocityPredictionCutoff = 1.0f;
 												controllerInfo.FilterAngularPredictionCutoff = 0.25f;
+												controllerInfo.FilterPositionKalmanError = 10.f;
+												controllerInfo.FilterPositionKalmanNoise = 200.f;
 
 												request_offset = true;
 
@@ -1259,6 +1291,8 @@ void AppStage_ControllerSettings::renderUI()
 												filterSettings.filter_angular_smoothing_factor = controllerInfo.FilterAngularSmoothingFactor;
 												filterSettings.filter_velocity_prediction_cutoff = controllerInfo.FilterVelocityPredictionCutoff;
 												filterSettings.filter_angular_prediction_cutoff = controllerInfo.FilterAngularPredictionCutoff;
+												filterSettings.filter_position_kalman_error = controllerInfo.FilterPositionKalmanError;
+												filterSettings.filter_position_kalman_noise = controllerInfo.FilterPositionKalmanNoise;
 
 												request_set_controller_filter_settings(controllerInfo.ControllerID, filterSettings);
 											}
@@ -1932,6 +1966,8 @@ void AppStage_ControllerSettings::request_set_controller_filter_settings(
 	filter_settings->set_filter_angular_smoothing_factor(filterSettings.filter_angular_smoothing_factor);
 	filter_settings->set_filter_velocity_prediction_cutoff(filterSettings.filter_velocity_prediction_cutoff);
 	filter_settings->set_filter_angular_prediction_cutoff(filterSettings.filter_angular_prediction_cutoff);
+	filter_settings->set_filter_position_kalman_error(filterSettings.filter_position_kalman_error);
+	filter_settings->set_filter_position_kalman_noise(filterSettings.filter_position_kalman_noise);
 
 	PSMRequestID request_id;
 	PSM_SendOpaqueRequest(&request, &request_id);
@@ -2039,6 +2075,8 @@ void AppStage_ControllerSettings::handle_controller_list_response(
 				ControllerInfo.FilterAngularSmoothingFactor = ControllerResponse.filter_angular_smoothing_factor();
 				ControllerInfo.FilterVelocityPredictionCutoff = ControllerResponse.filter_velocity_prediction_cutoff();
 				ControllerInfo.FilterAngularPredictionCutoff = ControllerResponse.filter_angular_prediction_cutoff();
+				ControllerInfo.FilterPositionKalmanError = ControllerResponse.filter_position_kalman_error();
+				ControllerInfo.FilterPositionKalmanNoise = ControllerResponse.filter_position_kalman_noise();
 
                 if (ControllerInfo.ControllerType == PSMController_Move)
                 {

@@ -72,6 +72,8 @@ public:
 		float filter_angular_smoothing_factor;
 		float filter_velocity_prediction_cutoff;
 		float filter_angular_prediction_cutoff;
+		float filter_position_kalman_error;
+		float filter_position_kalman_noise;
 	};
 
 	struct ControllerInfo
@@ -126,6 +128,8 @@ public:
 		float FilterAngularSmoothingFactor;
 		float FilterVelocityPredictionCutoff;
 		float FilterAngularPredictionCutoff;
+		float FilterPositionKalmanError;
+		float FilterPositionKalmanNoise;
 
 		static bool ParentControllerComboItemGetter(void* userdata, int index, const char** out_string)
 		{

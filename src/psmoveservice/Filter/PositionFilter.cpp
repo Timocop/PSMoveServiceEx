@@ -36,7 +36,7 @@
 #define k_kalman_position_error 10.f
 
 // Kalman process noise
-#define k_kalman_position_noise 2.0f
+#define k_kalman_position_noise 200.0f
 
 // -- private definitions -----
 struct PositionFilterState
@@ -882,6 +882,8 @@ void PositionFilterKalman::update(
 
 				velocity_smoothing_factor = config.filter_velocity_smoothing_factor;
 				position_prediction_cutoff = config.filter_velocity_prediction_cutoff;
+				kalman_position_error = config.filter_position_kalman_error;
+				kalman_position_noise = config.filter_position_kalman_noise;
 
 				break;
 			}
@@ -892,6 +894,8 @@ void PositionFilterKalman::update(
 
 				velocity_smoothing_factor = config.filter_velocity_smoothing_factor;
 				position_prediction_cutoff = config.filter_velocity_prediction_cutoff;
+				kalman_position_error = config.filter_position_kalman_error;
+				kalman_position_noise = config.filter_position_kalman_noise;
 
 				break;
 			}
@@ -902,6 +906,8 @@ void PositionFilterKalman::update(
 
 				velocity_smoothing_factor = config->filter_velocity_smoothing_factor;
 				position_prediction_cutoff = config->filter_velocity_prediction_cutoff;
+				kalman_position_error = config->filter_position_kalman_error;
+				kalman_position_noise = config->filter_position_kalman_noise;
 
 				break;
 			}
@@ -922,6 +928,8 @@ void PositionFilterKalman::update(
 
 				velocity_smoothing_factor = config->filter_velocity_smoothing_factor;
 				position_prediction_cutoff = config->filter_velocity_prediction_cutoff;
+				kalman_position_error = config->filter_position_kalman_error;
+				kalman_position_noise = config->filter_position_kalman_noise;
 
 				break;
 			}
@@ -932,6 +940,8 @@ void PositionFilterKalman::update(
 
 				velocity_smoothing_factor = config->filter_velocity_smoothing_factor;
 				position_prediction_cutoff = config->filter_velocity_prediction_cutoff;
+				kalman_position_error = config->filter_position_kalman_error;
+				kalman_position_noise = config->filter_position_kalman_noise;
 
 				break;
 			}
@@ -943,6 +953,8 @@ void PositionFilterKalman::update(
 	// Clamp everything to safety
 	velocity_smoothing_factor = clampf(velocity_smoothing_factor, 0.01f, 1.0f);
 	position_prediction_cutoff = clampf(position_prediction_cutoff, 0.0f, (1 << 16));
+	kalman_position_error = clampf(kalman_position_error, 0.01f, (1 << 16));
+	kalman_position_noise = clampf(kalman_position_noise, 0.01f, (1 << 16));
 
 	// If device isnt tracking, clear old position and velocity to remove over-prediction
 	if (!packet.isCurrentlyTracking && !m_resetVelocity)
@@ -981,7 +993,7 @@ void PositionFilterKalman::update(
 				kal_current_estimate[i] = old_position_cm[i] + kal_gain[i] * (new_position_cm[i] - old_position_cm[i]);
 
 				// Update estimation error
-				kal_err_estimate[i] = (1.0 - kal_gain[i]) * kal_err_estimate[i] + std::abs(old_position_cm[i] - kal_current_estimate[i]) * kalman_position_noise;
+				kal_err_estimate[i] = (1.0 - kal_gain[i]) * kal_err_estimate[i] + std::abs(old_position_cm[i] - kal_current_estimate[i]) * kalman_position_noise * optical_delta_time;
 
 				// Update last estimate for each dimension
 				new_position_cm[i] = kal_current_estimate[i];

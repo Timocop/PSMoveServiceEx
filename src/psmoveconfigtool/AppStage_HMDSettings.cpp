@@ -438,7 +438,8 @@ void AppStage_HMDSettings::renderUI()
 						ImGui::Spacing();
 
 						if (hmdInfo.PositionFilterName == "PassThru" ||
-							hmdInfo.PositionFilterName == "LowPassOptical")
+							hmdInfo.PositionFilterName == "LowPassOptical" ||
+							hmdInfo.PositionFilterName == "PositionKalman")
 						{
 							settings_shown = true;
 
@@ -501,6 +502,35 @@ void AppStage_HMDSettings::renderUI()
 							if (ImGui::InputFloat("##LowPassOpticalSmoothingPower", &filter_lowpassoptical_smoothing, 1.f, 5.f, 2))
 							{
 								hmdInfo.FilterLowPassOpticalSmoothing = clampf(1.f - (filter_lowpassoptical_smoothing / 100.f), 0.1f, 1.0f);
+
+								request_offset = true;
+							}
+							ImGui::PopItemWidth();
+						}
+
+						if (hmdInfo.PositionFilterName == "PositionKalman")
+						{
+							settings_shown = true;
+
+							ImGui::Text("Measurement Error (cm): ");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(120.f);
+							float filter_position_kalman_error = hmdInfo.FilterPositionKalmanError;
+							if (ImGui::InputFloat("##PositionKalmanError", &filter_position_kalman_error, 0.05f, 0.10f, 2))
+							{
+								hmdInfo.FilterPositionKalmanError = clampf(filter_position_kalman_error, 0.0f, (1 << 16));
+
+								request_offset = true;
+							}
+							ImGui::PopItemWidth();
+
+							ImGui::Text("Process Noise: ");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(120.f);
+							float filter_position_kalman_noise = hmdInfo.FilterPositionKalmanNoise;
+							if (ImGui::InputFloat("##PositionKalmanNoise", &filter_position_kalman_noise, 0.05f, 0.10f, 2))
+							{
+								hmdInfo.FilterPositionKalmanNoise = clampf(filter_position_kalman_noise, 0.0f, (1 << 16));
 
 								request_offset = true;
 							}
@@ -653,6 +683,8 @@ void AppStage_HMDSettings::renderUI()
 							hmdInfo.FilterAngularSmoothingFactor = 0.25f;
 							hmdInfo.FilterVelocityPredictionCutoff = 1.0f;
 							hmdInfo.FilterAngularPredictionCutoff = 0.25f;
+							hmdInfo.FilterPositionKalmanError = 10.f;
+							hmdInfo.FilterPositionKalmanNoise = 100.f;
 
 							request_offset = true;
 						}
@@ -670,6 +702,8 @@ void AppStage_HMDSettings::renderUI()
 							filterSettings.filter_angular_smoothing_factor = hmdInfo.FilterAngularSmoothingFactor;
 							filterSettings.filter_velocity_prediction_cutoff = hmdInfo.FilterVelocityPredictionCutoff;
 							filterSettings.filter_angular_prediction_cutoff = hmdInfo.FilterAngularPredictionCutoff;
+							filterSettings.filter_position_kalman_error = hmdInfo.FilterPositionKalmanError;
+							filterSettings.filter_position_kalman_noise = hmdInfo.FilterPositionKalmanNoise;
 
 							request_set_hmd_filter_settings(hmdInfo.HmdID, filterSettings);
 						}
@@ -1171,6 +1205,8 @@ void AppStage_HMDSettings::request_set_hmd_filter_settings(
 	filter_settings->set_filter_angular_smoothing_factor(filterSettings.filter_angular_smoothing_factor);
 	filter_settings->set_filter_velocity_prediction_cutoff(filterSettings.filter_velocity_prediction_cutoff);
 	filter_settings->set_filter_angular_prediction_cutoff(filterSettings.filter_angular_prediction_cutoff);
+	filter_settings->set_filter_position_kalman_error(filterSettings.filter_position_kalman_error);
+	filter_settings->set_filter_position_kalman_noise(filterSettings.filter_position_kalman_noise);
 
 	PSMRequestID request_id;
 	PSM_SendOpaqueRequest(&request, &request_id);
@@ -1276,6 +1312,8 @@ void AppStage_HMDSettings::handle_hmd_list_response(
 				HmdInfo.FilterAngularSmoothingFactor = HmdResponse.filter_angular_smoothing_factor();
 				HmdInfo.FilterVelocityPredictionCutoff = HmdResponse.filter_velocity_prediction_cutoff();
 				HmdInfo.FilterAngularPredictionCutoff = HmdResponse.filter_angular_prediction_cutoff();
+				HmdInfo.FilterPositionKalmanError = HmdResponse.filter_position_kalman_error();
+				HmdInfo.FilterPositionKalmanNoise= HmdResponse.filter_position_kalman_noise();
 
                 if (HmdInfo.HmdType == AppStage_HMDSettings::Morpheus)
                 {
