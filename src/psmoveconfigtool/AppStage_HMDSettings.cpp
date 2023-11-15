@@ -516,7 +516,7 @@ void AppStage_HMDSettings::renderUI()
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(120.f);
 							float filter_position_kalman_error = hmdInfo.FilterPositionKalmanError;
-							if (ImGui::InputFloat("##PositionKalmanError", &filter_position_kalman_error, 0.05f, 0.10f, 2))
+							if (ImGui::InputFloat("##PositionKalmanError", &filter_position_kalman_error, 1.f, 5.f, 2))
 							{
 								hmdInfo.FilterPositionKalmanError = clampf(filter_position_kalman_error, 0.0f, (1 << 16));
 
@@ -528,7 +528,7 @@ void AppStage_HMDSettings::renderUI()
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(120.f);
 							float filter_position_kalman_noise = hmdInfo.FilterPositionKalmanNoise;
-							if (ImGui::InputFloat("##PositionKalmanNoise", &filter_position_kalman_noise, 0.05f, 0.10f, 2))
+							if (ImGui::InputFloat("##PositionKalmanNoise", &filter_position_kalman_noise, 5.f, 10.f, 2))
 							{
 								hmdInfo.FilterPositionKalmanNoise = clampf(filter_position_kalman_noise, 0.0f, (1 << 16));
 

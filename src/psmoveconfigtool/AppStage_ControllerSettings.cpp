@@ -956,7 +956,7 @@ void AppStage_ControllerSettings::renderUI()
 												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 												ImGui::PushItemWidth(120.f);
 												float filter_position_kalman_error = controllerInfo.FilterPositionKalmanError;
-												if (ImGui::InputFloat("##PositionKalmanError", &filter_position_kalman_error, 0.05f, 0.10f, 2))
+												if (ImGui::InputFloat("##PositionKalmanError", &filter_position_kalman_error, 1.f, 5.f, 2))
 												{
 													controllerInfo.FilterPositionKalmanError = clampf(filter_position_kalman_error, 0.0f, (1 << 16));
 
@@ -968,7 +968,7 @@ void AppStage_ControllerSettings::renderUI()
 												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 												ImGui::PushItemWidth(120.f);
 												float filter_position_kalman_noise = controllerInfo.FilterPositionKalmanNoise;
-												if (ImGui::InputFloat("##PositionKalmanNoise", &filter_position_kalman_noise, 0.05f, 0.10f, 2))
+												if (ImGui::InputFloat("##PositionKalmanNoise", &filter_position_kalman_noise, 5.f, 10.f, 2))
 												{
 													controllerInfo.FilterPositionKalmanNoise = clampf(filter_position_kalman_noise, 0.0f, (1 << 16));
 
