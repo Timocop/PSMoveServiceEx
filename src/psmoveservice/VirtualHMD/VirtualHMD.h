@@ -36,7 +36,7 @@ public:
 		, filter_velocity_prediction_cutoff(1.0f)
 		, filter_angular_prediction_cutoff(0.25f)
 		, filter_position_kalman_error(10.f)
-		, filter_position_kalman_noise(100.f)
+		, filter_position_kalman_noise(200.f)
     {
 		offset_position.set(0.0, 0.0, 0.0);
 		offset_orientation.set(0.0, 0.0, 0.0);

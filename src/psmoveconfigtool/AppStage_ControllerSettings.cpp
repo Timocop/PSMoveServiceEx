@@ -1273,7 +1273,7 @@ void AppStage_ControllerSettings::renderUI()
 												controllerInfo.FilterVelocityPredictionCutoff = 1.0f;
 												controllerInfo.FilterAngularPredictionCutoff = 0.25f;
 												controllerInfo.FilterPositionKalmanError = 10.f;
-												controllerInfo.FilterPositionKalmanNoise = 200.f;
+												controllerInfo.FilterPositionKalmanNoise = 300.f;
 
 												request_offset = true;
 

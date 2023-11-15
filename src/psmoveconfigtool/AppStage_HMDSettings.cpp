@@ -693,7 +693,7 @@ void AppStage_HMDSettings::renderUI()
 							hmdInfo.FilterVelocityPredictionCutoff = 1.0f;
 							hmdInfo.FilterAngularPredictionCutoff = 0.25f;
 							hmdInfo.FilterPositionKalmanError = 10.f;
-							hmdInfo.FilterPositionKalmanNoise = 100.f;
+							hmdInfo.FilterPositionKalmanNoise = 200.f;
 
 							request_offset = true;
 						}
