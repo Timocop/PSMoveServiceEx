@@ -359,10 +359,10 @@ void AppStage_HMDSettings::renderUI()
 							{
 								hmdInfo.PredictionTime = 0.0f;
 								hmdInfo.AngPredictionTime = 0.0f;
-								hmdInfo.PositionFilterIndex = k_default_hmd_position_filter_index;
-								hmdInfo.OrientationFilterIndex = k_default_morpheus_position_filter_index;
-								hmdInfo.PositionFilterName = k_hmd_position_filter_names[k_default_hmd_position_filter_index];
-								hmdInfo.OrientationFilterName = k_morpheus_orientation_filter_names[k_default_morpheus_position_filter_index];
+								hmdInfo.PositionFilterIndex = k_default_morpheus_position_filter_index;
+								hmdInfo.OrientationFilterIndex = k_default_morpheus_orientation_filter_index;
+								hmdInfo.PositionFilterName = k_hmd_position_filter_names[k_default_morpheus_position_filter_index];
+								hmdInfo.OrientationFilterName = k_morpheus_orientation_filter_names[k_default_morpheus_orientation_filter_index];
 								request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
 								request_set_hmd_angular_prediction(hmdInfo.HmdID, hmdInfo.AngPredictionTime);
 								request_set_position_filter(hmdInfo.HmdID, hmdInfo.PositionFilterName);
