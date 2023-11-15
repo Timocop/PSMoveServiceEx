@@ -2549,10 +2549,6 @@ pose_filter_factory(
 		{
 			orientation_filter_enum = OrientationFilterTypeOrientationTargetOpticalARG;
 		}
-		else if (orientation_filter_type == "OrientationKalman")
-		{
-			orientation_filter_enum = OrientationFilterTypeKalman;
-		}
 		else if (orientation_filter_type == "OrientationExternal")
 		{
 			orientation_filter_enum = OrientationFilterTypeExternal;

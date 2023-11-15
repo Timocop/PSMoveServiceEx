@@ -84,4 +84,18 @@ public:
 	t_high_resolution_timepoint lastOpticalFrame;
 };
 
+class PositionFilterKalman : public PositionFilter
+{
+public:
+	void update(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet) override;
+	t_high_resolution_timepoint lastOpticalFrame;
+	bool m_resetVelocity = false;
+
+private:
+	float kal_err_estimate[3];
+	Eigen::Vector3f kal_current_estimate;
+	Eigen::Vector3f kal_gain;
+};
+
+
 #endif // POSITION_FILTER_H

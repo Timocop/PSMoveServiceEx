@@ -562,7 +562,7 @@ init_filter_for_psmove(
 		CompoundPoseFilter *compoundFilter = new CompoundPoseFilter();
 		compoundFilter->init(
 			CommonDeviceState::PSMove, 
-			OrientationFilterTypeKalman, PositionFilterTypeKalman, 
+			OrientationFilterTypePassThru /*OrientationFilterTypeKalman*/, PositionFilterTypeKalman,
 			constants,
 			initial_position, initial_orientation);
 
@@ -638,7 +638,7 @@ init_filter_for_psdualshock4(
 		CompoundPoseFilter *compoundFilter = new CompoundPoseFilter();
 		compoundFilter->init(
 			CommonDeviceState::PSDualShock4,
-			OrientationFilterTypeKalman, PositionFilterTypeKalman,
+			OrientationFilterTypePassThru /*OrientationFilterTypeKalman*/, PositionFilterTypeKalman,
 			constants,
 			initial_position, initial_orientation);
 

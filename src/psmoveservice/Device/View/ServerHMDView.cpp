@@ -1302,10 +1302,6 @@ pose_filter_factory(
 	{
 		orientation_filter_enum = OrientationFilterTypeComplementaryOpticalARG;
 	}
-	else if (orientation_filter_type == "OrientationKalman")
-	{
-		orientation_filter_enum = OrientationFilterTypeKalman;
-	}
 	else
 	{
 		SERVER_LOG_INFO("pose_filter_factory()") <<

@@ -2,8 +2,6 @@
 #include "CompoundPoseFilter.h"
 #include "OrientationFilter.h"
 #include "PositionFilter.h"
-#include "KalmanPositionFilter.h"
-#include "KalmanOrientationFilter.h"
 
 #if !defined(IS_TESTING_KALMAN)
 #include "ExternalOrientationFilter.h"
@@ -95,21 +93,6 @@ void CompoundPoseFilter::allocate_filters(
 		m_orientation_filter = nullptr;
 #endif
 		break;
-	case OrientationFilterTypeKalman:
-		{
-			switch (deviceType)
-			{
-			case CommonDeviceState::PSDualShock4:
-				m_orientation_filter = new KalmanOrientationFilterDS4;
-				break;
-			case CommonDeviceState::PSMove:
-				m_orientation_filter = new KalmanOrientationFilterPSMove;
-				break;
-			default:
-				assert(0 && "unreachable");
-			}
-		}
-		break;
 	case OrientationFilterTypeExternal:
 #if !defined(IS_TESTING_KALMAN)
 		m_orientation_filter = new OrientationFilterExternal;
@@ -142,7 +125,7 @@ void CompoundPoseFilter::allocate_filters(
 		m_position_filter = new PositionFilterLowPassExponential;
 		break;
 	case PositionFilterTypeKalman:
-		m_position_filter = new KalmanPositionFilter;
+		m_position_filter = new PositionFilterKalman;
 		break;
 	case PositionFilterTypeExternalAttachment:
 #if !defined(IS_TESTING_KALMAN)

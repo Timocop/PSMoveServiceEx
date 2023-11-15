@@ -14,7 +14,6 @@ enum OrientationFilterType {
     OrientationFilterTypeComplementaryOpticalARG,
     OrientationFilterTypeComplementaryMARG,
 	OrientationFilterTypeOrientationTargetOpticalARG,
-	OrientationFilterTypeKalman,
 	OrientationFilterTypeExternal,
 };
 

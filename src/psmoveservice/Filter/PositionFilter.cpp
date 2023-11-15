@@ -32,6 +32,12 @@
 
 #define k_velocity_adaptive_prediction_cutoff 0.5f
 
+// Kalman measurement error in cm
+#define k_kalman_position_error 10.f
+
+// Kalman process noise
+#define k_kalman_position_noise 2.0f
+
 // -- private definitions -----
 struct PositionFilterState
 {
@@ -847,6 +853,165 @@ void PositionFilterLowPassExponential::update(
 		m_state->apply_optical_state(new_position_meters, new_velocity_m_per_sec, timestamp);
     }
 }
+
+void PositionFilterKalman::update(
+	const t_high_resolution_timepoint timestamp, 
+	const PoseFilterPacket & packet)
+{
+	float optical_delta_time = m_state->getOpticalTime(timestamp);
+	float imu_delta_time = m_state->getImuTime(timestamp);
+
+	float velocity_smoothing_factor = k_lowpass_velocity_smoothing_factor;
+	float position_prediction_cutoff = k_velocity_adaptive_prediction_cutoff;
+	float kalman_position_error = k_kalman_position_error;
+	float kalman_position_noise = k_kalman_position_noise;
+
+
+#if !defined(IS_TESTING_KALMAN) 
+	if (packet.controllerDeviceId > -1)
+	{
+		ServerControllerViewPtr ControllerView = DeviceManager::getInstance()->getControllerViewPtr(packet.controllerDeviceId);
+		if (ControllerView != nullptr && ControllerView->getIsOpen())
+		{
+			switch (ControllerView->getControllerDeviceType())
+			{
+			case CommonDeviceState::PSMove:
+			{
+				PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
+				PSMoveControllerConfig config = *controller->getConfig();
+
+				velocity_smoothing_factor = config.filter_velocity_smoothing_factor;
+				position_prediction_cutoff = config.filter_velocity_prediction_cutoff;
+
+				break;
+			}
+			case CommonDeviceState::PSDualShock4:
+			{
+				PSDualShock4Controller *controller = ControllerView->castChecked<PSDualShock4Controller>();
+				PSDualShock4ControllerConfig config = *controller->getConfig();
+
+				velocity_smoothing_factor = config.filter_velocity_smoothing_factor;
+				position_prediction_cutoff = config.filter_velocity_prediction_cutoff;
+
+				break;
+			}
+			case CommonDeviceState::VirtualController:
+			{
+				VirtualController *controller = ControllerView->castChecked<VirtualController>();
+				VirtualControllerConfig *config = controller->getConfigMutable();
+
+				velocity_smoothing_factor = config->filter_velocity_smoothing_factor;
+				position_prediction_cutoff = config->filter_velocity_prediction_cutoff;
+
+				break;
+			}
+			}
+		}
+	}
+	else if (packet.hmdDeviceId > -1)
+	{
+		ServerHMDViewPtr HmdView = DeviceManager::getInstance()->getHMDViewPtr(packet.hmdDeviceId);
+		if (HmdView != nullptr && HmdView->getIsOpen())
+		{
+			switch (HmdView->getHMDDeviceType())
+			{
+			case CommonDeviceState::Morpheus:
+			{
+				MorpheusHMD *controller = HmdView->castChecked<MorpheusHMD>();
+				MorpheusHMDConfig *config = controller->getConfigMutable();
+
+				velocity_smoothing_factor = config->filter_velocity_smoothing_factor;
+				position_prediction_cutoff = config->filter_velocity_prediction_cutoff;
+
+				break;
+			}
+			case CommonDeviceState::VirtualHMD:
+			{
+				VirtualHMD *controller = HmdView->castChecked<VirtualHMD>();
+				VirtualHMDConfig *config = controller->getConfigMutable();
+
+				velocity_smoothing_factor = config->filter_velocity_smoothing_factor;
+				position_prediction_cutoff = config->filter_velocity_prediction_cutoff;
+
+				break;
+			}
+			}
+		}
+	}
+#endif
+
+	// Clamp everything to safety
+	velocity_smoothing_factor = clampf(velocity_smoothing_factor, 0.01f, 1.0f);
+	position_prediction_cutoff = clampf(position_prediction_cutoff, 0.0f, (1 << 16));
+
+	// If device isnt tracking, clear old position and velocity to remove over-prediction
+	if (!packet.isCurrentlyTracking && !m_resetVelocity)
+	{
+		m_resetVelocity = true;
+	}
+
+	if (packet.has_optical_measurement() && packet.isSynced)
+	{
+		Eigen::Vector3f old_position_meters = m_state->position_meters;
+		Eigen::Vector3f new_position_meters = packet.get_optical_position_in_meters();
+		Eigen::Vector3f new_position_meters_sec;
+
+		if (m_resetVelocity)
+		{
+			m_resetVelocity = false;
+
+			new_position_meters_sec = Eigen::Vector3f::Zero();
+		}
+		else
+		{
+			Eigen::Vector3f old_position_cm = old_position_meters * k_meters_to_centimeters;
+			Eigen::Vector3f new_position_cm = new_position_meters * k_meters_to_centimeters;
+
+			// Update for each dimension
+			for (int i = 0; i < 3; ++i) {
+				if (kal_err_estimate[i] <= k_real_epsilon)
+				{
+					kal_err_estimate[i] = kalman_position_error;
+				}
+
+				// Update Kalman gain
+				kal_gain[i] = kal_err_estimate[i] / (kal_err_estimate[i] + kalman_position_error);
+
+				// Update current estimate
+				kal_current_estimate[i] = old_position_cm[i] + kal_gain[i] * (new_position_cm[i] - old_position_cm[i]);
+
+				// Update estimation error
+				kal_err_estimate[i] = (1.0 - kal_gain[i]) * kal_err_estimate[i] + std::abs(old_position_cm[i] - kal_current_estimate[i]) * kalman_position_noise;
+
+				// Update last estimate for each dimension
+				new_position_cm[i] = kal_current_estimate[i];
+			}
+
+			new_position_meters = new_position_cm * k_centimeters_to_meters;
+
+
+			Eigen::Vector3f new_velocity(
+				(new_position_meters.x() - old_position_meters.x()) / optical_delta_time,
+				(new_position_meters.y() - old_position_meters.y()) / optical_delta_time,
+				(new_position_meters.z() - old_position_meters.z()) / optical_delta_time
+			);
+
+			new_position_meters_sec = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->velocity_m_per_sec, new_velocity);
+
+			if (position_prediction_cutoff > k_real_epsilon)
+			{
+				// Do adapting prediction and smoothing
+				const float velocity_speed_sec = new_position_meters_sec.norm();
+				const float adaptive_time_scale = clampf(velocity_speed_sec / position_prediction_cutoff, 0.0f, 1.0f);
+
+				new_position_meters_sec = new_position_meters_sec * adaptive_time_scale;
+			}
+		}
+
+		m_state->apply_optical_state(new_position_meters, new_position_meters_sec, timestamp);
+	}
+}
+
 
 //-- helper functions ---
 static Eigen::Vector3f threshold_vector3f(const Eigen::Vector3f &vector, const float min_length)
