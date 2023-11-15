@@ -2509,7 +2509,7 @@ pose_filter_factory(
             {
             case CommonDeviceState::PSMove:
             case CommonDeviceState::VirtualController:
-                position_filter_enum= PositionFilterTypeLowPassOptical;
+                position_filter_enum= PositionFilterTypeKalman;
                 break;
             case CommonDeviceState::PSDualShock4:
                 position_filter_enum= PositionFilterTypeComplimentaryOpticalIMU;
@@ -2562,7 +2562,7 @@ pose_filter_factory(
             switch (deviceType)
             {
             case CommonDeviceState::PSMove:
-                orientation_filter_enum= OrientationFilterTypeComplementaryMARG;
+                orientation_filter_enum= OrientationFilterTypeMadgwickMARG;
                 break;
             case CommonDeviceState::PSDualShock4:
                 orientation_filter_enum= OrientationFilterTypeComplementaryOpticalARG;

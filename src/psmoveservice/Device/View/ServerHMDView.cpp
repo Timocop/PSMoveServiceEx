@@ -1277,7 +1277,7 @@ pose_filter_factory(
 		{
 		case CommonDeviceState::Morpheus:
         case CommonDeviceState::VirtualHMD:
-			position_filter_enum = PositionFilterTypeLowPassIMU;
+			position_filter_enum = PositionFilterTypeKalman;
 			break;
 		default:
 			assert(0 && "unreachable");
@@ -1311,7 +1311,7 @@ pose_filter_factory(
 		switch (deviceType)
 		{
 		case CommonDeviceState::Morpheus:
-			orientation_filter_enum = OrientationFilterTypeComplementaryOpticalARG;
+			orientation_filter_enum = OrientationFilterTypeMadgwickARG;
 			break;
         case CommonDeviceState::VirtualHMD:
             orientation_filter_enum = OrientationFilterTypeNone;
