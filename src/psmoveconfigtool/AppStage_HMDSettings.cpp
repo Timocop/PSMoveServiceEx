@@ -704,7 +704,7 @@ void AppStage_HMDSettings::renderUI()
 							hmdInfo.FilterVelocitySmoothingFactor = 0.25f;
 							hmdInfo.FilterAngularSmoothingFactor = 0.25f;
 							hmdInfo.FilterVelocityPredictionCutoff = 1.0f;
-							hmdInfo.FilterAngularPredictionCutoff = 0.25f;
+							hmdInfo.FilterAngularPredictionCutoff = 0.0f;
 							hmdInfo.FilterPositionKalmanError = 10.f;
 							hmdInfo.FilterPositionKalmanNoise = 200.f;
 							hmdInfo.FilterPositionKalmanDisableCutoff = true;

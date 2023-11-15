@@ -66,7 +66,7 @@ public:
 		, filter_velocity_smoothing_factor(0.25f)
 		, filter_angular_smoothing_factor(0.25f)
 		, filter_velocity_prediction_cutoff(1.0f)
-		, filter_angular_prediction_cutoff(0.25f)
+		, filter_angular_prediction_cutoff(0.0f)
 		, use_custom_optical_tracking(true)
 		, filter_position_kalman_error(10.f)
 		, filter_position_kalman_noise(200.f)
