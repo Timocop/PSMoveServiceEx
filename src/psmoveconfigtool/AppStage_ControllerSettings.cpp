@@ -1265,7 +1265,7 @@ void AppStage_ControllerSettings::renderUI()
 
 											ImGui::Separator();
 
-											if (ImGui::Button("Reset Filter Settings Defaults"))
+											if (ImGui::Button("Reset Filter Settings Controller Defaults"))
 											{
 												controllerInfo.FilterLowPassOpticalDistance = 1.f;
 												controllerInfo.FilterLowPassOpticalSmoothing = 0.40f;
@@ -1290,7 +1290,33 @@ void AppStage_ControllerSettings::renderUI()
 												controllerInfo.FilterPositionKalmanDisableCutoff = true;
 
 												request_offset = true;
+											}
 
+											if (ImGui::Button("Reset Filter Settings HMD Defaults"))
+											{
+												controllerInfo.FilterLowPassOpticalDistance = 1.f;
+												controllerInfo.FilterLowPassOpticalSmoothing = 0.10f; // HMD
+												controllerInfo.FilterEnableMagnetometer = true;
+												controllerInfo.FilterUsePassiveDriftCorrection = false;
+												controllerInfo.FilterPassiveDriftCorrectionMethod = PassiveDriftCorrectionMethod::StableGravity;
+												controllerInfo.FilterPassiveDriftCorrectionDeazone = 3.f;
+												controllerInfo.FilterPassiveDriftCorrectionGravityDeazone = 0.8f;
+												controllerInfo.FilterPassiveDriftCorrectionDelay = 100.f;
+												controllerInfo.FilterUseStabilization = false;
+												controllerInfo.FilterStabilizationMinScale = 0.1f;
+												controllerInfo.FilterMadgwickBeta = 0.1f; // HMD
+												controllerInfo.FilterMadgwickStabilization = true;
+												controllerInfo.FilterMadgwickStabilizationMinBeta = 0.02f;
+												controllerInfo.FilterMadgwickStabilizationSmoothingFactor = 0.1f;
+												controllerInfo.FilterVelocitySmoothingFactor = 0.25f;
+												controllerInfo.FilterAngularSmoothingFactor = 0.25f;
+												controllerInfo.FilterVelocityPredictionCutoff = 1.0f;
+												controllerInfo.FilterAngularPredictionCutoff = 0.0f; //HMD
+												controllerInfo.FilterPositionKalmanError = 10.f;
+												controllerInfo.FilterPositionKalmanNoise = 200.f; //HMD
+												controllerInfo.FilterPositionKalmanDisableCutoff = true;
+
+												request_offset = true;
 											}
 
 											if (request_offset)

@@ -693,7 +693,7 @@ void AppStage_HMDSettings::renderUI()
 
 						ImGui::Separator();
 
-						if (ImGui::Button("Reset Filter Settings Defaults"))
+						if (ImGui::Button("Reset Filter Settings HMD Defaults"))
 						{
 							hmdInfo.FilterLowPassOpticalDistance = 1.f;
 							hmdInfo.FilterLowPassOpticalSmoothing = 0.10f;
