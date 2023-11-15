@@ -185,7 +185,7 @@ const char *AppStage_ControllerSettings::GAMEPAD_COMBO_LABELS[MAX_GAMEPAD_LABELS
 };
 
 //-- constants -----
-const int k_default_position_filter_index = 1; // LowPassOptical
+const int k_default_position_filter_index = 5; // PositionKalman
 const int k_default_psmove_orientation_filter_index = 2; // MadgwickMARG
 const int k_default_ds4_position_filter_index = 4; // ComplimentaryOpticalIMU
 const int k_default_ds4_orientation_filter_index = 2; // ComplementaryOpticalARG
@@ -2417,10 +2417,8 @@ void AppStage_ControllerSettings::show_position_filter_tooltip(const std::string
 	else if (name == "PositionKalman")
 	{
 		ImGui::SetTooltip(
-			"Optical smoothing filter using kalman and IMU.\n"
-			"Smooths optical tracking and reduces optical noise by tracker projection, distance and IMU.\n"
-			"Requires calibration.\n"
-			"(Use 'Calibrate Optical Noise' to calibrate / Experimental)"
+			"Optical smoothing filter using kalman.\n"
+			"Smooths optical tracking and reduces optical noise by tracker projection and distance."
 		);
 	}
 	else if (name == "PositionExternalAttachment")
@@ -2473,16 +2471,6 @@ void AppStage_ControllerSettings::show_orientation_filter_tooltip(const std::str
 			"Requires calibration.\n"
 			"[Optical; Gyroscope]\n"
 			"(Use 'Calibrate Optical Noise' to calibrate)"
-		);
-	}
-	else if (name == "OrientationKalman")
-	{
-		ImGui::SetTooltip(
-			"Optical orientation filter using kalman.\n"
-			"Smooths optical orintation and reduces optical orintation noise by tracker projection and distance.\n"
-			"Requires calibration.\n"
-			"[Optical; Gyroscope; Accelerometer; Magnetometer]\n"
-			"(Use 'Calibrate Optical Noise' to calibrate / Experimental)"
 		);
 	}
 	else if (name == "OrientationExternal")

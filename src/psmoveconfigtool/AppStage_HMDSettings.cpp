@@ -21,8 +21,8 @@
 const char *AppStage_HMDSettings::APP_STAGE_NAME= "HMDSettings";
 
 //-- constants -----
-const int k_default_hmd_position_filter_index = 1; // LowPassOptical
-const int k_default_morpheus_position_filter_index = 1; // LowPassOptical
+const int k_default_hmd_position_filter_index = 5; // PositionKalman
+const int k_default_morpheus_position_filter_index = 5; // PositionKalman
 const int k_default_morpheus_orientation_filter_index = 1; // MadgwickARG
 
 const char* k_hmd_position_filter_names[] = { "PassThru", "LowPassOptical", "LowPassIMU", "LowPassExponential", "ComplimentaryOpticalIMU", "PositionKalman" };
@@ -1414,10 +1414,8 @@ void AppStage_HMDSettings::show_position_filter_tooltip(const std::string name)
 	else if (name == "PositionKalman")
 	{
 		ImGui::SetTooltip(
-			"Optical smoothing filter using kalman and IMU.\n"
-			"Smooths optical tracking and reduces optical noise by tracker projection, distance and IMU.\n"
-			"Requires calibration.\n"
-			"(Use 'Calibrate Optical Noise' to calibrate / Experimental)"
+			"Optical smoothing filter using kalman.\n"
+			"Smooths optical tracking and reduces optical noise by tracker projection and distance."
 		);
 	}
 	else if (name == "PositionExternalAttachment")
@@ -1470,16 +1468,6 @@ void AppStage_HMDSettings::show_orientation_filter_tooltip(const std::string nam
 			"Requires calibration.\n"
 			"[Optical; Gyroscope]\n"
 			"(Use 'Calibrate Optical Noise' to calibrate)"
-		);
-	}
-	else if (name == "OrientationKalman")
-	{
-		ImGui::SetTooltip(
-			"Optical orientation filter using kalman.\n"
-			"Smooths optical orintation and reduces optical orintation noise by tracker projection and distance.\n"
-			"Requires calibration.\n"
-			"[Optical; Gyroscope; Accelerometer; Magnetometer]\n"
-			"(Use 'Calibrate Optical Noise' to calibrate / Experimental)"
 		);
 	}
 	else if (name == "OrientationExternal")
