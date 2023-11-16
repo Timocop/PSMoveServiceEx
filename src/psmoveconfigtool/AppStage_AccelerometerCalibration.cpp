@@ -464,10 +464,14 @@ void AppStage_AccelerometerCalibration::renderUI()
 			switch(m_controllerView->ControllerType)
 			{
 			case PSMController_Move:
-				ImGui::Text("Stand the controller on a flat, level surface.");
+				ImGui::Text(
+					"Stand the controller on a flat, level surface.\n"
+					"Do not move the controller while sampling is in progress!");
 				break;
 			case PSMController_DualShock4:
-				ImGui::Text("Lay the controller on a flat, level surface.");
+				ImGui::Text(
+					"Lay the controller on a flat, level surface.\n"
+					"Do not move the controller while sampling is in progress!");
 				break;
 			}
 

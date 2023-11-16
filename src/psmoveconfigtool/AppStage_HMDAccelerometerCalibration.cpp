@@ -393,7 +393,9 @@ void AppStage_HMDAccelerometerCalibration::renderUI()
 			{
 			case PSMHmd_Morpheus:
             case PSMHmd_Virtual:
-				ImGui::Text("Set the HMD on a flat, level surface.");
+				ImGui::Text(
+					"Set the HMD on a flat, level surface.\n"
+					"Do not move the HMD while sampling is in progress!");
 				break;
 			}
 
