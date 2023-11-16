@@ -757,7 +757,7 @@ void AppStage_HMDSettings::renderUI()
 								m_app->setAppStage(AppStage_HMDAccelerometerCalibration::APP_STAGE_NAME);
 							}
 
-							if (m_app->getIsLocalServer())
+							/*if (m_app->getIsLocalServer())
 							{
 								if (ImGui::Button("Calibrate LED Model"))
 								{
@@ -775,7 +775,7 @@ void AppStage_HMDSettings::renderUI()
 								);
 								ImGui::PopTextWrapPos();
 								ImGui::Spacing();
-							}
+							}*/
 						}
 						ImGui::EndGroup();
 						if (ImGui::IsItemVisible())
