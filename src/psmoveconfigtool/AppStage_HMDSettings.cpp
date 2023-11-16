@@ -621,7 +621,7 @@ void AppStage_HMDSettings::renderUI()
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(120.f);
 							float filter_madgwick_beta = hmdInfo.FilterMadgwickBeta;
-							if (ImGui::InputFloat("##MadgwickFilterMadgwickBeta", &filter_madgwick_beta, 1.f, 5.f, 2))
+							if (ImGui::InputFloat("##MadgwickFilterMadgwickBeta", &filter_madgwick_beta, 0.01f, 0.05f, 2))
 							{
 								hmdInfo.FilterMadgwickBeta = clampf(filter_madgwick_beta, 0.0f, 1.0f);
 
@@ -674,7 +674,7 @@ void AppStage_HMDSettings::renderUI()
 									ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 									ImGui::PushItemWidth(120.f);
 									float filter_madgwick_stabilization_smoothing_factor = (1.f - hmdInfo.FilterMadgwickStabilizationSmoothingFactor) * 100.f;
-									if (ImGui::InputFloat("##MadgwickFilterBetaSmoothingFactor", &filter_madgwick_stabilization_smoothing_factor, 0.01f, 0.05f, 2))
+									if (ImGui::InputFloat("##MadgwickFilterBetaSmoothingFactor", &filter_madgwick_stabilization_smoothing_factor, 1.f, 5.f, 2))
 									{
 										hmdInfo.FilterMadgwickStabilizationSmoothingFactor = clampf(1.f - (filter_madgwick_stabilization_smoothing_factor / 100.f), 0.0f, 1.f);
 
