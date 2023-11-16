@@ -430,6 +430,10 @@ public:
 				response = new PSMoveProtocol::Response;
 				handle_request__set_hmd_orientation_prediction_time(context, response);
 				break;
+			case PSMoveProtocol::Request_RequestType_SET_CONTROLLER_ACCELEROMETER_CALIBRATION_EX:
+				response = new PSMoveProtocol::Response;
+				handle_request__set_controller_accelerometer_calibration_ex(context, response);
+				break;
 
             default:
                 assert(0 && "Whoops, bad request!");
@@ -1417,60 +1421,130 @@ protected:
 		}
 	}
 
-    void handle_request__set_controller_accelerometer_calibration(
-        const RequestContext &context,
-        PSMoveProtocol::Response *response)
-    {
-        const int controller_id = context.request->set_controller_accelerometer_calibration_request().controller_id();
+	void handle_request__set_controller_accelerometer_calibration(
+		const RequestContext &context,
+		PSMoveProtocol::Response *response)
+	{
+		const int controller_id = context.request->set_controller_accelerometer_calibration_request().controller_id();
 
-        ServerControllerViewPtr ControllerView = m_device_manager.getControllerViewPtr(controller_id);
+		ServerControllerViewPtr ControllerView = m_device_manager.getControllerViewPtr(controller_id);
 
-        if (ControllerView && ControllerView->getIsOpen())
-        {
-            if (ControllerView->getControllerDeviceType() == CommonDeviceState::PSMove)
-            {
-                PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
-                PSMoveControllerConfig config = *controller->getConfig();
+		if (ControllerView && ControllerView->getIsOpen())
+		{
+			if (ControllerView->getControllerDeviceType() == CommonDeviceState::PSMove)
+			{
+				PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
+				PSMoveControllerConfig config = *controller->getConfig();
 
-                const auto &request = context.request->set_controller_accelerometer_calibration_request();
+				const auto &request = context.request->set_controller_accelerometer_calibration_request();
 
-                // Save the noise radius in controller config
-                config.accelerometer_noise_radius= request.noise_radius();
-                config.accelerometer_variance = request.variance();
-                
+				// Save the noise radius in controller config
+				config.accelerometer_variance = request.variance();
+
 				controller->setConfig(&config);
 
-                ControllerView->resetPoseFilter();
+				ControllerView->resetPoseFilter();
 
-                response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
-            }
-            else if (ControllerView->getControllerDeviceType() == CommonDeviceState::PSDualShock4)
-            {
-                PSDualShock4Controller *controller = ControllerView->castChecked<PSDualShock4Controller>();
-                PSDualShock4ControllerConfig config = *controller->getConfig();
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+			}
+			else if (ControllerView->getControllerDeviceType() == CommonDeviceState::PSDualShock4)
+			{
+				PSDualShock4Controller *controller = ControllerView->castChecked<PSDualShock4Controller>();
+				PSDualShock4ControllerConfig config = *controller->getConfig();
 
-                const auto &request = context.request->set_controller_accelerometer_calibration_request();
+				const auto &request = context.request->set_controller_accelerometer_calibration_request();
 
-                // Save the noise radius in controller config
-                config.accelerometer_noise_radius= request.noise_radius();
-                config.accelerometer_variance = request.variance();
-                
+				// Save the noise radius in controller config
+				config.accelerometer_variance = request.variance();
+
 				controller->setConfig(&config);
 
-                ControllerView->resetPoseFilter();
+				ControllerView->resetPoseFilter();
 
-                response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
-            }
-            else
-            {
-                response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
-            }
-        }
-        else
-        {
-            response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
-        }
-    }
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+			}
+			else
+			{
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+			}
+		}
+		else
+		{
+			response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+		}
+	}
+
+	void handle_request__set_controller_accelerometer_calibration_ex(
+		const RequestContext &context,
+		PSMoveProtocol::Response *response)
+	{
+		const int controller_id = context.request->set_controller_accelerometer_calibration_ex_request().controller_id();
+
+		ServerControllerViewPtr ControllerView = m_device_manager.getControllerViewPtr(controller_id);
+
+		if (ControllerView && ControllerView->getIsOpen())
+		{
+			if (ControllerView->getControllerDeviceType() == CommonDeviceState::PSMove)
+			{
+				PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
+				PSMoveControllerConfig config = *controller->getConfig();
+
+				const auto &request = context.request->set_controller_accelerometer_calibration_ex_request();
+
+				CommonDeviceVector measured_g;
+				set_config_vector(request.raw_average_gravity(), measured_g);
+				float length = sqrtf(measured_g.i*measured_g.i + measured_g.j*measured_g.j + measured_g.k*measured_g.k);
+				if (length > k_real_epsilon)
+				{
+					// "Drift" we call bias                                      // Gain                                                 // Offset
+					config.cal_ag_xyz_kbd[0][0][2] = measured_g.i * (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][0][0])) - (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][0][1]));
+					config.cal_ag_xyz_kbd[0][1][2] = measured_g.j * (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][1][0])) - (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][1][1]));
+					config.cal_ag_xyz_kbd[0][2][2] = measured_g.k * (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][2][0])) - (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][2][1]));
+				}
+
+				config.accelerometer_variance = request.raw_variance();
+
+				controller->setConfig(&config);
+
+				ControllerView->resetPoseFilter();
+
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+			}
+			else if (ControllerView->getControllerDeviceType() == CommonDeviceState::PSDualShock4)
+			{
+				PSDualShock4Controller *controller = ControllerView->castChecked<PSDualShock4Controller>();
+				PSDualShock4ControllerConfig config = *controller->getConfig();
+
+				const auto &request = context.request->set_controller_accelerometer_calibration_ex_request();
+
+				CommonDeviceVector measured_g;
+				set_config_vector(request.raw_average_gravity(), measured_g);
+				float length = sqrtf(measured_g.i*measured_g.i + measured_g.j*measured_g.j + measured_g.k*measured_g.k);
+				if (length > k_real_epsilon)
+				{
+					config.accelerometer_bias.i = measured_g.i * (1.f - 1.f / (length*config.accelerometer_gain.i));
+					config.accelerometer_bias.j = measured_g.j * (1.f - 1.f / (length*config.accelerometer_gain.j));
+					config.accelerometer_bias.k = measured_g.k * (1.f - 1.f / (length*config.accelerometer_gain.k));
+				}
+
+				config.accelerometer_variance = request.raw_variance();
+
+				controller->setConfig(&config);
+
+				ControllerView->resetPoseFilter();
+
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+			}
+			else
+			{
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+			}
+		}
+		else
+		{
+			response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+		}
+	}
 
     void handle_request__set_controller_gyroscope_calibration(
         const RequestContext &context,

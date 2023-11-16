@@ -530,14 +530,16 @@ PSMoveControllerConfig::config2ptree()
 	pt.put("enable_optical_tracking", enable_optical_tracking);
     
     pt.put("Calibration.Accel.X.k", cal_ag_xyz_kbd[0][0][0]);
-    pt.put("Calibration.Accel.X.b", cal_ag_xyz_kbd[0][0][1]);
+	pt.put("Calibration.Accel.X.b", cal_ag_xyz_kbd[0][0][1]);
+	pt.put("Calibration.Accel.X.d", cal_ag_xyz_kbd[0][0][2]);
     pt.put("Calibration.Accel.Y.k", cal_ag_xyz_kbd[0][1][0]);
-    pt.put("Calibration.Accel.Y.b", cal_ag_xyz_kbd[0][1][1]);
+	pt.put("Calibration.Accel.Y.b", cal_ag_xyz_kbd[0][1][1]);
+	pt.put("Calibration.Accel.Y.d", cal_ag_xyz_kbd[0][1][2]);
     pt.put("Calibration.Accel.Z.k", cal_ag_xyz_kbd[0][2][0]);
-    pt.put("Calibration.Accel.Z.b", cal_ag_xyz_kbd[0][2][1]);
+	pt.put("Calibration.Accel.Z.b", cal_ag_xyz_kbd[0][2][1]);
+	pt.put("Calibration.Accel.Z.d", cal_ag_xyz_kbd[0][2][2]);
 
 	pt.put("Calibration.Accel.Variance", accelerometer_variance);
-    pt.put("Calibration.Accel.NoiseRadius", accelerometer_noise_radius);
 
     pt.put("Calibration.Gyro.X.k", cal_ag_xyz_kbd[1][0][0]);
     pt.put("Calibration.Gyro.X.b", cal_ag_xyz_kbd[1][0][1]);
@@ -658,16 +660,15 @@ PSMoveControllerConfig::ptree2config(const boost::property_tree::ptree &pt)
 
         cal_ag_xyz_kbd[0][0][0] = pt.get<float>("Calibration.Accel.X.k", 1.0f);
         cal_ag_xyz_kbd[0][0][1] = pt.get<float>("Calibration.Accel.X.b", 0.0f);
-		cal_ag_xyz_kbd[0][0][2] = 0.f; // No drift
+		cal_ag_xyz_kbd[0][0][2] = pt.get<float>("Calibration.Accel.X.d", 0.0f);
         cal_ag_xyz_kbd[0][1][0] = pt.get<float>("Calibration.Accel.Y.k", 1.0f);
         cal_ag_xyz_kbd[0][1][1] = pt.get<float>("Calibration.Accel.Y.b", 0.0f);
-		cal_ag_xyz_kbd[0][1][2] = 0.f; // No drift
+		cal_ag_xyz_kbd[0][1][2] = pt.get<float>("Calibration.Accel.Y.d", 0.0f);
         cal_ag_xyz_kbd[0][2][0] = pt.get<float>("Calibration.Accel.Z.k", 1.0f);
         cal_ag_xyz_kbd[0][2][1] = pt.get<float>("Calibration.Accel.Z.b", 0.0f);
-		cal_ag_xyz_kbd[0][2][2] = 0.f; // No drift
+		cal_ag_xyz_kbd[0][2][2] = pt.get<float>("Calibration.Accel.Z.d", 0.0f);
 
 		accelerometer_variance = pt.get<float>("Calibration.Accel.Variance", accelerometer_variance);
-        accelerometer_noise_radius = pt.get<float>("Calibration.Accel.NoiseRadius", 0.0f);
 
         cal_ag_xyz_kbd[1][0][0] = pt.get<float>("Calibration.Gyro.X.k", 1.0f);
         cal_ag_xyz_kbd[1][0][1] = pt.get<float>("Calibration.Gyro.X.b", 0.0f);

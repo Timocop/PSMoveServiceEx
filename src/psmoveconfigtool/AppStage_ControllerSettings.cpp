@@ -1667,6 +1667,12 @@ void AppStage_ControllerSettings::renderUI()
 									m_app->getAppStage<AppStage_GyroscopeCalibration>()->setBypassCalibrationFlag(false);
 									m_app->setAppStage(AppStage_GyroscopeCalibration::APP_STAGE_NAME);
 								}
+
+								if (ImGui::Button("Calibrate Accelerometer"))
+								{
+									m_app->getAppStage<AppStage_AccelerometerCalibration>()->setBypassCalibrationFlag(false);
+									m_app->setAppStage(AppStage_AccelerometerCalibration::APP_STAGE_NAME);
+								}
 							}
 							ImGui::EndGroup();
 							if (ImGui::IsItemVisible())

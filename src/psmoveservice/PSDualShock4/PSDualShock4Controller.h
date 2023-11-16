@@ -56,7 +56,6 @@ public:
         , max_poll_failure_timeout_ms(3000)
 		, prediction_time(0.f)
 		, ang_prediction_time(0.f)
-		, accelerometer_noise_radius(0.015f) // rounded value from config tool measurement (g-units)
 		, accelerometer_variance(1.45e-05f) // rounded value from config tool measurement (g-units^2)
         , max_velocity(1.f)
         , gyro_variance(4.75e-06f) // rounded value from config tool measurement (rad^2/s^2)
@@ -158,9 +157,6 @@ public:
 	CommonDevicePosition offset_orientation;
 	CommonDevicePosition offset_world_orientation;
 	CommonDevicePosition offset_scale;
-
-	// The bounding radius of the accelerometer measurements 
-    float accelerometer_noise_radius;
 
 	// The variance of the accelerometer readings
 	float accelerometer_variance; // g-units^2

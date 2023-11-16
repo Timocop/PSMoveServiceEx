@@ -196,7 +196,7 @@ void AppStage_HMDGyroscopeCalibration::update()
                     m_hmdView->HmdState.MorpheusState.CalibratedSensorData;
 
                 m_lastRawGyroscope = rawSensorData.Gyroscope;
-				m_lastCalibratedGyroscope = PSM_Vector3iCastToFloat(&m_lastRawGyroscope); // calibratedSensorData.Gyroscope;
+				m_lastCalibratedGyroscope = calibratedSensorData.Gyroscope;
                 m_lastCalibratedAccelerometer = calibratedSensorData.Accelerometer;
             }
             break;
@@ -337,7 +337,7 @@ void AppStage_HMDGyroscopeCalibration::update()
 
 void AppStage_HMDGyroscopeCalibration::render()
 {
-	const float modelScale = 9.f;
+	const float modelScale = 18.f;
 	glm::mat4 hmdTransform;
 
 	switch (m_hmdView->HmdType)
@@ -394,10 +394,10 @@ void AppStage_HMDGyroscopeCalibration::render()
 				glm::mat4 worldSpaceOrientation= glm::mat4_cast(q);
 				glm::mat4 worldTransform = glm::scale(worldSpaceOrientation, glm::vec3(modelScale, modelScale, modelScale));
 
-				drawHMD(m_hmdView, worldTransform);
-				drawTransformedAxes(worldSpaceOrientation, 20.f);
+				drawTransformedAxes(glm::scale(glm::mat4(1.f), glm::vec3(modelScale, modelScale, modelScale)), 20.f);
 
-				drawTransformedAxes(glm::mat4(1.f), 20.f);
+				drawHMD(m_hmdView, worldTransform);
+				drawTransformedAxes(worldTransform, 20.f);
 			}
         } break;
     default:

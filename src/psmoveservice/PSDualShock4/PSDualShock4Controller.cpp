@@ -481,7 +481,6 @@ PSDualShock4ControllerConfig::config2ptree()
     pt.put("Calibration.Accel.X.b", accelerometer_bias.i);
     pt.put("Calibration.Accel.Y.b", accelerometer_bias.j);
     pt.put("Calibration.Accel.Z.b", accelerometer_bias.k);
-    pt.put("Calibration.Accel.NoiseRadius", accelerometer_noise_radius);
 	pt.put("Calibration.Accel.Variance", accelerometer_variance);
     pt.put("Calibration.Gyro.Gain", gyro_gain);
     pt.put("Calibration.Gyro.Variance", gyro_variance);
@@ -565,7 +564,6 @@ PSDualShock4ControllerConfig::ptree2config(const boost::property_tree::ptree &pt
         accelerometer_bias.i = pt.get<float>("Calibration.Accel.X.b", accelerometer_bias.i);
         accelerometer_bias.j = pt.get<float>("Calibration.Accel.Y.b", accelerometer_bias.j);
         accelerometer_bias.k = pt.get<float>("Calibration.Accel.Z.b", accelerometer_bias.k);
-        accelerometer_noise_radius = pt.get<float>("Calibration.Accel.NoiseRadius", accelerometer_noise_radius);
 		accelerometer_variance= pt.get<float>("Calibration.Accel.Variance", accelerometer_variance);
 		position_variance_exp_fit_a= pt.get<float>("Calibration.Position.VarianceExpFitA", position_variance_exp_fit_a);
 		position_variance_exp_fit_b= pt.get<float>("Calibration.Position.VarianceExpFitB", position_variance_exp_fit_b);

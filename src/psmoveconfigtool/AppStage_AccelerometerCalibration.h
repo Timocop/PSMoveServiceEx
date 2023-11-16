@@ -74,9 +74,10 @@ private:
     int m_lastControllerSeqNum;
 	float m_playspaceYawOffset;
 
-    PSMVector3f m_lastCalibratedAccelerometer;
+	PSMVector3i m_lastRawAccelerometer;
+	PSMVector3f m_lastCalibratedAccelerometer;
 
-    AccelerometerStatistics *m_noiseSamples;
+	struct ControllerAccelerometerPoseSamples *m_noiseSamples;
 };
 
 #endif // APP_STAGE_ACCELEROMETER_CALIBRATION_H

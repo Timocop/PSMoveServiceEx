@@ -61,7 +61,6 @@ public:
         , magnetometer_fit_error(0.f)
 		, magnetometer_variance(0.00059f) // rounded value from config tool measurement
 		, accelerometer_variance(7.2e-06f) // rounded value from config tool measurement
-        , accelerometer_noise_radius(0.014f) // rounded value from config tool measurement
         , gyro_variance(0.00035f) // rounded value from config tool measurement (rad/s)^2
         , gyro_drift(0.027f) // rounded value from config tool measurement (rad/s)
         , max_velocity(1.f)
@@ -174,9 +173,6 @@ public:
 	// The variance of the accelerometer readings
 	float accelerometer_variance; // g-units^2
 
-    // The bounding radius of the accelerometer noise
-    float accelerometer_noise_radius;
-    
     // The variance of the calibrated gyro readings in (rad/s)^2
     float gyro_variance;
 

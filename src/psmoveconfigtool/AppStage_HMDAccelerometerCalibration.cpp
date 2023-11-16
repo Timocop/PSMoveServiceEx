@@ -245,7 +245,7 @@ void AppStage_HMDAccelerometerCalibration::update()
 
 void AppStage_HMDAccelerometerCalibration::render()
 {
-    const float modelScale = 9.f;
+    const float modelScale = 18.f;
     glm::mat4 hmdTransform;
 
     switch(m_hmdView->HmdType)
@@ -265,13 +265,25 @@ void AppStage_HMDAccelerometerCalibration::render()
         } break;
     case eCalibrationMenuState::placeHMD:
         {
+			const float sampleScale = 0.2f;
+			glm::mat4 sampleTransform = glm::scale(glm::mat4(1.f), glm::vec3(sampleScale, sampleScale, sampleScale));
+
             // Draw the controller model in the pose we want the user place it in
             drawHMD(m_hmdView, hmdTransform);
+
+			// Draw the current raw accelerometer direction
+			{
+				glm::vec3 m_start = glm::vec3(0.f, 0.f, 0.f);
+				glm::vec3 m_end = psm_vector3f_to_glm_vec3(PSM_Vector3iCastToFloat(&m_lastRawAccelerometer));
+
+				drawArrow(sampleTransform, m_start, m_end, 0.1f, glm::vec3(1.f, 0.f, 0.f));
+				drawTextAtWorldPosition(sampleTransform, m_end, "A");
+			}
         } break;
     case eCalibrationMenuState::measureNoise:
     case eCalibrationMenuState::measureComplete:
         {
-            const float sampleScale = 0.1f;
+            const float sampleScale = 0.2f;
             glm::mat4 sampleTransform = glm::scale(glm::mat4(1.f), glm::vec3(sampleScale, sampleScale, sampleScale));
 
             // Draw the controller in the middle            
@@ -293,13 +305,13 @@ void AppStage_HMDAccelerometerCalibration::render()
         } break;
     case eCalibrationMenuState::test:
         {
-            const float sensorScale = 100.f;
+            const float sensorScale = 200.f;
             glm::mat4 sensorTransform = glm::scale(glm::mat4(1.f), glm::vec3(sensorScale, sensorScale, sensorScale));
+
+			drawTransformedAxes(glm::scale(glm::mat4(1.f), glm::vec3(modelScale, modelScale, modelScale)), 20.f);
 
             drawHMD(m_hmdView, hmdTransform);
             drawTransformedAxes(hmdTransform, 20.f);
-
-			drawTransformedAxes(glm::mat4(1.f), 20.f);
 
             // Draw the current filtered accelerometer direction
             {
@@ -357,7 +369,7 @@ void AppStage_HMDAccelerometerCalibration::renderUI()
 
             ImGui::Text("Failed to start hmd stream!");
 
-            if (ImGui::Button("Ok"))
+            if (ImGui::Button(" OK "))
             {
                 request_exit_to_app_stage(AppStage_HMDSettings::APP_STAGE_NAME);
             }
@@ -381,7 +393,7 @@ void AppStage_HMDAccelerometerCalibration::renderUI()
 			{
 			case PSMHmd_Morpheus:
             case PSMHmd_Virtual:
-				ImGui::Text("Set the HMD on a flat, level surface");
+				ImGui::Text("Set the HMD on a flat, level surface.");
 				break;
 			}
 

@@ -2632,7 +2632,7 @@ init_filters_for_psmove(
     constants.position_constants.accelerometer_variance= 
         Eigen::Vector3f(psmove_config->accelerometer_variance, psmove_config->accelerometer_variance, psmove_config->accelerometer_variance);
     constants.position_constants.accelerometer_drift = Eigen::Vector3f::Zero();
-    constants.position_constants.accelerometer_noise_radius= psmove_config->accelerometer_noise_radius;
+    constants.position_constants.accelerometer_noise_radius= 0.0f;
     constants.position_constants.max_velocity= psmove_config->max_velocity;
     constants.position_constants.mean_update_time_delta= psmove_config->mean_update_time_delta;
     constants.position_constants.position_variance_curve.A = psmove_config->position_variance_exp_fit_a;
@@ -2695,7 +2695,7 @@ init_filters_for_psdualshock4(
     constants.position_constants.accelerometer_drift = Eigen::Vector3f::Zero();
     constants.position_constants.accelerometer_variance= 
         Eigen::Vector3f(ds4_config->accelerometer_variance, ds4_config->accelerometer_variance, ds4_config->accelerometer_variance);
-    constants.position_constants.accelerometer_noise_radius= ds4_config->accelerometer_noise_radius;
+    constants.position_constants.accelerometer_noise_radius= 0.0f;
     constants.position_constants.max_velocity= ds4_config->max_velocity;
     constants.position_constants.mean_update_time_delta= ds4_config->mean_update_time_delta;
     constants.position_constants.position_variance_curve.A = ds4_config->position_variance_exp_fit_a;
