@@ -10,6 +10,17 @@
 #include <vector>
 #include <chrono>
 
+#define G_SCALE_125DPS ((125.f / 32768.0) * k_degrees_to_radians) //124.87?
+#define G_SCALE_250DPS (G_SCALE_125DPS * 2.f)
+#define G_SCALE_500DPS (G_SCALE_250DPS * 2.f)
+#define G_SCALE_1000DPS (G_SCALE_500DPS * 2.f)
+#define G_SCALE_2000DPS (G_SCALE_1000DPS * 2.f)
+
+#define A_SCALE_2G (2.0f / 2048.f)
+#define A_SCALE_4G (A_SCALE_2G * 2.f)
+#define A_SCALE_8G (A_SCALE_4G * 2.f)
+#define A_SCALE_16G (A_SCALE_8G * 2.f)
+
 // The angle the accelerometer reading is pitched forward when the DS4 is on a flat surface
 // The value comes from the accelerometer calibration utility
 #define FLAT_SURFACE_ACCELEROMETER_PITCH_DEGREES 12.661f
@@ -108,9 +119,9 @@ public:
         // Accelerometer gain computed from accelerometer calibration in the config tool is really close to 1/8192.
         // Since the accelerometer is 12-bit we have to >> 4 bits (divide by 16) to get the true raw sensor bits
 		// That means the "Sensitivity" is 512 and thus the accelerometer mode is ±4g
-		accelerometer_gain.i = 1.f / 512.f;
-		accelerometer_gain.j = 1.f / 512.f;
-		accelerometer_gain.k = 1.f / 512.f;
+		accelerometer_gain.i = A_SCALE_4G;
+		accelerometer_gain.j = A_SCALE_4G;
+		accelerometer_gain.k = A_SCALE_4G;
         
         // Accelerometer bias computed from accelerometer calibration in the config tool is really close to 0
         // This is because the raw gyro readings are likely pre-calibrated
@@ -121,7 +132,7 @@ public:
 		// Gyro gain mode can vary from controller to controller
 		// Initially assume that this controller is using the '±2000°/s' mode 
 		// and use the appropriate LSB/rad/s "Sensitivity"
-        gyro_gain= 1.f / (16.4f / k_degrees_to_radians);
+        gyro_gain= G_SCALE_2000DPS;
 
         // This is the ideal accelerometer reading you get when the DS4 is held such that 
         // the light bar facing is perpendicular to gravity.        
