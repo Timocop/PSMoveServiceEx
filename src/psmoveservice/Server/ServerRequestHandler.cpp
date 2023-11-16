@@ -1496,10 +1496,36 @@ protected:
 				float length = sqrtf(measured_g.i*measured_g.i + measured_g.j*measured_g.j + measured_g.k*measured_g.k);
 				if (length > k_real_epsilon)
 				{
-					// "Drift" we call bias                                      // Gain                                                 // Offset
-					config.cal_ag_xyz_kbd[0][0][2] = measured_g.i * (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][0][0])) - (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][0][1]));
-					config.cal_ag_xyz_kbd[0][1][2] = measured_g.j * (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][1][0])) - (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][1][1]));
-					config.cal_ag_xyz_kbd[0][2][2] = measured_g.k * (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][2][0])) - (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][2][1]));
+					// Check if gain is valid
+					if (config.cal_ag_xyz_kbd[0][0][0] > k_real_epsilon &&
+						config.cal_ag_xyz_kbd[0][1][0] > k_real_epsilon &&
+						config.cal_ag_xyz_kbd[0][2][0] > k_real_epsilon)
+					{
+						// Check if gain offset is valid
+						if (config.cal_ag_xyz_kbd[0][0][1] > k_real_epsilon &&
+							config.cal_ag_xyz_kbd[0][1][1] > k_real_epsilon &&
+							config.cal_ag_xyz_kbd[0][2][1] > k_real_epsilon)
+						{
+							// Bias														// Gain                                                 // Offset
+							config.cal_ag_xyz_kbd[0][0][2] = measured_g.i * (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][0][0])) - (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][0][1]));
+							config.cal_ag_xyz_kbd[0][1][2] = measured_g.j * (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][1][0])) - (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][1][1]));
+							config.cal_ag_xyz_kbd[0][2][2] = measured_g.k * (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][2][0])) - (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][2][1]));
+						}
+						else
+						{
+							// Bias														// Gain
+							config.cal_ag_xyz_kbd[0][0][2] = measured_g.i * (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][0][0]));
+							config.cal_ag_xyz_kbd[0][1][2] = measured_g.j * (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][1][0]));
+							config.cal_ag_xyz_kbd[0][2][2] = measured_g.k * (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][2][0]));
+						}
+					}
+					else
+					{
+						// Bias
+						config.cal_ag_xyz_kbd[0][0][2] = measured_g.i;
+						config.cal_ag_xyz_kbd[0][1][2] = measured_g.j;
+						config.cal_ag_xyz_kbd[0][2][2] = measured_g.k;
+					}
 				}
 
 				config.accelerometer_variance = request.raw_variance();
@@ -1522,9 +1548,20 @@ protected:
 				float length = sqrtf(measured_g.i*measured_g.i + measured_g.j*measured_g.j + measured_g.k*measured_g.k);
 				if (length > k_real_epsilon)
 				{
-					config.accelerometer_bias.i = measured_g.i * (1.f - 1.f / (length*config.accelerometer_gain.i));
-					config.accelerometer_bias.j = measured_g.j * (1.f - 1.f / (length*config.accelerometer_gain.j));
-					config.accelerometer_bias.k = measured_g.k * (1.f - 1.f / (length*config.accelerometer_gain.k));
+					if (config.accelerometer_gain.i > k_real_epsilon &&
+						config.accelerometer_gain.j > k_real_epsilon &&
+						config.accelerometer_gain.k > k_real_epsilon)
+					{
+						config.accelerometer_bias.i = measured_g.i * (1.f - 1.f / (length*config.accelerometer_gain.i));
+						config.accelerometer_bias.j = measured_g.j * (1.f - 1.f / (length*config.accelerometer_gain.j));
+						config.accelerometer_bias.k = measured_g.k * (1.f - 1.f / (length*config.accelerometer_gain.k));
+					}
+					else
+					{
+						config.accelerometer_bias.i = measured_g.i;
+						config.accelerometer_bias.j = measured_g.j;
+						config.accelerometer_bias.k = measured_g.k;
+					}
 				}
 
 				config.accelerometer_variance = request.raw_variance();
@@ -4166,9 +4203,20 @@ protected:
             float length = sqrtf(measured_g.i*measured_g.i + measured_g.j*measured_g.j + measured_g.k*measured_g.k);
             if (length > k_real_epsilon)
             {
-                config.raw_accelerometer_bias.i = measured_g.i * (1.f - 1.f / (length*config.accelerometer_gain.i));
-                config.raw_accelerometer_bias.j = measured_g.j * (1.f - 1.f / (length*config.accelerometer_gain.j));
-                config.raw_accelerometer_bias.k = measured_g.k * (1.f - 1.f / (length*config.accelerometer_gain.k));
+				if (config.accelerometer_gain.i > k_real_epsilon &&
+					config.accelerometer_gain.j > k_real_epsilon &&
+					config.accelerometer_gain.k > k_real_epsilon)
+				{
+					config.raw_accelerometer_bias.i = measured_g.i * (1.f - 1.f / (length*config.accelerometer_gain.i));
+					config.raw_accelerometer_bias.j = measured_g.j * (1.f - 1.f / (length*config.accelerometer_gain.j));
+					config.raw_accelerometer_bias.k = measured_g.k * (1.f - 1.f / (length*config.accelerometer_gain.k));
+				}
+				else
+				{
+					config.raw_accelerometer_bias.i = measured_g.i;
+					config.raw_accelerometer_bias.j = measured_g.j;
+					config.raw_accelerometer_bias.k = measured_g.k;
+				}
             }
 
             config.raw_accelerometer_variance = request.raw_variance();
