@@ -842,7 +842,14 @@ void MorpheusHMD::setHmdListener(IHMDListener * listener)
 bool 
 MorpheusHMD::getTrackingColorID(eCommonTrackingColorID &out_tracking_color_id) const
 {
-	out_tracking_color_id = eCommonTrackingColorID::Blue;
+	if (cfg.use_custom_optical_tracking)
+	{
+		out_tracking_color_id = eCommonTrackingColorID::Custom9;
+	}
+	else
+	{
+		out_tracking_color_id = eCommonTrackingColorID::Blue;
+	}
 	return true;
 }
 
