@@ -14,6 +14,8 @@
 #include "WorkerThread.h"
 #include <vector>
 #include <cstdlib>
+#include <mutex>
+#include <list>
 #ifdef _WIN32
 #define _USE_MATH_DEFINES
 #endif
@@ -40,6 +42,10 @@
 #define METERS_TO_CENTIMETERS 100
 
 #define HID_READ_TIMEOUT			  100 /* timeout in ms */
+
+/* Minimum time (in milliseconds) morpheus write updates */
+#define HMD_WRITE_DATA_INTERVAL_MS 120
+#define HMD_QUERED_COMMANDS_MAX 100
 
 enum eMorpheusRequestType
 {
@@ -194,6 +200,8 @@ public:
 	MorpheusHIDSensorProcessor(const MorpheusHMDConfig &cfg)
 		: WorkerThread("MorpheusSensorProcessor")
 		, m_hidDevice(nullptr)
+		, m_device_handle(nullptr)
+		, m_device_descriptor(nullptr)
 		, m_nextPollSequenceNumber(0)
 	{
 		setConfig(cfg);
@@ -216,11 +224,28 @@ public:
 		m_currentState.fetchValue(input_state);
 	}
 
+	void postQueredCommand(const MorpheusCommand &output_state)
+	{
+		std::lock_guard<std::mutex> lock(mutex);
+
+		if (m_queuedCommands.size() < HMD_QUERED_COMMANDS_MAX)
+		{
+			m_queuedCommands.push_back(output_state);
+			m_hasQueredCommands = true;
+		}
+		else
+		{
+			SERVER_MT_LOG_ERROR("PSMoveSensorProcessor::postQueredCommand") << "Unable to add more commands to the queue, limit reached!";
+		}
+	}
+
 	void start(class MorpheusUSBContext *USBContext, IHMDListener *hmd_listener)
 	{
 		if (!hasThreadStarted())
 		{
 			m_hidDevice = USBContext->sensor_device_handle;
+			m_device_handle = USBContext->usb_device_handle;
+			m_device_descriptor = USBContext->usb_device_descriptor;
 			m_hmdListener = hmd_listener;
 			WorkerThread::startThread();
 		}
@@ -279,11 +304,68 @@ protected:
 			bWorking = false;
 		}
 
+		// Don't send output writes too frequently
+		{
+			std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+
+			// See if it's time to update the LED/rumble state
+			std::chrono::duration<double, std::milli> led_update_diff = now - m_lastHIDOutputTimestamp;
+			if (m_hasQueredCommands && led_update_diff.count() >= HMD_WRITE_DATA_INTERVAL_MS)
+			{
+				std::lock_guard<std::mutex> lock(mutex);
+
+				if (m_queuedCommands.size() > 0)
+				{
+					MorpheusCommand output_command = *(m_queuedCommands.begin());
+					m_queuedCommands.pop_front();
+
+					morpheus_send_command(output_command);
+
+					m_lastHIDOutputTimestamp = now;
+				}
+
+				m_hasQueredCommands = (m_queuedCommands.size() > 0);
+			}
+		}
+
 		return bWorking;
 	}
 
+	bool morpheus_send_command(MorpheusCommand &command)
+	{
+		if (m_device_handle != nullptr)
+		{
+			const size_t command_length = static_cast<size_t>(command.header.length) + sizeof(command.header);
+			const int endpointAddress =
+				(m_device_descriptor->interface[MORPHEUS_COMMAND_INTERFACE]
+					.altsetting[0]
+					.endpoint[0]
+					.bEndpointAddress) & ~MORPHEUS_ENDPOINT_IN;
+
+			int transferredByteCount = 0;
+			int result =
+				libusb_bulk_transfer(
+					m_device_handle,
+					endpointAddress,
+					(unsigned char *)&command,
+					command_length,
+					&transferredByteCount,
+					0);
+
+			return result == LIBUSB_SUCCESS && transferredByteCount == command_length;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	std::mutex mutex;
+
 	// Multithreaded state
 	hid_device *m_hidDevice;
+	libusb_device_handle *m_device_handle;
+	libusb_config_descriptor *m_device_descriptor;
 	IHMDListener *m_hmdListener;
 
 	// Worker thread state
@@ -291,22 +373,17 @@ protected:
 	MorpheusSensorData m_previousRawHIDPacket;
 	MorpheusSensorData m_currentRawHIDPacket;
 
+	std::list<MorpheusCommand> m_queuedCommands;
+	std::atomic_bool m_hasQueredCommands;
+
 	AtomicObject<MorpheusHMDState> m_currentState;
 	AtomicObject<MorpheusHMDConfig> m_cfg;
+	std::chrono::time_point<std::chrono::high_resolution_clock> m_lastHIDOutputTimestamp;
 };
 
 // -- private methods
 static bool morpheus_open_usb_device(MorpheusUSBContext *morpheus_context);
 static void morpheus_close_usb_device(MorpheusUSBContext *morpheus_context);
-static bool morpheus_enable_tracking(MorpheusUSBContext *morpheus_context);
-static bool morpheus_set_headset_power(MorpheusUSBContext *morpheus_context, bool bIsOn);
-static bool morpheus_set_led_brightness(MorpheusUSBContext *morpheus_context, unsigned short led_bitmask, unsigned char intensity);
-static bool morpheus_turn_off_processor_unit(MorpheusUSBContext *morpheus_context);
-static bool morpheus_set_vr_mode(MorpheusUSBContext *morpheus_context, bool bIsOn);
-static bool morpheus_set_cinematic_configuration(
-	MorpheusUSBContext *morpheus_context,
-	unsigned char ScreenDistance, unsigned char ScreenSize, unsigned char Brightness, unsigned char MicVolume, bool UnknownVRSetting);
-static bool morpheus_send_command(MorpheusUSBContext *morpheus_context, MorpheusCommand &command);
 
 // -- public interface
 // -- Morpheus HMD Config
@@ -623,52 +700,6 @@ bool MorpheusHMD::open(
 
 			if (getIsOpen())  // Controller was opened and has an index
 			{
-				SERVER_LOG_INFO("MorpheusHMD::open") << "Turning on MorpheusHMD power.";
-				if (morpheus_set_headset_power(USBContext, true))
-				{
-					SERVER_LOG_INFO("MorpheusHMD::open") << "Turning on MorpheusHMD VR-Mode.";
-					
-					// Apparently the first generation morpheus dislikes morpheus_enable_tracking() and causes infinite loading.
-					// morpheus_set_vr_mode() seems to work just fine.
-					if (morpheus_set_vr_mode(USBContext, true))
-					{
-						//morpheus_enable_tracking() resets morpheus_set_led_brightness() LED settings?
-						//Lets just wait a bit.
-						std::this_thread::sleep_for(std::chrono::milliseconds(1500));
-
-						morpheus_set_led_brightness(USBContext, _MorpheusLED_FRONT, 0);
-						morpheus_set_led_brightness(USBContext, _MorpheusLED_BACK, 50);
-					}
-					else
-					{
-						SERVER_LOG_ERROR("MorpheusHMD::open") << "... failed!";
-					}
-				}
-				else
-				{
-					SERVER_LOG_ERROR("MorpheusHMD::open") << "... failed!";
-				}
-
-				/*std::string identifier = "Morpheus_";
-
-				char usb_port_path[128];
-				if (getUSBPortPath(usb_port_path, sizeof(usb_port_path)))
-				{
-				identifier.append(usb_port_path);
-
-				// Load the config file
-				cfg = MorpheusHMDConfig(identifier);
-				cfg.load();
-				}
-				else
-				{
-				SERVER_LOG_ERROR("MorpheusHMD::open") << "getUSBPortPath() failed!";
-
-				// Load the config file
-				cfg = MorpheusHMDConfig();
-				cfg.load();
-				}*/
-
 				// Load the config file
 				cfg = MorpheusHMDConfig();
 				cfg.load();
@@ -679,6 +710,44 @@ bool MorpheusHMD::open(
 
 				// Always save the config back out in case some defaults changed
 				cfg.save();
+
+
+				SERVER_LOG_INFO("MorpheusHMD::open") << "Turning on MorpheusHMD power.";
+				morpheus_set_headset_power(true);
+
+				// Apparently the first generation morpheus dislikes morpheus_enable_tracking() and causes infinite loading.
+				// morpheus_set_vr_mode() seems to work just fine.
+				SERVER_LOG_INFO("MorpheusHMD::open") << "Turning on MorpheusHMD VR-Mode.";
+				morpheus_set_vr_mode(true);
+
+				//morpheus_enable_tracking() resets morpheus_set_led_brightness() LED settings?
+				//Lets just wait a bit.
+				std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+
+				morpheus_set_led_brightness(_MorpheusLED_FRONT, 0);
+				morpheus_set_led_brightness(_MorpheusLED_BACK, 50);
+
+				/*
+				std::string identifier = "Morpheus_";
+
+				char usb_port_path[128];
+				if (getUSBPortPath(usb_port_path, sizeof(usb_port_path)))
+				{
+					identifier.append(usb_port_path);
+
+					// Load the config file
+					cfg = MorpheusHMDConfig(identifier);
+					cfg.load();
+				}
+				else
+				{
+					SERVER_LOG_ERROR("MorpheusHMD::open") << "getUSBPortPath() failed!";
+
+					// Load the config file
+					cfg = MorpheusHMDConfig();
+					cfg.load();
+				}
+				*/
 
 				// Reset the polling sequence counter
 				NextPollSequenceNumber = 0;
@@ -721,7 +790,7 @@ void MorpheusHMD::close()
 		if (USBContext->usb_device_handle != nullptr)
 		{
 			SERVER_LOG_INFO("MorpheusHMD::close") << "Closing MorpheusHMD command interface";
-			morpheus_set_headset_power(USBContext, false);
+			morpheus_set_headset_power(false);
 			morpheus_close_usb_device(USBContext);
 		}
 
@@ -886,20 +955,20 @@ void MorpheusHMD::setTrackingEnabled(bool bEnable)
 			if (getConfig()->use_custom_optical_tracking)
 			{
 				// We are using a custom bulb. Disable all LEDs.
-				morpheus_set_led_brightness(USBContext, _MorpheusLED_ALL, 0);
+				morpheus_set_led_brightness(_MorpheusLED_ALL, 0);
 			}
 			else
 			{
-				morpheus_set_led_brightness(USBContext, _MorpheusLED_ALL, 0);
-				morpheus_set_led_brightness(USBContext, _MorpheusLED_FONTTOPTRI, 50);
+				morpheus_set_led_brightness(_MorpheusLED_ALL, 0);
+				morpheus_set_led_brightness(_MorpheusLED_FONTTOPTRI, 50);
 			}
 
 			bIsTracking = true;
 		}
 		else if (bIsTracking && !bEnable)
 		{
-			morpheus_set_led_brightness(USBContext, _MorpheusLED_FRONT, 0);
-			morpheus_set_led_brightness(USBContext, _MorpheusLED_BACK, 50);
+			morpheus_set_led_brightness(_MorpheusLED_FRONT, 0);
+			morpheus_set_led_brightness(_MorpheusLED_BACK, 50);
 
 			bIsTracking = false;
 		}
@@ -1096,9 +1165,13 @@ static void morpheus_close_usb_device(
 	}
 }
 
-static bool morpheus_enable_tracking(
-	MorpheusUSBContext *morpheus_context)
+void MorpheusHMD::morpheus_enable_tracking()
 {
+	if (m_HIDPacketProcessor == nullptr)
+	{
+		return;
+	}
+
 	MorpheusCommand command = { {0} };
 	command.header.request_id = Morpheus_Req_EnableTracking;
 	command.header.magic = MORPHEUS_COMMAND_MAGIC;
@@ -1106,27 +1179,35 @@ static bool morpheus_enable_tracking(
 	((int*)command.payload)[0] = 0xFFFFFF00; // Magic numbers!  Turns on the VR mode and the blue lights on the front
 	((int*)command.payload)[1] = 0x00000000;
 
-	return morpheus_send_command(morpheus_context, command);
+	m_HIDPacketProcessor->postQueredCommand(command);
 }
 
-static bool morpheus_set_headset_power(
-	MorpheusUSBContext *morpheus_context,
+void MorpheusHMD::morpheus_set_headset_power(
 	bool bIsOn)
 {
+	if (m_HIDPacketProcessor == nullptr)
+	{
+		return;
+	}
+
 	MorpheusCommand command = { {0} };
 	command.header.request_id = Morpheus_Req_SetHeadsetPower;
 	command.header.magic = MORPHEUS_COMMAND_MAGIC;
 	command.header.length = 4;
 	((int*)command.payload)[0] = bIsOn ? 0x00000001 : 0x00000000;
 
-	return morpheus_send_command(morpheus_context, command);
+	m_HIDPacketProcessor->postQueredCommand(command);
 }
 
-static bool morpheus_set_led_brightness(
-	MorpheusUSBContext *morpheus_context,
+void MorpheusHMD::morpheus_set_led_brightness(
 	unsigned short led_bitmask,
 	unsigned char intensity)
 {
+	if (m_HIDPacketProcessor == nullptr)
+	{
+		return;
+	}
+
 	MorpheusCommand command = { {0} };
 	command.header.request_id = Morpheus_Req_SetLEDBrightness;
 	command.header.magic = MORPHEUS_COMMAND_MAGIC;
@@ -1140,42 +1221,54 @@ static bool morpheus_set_led_brightness(
 		mask = mask >> 1;
 	}
 
-	return morpheus_send_command(morpheus_context, command);
+	m_HIDPacketProcessor->postQueredCommand(command);
 }
 
-static bool morpheus_turn_off_processor_unit(
-	MorpheusUSBContext *morpheus_context)
+void MorpheusHMD::morpheus_turn_off_processor_unit()
 {
+	if (m_HIDPacketProcessor == nullptr)
+	{
+		return;
+	}
+
 	MorpheusCommand command = { {0} };
 	command.header.request_id = Morpheus_Req_TurnOffProcessorUnit;
 	command.header.magic = MORPHEUS_COMMAND_MAGIC;
 	command.header.length = 4;
 	((int*)command.payload)[0] = 0x00000001;
 
-	return morpheus_send_command(morpheus_context, command);
+	m_HIDPacketProcessor->postQueredCommand(command);
 }
 
-static bool morpheus_set_vr_mode(
-	MorpheusUSBContext *morpheus_context,
+void MorpheusHMD::morpheus_set_vr_mode(
 	bool bIsOn)
 {
+	if (m_HIDPacketProcessor == nullptr)
+	{
+		return;
+	}
+
 	MorpheusCommand command = { {0} };
 	command.header.request_id = Morpheus_Req_SetVRMode;
 	command.header.magic = MORPHEUS_COMMAND_MAGIC;
 	command.header.length = 4;
 	((int*)command.payload)[0] = bIsOn ? 0x00000001 : 0x00000000;
 
-	return morpheus_send_command(morpheus_context, command);
+	m_HIDPacketProcessor->postQueredCommand(command);
 }
 
-static bool morpheus_set_cinematic_configuration(
-	MorpheusUSBContext *morpheus_context,
+void MorpheusHMD::morpheus_set_cinematic_configuration(
 	unsigned char ScreenDistance, 
 	unsigned char ScreenSize, 
 	unsigned char Brightness, 
 	unsigned char MicVolume, 
 	bool UnknownVRSetting)
 {
+	if (m_HIDPacketProcessor == nullptr)
+	{
+		return;
+	}
+
 	MorpheusCommand command = { {0} };
 	command.header.request_id = Morpheus_Req_SetCinematicConfiguration;
 	command.header.magic = MORPHEUS_COMMAND_MAGIC;
@@ -1186,40 +1279,5 @@ static bool morpheus_set_cinematic_configuration(
 	command.payload[11] = MicVolume;
 	command.payload[14] = UnknownVRSetting ? 0 : 1;
 
-	return morpheus_send_command(morpheus_context, command);
-}
-
-static bool morpheus_send_command(
-	MorpheusUSBContext *morpheus_context,
-	MorpheusCommand &command)
-{
-	if (morpheus_context->usb_device_handle != nullptr)
-	{
-		const size_t command_length = static_cast<size_t>(command.header.length) + sizeof(command.header);
-		const int endpointAddress =
-			(morpheus_context->usb_device_descriptor->interface[MORPHEUS_COMMAND_INTERFACE]
-				.altsetting[0]
-				.endpoint[0]
-				.bEndpointAddress) & ~MORPHEUS_ENDPOINT_IN;
-
-		int transferredByteCount = 0;
-		int result =
-			libusb_bulk_transfer(
-				morpheus_context->usb_device_handle,
-				endpointAddress,
-				(unsigned char *)&command,
-				command_length,
-				&transferredByteCount,
-				0);
-
-
-		// $TODO Workaround for swallowing bulk request.
-		std::this_thread::sleep_for(std::chrono::milliseconds(30));
-
-		return result == LIBUSB_SUCCESS && transferredByteCount == command_length;
-	}
-	else
-	{
-		return false;
-	}
+	m_HIDPacketProcessor->postQueredCommand(command);
 }

@@ -320,6 +320,13 @@ public:
 
 	void setConfig(const MorpheusHMDConfig * config);
 
+	void morpheus_enable_tracking();
+	void morpheus_set_headset_power(bool bIsOn);
+	void morpheus_set_led_brightness(unsigned short led_bitmask, unsigned char intensity);
+	void morpheus_turn_off_processor_unit();
+	void morpheus_set_vr_mode(bool bIsOn);
+	void morpheus_set_cinematic_configuration(unsigned char ScreenDistance, unsigned char ScreenSize, unsigned char Brightness, unsigned char MicVolume, bool UnknownVRSetting);
+
 private:
     // Constant while the HMD is open
     MorpheusHMDConfig cfg;
