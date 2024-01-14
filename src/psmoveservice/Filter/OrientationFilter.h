@@ -115,8 +115,11 @@ public:
 		, m_beta(0.f)
 		, m_reset(true)
 		, m_recenter(false)
+		, m_smartReset(false)
+		, m_smartResetTime(0.0f)
 	{
 		m_recenterPose = Eigen::Quaternionf::Identity();
+		m_smartOrientation = Eigen::Quaternionf::Identity();
 		timeReset = std::chrono::high_resolution_clock::now();
 	}
 
@@ -128,6 +131,9 @@ protected:
 	float m_beta;
 	bool m_reset;
 	bool m_recenter;
+	bool m_smartReset;
+	float m_smartResetTime;
+	Eigen::Quaternionf m_smartOrientation;
 	Eigen::Quaternionf m_recenterPose;
 	std::chrono::time_point<std::chrono::high_resolution_clock> timeReset;
 };
