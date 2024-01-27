@@ -34,6 +34,7 @@
 #define k_madgwick_smart_correct_min_deg 5.0f
 #define k_madgwick_smart_correct_max_deg 25.0f
 #define k_madgwick_smart_correct_reset_time_ms 500.0f
+#define k_madgwick_smart_correct_gravity_stable 0.8f
 
 #define k_lowpass_velocity_smoothing_factor 0.25f
 
@@ -534,9 +535,19 @@ void OrientationFilterMadgwickARG::update(
 				SEq_smart_new.normalize();
 			}
 
+			const Eigen::Vector3f &world_g = -packet.world_accelerometer;
+			const float accel_g = sqrtf(world_g.x() * world_g.x() + world_g.y() * world_g.y() + world_g.z() * world_g.z());
+			
 			if (m_smartReset)
 			{
+				// Stop when deviation is too small
 				if ((eigen_quaternion_unsigned_angle_between(SEq_smart_new, SEq_new) * k_radians_to_degreees) < k_madgwick_smart_correct_min_deg)
+				{
+					m_smartReset = false;
+				}
+
+				// Stop if gravity is unstable
+				if (accel_g > k_madgwick_smart_correct_gravity_stable && accel_g < 1.f + (1.f - k_madgwick_smart_correct_gravity_stable))
 				{
 					m_smartReset = false;
 				}
@@ -545,23 +556,28 @@ void OrientationFilterMadgwickARG::update(
 			{
 				if ((eigen_quaternion_unsigned_angle_between(SEq_smart_new, SEq_new) * k_radians_to_degreees) > k_madgwick_smart_correct_max_deg)
 				{
-					m_smartResetTime += imu_delta_time;
-
-					if (m_smartResetTime > (k_madgwick_smart_correct_reset_time_ms / 1000.f))
+					// Make sure smart madgwick its kind of stable
+					if (accel_g > k_madgwick_smart_correct_gravity_stable && accel_g < 1.f + (1.f - k_madgwick_smart_correct_gravity_stable))
 					{
-						if (filter_madgwick_smart_force)
+						m_smartResetTime += imu_delta_time;
+
+						if (m_smartResetTime > (k_madgwick_smart_correct_reset_time_ms / 1000.f))
 						{
-							// Make sure smart madgwick its kind of stable.
-							if ((eigen_quaternion_unsigned_angle_between(SEq_smart_new, SEq_smart) * k_radians_to_degreees) < k_madgwick_smart_correct_min_deg)
+							if (filter_madgwick_smart_force)
 							{
 								SEq_new = SEq_smart_new;
 								m_smartResetTime = 0.0f;
 							}
+							else
+							{
+								m_smartReset = true;
+							}
 						}
-						else
-						{
-							m_smartReset = true;
-						}
+					}
+					else
+					{
+						if (m_smartResetTime > 0.0f)
+							m_smartResetTime = 0.0f;
 					}
 				}
 				else
@@ -924,9 +940,19 @@ void OrientationFilterMadgwickMARG::update(
 				SEq_smart_new.normalize();
 			}
 
+			const Eigen::Vector3f &world_g = -packet.world_accelerometer;
+			const float accel_g = sqrtf(world_g.x() * world_g.x() + world_g.y() * world_g.y() + world_g.z() * world_g.z());
+			
 			if (m_smartReset)
 			{
+				// Stop when deviation is too small
 				if ((eigen_quaternion_unsigned_angle_between(SEq_smart_new, SEq_new) * k_radians_to_degreees) < k_madgwick_smart_correct_min_deg)
+				{
+					m_smartReset = false;
+				}
+
+				// Stop if gravity is unstable
+				if (accel_g > k_madgwick_smart_correct_gravity_stable && accel_g < 1.f + (1.f - k_madgwick_smart_correct_gravity_stable))
 				{
 					m_smartReset = false;
 				}
@@ -935,23 +961,28 @@ void OrientationFilterMadgwickMARG::update(
 			{
 				if ((eigen_quaternion_unsigned_angle_between(SEq_smart_new, SEq_new) * k_radians_to_degreees) > k_madgwick_smart_correct_max_deg)
 				{
-					m_smartResetTime += imu_delta_time;
-
-					if (m_smartResetTime > (k_madgwick_smart_correct_reset_time_ms / 1000.f))
+					// Make sure smart madgwick its kind of stable
+					if (accel_g > k_madgwick_smart_correct_gravity_stable && accel_g < 1.f + (1.f - k_madgwick_smart_correct_gravity_stable))
 					{
-						if (filter_madgwick_smart_force)
+						m_smartResetTime += imu_delta_time;
+
+						if (m_smartResetTime > (k_madgwick_smart_correct_reset_time_ms / 1000.f))
 						{
-							// Make sure smart madgwick its kind of stable.
-							if ((eigen_quaternion_unsigned_angle_between(SEq_smart_new, SEq_smart) * k_radians_to_degreees) < k_madgwick_smart_correct_min_deg)
+							if (filter_madgwick_smart_force)
 							{
 								SEq_new = SEq_smart_new;
 								m_smartResetTime = 0.0f;
 							}
+							else
+							{
+								m_smartReset = true;
+							}
 						}
-						else
-						{
-							m_smartReset = true;
-						}
+					}
+					else
+					{
+						if (m_smartResetTime > 0.0f)
+							m_smartResetTime = 0.0f;
 					}
 				}
 				else
