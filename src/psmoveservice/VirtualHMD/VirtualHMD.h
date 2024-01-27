@@ -20,7 +20,7 @@ public:
         : PSMoveConfig(fnamebase)
 		, is_valid(false)
 		, version(CONFIG_VERSION)
-		, position_filter_type("LowPassOptical")
+		, position_filter_type("PositionKalman")
         , max_velocity(1.f)
 		, mean_update_time_delta(0.008333f)
 		, position_variance_exp_fit_a(0.0994158462f)

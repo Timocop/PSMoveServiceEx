@@ -43,7 +43,7 @@ public:
         : PSMoveConfig(fnamebase)
 		, is_valid(false)
 		, version(CONFIG_VERSION)
-		, position_filter_type("LowPassOptical")
+		, position_filter_type("PositionKalman")
 		, orientation_filter_type("MadgwickARG")
 		, raw_accelerometer_variance(0.f)
         , max_velocity(1.f)

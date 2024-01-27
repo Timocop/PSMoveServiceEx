@@ -52,7 +52,7 @@ public:
 		, prediction_time(0.f)
 		, ang_prediction_time(0.f)
 		, enable_optical_tracking(true)
-		, position_filter_type("LowPassOptical")
+		, position_filter_type("PositionKalman")
 		, orientation_filter_type("MadgwickMARG")
         , cal_ag_xyz_kbd({{ 
             {{ {{0, 0, 0}}, {{0, 0, 0}}, {{0, 0, 0}} }},
