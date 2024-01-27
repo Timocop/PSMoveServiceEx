@@ -297,132 +297,133 @@ void AppStage_HMDSettings::renderUI()
 							}
 							ImGui::PopItemWidth();
 						}
+
+						if (hmdInfo.HmdType == AppStage_HMDSettings::eHMDType::Morpheus)
+						{
+							if (ImGui::CollapsingHeader("Filters", 0, true, false))
+							{
+								static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
+								ImGui::BeginChild("##FiltersChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
+								ImGui::BeginGroup();
+								{
+									ImGui::PushItemWidth(195);
+									if (ImGui::Combo("Position Filter", &hmdInfo.PositionFilterIndex, k_hmd_position_filter_names, UI_ARRAYSIZE(k_hmd_position_filter_names)))
+									{
+										hmdInfo.PositionFilterName = k_hmd_position_filter_names[hmdInfo.PositionFilterIndex];
+										request_set_position_filter(hmdInfo.HmdID, hmdInfo.PositionFilterName);
+									}
+									if (ImGui::IsItemHovered())
+									{
+										show_position_filter_tooltip(hmdInfo.PositionFilterName);
+									}
+
+									if (ImGui::Combo("Orientation Filter", &hmdInfo.OrientationFilterIndex, k_morpheus_orientation_filter_names, UI_ARRAYSIZE(k_morpheus_orientation_filter_names)))
+									{
+										hmdInfo.OrientationFilterName = k_morpheus_orientation_filter_names[hmdInfo.OrientationFilterIndex];
+										request_set_orientation_filter(hmdInfo.HmdID, hmdInfo.OrientationFilterName);
+									}
+									if (ImGui::IsItemHovered())
+									{
+										show_orientation_filter_tooltip(hmdInfo.OrientationFilterName);
+									}
+
+									ImGui::ProgressBar(hmdInfo.PredictionTime / k_max_hmd_prediction_time, ImVec2(195.f - 55.f, 0.f), " ");
+									ImGui::SameLine();
+									ImGui::PushItemWidth(96);
+									if (ImGui::InputFloat("Prediction Time (ms)##PredictionTime", &hmdInfo.PredictionTime, 0.005f, 0.025f, 3))
+									{
+										hmdInfo.PredictionTime = clampf(hmdInfo.PredictionTime, 0.f, k_max_hmd_prediction_time);
+										request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
+									}
+									ImGui::PopItemWidth();
+
+									ImGui::ProgressBar(hmdInfo.AngPredictionTime / k_max_hmd_prediction_time, ImVec2(195.f - 55.f, 0.f), " ");
+									ImGui::SameLine();
+									ImGui::PushItemWidth(96);
+									if (ImGui::InputFloat("Angular Prediction Time (ms)##AngPredictionTime", &hmdInfo.AngPredictionTime, 0.005f, 0.025f, 3))
+									{
+										hmdInfo.AngPredictionTime = clampf(hmdInfo.AngPredictionTime, 0.f, k_max_hmd_prediction_time);
+										request_set_hmd_angular_prediction(hmdInfo.HmdID, hmdInfo.AngPredictionTime);
+									}
+									ImGui::PopItemWidth();
+
+									ImGui::Separator();
+
+									if (ImGui::Button("Reset Filter Defaults"))
+									{
+										hmdInfo.PredictionTime = 0.0f;
+										hmdInfo.AngPredictionTime = 0.0f;
+										hmdInfo.PositionFilterIndex = k_default_morpheus_position_filter_index;
+										hmdInfo.OrientationFilterIndex = k_default_morpheus_orientation_filter_index;
+										hmdInfo.PositionFilterName = k_hmd_position_filter_names[k_default_morpheus_position_filter_index];
+										hmdInfo.OrientationFilterName = k_morpheus_orientation_filter_names[k_default_morpheus_orientation_filter_index];
+										request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
+										request_set_hmd_angular_prediction(hmdInfo.HmdID, hmdInfo.AngPredictionTime);
+										request_set_position_filter(hmdInfo.HmdID, hmdInfo.PositionFilterName);
+										request_set_orientation_filter(hmdInfo.HmdID, hmdInfo.OrientationFilterName);
+									}
+									ImGui::PopItemWidth();
+								}
+								ImGui::EndGroup();
+								if (ImGui::IsItemVisible())
+									lastChildVec2 = ImGui::GetItemRectSize();
+								ImGui::EndChild();
+							}
+						}
+						else if (hmdInfo.HmdType == AppStage_HMDSettings::eHMDType::VirtualHMD)
+						{
+							if (ImGui::CollapsingHeader("Filters", 0, true, false))
+							{
+								static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
+								ImGui::BeginChild("##FiltersChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
+								ImGui::BeginGroup();
+								{
+									ImGui::PushItemWidth(195);
+									if (ImGui::Combo("Position Filter", &hmdInfo.PositionFilterIndex, k_hmd_position_filter_names, UI_ARRAYSIZE(k_hmd_position_filter_names)))
+									{
+										hmdInfo.PositionFilterName = k_hmd_position_filter_names[hmdInfo.PositionFilterIndex];
+										request_set_position_filter(hmdInfo.HmdID, hmdInfo.PositionFilterName);
+									}
+									if (ImGui::IsItemHovered())
+									{
+										show_position_filter_tooltip(hmdInfo.PositionFilterName);
+									}
+
+									ImGui::ProgressBar(hmdInfo.PredictionTime / k_max_hmd_prediction_time, ImVec2(195.f - 55.f, 0.f), " ");
+									ImGui::SameLine();
+									ImGui::PushItemWidth(96);
+									if (ImGui::InputFloat("Prediction Time (ms)##PredictionTime", &hmdInfo.PredictionTime, 0.005f, 0.025f, 3))
+									{
+										hmdInfo.PredictionTime = clampf(hmdInfo.PredictionTime, 0.f, k_max_hmd_prediction_time);
+										request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
+									}
+									ImGui::PopItemWidth();
+
+									if (ImGui::Button("Reset Filter Defaults"))
+									{
+										hmdInfo.PredictionTime = 0.0f;
+										hmdInfo.AngPredictionTime = 0.0f;
+										hmdInfo.PositionFilterIndex = k_default_hmd_position_filter_index;
+										hmdInfo.PositionFilterName = k_hmd_position_filter_names[k_default_hmd_position_filter_index];
+										request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
+										request_set_hmd_angular_prediction(hmdInfo.HmdID, hmdInfo.AngPredictionTime);
+										request_set_position_filter(hmdInfo.HmdID, hmdInfo.PositionFilterName);
+										request_set_orientation_filter(hmdInfo.HmdID, hmdInfo.OrientationFilterName);
+									}
+									ImGui::PopItemWidth();
+								}
+								ImGui::EndGroup();
+								if (ImGui::IsItemVisible())
+									lastChildVec2 = ImGui::GetItemRectSize();
+								ImGui::EndChild();
+							}
+						}
+
 					}
 					ImGui::EndGroup();
 					if (ImGui::IsItemVisible())
 						lastChildVec = ImGui::GetItemRectSize();
 					ImGui::EndChild();
-				}
-
-				if (hmdInfo.HmdType == AppStage_HMDSettings::eHMDType::Morpheus)
-				{
-					if (ImGui::CollapsingHeader("Filters", 0, true, false))
-					{
-						static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
-						ImGui::BeginChild("##FiltersChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
-						ImGui::BeginGroup();
-						{
-							ImGui::PushItemWidth(195);
-							if (ImGui::Combo("Position Filter", &hmdInfo.PositionFilterIndex, k_hmd_position_filter_names, UI_ARRAYSIZE(k_hmd_position_filter_names)))
-							{
-								hmdInfo.PositionFilterName = k_hmd_position_filter_names[hmdInfo.PositionFilterIndex];
-								request_set_position_filter(hmdInfo.HmdID, hmdInfo.PositionFilterName);
-							}
-							if (ImGui::IsItemHovered())
-							{
-								show_position_filter_tooltip(hmdInfo.PositionFilterName);
-							}
-
-							if (ImGui::Combo("Orientation Filter", &hmdInfo.OrientationFilterIndex, k_morpheus_orientation_filter_names, UI_ARRAYSIZE(k_morpheus_orientation_filter_names)))
-							{
-								hmdInfo.OrientationFilterName = k_morpheus_orientation_filter_names[hmdInfo.OrientationFilterIndex];
-								request_set_orientation_filter(hmdInfo.HmdID, hmdInfo.OrientationFilterName);
-							}
-							if (ImGui::IsItemHovered())
-							{
-								show_orientation_filter_tooltip(hmdInfo.OrientationFilterName);
-							}
-
-							ImGui::ProgressBar(hmdInfo.PredictionTime / k_max_hmd_prediction_time, ImVec2(195.f - 55.f, 0.f), " ");
-							ImGui::SameLine();
-							ImGui::PushItemWidth(96);
-							if (ImGui::InputFloat("Prediction Time (ms)##PredictionTime", &hmdInfo.PredictionTime, 0.005f, 0.025f, 3))
-							{
-								hmdInfo.PredictionTime = clampf(hmdInfo.PredictionTime, 0.f, k_max_hmd_prediction_time);
-								request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
-							}
-							ImGui::PopItemWidth();
-
-							ImGui::ProgressBar(hmdInfo.AngPredictionTime / k_max_hmd_prediction_time, ImVec2(195.f - 55.f, 0.f), " ");
-							ImGui::SameLine();
-							ImGui::PushItemWidth(96);
-							if (ImGui::InputFloat("Angular Prediction Time (ms)##AngPredictionTime", &hmdInfo.AngPredictionTime, 0.005f, 0.025f, 3))
-							{
-								hmdInfo.AngPredictionTime = clampf(hmdInfo.AngPredictionTime, 0.f, k_max_hmd_prediction_time);
-								request_set_hmd_angular_prediction(hmdInfo.HmdID, hmdInfo.AngPredictionTime);
-							}
-							ImGui::PopItemWidth();
-
-							ImGui::Separator();
-
-							if (ImGui::Button("Reset Filter Defaults"))
-							{
-								hmdInfo.PredictionTime = 0.0f;
-								hmdInfo.AngPredictionTime = 0.0f;
-								hmdInfo.PositionFilterIndex = k_default_morpheus_position_filter_index;
-								hmdInfo.OrientationFilterIndex = k_default_morpheus_orientation_filter_index;
-								hmdInfo.PositionFilterName = k_hmd_position_filter_names[k_default_morpheus_position_filter_index];
-								hmdInfo.OrientationFilterName = k_morpheus_orientation_filter_names[k_default_morpheus_orientation_filter_index];
-								request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
-								request_set_hmd_angular_prediction(hmdInfo.HmdID, hmdInfo.AngPredictionTime);
-								request_set_position_filter(hmdInfo.HmdID, hmdInfo.PositionFilterName);
-								request_set_orientation_filter(hmdInfo.HmdID, hmdInfo.OrientationFilterName);
-							}
-							ImGui::PopItemWidth();
-						}
-						ImGui::EndGroup();
-						if (ImGui::IsItemVisible())
-							lastChildVec = ImGui::GetItemRectSize();
-						ImGui::EndChild();
-					}
-				}
-				else if (hmdInfo.HmdType == AppStage_HMDSettings::eHMDType::VirtualHMD)
-				{
-					if (ImGui::CollapsingHeader("Filters", 0, true, false))
-					{
-						static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
-						ImGui::BeginChild("##FiltersChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
-						ImGui::BeginGroup();
-						{
-							ImGui::PushItemWidth(195);
-							if (ImGui::Combo("Position Filter", &hmdInfo.PositionFilterIndex, k_hmd_position_filter_names, UI_ARRAYSIZE(k_hmd_position_filter_names)))
-							{
-								hmdInfo.PositionFilterName = k_hmd_position_filter_names[hmdInfo.PositionFilterIndex];
-								request_set_position_filter(hmdInfo.HmdID, hmdInfo.PositionFilterName);
-							}
-							if (ImGui::IsItemHovered())
-							{
-								show_position_filter_tooltip(hmdInfo.PositionFilterName);
-							}
-
-							ImGui::ProgressBar(hmdInfo.PredictionTime / k_max_hmd_prediction_time, ImVec2(195.f - 55.f, 0.f), " ");
-							ImGui::SameLine();
-							ImGui::PushItemWidth(96);
-							if (ImGui::InputFloat("Prediction Time (ms)##PredictionTime", &hmdInfo.PredictionTime, 0.005f, 0.025f, 3))
-							{
-								hmdInfo.PredictionTime = clampf(hmdInfo.PredictionTime, 0.f, k_max_hmd_prediction_time);
-								request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
-							}
-							ImGui::PopItemWidth();
-
-							if (ImGui::Button("Reset Filter Defaults"))
-							{
-								hmdInfo.PredictionTime = 0.0f;
-								hmdInfo.AngPredictionTime = 0.0f;
-								hmdInfo.PositionFilterIndex = k_default_hmd_position_filter_index;
-								hmdInfo.PositionFilterName = k_hmd_position_filter_names[k_default_hmd_position_filter_index];
-								request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
-								request_set_hmd_angular_prediction(hmdInfo.HmdID, hmdInfo.AngPredictionTime);
-								request_set_position_filter(hmdInfo.HmdID, hmdInfo.PositionFilterName);
-								request_set_orientation_filter(hmdInfo.HmdID, hmdInfo.OrientationFilterName);
-							}
-							ImGui::PopItemWidth();
-						}
-						ImGui::EndGroup();
-						if (ImGui::IsItemVisible())
-							lastChildVec = ImGui::GetItemRectSize();
-						ImGui::EndChild();
-					}
 				}
 
 				if (ImGui::CollapsingHeader("Filter Settings", 0, true, false))
