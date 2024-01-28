@@ -302,8 +302,8 @@ void OrientationFilterMadgwickARG::update(
 	float filter_madgwick_stabilization_smoothing_factor = k_madgwick_beta_smoothing_factor;
 	float velocity_smoothing_factor = k_lowpass_velocity_smoothing_factor;
 	float angular_prediction_cutoff = k_adaptive_prediction_cutoff;
-	bool filter_madgwick_smart_enable = true;
-	bool filter_madgwick_smart_force = true;
+	bool filter_madgwick_smart_correct = true;
+	bool filter_madgwick_smart_instant = true;
 
 #if !defined(IS_TESTING_KALMAN) 
 	if (packet.controllerDeviceId > -1)
@@ -324,6 +324,8 @@ void OrientationFilterMadgwickARG::update(
 				filter_madgwick_stabilization_smoothing_factor = config.filter_madgwick_stabilization_smoothing_factor;
 				velocity_smoothing_factor = config.filter_angular_smoothing_factor;
 				angular_prediction_cutoff = config.filter_angular_prediction_cutoff;
+				filter_madgwick_smart_correct = config.filter_madgwick_smart_correct;
+				filter_madgwick_smart_instant = config.filter_madgwick_smart_instant;
 
 				break;
 			}
@@ -338,6 +340,8 @@ void OrientationFilterMadgwickARG::update(
 				filter_madgwick_stabilization_smoothing_factor = config.filter_madgwick_stabilization_smoothing_factor;
 				velocity_smoothing_factor = config.filter_angular_smoothing_factor;
 				angular_prediction_cutoff = config.filter_angular_prediction_cutoff;
+				filter_madgwick_smart_correct = config.filter_madgwick_smart_correct;
+				filter_madgwick_smart_instant = config.filter_madgwick_smart_instant;
 
 				break;
 			}
@@ -486,7 +490,7 @@ void OrientationFilterMadgwickARG::update(
 			SEq_new.normalize();
 		}
 
-		if (filter_madgwick_smart_enable)
+		if (filter_madgwick_smart_correct)
 		{
 			{ // Smart Madgwick
 			  // Compute the quaternion derivative measured by gyroscopes
@@ -563,7 +567,7 @@ void OrientationFilterMadgwickARG::update(
 
 						if (m_smartResetTime > (k_madgwick_smart_correct_reset_time_ms / 1000.f))
 						{
-							if (filter_madgwick_smart_force)
+							if (filter_madgwick_smart_instant)
 							{
 								SEq_new = SEq_smart_new;
 								m_smartResetTime = 0.0f;
@@ -652,8 +656,8 @@ void OrientationFilterMadgwickMARG::update(
 	float filter_madgwick_stabilization_smoothing_factor = k_madgwick_beta_smoothing_factor;
 	float velocity_smoothing_factor = k_lowpass_velocity_smoothing_factor;
 	float angular_prediction_cutoff = k_adaptive_prediction_cutoff;
-	bool filter_madgwick_smart_enable = true;
-	bool filter_madgwick_smart_force = true;
+	bool filter_madgwick_smart_correct = true;
+	bool filter_madgwick_smart_instant = true;
 
 #if !defined(IS_TESTING_KALMAN) 
 	if (packet.controllerDeviceId > -1)
@@ -674,6 +678,8 @@ void OrientationFilterMadgwickMARG::update(
 				filter_madgwick_stabilization_smoothing_factor = config.filter_madgwick_stabilization_smoothing_factor;
 				velocity_smoothing_factor = config.filter_angular_smoothing_factor;
 				angular_prediction_cutoff = config.filter_angular_prediction_cutoff;
+				filter_madgwick_smart_correct = config.filter_madgwick_smart_correct;
+				filter_madgwick_smart_instant = config.filter_madgwick_smart_instant;
 
 				break;
 			}
@@ -688,6 +694,8 @@ void OrientationFilterMadgwickMARG::update(
 				filter_madgwick_stabilization_smoothing_factor = config.filter_madgwick_stabilization_smoothing_factor;
 				velocity_smoothing_factor = config.filter_angular_smoothing_factor;
 				angular_prediction_cutoff = config.filter_angular_prediction_cutoff;
+				filter_madgwick_smart_correct = config.filter_madgwick_smart_correct;
+				filter_madgwick_smart_instant = config.filter_madgwick_smart_instant;
 
 				break;
 			}
@@ -713,6 +721,8 @@ void OrientationFilterMadgwickMARG::update(
 				filter_madgwick_stabilization_smoothing_factor = config.filter_madgwick_stabilization_smoothing_factor;
 				velocity_smoothing_factor = config.filter_angular_smoothing_factor;
 				angular_prediction_cutoff = config.filter_angular_prediction_cutoff;
+				filter_madgwick_smart_correct = config.filter_madgwick_smart_correct;
+				filter_madgwick_smart_instant = config.filter_madgwick_smart_instant;
 
 				break;
 			}
@@ -869,7 +879,7 @@ void OrientationFilterMadgwickMARG::update(
 			SEq_new.normalize();
 		}
 
-		if (filter_madgwick_smart_enable)
+		if (filter_madgwick_smart_correct)
 		{
 			{ // Smart Madgwick
 
@@ -968,7 +978,7 @@ void OrientationFilterMadgwickMARG::update(
 
 						if (m_smartResetTime > (k_madgwick_smart_correct_reset_time_ms / 1000.f))
 						{
-							if (filter_madgwick_smart_force)
+							if (filter_madgwick_smart_instant)
 							{
 								SEq_new = SEq_smart_new;
 								m_smartResetTime = 0.0f;

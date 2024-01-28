@@ -1256,6 +1256,44 @@ void AppStage_ControllerSettings::renderUI()
 													}
 													ImGui::Unindent();
 												}
+
+												ImGui::Text("Smart Drift Correction: ");
+												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+												ImGui::PushItemWidth(120.f);
+												bool filter_madgwick_smart_correct = controllerInfo.FilterMadgwickSmartCorrect;
+												if (ImGui::Checkbox("##MadgwickSmartDriftCorrection", &filter_madgwick_smart_correct))
+												{
+													controllerInfo.FilterMadgwickSmartCorrect = filter_madgwick_smart_correct;
+
+													request_offset = true;
+												}
+												ImGui::PopItemWidth();
+
+												if (ImGui::IsItemHovered())
+												{
+													ImGui::SetTooltip(
+														"Smart Drift Correction detects excessive orientation deviations and attempts to aggressively correct drift."
+													);
+												}
+
+												if (controllerInfo.FilterMadgwickSmartCorrect)
+												{
+													ImGui::Indent();
+													{
+														ImGui::Text("Instant-Mode: ");
+														ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+														ImGui::PushItemWidth(120.f);
+														bool filter_madgwick_smart_instant = controllerInfo.FilterMadgwickSmartInstant;
+														if (ImGui::Checkbox("##MadgwickFilterMadgwickSmartInstant", &filter_madgwick_smart_instant))
+														{
+															controllerInfo.FilterMadgwickSmartInstant = filter_madgwick_smart_instant;
+
+															request_offset = true;
+														}
+														ImGui::PopItemWidth();
+													}
+													ImGui::Unindent();
+												}
 											}
 
 											if (!settings_shown)
@@ -1288,6 +1326,8 @@ void AppStage_ControllerSettings::renderUI()
 												controllerInfo.FilterPositionKalmanError = 10.f;
 												controllerInfo.FilterPositionKalmanNoise = 300.f;
 												controllerInfo.FilterPositionKalmanDisableCutoff = true;
+												controllerInfo.FilterMadgwickSmartCorrect = true;
+												controllerInfo.FilterMadgwickSmartInstant = true;
 
 												request_offset = true;
 											}
@@ -1315,6 +1355,8 @@ void AppStage_ControllerSettings::renderUI()
 												controllerInfo.FilterPositionKalmanError = 10.f;
 												controllerInfo.FilterPositionKalmanNoise = 200.f; //HMD
 												controllerInfo.FilterPositionKalmanDisableCutoff = true;
+												controllerInfo.FilterMadgwickSmartCorrect = true;
+												controllerInfo.FilterMadgwickSmartInstant = true;
 
 												request_offset = true;
 											}
@@ -1343,6 +1385,8 @@ void AppStage_ControllerSettings::renderUI()
 												filterSettings.filter_position_kalman_error = controllerInfo.FilterPositionKalmanError;
 												filterSettings.filter_position_kalman_noise = controllerInfo.FilterPositionKalmanNoise;
 												filterSettings.filter_position_kalman_disable_cutoff = controllerInfo.FilterPositionKalmanDisableCutoff;
+												filterSettings.filter_madgwick_smart_correct = controllerInfo.FilterMadgwickSmartCorrect;
+												filterSettings.filter_madgwick_smart_instant = controllerInfo.FilterMadgwickSmartInstant;
 
 												request_set_controller_filter_settings(controllerInfo.ControllerID, filterSettings);
 											}
@@ -2043,6 +2087,8 @@ void AppStage_ControllerSettings::request_set_controller_filter_settings(
 	filter_settings->set_filter_position_kalman_error(filterSettings.filter_position_kalman_error);
 	filter_settings->set_filter_position_kalman_noise(filterSettings.filter_position_kalman_noise);
 	filter_settings->set_filter_position_kalman_disable_cutoff(filterSettings.filter_position_kalman_disable_cutoff);
+	filter_settings->set_filter_madgwick_smart_correct(filterSettings.filter_madgwick_smart_correct);
+	filter_settings->set_filter_madgwick_smart_instant(filterSettings.filter_madgwick_smart_instant);
 
 	PSMRequestID request_id;
 	PSM_SendOpaqueRequest(&request, &request_id);
@@ -2153,6 +2199,8 @@ void AppStage_ControllerSettings::handle_controller_list_response(
 				ControllerInfo.FilterPositionKalmanError = ControllerResponse.filter_position_kalman_error();
 				ControllerInfo.FilterPositionKalmanNoise = ControllerResponse.filter_position_kalman_noise();
 				ControllerInfo.FilterPositionKalmanDisableCutoff = ControllerResponse.filter_position_kalman_disable_cutoff();
+				ControllerInfo.FilterMadgwickSmartCorrect = ControllerResponse.filter_madgwick_smart_correct();
+				ControllerInfo.FilterMadgwickSmartInstant = ControllerResponse.filter_madgwick_smart_instant();
 
                 if (ControllerInfo.ControllerType == PSMController_Move)
                 {

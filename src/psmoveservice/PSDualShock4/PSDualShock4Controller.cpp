@@ -530,6 +530,8 @@ PSDualShock4ControllerConfig::config2ptree()
 	pt.put("FilterSettings.Madgwick.Stabilization", filter_madgwick_stabilization);
 	pt.put("FilterSettings.Madgwick.StabilizationMinBeta", filter_madgwick_stabilization_min_beta);
 	pt.put("FilterSettings.Madgwick.StabilizationSmoothingFactor", filter_madgwick_stabilization_smoothing_factor);
+	pt.put("FilterSettings.Madgwick.SmartEnabled", filter_madgwick_smart_correct);
+	pt.put("FilterSettings.Madgwick.SmartInstant", filter_madgwick_smart_instant);
 
 	pt.put("FilterSettings.VelocitySmoothingFactor", filter_velocity_smoothing_factor);
 	pt.put("FilterSettings.AngularSmoothingFactor", filter_angular_smoothing_factor);
@@ -619,6 +621,8 @@ PSDualShock4ControllerConfig::ptree2config(const boost::property_tree::ptree &pt
 		filter_madgwick_stabilization = pt.get<bool>("FilterSettings.Madgwick.Stabilization", filter_madgwick_stabilization);
 		filter_madgwick_stabilization_min_beta = pt.get<float>("FilterSettings.Madgwick.StabilizationMinBeta", filter_madgwick_stabilization_min_beta);
 		filter_madgwick_stabilization_smoothing_factor = pt.get<float>("FilterSettings.Madgwick.StabilizationSmoothingFactor", filter_madgwick_stabilization_smoothing_factor);
+		filter_madgwick_smart_correct = pt.get<bool>("FilterSettings.Madgwick.SmartEnabled", filter_madgwick_smart_correct);
+		filter_madgwick_smart_instant = pt.get<bool>("FilterSettings.Madgwick.SmartInstant", filter_madgwick_smart_instant);
 
 		filter_velocity_smoothing_factor = pt.get<float>("FilterSettings.VelocitySmoothingFactor", filter_velocity_smoothing_factor);
 		filter_angular_smoothing_factor = pt.get<float>("FilterSettings.AngularSmoothingFactor", filter_angular_smoothing_factor);
