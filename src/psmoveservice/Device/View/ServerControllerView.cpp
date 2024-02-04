@@ -3113,6 +3113,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 		int index;
 	};
 	static std::vector<positionOffsetCaching> globalPositionOffsetCaching[TrackerManager::k_max_devices][TrackerManager::k_max_devices];
+	static int globalPositionOffsetCachingCount[TrackerManager::k_max_devices][TrackerManager::k_max_devices];
 	std::vector<orgPositionOffsetCaching> newPositionOffsetCaching;
 	
 	const TrackerManagerConfig &cfg = tracker_manager->getConfig();
@@ -3227,7 +3228,9 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 
 					float cell_size = fmax(1.f, cfg.average_position_cache_cell_size);
 					float avg_size = fmax(0.f, cfg.average_position_cache_avg_size);
+					int avg_limit = (int)fmax(1.f, cfg.average_position_cache_limit);
 
+					// Find the closest cache item
 					int cacheIndex = -1;
 					float lastCacheDistance = cell_size;
 					for (int j = globalPositionOffsetCaching[tracker_id][other_tracker_id].size() - 1; j >= 0; --j)
@@ -3248,8 +3251,47 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 						}
 					}
 
-					if (cacheIndex == -1)
+					// Cycle buffer if limit is reached
+					int cycleCacheIndex = -1;
+					if (cacheIndex == -1 && globalPositionOffsetCaching[tracker_id][other_tracker_id].size() >= avg_limit)
 					{
+						if (globalPositionOffsetCachingCount[tracker_id][other_tracker_id] >= avg_limit)
+							globalPositionOffsetCachingCount[tracker_id][other_tracker_id] = 0;
+
+						cycleCacheIndex = globalPositionOffsetCachingCount[tracker_id][other_tracker_id];
+					}
+
+					if (cycleCacheIndex > -1)
+					{
+						orgPositionOffsetCaching orgCache;
+						orgCache.tracker_1_id = tracker_id;
+						orgCache.tracker_2_id = other_tracker_id;
+						orgCache.index = cycleCacheIndex;
+						newPositionOffsetCaching.push_back(orgCache);
+
+						positionOffsetCaching *cache = &globalPositionOffsetCaching[tracker_id][other_tracker_id][cycleCacheIndex];
+						cache->isValid = false;
+						cache->local_position.x = world_position.x;
+						cache->local_position.y = world_position.y;
+						cache->local_position.z = world_position.z;
+						cache->world_avg_position.x = 0.f;
+						cache->world_avg_position.y = 0.f;
+						cache->world_avg_position.z = 0.f;
+						cache->new_local_position.x = world_position.x;
+						cache->new_local_position.y = world_position.y;
+						cache->new_local_position.z = world_position.z;
+						cache->paired_trackers = 0;
+
+						globalPositionOffsetCachingCount[tracker_id][other_tracker_id]++;
+					}
+					else if (cacheIndex == -1)
+					{
+						orgPositionOffsetCaching orgCache;
+						orgCache.tracker_1_id = tracker_id;
+						orgCache.tracker_2_id = other_tracker_id;
+						orgCache.index = globalPositionOffsetCaching[tracker_id][other_tracker_id].size();
+						newPositionOffsetCaching.push_back(orgCache);
+
 						positionOffsetCaching cache;
 						cache.isValid = false;
 						cache.local_position.x = world_position.x;
@@ -3264,12 +3306,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 						cache.paired_trackers = 0;
 
 						globalPositionOffsetCaching[tracker_id][other_tracker_id].push_back(cache);
-
-						orgPositionOffsetCaching orgCache;
-						orgCache.tracker_1_id = tracker_id;
-						orgCache.tracker_2_id = other_tracker_id;
-						orgCache.index = globalPositionOffsetCaching[tracker_id][other_tracker_id].size() - 1;
-						newPositionOffsetCaching.push_back(orgCache);
+						globalPositionOffsetCachingCount[tracker_id][other_tracker_id]++;
 					}
 					else
 					{
@@ -3279,7 +3316,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 						orgCache.index = cacheIndex;
 						newPositionOffsetCaching.push_back(orgCache);
 
-						positionOffsetCaching *cache = &globalPositionOffsetCaching[orgCache.tracker_1_id][orgCache.tracker_2_id][cacheIndex];
+						positionOffsetCaching *cache = &globalPositionOffsetCaching[tracker_id][other_tracker_id][cacheIndex];
 
 						cache->new_local_position.x = world_position.x;
 						cache->new_local_position.y = world_position.y;
@@ -3455,6 +3492,7 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 		}
 
 		//printf("Cache Size: %d\n", globalPositionOffsetCaching[0][1].size());
+		//printf("Cache Total Size: %d/%d\n", globalPositionOffsetCachingCount[0][1], (int)fmax(1.f, cfg.average_position_cache_limit));
 
 		// Store the averaged tracking position
 		multicam_pose_estimation->position_cm = average_world_position;

@@ -51,6 +51,7 @@ public:
 		average_position_cache_enabled = false;
 		average_position_cache_cell_size = 15.f;
 		average_position_cache_avg_size = 30.f;
+		average_position_cache_limit = 1000.f;
 		projection_collision_avoid = true;
 		projection_collision_offset = 5.f;
 		min_points_in_contour = 4;
@@ -82,6 +83,7 @@ public:
 	bool average_position_cache_enabled;
 	float average_position_cache_cell_size;
 	float average_position_cache_avg_size;
+	float average_position_cache_limit;
 	bool projection_collision_avoid;
 	float projection_collision_offset;
 	int min_points_in_contour;

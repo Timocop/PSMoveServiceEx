@@ -36,6 +36,7 @@ TrackerManagerConfig::TrackerManagerConfig(const std::string &fnamebase)
 	average_position_cache_enabled = false;
 	average_position_cache_cell_size = 15.f;
 	average_position_cache_avg_size = 30.f;
+	average_position_cache_limit = 1000.f;
 	min_points_in_contour = 4;
 	max_tracker_position_deviation = 15.0f;
 	disable_roi = false;
@@ -90,6 +91,7 @@ TrackerManagerConfig::config2ptree()
 	pt.put("average_position_cache_enabled", average_position_cache_enabled);
 	pt.put("average_position_cache_cell_size", average_position_cache_cell_size);
 	pt.put("average_position_cache_avg_size", average_position_cache_avg_size);
+	pt.put("average_position_cache_limit", average_position_cache_limit);
 	pt.put("min_points_in_contour", min_points_in_contour);
 	pt.put("max_tracker_position_deviation", max_tracker_position_deviation);
 
@@ -145,6 +147,7 @@ TrackerManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
 		average_position_cache_enabled = pt.get<bool>("average_position_cache_enabled", average_position_cache_enabled);
 		average_position_cache_cell_size = pt.get<float>("average_position_cache_cell_size", average_position_cache_cell_size);
 		average_position_cache_avg_size = pt.get<float>("average_position_cache_avg_size", average_position_cache_avg_size);
+		average_position_cache_limit = pt.get<float>("average_position_cache_limit", average_position_cache_limit);
 		min_points_in_contour = pt.get<int>("min_points_in_contour", min_points_in_contour);
 		max_tracker_position_deviation = pt.get<float>("max_tracker_position_deviation", max_tracker_position_deviation);
 

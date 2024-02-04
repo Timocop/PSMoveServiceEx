@@ -237,6 +237,7 @@ TrackerConfig::config2ptree()
 	pt.put("average_position_cache_enabled", average_position_cache_enabled);
 	pt.put("average_position_cache_cell_size", average_position_cache_cell_size);
 	pt.put("average_position_cache_avg_size", average_position_cache_avg_size);
+	pt.put("average_position_cache_limit", average_position_cache_limit);
 	pt.put("min_points_in_contour", min_points_in_contour);
 	pt.put("max_tracker_position_deviation", max_tracker_position_deviation);
 
@@ -274,6 +275,7 @@ TrackerConfig::ptree2config(const boost::property_tree::ptree &pt)
 	average_position_cache_enabled = pt.get<bool>("average_position_cache_enabled", average_position_cache_enabled);
 	average_position_cache_cell_size = pt.get<float>("average_position_cache_cell_size", average_position_cache_cell_size);
 	average_position_cache_avg_size = pt.get<float>("average_position_cache_avg_size", average_position_cache_avg_size);
+	average_position_cache_limit = pt.get<float>("average_position_cache_limit", average_position_cache_limit);
 	min_points_in_contour = pt.get<int>("min_points_in_contour", min_points_in_contour);
 	max_tracker_position_deviation = pt.get<float>("max_tracker_position_deviation", max_tracker_position_deviation);
 
@@ -747,6 +749,7 @@ void AppStage_AdvancedSettings::renderUI()
 							ImGui::SetTooltip(
 								"If there are no nearby samples by this distance, new ones will be created.\n"
 								"The lower the value the more smoother and less jittery transitions between trackers will become.\n"
+								"Too low of a value can result in increased CPU usage.\n"
 								"(The default value is 15 (cm))"
 							);
 					}
@@ -769,6 +772,27 @@ void AppStage_AdvancedSettings::renderUI()
 								"Multiple samples by this range will be averaged making transitions between trackers smoother.\n"
 								"If the value is smaller than 'Sample cell size' then only the nearest sample will be used.\n"
 								"(The default value is 30 (cm))"
+							);
+					}
+					ImGui::Unindent();
+
+					ImGui::Indent();
+					{
+						ImGui::Text("Maximum samples:");
+						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+						ImGui::PushItemWidth(100.f);
+						if (ImGui::InputFloat("##AveragePositionCacheLimit", &cfg_tracker.average_position_cache_limit, 5.f, 10.f, 2))
+						{
+							cfg_tracker.average_position_cache_limit = static_cast<float>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.average_position_cache_limit)));
+						}
+						ImGui::PopItemWidth();
+
+						if (ImGui::IsItemHovered())
+							ImGui::SetTooltip(
+								"Maximum count of samples per tracker pair.\n"
+								"If the number of samples exceeds the maximum count then old samples will be removed.\n"
+								"Too high of a value can result in increased CPU usage.\n"
+								"(The default value is 1000)"
 							);
 					}
 					ImGui::Unindent();

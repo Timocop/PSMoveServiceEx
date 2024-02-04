@@ -75,6 +75,7 @@ public:
 	bool average_position_cache_enabled;
 	float average_position_cache_cell_size;
 	float average_position_cache_avg_size;
+	float average_position_cache_limit;
 	int min_points_in_contour;
 	float max_tracker_position_deviation;
 	bool disable_roi;
