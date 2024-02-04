@@ -739,7 +739,7 @@ void AppStage_AdvancedSettings::renderUI()
 						ImGui::PushItemWidth(100.f);
 						if (ImGui::InputFloat("##AveragePositionCacheCellSize", &cfg_tracker.average_position_cache_cell_size, 1.f, 4.f, 2))
 						{
-							cfg_tracker.average_position_cache_cell_size = static_cast<float>(std::fmax(10.f, std::fmin(99999.f, cfg_tracker.average_position_cache_cell_size)));
+							cfg_tracker.average_position_cache_cell_size = static_cast<float>(std::fmax(1.f, std::fmin(99999.f, cfg_tracker.average_position_cache_cell_size)));
 						}
 						ImGui::PopItemWidth();
 

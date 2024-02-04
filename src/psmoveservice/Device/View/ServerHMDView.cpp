@@ -1979,7 +1979,7 @@ static void computeSpherePoseForHmdFromMultipleTrackers(
 					unfiltered_average_world_position.y += world_position.y;
 					unfiltered_average_world_position.z += world_position.z;
 
-					float cell_size = fmax(10.f, cfg.average_position_cache_cell_size);
+					float cell_size = fmax(1.f, cfg.average_position_cache_cell_size);
 					float avg_size = fmax(0.f, cfg.average_position_cache_avg_size);
 
 					int cacheIndex = -1;
@@ -2373,7 +2373,7 @@ static void computePointCloudPoseForHmdFromMultipleTrackers(
 					unfiltered_average_world_position.y += world_position.y;
 					unfiltered_average_world_position.z += world_position.z;
 
-					float cell_size = fmax(10.f, cfg.average_position_cache_cell_size);
+					float cell_size = fmax(1.f, cfg.average_position_cache_cell_size);
 					float avg_size = fmax(0.f, cfg.average_position_cache_avg_size);
 
 					int cacheIndex = -1;
