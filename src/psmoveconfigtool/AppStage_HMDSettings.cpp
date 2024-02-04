@@ -420,361 +420,596 @@ void AppStage_HMDSettings::renderUI()
 						}
 
 					}
-					ImGui::EndGroup();
-					if (ImGui::IsItemVisible())
-						lastChildVec = ImGui::GetItemRectSize();
-					ImGui::EndChild();
-				}
 
-				if (ImGui::CollapsingHeader("Filter Settings", 0, true, false))
-				{
-					static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
-					ImGui::BeginChild("##FilterSettingsChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
-					ImGui::BeginGroup();
+
+					if (ImGui::CollapsingHeader("Filter Settings", 0, true, false))
 					{
-						bool request_offset = false;
-						bool settings_shown = false;
-
-						ImGui::TextDisabled("Position Filter Settings:");
-						ImGui::Spacing();
-
-						if (hmdInfo.PositionFilterName == "PassThru" ||
-							hmdInfo.PositionFilterName == "LowPassOptical" ||
-							hmdInfo.PositionFilterName == "PositionKalman")
+						static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
+						ImGui::BeginChild("##FilterSettingsChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
+						ImGui::BeginGroup();
 						{
-							settings_shown = true;
+							bool request_offset = false;
+							bool settings_shown = false;
 
-							ImGui::Text("Velocity Smoothing Power (%%): ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							float filter_velocity_smoothing_factor = (1.f - hmdInfo.FilterVelocitySmoothingFactor) * 100.f; ;
-							if (ImGui::InputFloat("##VelocitySmoothingFactor", &filter_velocity_smoothing_factor, 1.f, 5.f, 2))
+							ImGui::TextDisabled("Position Filter Settings:");
+							ImGui::Spacing();
+
+							if (hmdInfo.PositionFilterName == "PassThru" ||
+								hmdInfo.PositionFilterName == "LowPassOptical" ||
+								hmdInfo.PositionFilterName == "PositionKalman")
 							{
-								hmdInfo.FilterVelocitySmoothingFactor = clampf(1.f - (filter_velocity_smoothing_factor / 100.f), 0.0f, 1.0f);
+								settings_shown = true;
 
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-
-							if (ImGui::IsItemHovered())
-							{
-								ImGui::SetTooltip(
-									"The amount of velocity smoothing determines the reduction\n"
-									"of motion jitter when prediction is applied.\n"
-									"Higher values means more smoothing, lower values less.\n"
-									"However, too high values can lead to increased motion latency and may cause a rubberbanding effect.\n"
-									"Using too low values can result in faster responsiveness but also rough and erratic motion."
-								);
-							}
-
-							bool hidePredictionCutoff = (hmdInfo.PositionFilterName == "PositionKalman" && hmdInfo.FilterPositionKalmanDisableCutoff);
-							if (!hidePredictionCutoff)
-							{
-								ImGui::Text("Velocity Prediction Cutoff (m/s): ");
+								ImGui::Text("Velocity Smoothing Power (%%): ");
 								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 								ImGui::PushItemWidth(120.f);
-								float filter_velocity_prediction_cutoff = hmdInfo.FilterVelocityPredictionCutoff;
-								if (ImGui::InputFloat("##VelocityPredictionCutoff", &filter_velocity_prediction_cutoff, 0.01f, 0.05f, 2))
+								float filter_velocity_smoothing_factor = (1.f - hmdInfo.FilterVelocitySmoothingFactor) * 100.f; ;
+								if (ImGui::InputFloat("##VelocitySmoothingFactor", &filter_velocity_smoothing_factor, 1.f, 5.f, 2))
 								{
-									hmdInfo.FilterVelocityPredictionCutoff = clampf(filter_velocity_prediction_cutoff, 0.0f, (1 << 16));
+									hmdInfo.FilterVelocitySmoothingFactor = clampf(1.f - (filter_velocity_smoothing_factor / 100.f), 0.0f, 1.0f);
+
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
+
+								if (ImGui::IsItemHovered())
+								{
+									ImGui::SetTooltip(
+										"The amount of velocity smoothing determines the reduction\n"
+										"of motion jitter when prediction is applied.\n"
+										"Higher values means more smoothing, lower values less.\n"
+										"However, too high values can lead to increased motion latency and may cause a rubberbanding effect.\n"
+										"Using too low values can result in faster responsiveness but also rough and erratic motion."
+									);
+								}
+
+								bool hidePredictionCutoff = (hmdInfo.PositionFilterName == "PositionKalman" && hmdInfo.FilterPositionKalmanDisableCutoff);
+								if (!hidePredictionCutoff)
+								{
+									ImGui::Text("Velocity Prediction Cutoff (m/s): ");
+									ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+									ImGui::PushItemWidth(120.f);
+									float filter_velocity_prediction_cutoff = hmdInfo.FilterVelocityPredictionCutoff;
+									if (ImGui::InputFloat("##VelocityPredictionCutoff", &filter_velocity_prediction_cutoff, 0.01f, 0.05f, 2))
+									{
+										hmdInfo.FilterVelocityPredictionCutoff = clampf(filter_velocity_prediction_cutoff, 0.0f, (1 << 16));
+
+										request_offset = true;
+									}
+									ImGui::PopItemWidth();
+								}
+							}
+
+							if (hmdInfo.PositionFilterName == "LowPassOptical")
+							{
+								settings_shown = true;
+
+								ImGui::Text("Position Smoothing Cutoff (m/s): ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								float filter_lowpassoptical_distance = hmdInfo.FilterLowPassOpticalDistance;
+								if (ImGui::InputFloat("##LowPassOpticalSmoothingDistance", &filter_lowpassoptical_distance, 0.05f, 0.10f, 2))
+								{
+									hmdInfo.FilterLowPassOpticalDistance = clampf(filter_lowpassoptical_distance, 0.0f, (1 << 16));
+
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
+
+								ImGui::Text("Position Smoothing Power (%%): ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								float filter_lowpassoptical_smoothing = (1.f - hmdInfo.FilterLowPassOpticalSmoothing) * 100.f;
+								if (ImGui::InputFloat("##LowPassOpticalSmoothingPower", &filter_lowpassoptical_smoothing, 1.f, 5.f, 2))
+								{
+									hmdInfo.FilterLowPassOpticalSmoothing = clampf(1.f - (filter_lowpassoptical_smoothing / 100.f), 0.1f, 1.0f);
 
 									request_offset = true;
 								}
 								ImGui::PopItemWidth();
 							}
-						}
 
-						if (hmdInfo.PositionFilterName == "LowPassOptical")
-						{
-							settings_shown = true;
-
-							ImGui::Text("Position Smoothing Cutoff (m/s): ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							float filter_lowpassoptical_distance = hmdInfo.FilterLowPassOpticalDistance;
-							if (ImGui::InputFloat("##LowPassOpticalSmoothingDistance", &filter_lowpassoptical_distance, 0.05f, 0.10f, 2))
+							if (hmdInfo.PositionFilterName == "PositionKalman")
 							{
-								hmdInfo.FilterLowPassOpticalDistance = clampf(filter_lowpassoptical_distance, 0.0f, (1 << 16));
+								settings_shown = true;
 
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-
-							ImGui::Text("Position Smoothing Power (%%): ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							float filter_lowpassoptical_smoothing = (1.f - hmdInfo.FilterLowPassOpticalSmoothing) * 100.f;
-							if (ImGui::InputFloat("##LowPassOpticalSmoothingPower", &filter_lowpassoptical_smoothing, 1.f, 5.f, 2))
-							{
-								hmdInfo.FilterLowPassOpticalSmoothing = clampf(1.f - (filter_lowpassoptical_smoothing / 100.f), 0.1f, 1.0f);
-
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-						}
-
-						if (hmdInfo.PositionFilterName == "PositionKalman")
-						{
-							settings_shown = true;
-
-							ImGui::Text("Measurement Error (cm): ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							float filter_position_kalman_error = hmdInfo.FilterPositionKalmanError;
-							if (ImGui::InputFloat("##PositionKalmanError", &filter_position_kalman_error, 1.f, 5.f, 2))
-							{
-								hmdInfo.FilterPositionKalmanError = clampf(filter_position_kalman_error, 0.0f, (1 << 16));
-
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-
-							ImGui::Text("Process Noise: ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							float filter_position_kalman_noise = hmdInfo.FilterPositionKalmanNoise;
-							if (ImGui::InputFloat("##PositionKalmanNoise", &filter_position_kalman_noise, 5.f, 10.f, 2))
-							{
-								hmdInfo.FilterPositionKalmanNoise = clampf(filter_position_kalman_noise, 0.0f, (1 << 16));
-
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-
-							if (ImGui::IsItemHovered())
-							{
-								ImGui::SetTooltip(
-									"The amount of noise filtered.\n"
-									"Lower values filter out noise more, higher values less.\n"
-									"Too low values can also lead to increased motion latency."
-								);
-							}
-
-							ImGui::Text("Disable Velocity Prediction Cutoff: ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							if (ImGui::Checkbox("##DisableVelocityPredictionCutoff", &hmdInfo.FilterPositionKalmanDisableCutoff))
-							{
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-						}
-
-						if (!settings_shown)
-						{
-							ImGui::Text("There are no settings for these filters.");
-						}
-
-						ImGui::Separator();
-						ImGui::TextDisabled("Orientation Filter Settings:");
-						ImGui::Spacing();
-
-						settings_shown = false;
-
-						if (hmdInfo.OrientationFilterName == "ComplementaryMARG" ||
-							hmdInfo.OrientationFilterName == "MadgwickMARG" ||
-							hmdInfo.OrientationFilterName == "MadgwickARG" ||
-							hmdInfo.OrientationFilterName == "OrientationExternal")
-						{
-							settings_shown = true;
-
-							ImGui::Text("Angular Velocity Smoothing Power (%%): ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							float filter_angular_smoothing_factor = (1.f - hmdInfo.FilterAngularSmoothingFactor) * 100.f;
-							if (ImGui::InputFloat("##AngularVelocitySmoothingFactor", &filter_angular_smoothing_factor, 1.f, 5.f, 2))
-							{
-								hmdInfo.FilterAngularSmoothingFactor = clampf(1.f - (filter_angular_smoothing_factor / 100.f), 0.0f, 1.0f);
-
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-
-							if (ImGui::IsItemHovered())
-							{
-								ImGui::SetTooltip(
-									"The amount of angular smoothing determines the reduction\n"
-									"of motion jitter when prediction is applied.\n"
-									"Higher values means more smoothing, lower values less.\n"
-									"However, too high values can lead to increased motion latency and may cause a rubberbanding effect.\n"
-									"Using too low values can result in faster responsiveness but also rough and erratic motion."
-								);
-							}
-
-							ImGui::Text("Angular Prediction Cutoff (deg/s): ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							float filter_angular_prediction_cutoff = hmdInfo.FilterAngularPredictionCutoff;
-							if (ImGui::InputFloat("##AngularPredictionCutoff", &filter_angular_prediction_cutoff, 0.01f, 0.05f, 2))
-							{
-								hmdInfo.FilterAngularPredictionCutoff = clampf(filter_angular_prediction_cutoff, 0.0f, (1 << 16));
-
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-						}
-
-						if (hmdInfo.OrientationFilterName == "MadgwickMARG" || hmdInfo.OrientationFilterName == "MadgwickARG")
-						{
-							settings_shown = true;
-
-							ImGui::Text("Drift Correction Power (Beta): ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							float filter_madgwick_beta = hmdInfo.FilterMadgwickBeta;
-							if (ImGui::InputFloat("##MadgwickFilterMadgwickBeta", &filter_madgwick_beta, 0.01f, 0.05f, 2))
-							{
-								hmdInfo.FilterMadgwickBeta = clampf(filter_madgwick_beta, 0.0f, 1.0f);
-
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-
-							ImGui::Text("Use Stabilization: ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							bool filter_madgwick_stabilization = hmdInfo.FilterMadgwickStabilization;
-							if (ImGui::Checkbox("##MadgwickFilterMadgwickStabilization", &filter_madgwick_stabilization))
-							{
-								hmdInfo.FilterMadgwickStabilization = filter_madgwick_stabilization;
-
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-
-
-							if (ImGui::IsItemHovered())
-							{
-								ImGui::SetTooltip(
-									"Stabilization will reduce orientation jitter\n"
-									"when the head-mounted display is stable."
-								);
-							}
-
-							if (hmdInfo.FilterMadgwickStabilization)
-							{
-								ImGui::Indent();
+								ImGui::Text("Measurement Error (cm): ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								float filter_position_kalman_error = hmdInfo.FilterPositionKalmanError;
+								if (ImGui::InputFloat("##PositionKalmanError", &filter_position_kalman_error, 1.f, 5.f, 2))
 								{
-									ImGui::Text("Minimum Drift Correction Power (Beta): ");
-									ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-									ImGui::PushItemWidth(120.f);
-									float filter_madgwick_stabilization_min_beta = hmdInfo.FilterMadgwickStabilizationMinBeta;
-									if (ImGui::InputFloat("##MadgwickFilterMinimumBeta", &filter_madgwick_stabilization_min_beta, 0.01f, 0.05f, 2))
-									{
-										hmdInfo.FilterMadgwickStabilizationMinBeta = clampf(filter_madgwick_stabilization_min_beta, 0.f, 1.f);
+									hmdInfo.FilterPositionKalmanError = clampf(filter_position_kalman_error, 0.0f, (1 << 16));
 
-										request_offset = true;
-									}
-									ImGui::PopItemWidth();
+									request_offset = true;
 								}
-								ImGui::Unindent();
+								ImGui::PopItemWidth();
 
-								ImGui::Indent();
+								ImGui::Text("Process Noise: ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								float filter_position_kalman_noise = hmdInfo.FilterPositionKalmanNoise;
+								if (ImGui::InputFloat("##PositionKalmanNoise", &filter_position_kalman_noise, 5.f, 10.f, 2))
 								{
-									ImGui::Text("Beta Smoothing Power (%%): ");
-									ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-									ImGui::PushItemWidth(120.f);
-									float filter_madgwick_stabilization_smoothing_factor = (1.f - hmdInfo.FilterMadgwickStabilizationSmoothingFactor) * 100.f;
-									if (ImGui::InputFloat("##MadgwickFilterBetaSmoothingFactor", &filter_madgwick_stabilization_smoothing_factor, 1.f, 5.f, 2))
-									{
-										hmdInfo.FilterMadgwickStabilizationSmoothingFactor = clampf(1.f - (filter_madgwick_stabilization_smoothing_factor / 100.f), 0.0f, 1.f);
+									hmdInfo.FilterPositionKalmanNoise = clampf(filter_position_kalman_noise, 0.0f, (1 << 16));
 
-										request_offset = true;
-									}
-									ImGui::PopItemWidth();
+									request_offset = true;
 								}
-								ImGui::Unindent();
+								ImGui::PopItemWidth();
+
+								if (ImGui::IsItemHovered())
+								{
+									ImGui::SetTooltip(
+										"The amount of noise filtered.\n"
+										"Lower values filter out noise more, higher values less.\n"
+										"Too low values can also lead to increased motion latency."
+									);
+								}
+
+								ImGui::Text("Disable Velocity Prediction Cutoff: ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								if (ImGui::Checkbox("##DisableVelocityPredictionCutoff", &hmdInfo.FilterPositionKalmanDisableCutoff))
+								{
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
 							}
 
-							ImGui::Text("Smart Drift Correction: ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							bool filter_madgwick_smart_correct = hmdInfo.FilterMadgwickSmartCorrect;
-							if (ImGui::Checkbox("##MadgwickSmartDriftCorrection", &filter_madgwick_smart_correct))
+							if (!settings_shown)
 							{
-								hmdInfo.FilterMadgwickSmartCorrect = filter_madgwick_smart_correct;
+								ImGui::Text("There are no settings for these filters.");
+							}
+
+							ImGui::Separator();
+							ImGui::TextDisabled("Orientation Filter Settings:");
+							ImGui::Spacing();
+
+							settings_shown = false;
+
+							if (hmdInfo.OrientationFilterName == "ComplementaryMARG" ||
+								hmdInfo.OrientationFilterName == "MadgwickMARG" ||
+								hmdInfo.OrientationFilterName == "MadgwickARG" ||
+								hmdInfo.OrientationFilterName == "OrientationExternal")
+							{
+								settings_shown = true;
+
+								ImGui::Text("Angular Velocity Smoothing Power (%%): ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								float filter_angular_smoothing_factor = (1.f - hmdInfo.FilterAngularSmoothingFactor) * 100.f;
+								if (ImGui::InputFloat("##AngularVelocitySmoothingFactor", &filter_angular_smoothing_factor, 1.f, 5.f, 2))
+								{
+									hmdInfo.FilterAngularSmoothingFactor = clampf(1.f - (filter_angular_smoothing_factor / 100.f), 0.0f, 1.0f);
+
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
+
+								if (ImGui::IsItemHovered())
+								{
+									ImGui::SetTooltip(
+										"The amount of angular smoothing determines the reduction\n"
+										"of motion jitter when prediction is applied.\n"
+										"Higher values means more smoothing, lower values less.\n"
+										"However, too high values can lead to increased motion latency and may cause a rubberbanding effect.\n"
+										"Using too low values can result in faster responsiveness but also rough and erratic motion."
+									);
+								}
+
+								ImGui::Text("Angular Prediction Cutoff (deg/s): ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								float filter_angular_prediction_cutoff = hmdInfo.FilterAngularPredictionCutoff;
+								if (ImGui::InputFloat("##AngularPredictionCutoff", &filter_angular_prediction_cutoff, 0.01f, 0.05f, 2))
+								{
+									hmdInfo.FilterAngularPredictionCutoff = clampf(filter_angular_prediction_cutoff, 0.0f, (1 << 16));
+
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
+							}
+
+							if (hmdInfo.OrientationFilterName == "MadgwickMARG" || hmdInfo.OrientationFilterName == "MadgwickARG")
+							{
+								settings_shown = true;
+
+								ImGui::Text("Drift Correction Power (Beta): ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								float filter_madgwick_beta = hmdInfo.FilterMadgwickBeta;
+								if (ImGui::InputFloat("##MadgwickFilterMadgwickBeta", &filter_madgwick_beta, 0.01f, 0.05f, 2))
+								{
+									hmdInfo.FilterMadgwickBeta = clampf(filter_madgwick_beta, 0.0f, 1.0f);
+
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
+
+								ImGui::Text("Use Stabilization: ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								bool filter_madgwick_stabilization = hmdInfo.FilterMadgwickStabilization;
+								if (ImGui::Checkbox("##MadgwickFilterMadgwickStabilization", &filter_madgwick_stabilization))
+								{
+									hmdInfo.FilterMadgwickStabilization = filter_madgwick_stabilization;
+
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
+
+
+								if (ImGui::IsItemHovered())
+								{
+									ImGui::SetTooltip(
+										"Stabilization will reduce orientation jitter\n"
+										"when the head-mounted display is stable."
+									);
+								}
+
+								if (hmdInfo.FilterMadgwickStabilization)
+								{
+									ImGui::Indent();
+									{
+										ImGui::Text("Minimum Drift Correction Power (Beta): ");
+										ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+										ImGui::PushItemWidth(120.f);
+										float filter_madgwick_stabilization_min_beta = hmdInfo.FilterMadgwickStabilizationMinBeta;
+										if (ImGui::InputFloat("##MadgwickFilterMinimumBeta", &filter_madgwick_stabilization_min_beta, 0.01f, 0.05f, 2))
+										{
+											hmdInfo.FilterMadgwickStabilizationMinBeta = clampf(filter_madgwick_stabilization_min_beta, 0.f, 1.f);
+
+											request_offset = true;
+										}
+										ImGui::PopItemWidth();
+									}
+									ImGui::Unindent();
+
+									ImGui::Indent();
+									{
+										ImGui::Text("Beta Smoothing Power (%%): ");
+										ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+										ImGui::PushItemWidth(120.f);
+										float filter_madgwick_stabilization_smoothing_factor = (1.f - hmdInfo.FilterMadgwickStabilizationSmoothingFactor) * 100.f;
+										if (ImGui::InputFloat("##MadgwickFilterBetaSmoothingFactor", &filter_madgwick_stabilization_smoothing_factor, 1.f, 5.f, 2))
+										{
+											hmdInfo.FilterMadgwickStabilizationSmoothingFactor = clampf(1.f - (filter_madgwick_stabilization_smoothing_factor / 100.f), 0.0f, 1.f);
+
+											request_offset = true;
+										}
+										ImGui::PopItemWidth();
+									}
+									ImGui::Unindent();
+								}
+
+								ImGui::Text("Smart Drift Correction: ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								bool filter_madgwick_smart_correct = hmdInfo.FilterMadgwickSmartCorrect;
+								if (ImGui::Checkbox("##MadgwickSmartDriftCorrection", &filter_madgwick_smart_correct))
+								{
+									hmdInfo.FilterMadgwickSmartCorrect = filter_madgwick_smart_correct;
+
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
+
+								if (ImGui::IsItemHovered())
+								{
+									ImGui::SetTooltip(
+										"Smart Drift Correction detects excessive orientation deviations and attempts to aggressively correct drift."
+									);
+								}
+
+								if (hmdInfo.FilterMadgwickSmartCorrect)
+								{
+									ImGui::Indent();
+									{
+										ImGui::Text("Instant-Mode: ");
+										ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+										ImGui::PushItemWidth(120.f);
+										bool filter_madgwick_smart_instant = hmdInfo.FilterMadgwickSmartInstant;
+										if (ImGui::Checkbox("##MadgwickFilterMadgwickSmartInstant", &filter_madgwick_smart_instant))
+										{
+											hmdInfo.FilterMadgwickSmartInstant = filter_madgwick_smart_instant;
+
+											request_offset = true;
+										}
+										ImGui::PopItemWidth();
+									}
+									ImGui::Unindent();
+								}
+							}
+
+							if (!settings_shown)
+							{
+								ImGui::Text("There are no settings for these filters.");
+							}
+
+							ImGui::Separator();
+
+							if (ImGui::Button("Reset Filter Settings HMD Defaults"))
+							{
+								hmdInfo.FilterLowPassOpticalDistance = 1.f;
+								hmdInfo.FilterLowPassOpticalSmoothing = 0.10f;
+								hmdInfo.FilterMadgwickBeta = 0.1f;
+								hmdInfo.FilterMadgwickStabilization = true;
+								hmdInfo.FilterMadgwickStabilizationMinBeta = 0.02f;
+								hmdInfo.FilterMadgwickStabilizationSmoothingFactor = 0.1f;
+								hmdInfo.FilterVelocitySmoothingFactor = 0.25f;
+								hmdInfo.FilterAngularSmoothingFactor = 0.25f;
+								hmdInfo.FilterVelocityPredictionCutoff = 1.0f;
+								hmdInfo.FilterAngularPredictionCutoff = 0.0f;
+								hmdInfo.FilterPositionKalmanError = 10.f;
+								hmdInfo.FilterPositionKalmanNoise = 200.f;
+								hmdInfo.FilterPositionKalmanDisableCutoff = true;
+								hmdInfo.FilterMadgwickSmartCorrect = true;
+								hmdInfo.FilterMadgwickSmartInstant = true;
 
 								request_offset = true;
 							}
-							ImGui::PopItemWidth();
 
-							if (ImGui::IsItemHovered())
+							if (request_offset)
 							{
-								ImGui::SetTooltip(
-									"Smart Drift Correction detects excessive orientation deviations and attempts to aggressively correct drift."
-								);
-							}
+								FilterSettings filterSettings;
+								filterSettings.filter_lowpassoptical_distance = hmdInfo.FilterLowPassOpticalDistance;
+								filterSettings.filter_lowpassoptical_smoothing = hmdInfo.FilterLowPassOpticalSmoothing;
+								filterSettings.filter_madgwick_beta = hmdInfo.FilterMadgwickBeta;
+								filterSettings.filter_madgwick_stabilization = hmdInfo.FilterMadgwickStabilization;
+								filterSettings.filter_madgwick_stabilization_min_beta = hmdInfo.FilterMadgwickStabilizationMinBeta;
+								filterSettings.filter_madgwick_stabilization_smoothing_factor = hmdInfo.FilterMadgwickStabilizationSmoothingFactor;
+								filterSettings.filter_velocity_smoothing_factor = hmdInfo.FilterVelocitySmoothingFactor;
+								filterSettings.filter_angular_smoothing_factor = hmdInfo.FilterAngularSmoothingFactor;
+								filterSettings.filter_velocity_prediction_cutoff = hmdInfo.FilterVelocityPredictionCutoff;
+								filterSettings.filter_angular_prediction_cutoff = hmdInfo.FilterAngularPredictionCutoff;
+								filterSettings.filter_position_kalman_error = hmdInfo.FilterPositionKalmanError;
+								filterSettings.filter_position_kalman_noise = hmdInfo.FilterPositionKalmanNoise;
+								filterSettings.filter_position_kalman_disable_cutoff = hmdInfo.FilterPositionKalmanDisableCutoff;
+								filterSettings.filter_madgwick_smart_correct = hmdInfo.FilterMadgwickSmartCorrect;
+								filterSettings.filter_madgwick_smart_instant = hmdInfo.FilterMadgwickSmartInstant;
 
-							if (hmdInfo.FilterMadgwickSmartCorrect)
-							{
-								ImGui::Indent();
-								{
-									ImGui::Text("Instant-Mode: ");
-									ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-									ImGui::PushItemWidth(120.f);
-									bool filter_madgwick_smart_instant = hmdInfo.FilterMadgwickSmartInstant;
-									if (ImGui::Checkbox("##MadgwickFilterMadgwickSmartInstant", &filter_madgwick_smart_instant))
-									{
-										hmdInfo.FilterMadgwickSmartInstant = filter_madgwick_smart_instant;
-
-										request_offset = true;
-									}
-									ImGui::PopItemWidth();
-								}
-								ImGui::Unindent();
+								request_set_hmd_filter_settings(hmdInfo.HmdID, filterSettings);
 							}
 						}
-
-						if (!settings_shown)
-						{
-							ImGui::Text("There are no settings for these filters.");
-						}
-
-						ImGui::Separator();
-
-						if (ImGui::Button("Reset Filter Settings HMD Defaults"))
-						{
-							hmdInfo.FilterLowPassOpticalDistance = 1.f;
-							hmdInfo.FilterLowPassOpticalSmoothing = 0.10f;
-							hmdInfo.FilterMadgwickBeta = 0.1f;
-							hmdInfo.FilterMadgwickStabilization = true;
-							hmdInfo.FilterMadgwickStabilizationMinBeta = 0.02f;
-							hmdInfo.FilterMadgwickStabilizationSmoothingFactor = 0.1f;
-							hmdInfo.FilterVelocitySmoothingFactor = 0.25f;
-							hmdInfo.FilterAngularSmoothingFactor = 0.25f;
-							hmdInfo.FilterVelocityPredictionCutoff = 1.0f;
-							hmdInfo.FilterAngularPredictionCutoff = 0.0f;
-							hmdInfo.FilterPositionKalmanError = 10.f;
-							hmdInfo.FilterPositionKalmanNoise = 200.f;
-							hmdInfo.FilterPositionKalmanDisableCutoff = true;
-							hmdInfo.FilterMadgwickSmartCorrect = true;
-							hmdInfo.FilterMadgwickSmartInstant = true;
-
-							request_offset = true;
-						}
-
-						if (request_offset)
-						{
-							FilterSettings filterSettings;
-							filterSettings.filter_lowpassoptical_distance = hmdInfo.FilterLowPassOpticalDistance;
-							filterSettings.filter_lowpassoptical_smoothing = hmdInfo.FilterLowPassOpticalSmoothing;
-							filterSettings.filter_madgwick_beta = hmdInfo.FilterMadgwickBeta;
-							filterSettings.filter_madgwick_stabilization = hmdInfo.FilterMadgwickStabilization;
-							filterSettings.filter_madgwick_stabilization_min_beta = hmdInfo.FilterMadgwickStabilizationMinBeta;
-							filterSettings.filter_madgwick_stabilization_smoothing_factor = hmdInfo.FilterMadgwickStabilizationSmoothingFactor;
-							filterSettings.filter_velocity_smoothing_factor = hmdInfo.FilterVelocitySmoothingFactor;
-							filterSettings.filter_angular_smoothing_factor = hmdInfo.FilterAngularSmoothingFactor;
-							filterSettings.filter_velocity_prediction_cutoff = hmdInfo.FilterVelocityPredictionCutoff;
-							filterSettings.filter_angular_prediction_cutoff = hmdInfo.FilterAngularPredictionCutoff;
-							filterSettings.filter_position_kalman_error = hmdInfo.FilterPositionKalmanError;
-							filterSettings.filter_position_kalman_noise = hmdInfo.FilterPositionKalmanNoise;
-							filterSettings.filter_position_kalman_disable_cutoff = hmdInfo.FilterPositionKalmanDisableCutoff;
-							filterSettings.filter_madgwick_smart_correct = hmdInfo.FilterMadgwickSmartCorrect;
-							filterSettings.filter_madgwick_smart_instant = hmdInfo.FilterMadgwickSmartInstant;
-
-							request_set_hmd_filter_settings(hmdInfo.HmdID, filterSettings);
-						}
+						ImGui::EndGroup();
+						if (ImGui::IsItemVisible())
+							lastChildVec2 = ImGui::GetItemRectSize();
+						ImGui::EndChild();
 					}
+
+					if (ImGui::CollapsingHeader("Offsets", 0, true, false))
+					{
+						static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
+						ImGui::BeginChild("##OffsetsChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
+						ImGui::BeginGroup();
+						{
+							static int iOffsetView = 0;
+							ImGui::PushItemWidth(250);
+							ImGui::Combo("View", &iOffsetView, "Simple\0Advanced\0\0");
+							ImGui::PopItemWidth();
+
+							ImGui::Separator();
+
+							bool request_offset = false;
+
+							if (iOffsetView == 1)
+							{
+								ImGui::Text("Local Orientation X (Roll): ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								if (ImGui::InputFloat("##LocalOffsetOrientationX", &hmdInfo.OffsetOrientation.x, 1.f, 5.f, 2))
+								{
+									while (hmdInfo.OffsetOrientation.x < -180.f)
+										hmdInfo.OffsetOrientation.x += 360.f;
+									while (hmdInfo.OffsetOrientation.x >= 180.f)
+										hmdInfo.OffsetOrientation.x -= 360.f;
+
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
+
+								ImGui::Text("Local Orientation Y (Yaw): ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								if (ImGui::InputFloat("##LocalOffsetOrientationY", &hmdInfo.OffsetOrientation.y, 1.f, 5.f, 2))
+								{
+									while (hmdInfo.OffsetOrientation.y < -180.f)
+										hmdInfo.OffsetOrientation.y += 360.f;
+									while (hmdInfo.OffsetOrientation.y >= 180.f)
+										hmdInfo.OffsetOrientation.y -= 360.f;
+
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
+
+								ImGui::Text("Local Orientation Z (Pitch): ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								if (ImGui::InputFloat("##LocalOffsetOrientationZ", &hmdInfo.OffsetOrientation.z, 1.f, 5.f, 2))
+								{
+									while (hmdInfo.OffsetOrientation.z < -180.f)
+										hmdInfo.OffsetOrientation.z += 360.f;
+									while (hmdInfo.OffsetOrientation.z >= 180.f)
+										hmdInfo.OffsetOrientation.z -= 360.f;
+
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
+
+								ImGui::Separator();
+
+								ImGui::Text("World Orientation X (Roll): ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								if (ImGui::InputFloat("##WorldOffsetOrientationX", &hmdInfo.OffsetWorldOrientation.x, 1.f, 5.f, 2))
+								{
+									while (hmdInfo.OffsetWorldOrientation.x < -180.f)
+										hmdInfo.OffsetWorldOrientation.x += 360.f;
+									while (hmdInfo.OffsetWorldOrientation.x >= 180.f)
+										hmdInfo.OffsetWorldOrientation.x -= 360.f;
+
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
+							}
+
+							ImGui::Text("World Orientation Y (Yaw): ");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(120.f);
+							if (ImGui::InputFloat("##WorldOffsetOrientationY", &hmdInfo.OffsetWorldOrientation.y, 1.f, 5.f, 2))
+							{
+								while (hmdInfo.OffsetWorldOrientation.y < -180.f)
+									hmdInfo.OffsetWorldOrientation.y += 360.f;
+								while (hmdInfo.OffsetWorldOrientation.y >= 180.f)
+									hmdInfo.OffsetWorldOrientation.y -= 360.f;
+
+								request_offset = true;
+							}
+							ImGui::PopItemWidth();
+
+							if (iOffsetView == 1)
+							{
+								ImGui::Text("World Orientation Z (Pitch): ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								if (ImGui::InputFloat("##WorldOffsetOrientationZ", &hmdInfo.OffsetWorldOrientation.z, 1.f, 5.f, 2))
+								{
+									while (hmdInfo.OffsetWorldOrientation.z < -180.f)
+										hmdInfo.OffsetWorldOrientation.z += 360.f;
+									while (hmdInfo.OffsetWorldOrientation.z >= 180.f)
+										hmdInfo.OffsetWorldOrientation.z -= 360.f;
+
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
+
+								ImGui::Separator();
+
+								ImGui::Text("Position X (Right): ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								if (ImGui::InputFloat("##OffsetPositionX", &hmdInfo.OffsetPosition.x, 1.f, 5.f, 2))
+								{
+									hmdInfo.OffsetPosition.x = clampf(hmdInfo.OffsetPosition.x, -(1 << 16), (1 << 16));
+
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
+
+								ImGui::Text("Position Y (Up): ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								if (ImGui::InputFloat("##OffsetPositionY", &hmdInfo.OffsetPosition.y, 1.f, 5.f, 2))
+								{
+									hmdInfo.OffsetPosition.y = clampf(hmdInfo.OffsetPosition.y, -(1 << 16), (1 << 16));
+
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
+
+								ImGui::Text("Position Z (Backward): ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								if (ImGui::InputFloat("##OffsetPositionZ", &hmdInfo.OffsetPosition.z, 1.f, 5.f, 2))
+								{
+									hmdInfo.OffsetPosition.z = clampf(hmdInfo.OffsetPosition.z, -(1 << 16), (1 << 16));
+
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
+
+								ImGui::Separator();
+
+								ImGui::Text("Scale X (Left/Right): ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								if (ImGui::InputFloat("##OffsetScaleX", &hmdInfo.OffsetScale.x, 0.01f, 0.05f, 2))
+								{
+									hmdInfo.OffsetScale.x = clampf(hmdInfo.OffsetScale.x, 0.01f, 100.0f);
+
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
+
+								ImGui::Text("Scale Y (Up/Down): ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								if (ImGui::InputFloat("##OffsetScaleY", &hmdInfo.OffsetScale.y, 0.01f, 0.05f, 2))
+								{
+									hmdInfo.OffsetScale.y = clampf(hmdInfo.OffsetScale.y, 0.01f, 100.0f);
+
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
+
+								ImGui::Text("Scale Z (Forward/Backward): ");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(120.f);
+								if (ImGui::InputFloat("##OffsetScaleZ", &hmdInfo.OffsetScale.z, 0.01f, 0.05f, 2))
+								{
+									hmdInfo.OffsetScale.z = clampf(hmdInfo.OffsetScale.z, 0.01f, 100.0f);
+
+									request_offset = true;
+								}
+								ImGui::PopItemWidth();
+							}
+
+							ImGui::Separator();
+
+							if (hmdInfo.OffsetPosition.x != 0.0f ||
+								hmdInfo.OffsetPosition.y != 0.0f ||
+								hmdInfo.OffsetPosition.z != 0.0f ||
+								hmdInfo.OffsetScale.x != 1.0f ||
+								hmdInfo.OffsetScale.y != 1.0f ||
+								hmdInfo.OffsetScale.z != 1.0f)
+							{
+								ImGui::Bullet();
+								ImGui::SameLine();
+								ImGui::PushTextWrapPos();
+								ImGui::TextDisabled(
+									"HMD scale or position has been changed!\n"
+									"Changing the scale or position can cause abnormal artifacts in pose previews!"
+								);
+								ImGui::PopTextWrapPos();
+
+								ImGui::Separator();
+							}
+
+							if (ImGui::Button("Reset All"))
+							{
+								hmdInfo.OffsetOrientation.x = 0.f;
+								hmdInfo.OffsetOrientation.y = 0.f;
+								hmdInfo.OffsetOrientation.z = 0.f;
+								hmdInfo.OffsetWorldOrientation.x = 0.f;
+								hmdInfo.OffsetWorldOrientation.y = 0.f;
+								hmdInfo.OffsetWorldOrientation.z = 0.f;
+								hmdInfo.OffsetPosition.x = 0.f;
+								hmdInfo.OffsetPosition.y = 0.f;
+								hmdInfo.OffsetPosition.z = 0.f;
+								hmdInfo.OffsetScale.x = 1.f;
+								hmdInfo.OffsetScale.y = 1.f;
+								hmdInfo.OffsetScale.z = 1.f;
+
+								request_offset = true;
+							}
+
+							if (request_offset)
+							{
+								OffsetSettings offset;
+								offset.offset_orientation = hmdInfo.OffsetOrientation;
+								offset.offset_world_orientation = hmdInfo.OffsetWorldOrientation;
+								offset.offset_position = hmdInfo.OffsetPosition;
+								offset.offset_scale = hmdInfo.OffsetScale;
+
+								request_set_hmd_offsets(hmdInfo.HmdID, offset);
+							}
+						}
+						ImGui::EndGroup();
+						if (ImGui::IsItemVisible())
+							lastChildVec2 = ImGui::GetItemRectSize();
+						ImGui::EndChild();
+					}
+
 					ImGui::EndGroup();
 					if (ImGui::IsItemVisible())
 						lastChildVec = ImGui::GetItemRectSize();
@@ -848,239 +1083,6 @@ void AppStage_HMDSettings::renderUI()
 							lastChildVec = ImGui::GetItemRectSize();
 						ImGui::EndChild();
 					}
-				}
-
-				if (ImGui::CollapsingHeader("Offsets", 0, true, false))
-				{
-					static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
-					ImGui::BeginChild("##OffsetsChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
-					ImGui::BeginGroup();
-					{
-						static int iOffsetView = 0;
-						ImGui::PushItemWidth(250);
-						ImGui::Combo("View", &iOffsetView, "Simple\0Advanced\0\0");
-						ImGui::PopItemWidth();
-
-						ImGui::Separator();
-
-						bool request_offset = false;
-
-						if (iOffsetView == 1)
-						{
-							ImGui::Text("Local Orientation X (Roll): ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##LocalOffsetOrientationX", &hmdInfo.OffsetOrientation.x, 1.f, 5.f, 2))
-							{
-								while (hmdInfo.OffsetOrientation.x < -180.f)
-									hmdInfo.OffsetOrientation.x += 360.f;
-								while (hmdInfo.OffsetOrientation.x >= 180.f)
-									hmdInfo.OffsetOrientation.x -= 360.f;
-
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-
-							ImGui::Text("Local Orientation Y (Yaw): ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##LocalOffsetOrientationY", &hmdInfo.OffsetOrientation.y, 1.f, 5.f, 2))
-							{
-								while (hmdInfo.OffsetOrientation.y < -180.f)
-									hmdInfo.OffsetOrientation.y += 360.f;
-								while (hmdInfo.OffsetOrientation.y >= 180.f)
-									hmdInfo.OffsetOrientation.y -= 360.f;
-
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-
-							ImGui::Text("Local Orientation Z (Pitch): ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##LocalOffsetOrientationZ", &hmdInfo.OffsetOrientation.z, 1.f, 5.f, 2))
-							{
-								while (hmdInfo.OffsetOrientation.z < -180.f)
-									hmdInfo.OffsetOrientation.z += 360.f;
-								while (hmdInfo.OffsetOrientation.z >= 180.f)
-									hmdInfo.OffsetOrientation.z -= 360.f;
-
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-
-							ImGui::Separator();
-
-							ImGui::Text("World Orientation X (Roll): ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##WorldOffsetOrientationX", &hmdInfo.OffsetWorldOrientation.x, 1.f, 5.f, 2))
-							{
-								while (hmdInfo.OffsetWorldOrientation.x < -180.f)
-									hmdInfo.OffsetWorldOrientation.x += 360.f;
-								while (hmdInfo.OffsetWorldOrientation.x >= 180.f)
-									hmdInfo.OffsetWorldOrientation.x -= 360.f;
-
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-						}
-
-						ImGui::Text("World Orientation Y (Yaw): ");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::PushItemWidth(120.f);
-						if (ImGui::InputFloat("##WorldOffsetOrientationY", &hmdInfo.OffsetWorldOrientation.y, 1.f, 5.f, 2))
-						{
-							while (hmdInfo.OffsetWorldOrientation.y < -180.f)
-								hmdInfo.OffsetWorldOrientation.y += 360.f;
-							while (hmdInfo.OffsetWorldOrientation.y >= 180.f)
-								hmdInfo.OffsetWorldOrientation.y -= 360.f;
-
-							request_offset = true;
-						}
-						ImGui::PopItemWidth();
-
-						if (iOffsetView == 1)
-						{
-							ImGui::Text("World Orientation Z (Pitch): ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##WorldOffsetOrientationZ", &hmdInfo.OffsetWorldOrientation.z, 1.f, 5.f, 2))
-							{
-								while (hmdInfo.OffsetWorldOrientation.z < -180.f)
-									hmdInfo.OffsetWorldOrientation.z += 360.f;
-								while (hmdInfo.OffsetWorldOrientation.z >= 180.f)
-									hmdInfo.OffsetWorldOrientation.z -= 360.f;
-
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-
-							ImGui::Separator();
-
-							ImGui::Text("Position X (Right): ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##OffsetPositionX", &hmdInfo.OffsetPosition.x, 1.f, 5.f, 2))
-							{
-								hmdInfo.OffsetPosition.x = clampf(hmdInfo.OffsetPosition.x, -(1 << 16), (1 << 16));
-
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-
-							ImGui::Text("Position Y (Up): ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##OffsetPositionY", &hmdInfo.OffsetPosition.y, 1.f, 5.f, 2))
-							{
-								hmdInfo.OffsetPosition.y = clampf(hmdInfo.OffsetPosition.y, -(1 << 16), (1 << 16));
-
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-
-							ImGui::Text("Position Z (Backward): ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##OffsetPositionZ", &hmdInfo.OffsetPosition.z, 1.f, 5.f, 2))
-							{
-								hmdInfo.OffsetPosition.z = clampf(hmdInfo.OffsetPosition.z, -(1 << 16), (1 << 16));
-
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-
-							ImGui::Separator();
-
-							ImGui::Text("Scale X (Left/Right): ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##OffsetScaleX", &hmdInfo.OffsetScale.x, 0.01f, 0.05f, 2))
-							{
-								hmdInfo.OffsetScale.x = clampf(hmdInfo.OffsetScale.x, 0.01f, 100.0f);
-
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-
-							ImGui::Text("Scale Y (Up/Down): ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##OffsetScaleY", &hmdInfo.OffsetScale.y, 0.01f, 0.05f, 2))
-							{
-								hmdInfo.OffsetScale.y = clampf(hmdInfo.OffsetScale.y, 0.01f, 100.0f);
-
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-
-							ImGui::Text("Scale Z (Forward/Backward): ");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::PushItemWidth(120.f);
-							if (ImGui::InputFloat("##OffsetScaleZ", &hmdInfo.OffsetScale.z, 0.01f, 0.05f, 2))
-							{
-								hmdInfo.OffsetScale.z = clampf(hmdInfo.OffsetScale.z, 0.01f, 100.0f);
-
-								request_offset = true;
-							}
-							ImGui::PopItemWidth();
-						}
-
-						ImGui::Separator();
-
-						if (hmdInfo.OffsetPosition.x != 0.0f ||
-							hmdInfo.OffsetPosition.y != 0.0f ||
-							hmdInfo.OffsetPosition.z != 0.0f ||
-							hmdInfo.OffsetScale.x != 1.0f ||
-							hmdInfo.OffsetScale.y != 1.0f ||
-							hmdInfo.OffsetScale.z != 1.0f)
-						{
-							ImGui::Bullet();
-							ImGui::SameLine();
-							ImGui::PushTextWrapPos();
-							ImGui::TextDisabled(
-								"HMD scale or position has been changed!\n"
-								"Changing the scale or position can cause abnormal artifacts in pose previews!"
-							);
-							ImGui::PopTextWrapPos();
-
-							ImGui::Separator();
-						}
-
-						if (ImGui::Button("Reset All"))
-						{
-							hmdInfo.OffsetOrientation.x = 0.f;
-							hmdInfo.OffsetOrientation.y = 0.f;
-							hmdInfo.OffsetOrientation.z = 0.f;
-							hmdInfo.OffsetWorldOrientation.x = 0.f;
-							hmdInfo.OffsetWorldOrientation.y = 0.f;
-							hmdInfo.OffsetWorldOrientation.z = 0.f;
-							hmdInfo.OffsetPosition.x = 0.f;
-							hmdInfo.OffsetPosition.y = 0.f;
-							hmdInfo.OffsetPosition.z = 0.f;
-							hmdInfo.OffsetScale.x = 1.f;
-							hmdInfo.OffsetScale.y = 1.f;
-							hmdInfo.OffsetScale.z = 1.f;
-
-							request_offset = true;
-						}
-
-						if (request_offset)
-						{
-							OffsetSettings offset;
-							offset.offset_orientation = hmdInfo.OffsetOrientation;
-							offset.offset_world_orientation = hmdInfo.OffsetWorldOrientation;
-							offset.offset_position = hmdInfo.OffsetPosition;
-							offset.offset_scale = hmdInfo.OffsetScale;
-
-							request_set_hmd_offsets(hmdInfo.HmdID, offset);
-						}
-					}
-					ImGui::EndGroup();
-					if (ImGui::IsItemVisible())
-						lastChildVec = ImGui::GetItemRectSize();
-					ImGui::EndChild();
 				}
 			}
 			else
