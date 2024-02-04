@@ -50,17 +50,31 @@ protected:
 class PositionFilterPassThru : public PositionFilter
 {
 public:
+	PositionFilterPassThru()
+		: PositionFilter()
+		, m_resetVelocity(false)
+	{
+		lastOpticalFrame = std::chrono::high_resolution_clock::now();
+	}
+
     void update(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet) override;
 	t_high_resolution_timepoint lastOpticalFrame;
-	bool m_resetVelocity = false;
+	bool m_resetVelocity;
 };
 
 class PositionFilterLowPassOptical : public PositionFilter
 {
 public:
+	PositionFilterLowPassOptical()
+		: PositionFilter()
+		, m_resetVelocity(false)
+	{
+		lastOpticalFrame = std::chrono::high_resolution_clock::now();
+	}
+
     void update(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet) override;
 	t_high_resolution_timepoint lastOpticalFrame;
-	bool m_resetVelocity = false;
+	bool m_resetVelocity;
 };
 
 class PositionFilterLowPassIMU : public PositionFilter
@@ -71,7 +85,6 @@ public:
 
 class PositionFilterLowPassExponential : public PositionFilter
 {
-public:
 	void update(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet) override;
 	std::list<float> deltaTimeHistory;
 	std::list<Eigen::Vector3f> blendedPositionHistory;
@@ -80,6 +93,12 @@ public:
 class PositionFilterComplimentaryOpticalIMU : public PositionFilter
 {
 public:
+	PositionFilterComplimentaryOpticalIMU()
+		: PositionFilter()
+	{
+		lastOpticalFrame = std::chrono::high_resolution_clock::now();
+	}
+
     void update(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet) override;
 	t_high_resolution_timepoint lastOpticalFrame;
 };
@@ -87,9 +106,22 @@ public:
 class PositionFilterKalman : public PositionFilter
 {
 public:
+	PositionFilterKalman()
+		: PositionFilter()
+		, m_resetVelocity(false)
+	{
+		kal_err_estimate[0] = 0.0;
+		kal_err_estimate[1] = 0.0;
+		kal_err_estimate[2] = 0.0;
+
+		kal_current_estimate = Eigen::Vector3f::Zero();
+		kal_gain = Eigen::Vector3f::Zero();
+		lastOpticalFrame = std::chrono::high_resolution_clock::now();
+	}
+
 	void update(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet) override;
 	t_high_resolution_timepoint lastOpticalFrame;
-	bool m_resetVelocity = false;
+	bool m_resetVelocity;
 
 private:
 	float kal_err_estimate[3];

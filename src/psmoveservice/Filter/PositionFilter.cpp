@@ -987,7 +987,7 @@ void PositionFilterKalman::update(
 
 			// Update for each dimension
 			for (int i = 0; i < 3; ++i) {
-				if (kal_err_estimate[i] <= k_real_epsilon)
+				if (kal_err_estimate[i] <= k_real_epsilon || (kal_err_estimate[i] + kalman_position_error) <= k_real_epsilon)
 				{
 					kal_err_estimate[i] = kalman_position_error;
 				}
