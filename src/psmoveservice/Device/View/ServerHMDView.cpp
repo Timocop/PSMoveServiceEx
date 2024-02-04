@@ -2208,7 +2208,7 @@ static void computeSpherePoseForHmdFromMultipleTrackers(
 			}
 		}
 
-		printf("Cache Size: %d\n", globalPositionOffsetCaching[0][1].size());
+		//printf("Cache Size: %d\n", globalPositionOffsetCaching[0][1].size());
 
         // Store the averaged tracking position
 		multicam_pose_estimation->position_cm = average_world_position;
