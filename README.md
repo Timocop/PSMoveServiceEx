@@ -8,11 +8,7 @@ A background service that manages multiple PSMove Controllers and PS3 Eye Camera
  # 🔗 PSMoveServiceEx with SteamVR
 ℹ️ *Requires [PSMoveServiceEx - Virtual Device Manager](https://github.com/Timocop/PSMoveServiceEx-Virtual-Device-Manager/tree/master)*
 
-<a href="https://youtu.be/8pwCMh_Z4ko" title="">
-  <p align="center">
-    <img width="100%" src="https://img.youtube.com/vi/8pwCMh_Z4ko/0.jpg" alt=""/>
-  </p>
-</a>
+[PSVR SteamVR](https://github.com/Timocop/PSMoveServiceEx/assets/22834512/70b5b729-4c59-4d9f-b554-23af9b494fdb)
 
 # 📖 Documentation
 * General setup guides, troubleshooting and design docs can be found on the [wiki](https://github.com/psmoveservice/PSMoveService/wiki)
