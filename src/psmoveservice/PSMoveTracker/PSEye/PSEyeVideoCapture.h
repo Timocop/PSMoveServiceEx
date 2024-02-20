@@ -45,12 +45,12 @@ public:
     pass in the index + API. e.g., PSEyeVideoCapture(0 + PSEYE_CAP_CLMULTI)
     */
     PSEyeVideoCapture(int apiIndex, int asignIndex, eVideoCaptureType videoCaptureType)
-        : m_api_index(-1) 
+        : m_api_index(-1)
 		, m_asign_index(asignIndex)
 		, m_iVideoCaptureType(eVideoCaptureType::CaptureType_ALL)
 	{
 		m_iVideoCaptureType = videoCaptureType;
-		open(apiIndex);
+		m_valid = open(apiIndex);
 	} // Constructor is same as base class
     
     /// Attempts to open a device using different drivers in the order outlined above.
@@ -69,10 +69,13 @@ public:
 
 	int getApiIndex() const;
 
+	bool isOpened() const override;
+
     /// Get the unique identifier for the camera
     std::string getUniqueIndentifier() const;
     
 protected:
+	bool m_valid;
 	int m_api_index; /**< Keep track of index. Necessary for PSEYE_CLEYE_DRIVER */
 	int m_asign_index; 
 	eVideoCaptureType m_iVideoCaptureType;
