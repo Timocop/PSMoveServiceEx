@@ -887,20 +887,36 @@ void AppStage_ColorCalibration::renderUI()
 						{
 							if (is_tracker_virtual())
 							{
-								ImGui::PushTextWrapPos();
-								ImGui::TextDisabled("Virtual Trackers do not have any properties.");
-								ImGui::PopTextWrapPos();
+								if (ImGui::Button(" - ##FrameWidth"))
+								{
+									if (m_trackerFrameWidth != 640) 
+									{
+										// Assume 4:3 ratio
+										request_tracker_set_frame_width(640);
+									}
+								}
+								ImGui::SameLine();
+								if (ImGui::Button(" + ##FrameWidth"))
+								{
+									if (m_trackerFrameWidth != 1920)
+									{
+										// Assume 16:9 ratio
+										request_tracker_set_frame_width(1920);
+									}
+								}
+								ImGui::SameLine();
+								ImGui::Text("Frame Width: %.0f", m_trackerFrameWidth);
 							}
 							else
 							{
 								if (ImGui::Button(" - ##FrameWidth"))
 								{
-									if (m_trackerFrameWidth == 640) request_tracker_set_frame_width(m_trackerFrameWidth - 320);
+									if (m_trackerFrameWidth != 320) request_tracker_set_frame_width(320);
 								}
 								ImGui::SameLine();
 								if (ImGui::Button(" + ##FrameWidth"))
 								{
-									if (m_trackerFrameWidth == 320) request_tracker_set_frame_width(m_trackerFrameWidth + 320);
+									if (m_trackerFrameWidth != 640) request_tracker_set_frame_width(640);
 								}
 								ImGui::SameLine();
 								ImGui::Text("Frame Width: %.0f", m_trackerFrameWidth);
@@ -2880,46 +2896,46 @@ void AppStage_ColorCalibration::release_video_buffers()
 
 void AppStage_ColorCalibration::request_tracker_set_frame_width(double value)
 {
-    // Tell the psmove service that we want to change frame width.
-    RequestPtr request(new PSMoveProtocol::Request());
-    request->set_type(PSMoveProtocol::Request_RequestType_SET_TRACKER_FRAME_WIDTH);
-    request->mutable_request_set_tracker_frame_width()->set_tracker_id(m_trackerView->tracker_info.tracker_id);
-    request->mutable_request_set_tracker_frame_width()->set_value(static_cast<float>(value));
-    request->mutable_request_set_tracker_frame_width()->set_save_setting(true);
+	// Tell the psmove service that we want to change frame width.
+	RequestPtr request(new PSMoveProtocol::Request());
+	request->set_type(PSMoveProtocol::Request_RequestType_SET_TRACKER_FRAME_WIDTH);
+	request->mutable_request_set_tracker_frame_width()->set_tracker_id(m_trackerView->tracker_info.tracker_id);
+	request->mutable_request_set_tracker_frame_width()->set_value(static_cast<float>(value));
+	request->mutable_request_set_tracker_frame_width()->set_save_setting(true);
 
-    PSMRequestID request_id;
-    PSM_SendOpaqueRequest(&request, &request_id);
-    PSM_RegisterCallback(request_id, AppStage_ColorCalibration::handle_tracker_set_frame_width_response, this);
+	PSMRequestID request_id;
+	PSM_SendOpaqueRequest(&request, &request_id);
+	PSM_RegisterCallback(request_id, AppStage_ColorCalibration::handle_tracker_set_frame_width_response, this);
 
-    // Exit and re-enter Color Calibration
-    m_app->getAppStage<AppStage_TrackerSettings>()->gotoControllerColorCalib(true);
+	// Exit and re-enter Color Calibration
+	m_app->getAppStage<AppStage_TrackerSettings>()->gotoControllerColorCalib(true);
 
-    request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
+	request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
 }
 
 void AppStage_ColorCalibration::handle_tracker_set_frame_width_response(
-    const PSMResponseMessage *response,
-    void *userdata)
+	const PSMResponseMessage *response,
+	void *userdata)
 {
-    PSMResult ResultCode = response->result_code;
-    PSMResponseHandle response_handle = response->opaque_response_handle;
-    AppStage_ColorCalibration *thisPtr = static_cast<AppStage_ColorCalibration *>(userdata);
+	PSMResult ResultCode = response->result_code;
+	PSMResponseHandle response_handle = response->opaque_response_handle;
+	AppStage_ColorCalibration *thisPtr = static_cast<AppStage_ColorCalibration *>(userdata);
 
-    switch (ResultCode)
-    {
-    case PSMResult_Success:
-    {
-        const PSMoveProtocol::Response *response = GET_PSMOVEPROTOCOL_RESPONSE(response_handle);
-        thisPtr->m_trackerFrameWidth = response->result_set_tracker_frame_width().new_frame_width();
-    } break;
-    case PSMResult_Error:
-    case PSMResult_Canceled:
-    case PSMResult_Timeout:
-    {
-        //###HipsterSloth $TODO - Replace with C_API style log
-        //CLIENT_LOG_INFO("AppStage_ColorCalibration") << "Failed to set the tracker frame width!";
-    } break;
-    }
+	switch (ResultCode)
+	{
+	case PSMResult_Success:
+	{
+		const PSMoveProtocol::Response *response = GET_PSMOVEPROTOCOL_RESPONSE(response_handle);
+		thisPtr->m_trackerFrameWidth = response->result_set_tracker_frame_width().new_frame_width();
+	} break;
+	case PSMResult_Error:
+	case PSMResult_Canceled:
+	case PSMResult_Timeout:
+	{
+		//###HipsterSloth $TODO - Replace with C_API style log
+		//CLIENT_LOG_INFO("AppStage_ColorCalibration") << "Failed to set the tracker frame width!";
+	} break;
+	}
 }
 
 void AppStage_ColorCalibration::request_tracker_set_frame_rate(double value)

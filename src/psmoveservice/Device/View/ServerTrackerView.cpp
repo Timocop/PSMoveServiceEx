@@ -115,6 +115,8 @@ public:
 
     void dispose()
     {
+		SERVER_LOG_INFO("SharedMemory::initialize()") << "Disposing shared memory: " << m_shared_memory_name;
+
         if (m_region != nullptr)
         {
             // Call the destructor manually on the frame header since it was constructed via placement new
@@ -405,10 +407,24 @@ public:
 
     void writeVideoFrame(const unsigned char *video_buffer)
     {
-        const cv::Mat videoBufferMat(frameHeight, frameWidth, CV_8UC3, const_cast<unsigned char *>(video_buffer));
+		// $TODO Random crashes when changing resolution.
+		// For some reason the reallocating matrix uses less processing power.
+		//const cv::Mat videoBufferMat(frameHeight, frameWidth, CV_8UC3, const_cast<unsigned char *>(video_buffer));
+		//videoBufferMat.copyTo(*bgrBuffer);
+		//videoBufferMat.copyTo(*bgrShmemBuffer);
 
-        videoBufferMat.copyTo(*bgrBuffer);
-        videoBufferMat.copyTo(*bgrShmemBuffer);
+		if (bgrBuffer != nullptr)
+		{
+			delete bgrBuffer;
+		}
+
+		if (bgrShmemBuffer != nullptr)
+		{
+			delete bgrShmemBuffer;
+		}
+
+		bgrBuffer = new cv::Mat(frameHeight, frameWidth, CV_8UC3, const_cast<unsigned char *>(video_buffer));
+		bgrShmemBuffer = new cv::Mat(frameHeight, frameWidth, CV_8UC3, const_cast<unsigned char *>(video_buffer));
     }
     
     void updateHsvBuffer()
@@ -923,6 +939,11 @@ bool ServerTrackerView::open(const class DeviceEnumerator *enumerator)
             }
 
             // Allocate the OpenCV scratch buffers used for finding tracking blobs
+			if (m_opencv_buffer_state != nullptr)
+			{
+				delete m_opencv_buffer_state;
+			}
+
             m_opencv_buffer_state = new OpenCVBufferState(m_device);
         }
         else
@@ -969,7 +990,7 @@ bool ServerTrackerView::poll()
             // Cache the raw video frame
             if (m_opencv_buffer_state != nullptr)
             {
-                m_opencv_buffer_state->writeVideoFrame(buffer);
+				m_opencv_buffer_state->writeVideoFrame(buffer);
             }
         }
     }
@@ -1064,6 +1085,8 @@ void ServerTrackerView::setFrameWidth(double value, bool bUpdateConfig)
 {
     if (value == m_device->getFrameWidth()) return;
 
+	SERVER_LOG_INFO("ServerTrackerView::open()") << "ServerTrackerView::setFrameWidth(): " << value;
+
     // close buffer
     if (m_shared_memory_accesor != nullptr)
     {
@@ -1095,6 +1118,11 @@ void ServerTrackerView::setFrameWidth(double value, bool bUpdateConfig)
         }
 
         // Allocate the OpenCV scratch buffers used for finding tracking blobs
+		if (m_opencv_buffer_state != nullptr)
+		{
+			delete m_opencv_buffer_state;
+		}
+
         m_opencv_buffer_state = new OpenCVBufferState(m_device);
     }
     else
@@ -1111,6 +1139,8 @@ double ServerTrackerView::getFrameHeight() const
 void ServerTrackerView::setFrameHeight(double value, bool bUpdateConfig)
 {
     if (value == m_device->getFrameHeight()) return;
+
+	SERVER_LOG_INFO("ServerTrackerView::open()") << "ServerTrackerView::setFrameHeight(): " << value;
 
     // close buffer
     if (m_shared_memory_accesor != nullptr)
@@ -1143,6 +1173,11 @@ void ServerTrackerView::setFrameHeight(double value, bool bUpdateConfig)
         }
 
         // Allocate the OpenCV scratch buffers used for finding tracking blobs
+		if (m_opencv_buffer_state != nullptr)
+		{
+			delete m_opencv_buffer_state;
+		}
+
         m_opencv_buffer_state = new OpenCVBufferState(m_device);
     }
     else

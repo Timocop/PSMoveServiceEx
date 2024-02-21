@@ -467,7 +467,7 @@ public:
     {
 		if (!m_waitFrame && !m_frameAvailable)
 			return false;
-
+		
 		capFrame.copyTo(outArray);
         return true;
     }
@@ -564,7 +564,10 @@ protected:
 #endif
 
 #ifdef WIN32
-#define VRIT_BUFF_SIZE (480 * 640 * 3)
+
+// $TODO This duplicated code is massive cancer. Merge SD and HD together.
+#define VRIT_BUFF_SD_SIZE (480 * 640 * 3)
+#define VRIT_BUFF_HD_SIZE (1080 * 1920 * 3)
 
 /// Implementation of PS3EyeCapture using named pipes
 class PSEYECaptureCAM_VIRTUAL : public cv::IVideoCapture
@@ -572,7 +575,8 @@ class PSEYECaptureCAM_VIRTUAL : public cv::IVideoCapture
 public:
 	PSEYECaptureCAM_VIRTUAL(int _index) :
 		m_index(-1), m_frameAvailable(false), m_pipeConnected(false),
-		capturePipe(INVALID_HANDLE_VALUE)
+		capturePipeSD(INVALID_HANDLE_VALUE), capturePipeHD(INVALID_HANDLE_VALUE),
+		m_frameHeight(480), m_frameWidth(640)
 	{
 		//CoInitialize(NULL);
 		m_isValid = open(_index);
@@ -597,9 +601,9 @@ public:
 		case CV_CAP_PROP_FPS:
 			return 30;
 		case CV_CAP_PROP_FRAME_HEIGHT:
-			return 480;
+			return (double)m_frameHeight;
 		case CV_CAP_PROP_FRAME_WIDTH:
-			return 640;
+			return (double)m_frameWidth;
 		case CV_CAP_PROP_GAIN:
 			return 0;
 		case CV_CAP_PROP_HUE:
@@ -619,6 +623,37 @@ public:
 	{
 		switch (property_id)
 		{
+		case CV_CAP_PROP_FRAME_HEIGHT:
+			m_frameHeight = (int)round(value);
+
+			if (m_frameHeight == 0 || m_frameHeight == 480)
+			{
+				m_frameWidth = 640;
+				m_frameHeight = 480;
+			}
+			else 
+			{
+				m_frameWidth = 1920;
+				m_frameHeight = 1080;
+			}
+
+			m_frameAvailable = false;
+			return true;
+		case CV_CAP_PROP_FRAME_WIDTH:
+			m_frameWidth = (int)round(value);
+
+			if (m_frameWidth == 0 || m_frameWidth == 640)
+			{
+				m_frameWidth = 640;
+				m_frameHeight = 480;
+			}
+			else 
+			{
+				m_frameWidth = 1920;
+				m_frameHeight = 1080;
+			}
+			m_frameAvailable = false;
+			return true;
 		case CV_CAP_PROP_FRAMEAVAILABLE:
 			m_frameAvailable = (bool)value;
 		}
@@ -628,13 +663,28 @@ public:
 
 	bool grabFrame()
 	{
-		if (capturePipe == INVALID_HANDLE_VALUE)
+		if (capFrameSD.rows == m_frameHeight && capFrameSD.cols == m_frameWidth)
 		{
-			capFrame.setTo(cv::Scalar(0, 0, 0));
+			return grabFrameSD();
+		}
+
+		if (capFrameHD.rows == m_frameHeight && capFrameHD.cols == m_frameWidth)
+		{
+			return grabFrameHD();
+		}
+
+		return false;
+	}
+
+	bool grabFrameSD()
+	{
+		if (capturePipeSD == INVALID_HANDLE_VALUE)
+		{
+			capFrameSD.setTo(cv::Scalar(0, 0, 0));
 			cv::putText(
-				capFrame,
+				capFrameSD,
 				"Virtual tracker not connected.",
-				cv::Point(64, capFrame.rows / 2),
+				cv::Point(64, capFrameSD.rows / 2),
 				cv::FONT_HERSHEY_DUPLEX,
 				1.0,
 				CvScalar(255, 255, 255),
@@ -645,7 +695,7 @@ public:
 			return true;
 		}
 
-		BOOL connected = ConnectNamedPipe(capturePipe, NULL);
+		BOOL connected = ConnectNamedPipe(capturePipeSD, NULL);
 		if (connected)
 			std::cout << "ps3eye::VIRTUAL() ConnectNamedPipe success, index " << m_index << std::endl;
 
@@ -657,7 +707,7 @@ public:
 			if (GetLastError() != ERROR_PIPE_LISTENING) {
 				std::cout << "ps3eye::VIRTUAL() ConnectNamedPipe failed, index " << m_index << ", GLE=" << GetLastError() << "." << std::endl;
 
-				DisconnectNamedPipe(capturePipe);
+				DisconnectNamedPipe(capturePipeSD);
 			}
 		}
 
@@ -665,11 +715,11 @@ public:
 
 		if (!connected)
 		{
-			capFrame.setTo(cv::Scalar(0, 0, 0));
+			capFrameSD.setTo(cv::Scalar(0, 0, 0));
 			cv::putText(
-				capFrame,
+				capFrameSD,
 				"Virtual tracker not connected.",
-				cv::Point(64, capFrame.rows / 2),
+				cv::Point(64, capFrameSD.rows / 2),
 				cv::FONT_HERSHEY_DUPLEX,
 				1.0,
 				CvScalar(255, 255, 255),
@@ -681,7 +731,7 @@ public:
 		}
 
 		DWORD dwRead;
-		BOOL success = ReadFile(capturePipe, pipeBuffer, VRIT_BUFF_SIZE, &dwRead, NULL);
+		BOOL success = ReadFile(capturePipeSD, pipeBufferSD, sizeof(pipeBufferSD), &dwRead, NULL);
 		if (!success)
 		{
 			bool bDisplayText = true;
@@ -712,11 +762,11 @@ public:
 
 			if (bDisplayText)
 			{
-				capFrame.setTo(cv::Scalar(0, 0, 0));
+				capFrameSD.setTo(cv::Scalar(0, 0, 0));
 				cv::putText(
-					capFrame,
+					capFrameSD,
 					"Virtual tracker not connected.",
-					cv::Point(64, capFrame.rows / 2),
+					cv::Point(64, capFrameSD.rows / 2),
 					cv::FONT_HERSHEY_DUPLEX,
 					1.0,
 					CvScalar(255, 255, 255),
@@ -733,194 +783,21 @@ public:
 		if (m_frameAvailable)
 			return true;
 
-		memcpy((uchar*)capFrame.data, pipeBuffer, VRIT_BUFF_SIZE);
+		memcpy((uchar*)capFrameSD.data, pipeBufferSD, sizeof(pipeBufferSD));
 
 		m_frameAvailable = true;
 		return true;
 	}
 
-	bool retrieveFrame(int outputType, cv::OutputArray outArray)
+	bool grabFrameHD()
 	{
-		if (!m_frameAvailable)
-			return false;
-
-		// ###Externet We need to flip the input image because PSEyes do so too.
-		// If we dont do this the Y axis will be flipped on pose calibration.
-		// EDIT:
-		// Let the virtual tracker manager control the flip. Not all cameras have flipped horizontal streams.
-		//cv::Mat flipped;
-		//cv::flip(capFrame, flipped, 1);
-
-		capFrame.copyTo(outArray);
-		return true;
-	}
-
-	int getCaptureDomain() {
-		return CV_CAP_IMAGES;
-	}
-
-	bool isOpened() const
-	{
-		return (m_isValid && m_index != -1);
-	}
-
-	bool isConnected() const
-	{
-		return m_pipeConnected;
-	}
-
-	std::string getUniqueIndentifier() const
-	{
-		std::string identifier = "virtual_";
-
-		char indexStr[20];
-		identifier.append(itoa(m_index, indexStr, 10));
-
-		return identifier;
-	}
-
-protected:
-
-	bool open(int _index)
-	{
-		m_index = _index;
-		capFrame = cv::Mat(480, 640, CV_8UC3, CvScalar(0, 0, 0));
-
-		std::cout << "ps3eye::VIRTUAL() index " << m_index << " open." << std::endl;
-
-		std::string pipeName = "\\\\.\\pipe\\PSMoveSerivceEx\\VirtPSeyeStream0_";
-
-		char indexStr[20];
-		pipeName.append(itoa(m_index, indexStr, 10));
-
-		capturePipe = CreateNamedPipe(
-			pipeName.c_str(),
-			PIPE_ACCESS_INBOUND,
-			PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_NOWAIT,
-			1,
-			sizeof(pipeBuffer),
-			sizeof(pipeBuffer),
-			NMPWAIT_USE_DEFAULT_WAIT,
-			NULL
-		);
-
-		if (capturePipe != INVALID_HANDLE_VALUE)
+		if (capturePipeHD == INVALID_HANDLE_VALUE)
 		{
-			std::cout << "ps3eye::VIRTUAL() " << pipeName.c_str() << " pipe created." << std::endl;
-
-			// Try to connect to pipe and check for connection.
-			grabFrame();
-			return true;
-		}
-		else
-		{
-			std::cout << "ps3eye::VIRTUAL() " << pipeName.c_str() << " pipe failed!, GLE=" << GetLastError() << std::endl;
-
-			m_index = -1;
-			return false;
-		}
-	}
-
-	void close()
-	{
-		std::cout << "ps3eye::VIRTUAL() index " << m_index << " closed." << std::endl;
-
-		if (capturePipe != INVALID_HANDLE_VALUE)
-		{
-			DisconnectNamedPipe(capturePipe);
-			CloseHandle(capturePipe);
-
-			capturePipe = INVALID_HANDLE_VALUE;
-		}
-
-		m_index = -1;
-		m_isValid = false;
-	}
-
-	void refreshDimensions() {}
-
-	int m_index;
-	bool m_frameAvailable;
-	bool m_pipeConnected;
-	bool m_isValid;
-
-	HANDLE capturePipe;
-	char pipeBuffer[VRIT_BUFF_SIZE];
-	cv::Mat capFrame;
-	std::chrono::time_point<std::chrono::high_resolution_clock> m_lastRequest;
-};
-
-#define VRIT_BUFF_BIG_SIZE (1080 * 1920 * 3)
-
-/// Implementation of PS3EyeCapture using named pipes
-class PSEYECaptureCAM_VIRTUAL2 : public cv::IVideoCapture
-{
-public:
-	PSEYECaptureCAM_VIRTUAL2(int _index) :
-		m_index(-1), m_frameAvailable(false), m_pipeConnected(false),
-		capturePipe(INVALID_HANDLE_VALUE)
-	{
-		//CoInitialize(NULL);
-		m_isValid = open(_index);
-	}
-
-	~PSEYECaptureCAM_VIRTUAL2()
-	{
-		close();
-	}
-
-	// Currently there is no way to get/set properties on virtual trackers.
-	double getProperty(int property_id) const
-	{
-		switch (property_id)
-		{
-		case CV_CAP_PROP_BRIGHTNESS:
-			return 0;
-		case CV_CAP_PROP_CONTRAST:
-			return 0;
-		case CV_CAP_PROP_EXPOSURE:
-			return 0;
-		case CV_CAP_PROP_FPS:
-			return 30;
-		case CV_CAP_PROP_FRAME_HEIGHT:
-			return 1080;
-		case CV_CAP_PROP_FRAME_WIDTH:
-			return 1920;
-		case CV_CAP_PROP_GAIN:
-			return 0;
-		case CV_CAP_PROP_HUE:
-			return 0;
-		case CV_CAP_PROP_SHARPNESS:
-			return 0;
-		case CV_CAP_PROP_FORMAT:
-			return cv::CAP_MODE_RGB;
-		case CV_CAP_PROP_FRAMEAVAILABLE:
-			return (bool)m_frameAvailable;
-		}
-		return 0;
-	}
-
-	// Currently there is no way to get/set properties on virtual trackers.
-	bool setProperty(int property_id, double value)
-	{
-		switch (property_id)
-		{
-		case CV_CAP_PROP_FRAMEAVAILABLE:
-			m_frameAvailable = (bool)value;
-		}
-
-		return false;
-	}
-
-	bool grabFrame()
-	{
-		if (capturePipe == INVALID_HANDLE_VALUE)
-		{
-			capFrame.setTo(cv::Scalar(0, 0, 0));
+			capFrameHD.setTo(cv::Scalar(0, 0, 0));
 			cv::putText(
-				capFrame,
+				capFrameHD,
 				"Virtual tracker not connected.",
-				cv::Point(64, capFrame.rows / 2),
+				cv::Point(64, capFrameHD.rows / 2),
 				cv::FONT_HERSHEY_DUPLEX,
 				1.0,
 				CvScalar(255, 255, 255),
@@ -931,9 +808,9 @@ public:
 			return true;
 		}
 
-		BOOL connected = ConnectNamedPipe(capturePipe, NULL);
+		BOOL connected = ConnectNamedPipe(capturePipeHD, NULL);
 		if (connected)
-			std::cout << "ps3eye::VIRTUAL2() ConnectNamedPipe success, index " << m_index << std::endl;
+			std::cout << "ps3eye::VIRTUAL() ConnectNamedPipe success, index " << m_index << std::endl;
 
 		if (!connected)
 			connected = (GetLastError() == ERROR_PIPE_CONNECTED);
@@ -941,9 +818,9 @@ public:
 		if (!connected)
 		{
 			if (GetLastError() != ERROR_PIPE_LISTENING) {
-				std::cout << "ps3eye::VIRTUAL2() ConnectNamedPipe failed, index " << m_index << ", GLE=" << GetLastError() << "." << std::endl;
+				std::cout << "ps3eye::VIRTUAL() ConnectNamedPipe failed, index " << m_index << ", GLE=" << GetLastError() << "." << std::endl;
 
-				DisconnectNamedPipe(capturePipe);
+				DisconnectNamedPipe(capturePipeHD);
 			}
 		}
 
@@ -951,11 +828,11 @@ public:
 
 		if (!connected)
 		{
-			capFrame.setTo(cv::Scalar(0, 0, 0));
+			capFrameHD.setTo(cv::Scalar(0, 0, 0));
 			cv::putText(
-				capFrame,
+				capFrameHD,
 				"Virtual tracker not connected.",
-				cv::Point(64, capFrame.rows / 2),
+				cv::Point(64, capFrameHD.rows / 2),
 				cv::FONT_HERSHEY_DUPLEX,
 				1.0,
 				CvScalar(255, 255, 255),
@@ -967,7 +844,7 @@ public:
 		}
 
 		DWORD dwRead;
-		BOOL success = ReadFile(capturePipe, pipeBuffer, VRIT_BUFF_BIG_SIZE, &dwRead, NULL);
+		BOOL success = ReadFile(capturePipeHD, pipeBufferHD, sizeof(pipeBufferHD), &dwRead, NULL);
 		if (!success)
 		{
 			bool bDisplayText = true;
@@ -976,7 +853,7 @@ public:
 			{
 			case ERROR_BROKEN_PIPE:
 			{
-				std::cout << "ps3eye::VIRTUAL2() client disconnected, index " << m_index << "." << std::endl;
+				std::cout << "ps3eye::VIRTUAL() client disconnected, index " << m_index << "." << std::endl;
 				break;
 			}
 			case ERROR_PIPE_LISTENING:
@@ -991,20 +868,20 @@ public:
 			}
 			default:
 			{
-				std::cout << "ps3eye::VIRTUAL2() ReadFile failed, index " << m_index << ", GLE=" << GetLastError() << "." << std::endl;
+				std::cout << "ps3eye::VIRTUAL() ReadFile failed, index " << m_index << ", GLE=" << GetLastError() << "." << std::endl;
 				break;
 			}
 			}
 
 			if (bDisplayText)
 			{
-				capFrame.setTo(cv::Scalar(0, 0, 0));
+				capFrameHD.setTo(cv::Scalar(0, 0, 0));
 				cv::putText(
-					capFrame,
+					capFrameHD,
 					"Virtual tracker not connected.",
-					cv::Point(64, capFrame.rows / 2),
+					cv::Point(64, capFrameHD.rows / 2),
 					cv::FONT_HERSHEY_DUPLEX,
-					1.0,
+					10.0,
 					CvScalar(255, 255, 255),
 					2
 				);
@@ -1019,13 +896,28 @@ public:
 		if (m_frameAvailable)
 			return true;
 
-		memcpy((uchar*)capFrame.data, pipeBuffer, VRIT_BUFF_BIG_SIZE);
+		memcpy((uchar*)capFrameHD.data, pipeBufferHD, sizeof(pipeBufferHD));
 
 		m_frameAvailable = true;
 		return true;
 	}
 
 	bool retrieveFrame(int outputType, cv::OutputArray outArray)
+	{
+		if (capFrameSD.rows == m_frameHeight && capFrameSD.cols == m_frameWidth)
+		{
+			return retrieveFrameSD(outputType, outArray);
+		}
+
+		if (capFrameHD.rows == m_frameHeight && capFrameHD.cols == m_frameWidth)
+		{
+			return retrieveFrameHD(outputType, outArray);
+		}
+
+		return false;
+	}
+
+	bool retrieveFrameSD(int outputType, cv::OutputArray outArray)
 	{
 		if (!m_frameAvailable)
 			return false;
@@ -1035,9 +927,25 @@ public:
 		// EDIT:
 		// Let the virtual tracker manager control the flip. Not all cameras have flipped horizontal streams.
 		//cv::Mat flipped;
-		//cv::flip(capFrame, flipped, 1);
+		//cv::flip(capFrameSD, flipped, 1);
 
-		capFrame.copyTo(outArray);
+		capFrameSD.copyTo(outArray);
+		return true;
+	}
+
+	bool retrieveFrameHD(int outputType, cv::OutputArray outArray)
+	{
+		if (!m_frameAvailable)
+			return false;
+
+		// ###Externet We need to flip the input image because PSEyes do so too.
+		// If we dont do this the Y axis will be flipped on pose calibration.
+		// EDIT:
+		// Let the virtual tracker manager control the flip. Not all cameras have flipped horizontal streams.
+		//cv::Mat flipped;
+		//cv::flip(capFrameSD, flipped, 1);
+
+		capFrameHD.copyTo(outArray);
 		return true;
 	}
 
@@ -1070,29 +978,44 @@ protected:
 	bool open(int _index)
 	{
 		m_index = _index;
-		capFrame = cv::Mat(1080, 1920, CV_8UC3, CvScalar(0, 0, 0));
+		capFrameSD = cv::Mat(480, 640, CV_8UC3, CvScalar(0, 0, 0));
+		capFrameHD = cv::Mat(1080, 1920, CV_8UC3, CvScalar(0, 0, 0));
 
-		std::cout << "ps3eye::VIRTUAL2() index " << _index << " open." << std::endl;
+		std::cout << "ps3eye::VIRTUAL() index " << m_index << " open." << std::endl;
 
-		std::string pipeName = "\\\\.\\pipe\\PSMoveSerivceEx\\VirtPSeyeStream1_";
+		std::string pipeNameSD = "\\\\.\\pipe\\PSMoveSerivceEx\\VirtPSeyeStream0_";
+		std::string pipeNameHD = "\\\\.\\pipe\\PSMoveSerivceEx\\VirtPSeyeStream1_";
 
 		char indexStr[20];
-		pipeName.append(itoa(_index, indexStr, 10));
+		pipeNameSD.append(itoa(m_index, indexStr, 10));
+		pipeNameHD.append(itoa(m_index, indexStr, 10));
 
-		capturePipe = CreateNamedPipe(
-			pipeName.c_str(),
+		capturePipeSD = CreateNamedPipe(
+			pipeNameSD.c_str(),
 			PIPE_ACCESS_INBOUND,
 			PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_NOWAIT,
 			1,
-			sizeof(pipeBuffer),
-			sizeof(pipeBuffer),
+			sizeof(pipeBufferSD),
+			sizeof(pipeBufferSD),
 			NMPWAIT_USE_DEFAULT_WAIT,
 			NULL
 		);
 
-		if (capturePipe != INVALID_HANDLE_VALUE)
+		capturePipeHD = CreateNamedPipe(
+			pipeNameHD.c_str(),
+			PIPE_ACCESS_INBOUND,
+			PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_NOWAIT,
+			1,
+			sizeof(pipeBufferHD),
+			sizeof(pipeBufferHD),
+			NMPWAIT_USE_DEFAULT_WAIT,
+			NULL
+		);
+
+		if (capturePipeSD != INVALID_HANDLE_VALUE && pipeBufferHD != INVALID_HANDLE_VALUE)
 		{
-			std::cout << "ps3eye::VIRTUAL2() " << pipeName.c_str() << " pipe created." << std::endl;
+			std::cout << "ps3eye::VIRTUAL() " << pipeNameSD.c_str() << " pipe created." << std::endl;
+			std::cout << "ps3eye::VIRTUAL() " << pipeNameHD.c_str() << " pipe created." << std::endl;
 
 			// Try to connect to pipe and check for connection.
 			grabFrame();
@@ -1100,7 +1023,8 @@ protected:
 		}
 		else
 		{
-			std::cout << "ps3eye::VIRTUAL2() " << pipeName.c_str() << " pipe failed!, GLE=" << GetLastError() << std::endl;
+			std::cout << "ps3eye::VIRTUAL() " << pipeNameSD.c_str() << " pipe failed!, GLE=" << GetLastError() << std::endl;
+			std::cout << "ps3eye::VIRTUAL() " << pipeNameHD.c_str() << " pipe failed!, GLE=" << GetLastError() << std::endl;
 
 			m_index = -1;
 			return false;
@@ -1109,14 +1033,22 @@ protected:
 
 	void close()
 	{
-		std::cout << "ps3eye::VIRTUAL2() index " << m_index << " closed." << std::endl;
+		std::cout << "ps3eye::VIRTUAL() index " << m_index << " closed." << std::endl;
 
-		if (capturePipe != INVALID_HANDLE_VALUE)
+		if (capturePipeSD != INVALID_HANDLE_VALUE)
 		{
-			DisconnectNamedPipe(capturePipe);
-			CloseHandle(capturePipe);
+			DisconnectNamedPipe(capturePipeSD);
+			CloseHandle(capturePipeSD);
 
-			capturePipe = INVALID_HANDLE_VALUE;
+			capturePipeSD = INVALID_HANDLE_VALUE;
+		}
+
+		if (capturePipeHD != INVALID_HANDLE_VALUE)
+		{
+			DisconnectNamedPipe(capturePipeHD);
+			CloseHandle(capturePipeHD);
+
+			capturePipeHD = INVALID_HANDLE_VALUE;
 		}
 
 		m_index = -1;
@@ -1129,11 +1061,15 @@ protected:
 	bool m_frameAvailable;
 	bool m_pipeConnected;
 	bool m_isValid;
+	int m_frameHeight;
+	int m_frameWidth;
 
-	HANDLE capturePipe;
-	char pipeBuffer[VRIT_BUFF_BIG_SIZE];
-	cv::Mat capFrame;
-	std::chrono::time_point<std::chrono::high_resolution_clock> m_lastRequest;
+	HANDLE capturePipeSD;
+	HANDLE capturePipeHD;
+	char pipeBufferSD[VRIT_BUFF_SD_SIZE];
+	char pipeBufferHD[VRIT_BUFF_HD_SIZE];
+	cv::Mat capFrameSD;
+	cv::Mat capFrameHD;
 };
 
 static bool usingCLEyeDriver()
@@ -1215,28 +1151,13 @@ bool PSEyeVideoCapture::open(int index)
 	if (m_iVideoCaptureType == eVideoCaptureType::CaptureType_VIRTUAL || m_iVideoCaptureType == eVideoCaptureType::CaptureType_ALL)
 	{
 #ifdef WIN32
-		// 1080p stream
+		icap = cv::makePtr<PSEYECaptureCAM_VIRTUAL>(index);
+		m_indentifier = icap.dynamicCast<PSEYECaptureCAM_VIRTUAL>()->getUniqueIndentifier();
+		m_api_index = index;
+
+		if (!icap.empty())
 		{
-			icap = cv::makePtr<PSEYECaptureCAM_VIRTUAL2>(index);
-			m_indentifier = icap.dynamicCast<PSEYECaptureCAM_VIRTUAL2>()->getUniqueIndentifier();
-			m_api_index = index;
-
-			if (!icap.empty() && icap.dynamicCast<PSEYECaptureCAM_VIRTUAL2>()->isConnected())
-			{
-				return true;
-			}
-		}
-
-		{
-			//// 480p stream (fallback, dont check for connected)
-			icap = cv::makePtr<PSEYECaptureCAM_VIRTUAL>(index);
-			m_indentifier = icap.dynamicCast<PSEYECaptureCAM_VIRTUAL>()->getUniqueIndentifier();
-			m_api_index = index;
-
-			if (!icap.empty())
-			{
-				return true;
-			}
+			return true;
 		}
 
 		return false;
