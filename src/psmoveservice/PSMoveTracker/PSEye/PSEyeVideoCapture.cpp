@@ -797,11 +797,11 @@ public:
 			cv::putText(
 				capFrameHD,
 				"Virtual tracker not connected.",
-				cv::Point(64, capFrameHD.rows / 2),
+				cv::Point(256, capFrameHD.rows / 2),
 				cv::FONT_HERSHEY_DUPLEX,
-				1.0,
+				3.0,
 				CvScalar(255, 255, 255),
-				2
+				5
 			);
 
 			m_frameAvailable = true;
@@ -832,11 +832,11 @@ public:
 			cv::putText(
 				capFrameHD,
 				"Virtual tracker not connected.",
-				cv::Point(64, capFrameHD.rows / 2),
+				cv::Point(256, capFrameHD.rows / 2),
 				cv::FONT_HERSHEY_DUPLEX,
-				1.0,
+				3.0,
 				CvScalar(255, 255, 255),
-				2
+				5
 			);
 
 			m_frameAvailable = true;
@@ -879,11 +879,11 @@ public:
 				cv::putText(
 					capFrameHD,
 					"Virtual tracker not connected.",
-					cv::Point(64, capFrameHD.rows / 2),
+					cv::Point(256, capFrameHD.rows / 2),
 					cv::FONT_HERSHEY_DUPLEX,
-					10.0,
+					3.0,
 					CvScalar(255, 255, 255),
-					2
+					5
 				);
 
 				m_frameAvailable = true;
