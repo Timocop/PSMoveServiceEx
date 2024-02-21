@@ -95,6 +95,9 @@ void AppStage_TrackerSettings::render()
 	case eTrackerMenuState::failedHmdListRequest:
 	case eTrackerMenuState::pendingPlayspaceRequest:
 	case eTrackerMenuState::failedPlayspaceRequest:
+	case eTrackerMenuState::trackerResetPoseWarning:
+	case eTrackerMenuState::failedTrackerResetPoseRequest:
+	case eTrackerMenuState::pendingTrackerResetPoseRequest:
     {
     } break;
 
@@ -440,6 +443,11 @@ void AppStage_TrackerSettings::renderUI()
 							if (ImGui::Button("Calibrate Tracker Distortion"))
 							{
 								m_app->setAppStage(AppStage_DistortionCalibration::APP_STAGE_NAME);
+							}
+
+							if (ImGui::Button("Reset Tracker Pose"))
+							{
+								m_menuState = AppStage_TrackerSettings::trackerResetPoseWarning;
 							}
 						}
 						else
@@ -1009,6 +1017,7 @@ void AppStage_TrackerSettings::renderUI()
     case eTrackerMenuState::pendingControllerListRequest:
 	case eTrackerMenuState::pendingHmdListRequest:
 	case eTrackerMenuState::pendingPlayspaceRequest:
+	case eTrackerMenuState::pendingTrackerResetPoseRequest:
     {
         ImGui::SetNextWindowPosCenter();
         ImGui::SetNextWindowSize(ImVec2(300, 150));
@@ -1022,6 +1031,7 @@ void AppStage_TrackerSettings::renderUI()
     case eTrackerMenuState::failedControllerListRequest:
 	case eTrackerMenuState::failedHmdListRequest:
 	case eTrackerMenuState::failedPlayspaceRequest:
+	case eTrackerMenuState::failedTrackerResetPoseRequest:
     {
         ImGui::SetNextWindowPosCenter();
         ImGui::SetNextWindowSize(ImVec2(300, 150));
@@ -1041,7 +1051,31 @@ void AppStage_TrackerSettings::renderUI()
 
         ImGui::End();
     } break;
+	case eTrackerMenuState::trackerResetPoseWarning:
+	{
+		ImGui::SetNextWindowPosCenter();
+		ImGui::SetNextWindowSize(ImVec2(500, 150));
+		ImGui::Begin("Reset Tracker Pose", nullptr, window_flags);
 
+		ImGui::Text(
+			"You are about to reset the calibrated pose for this tracker!\n"
+			"Do you want to continue?"
+		);
+
+		if (ImGui::Button("Reset Pose"))
+		{
+			request_tracker_reset_pose();
+		}
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("Cancel"))
+		{
+			m_menuState = AppStage_TrackerSettings::idle;
+		}
+
+		ImGui::End();
+	} break;
     default:
         assert(0 && "unreachable");
     }
@@ -1379,6 +1413,7 @@ void AppStage_TrackerSettings::handle_playspace_info_response(
 	} break;
 	}
 }
+
 void AppStage_TrackerSettings::request_set_playspace_offsets(
 	float playspace_orientation_yaw,
 	float playspace_position_x,
@@ -1429,6 +1464,74 @@ void AppStage_TrackerSettings::handle_search_for_new_trackers_response(
     AppStage_TrackerSettings *thisPtr = static_cast<AppStage_TrackerSettings *>(userdata);
 
     thisPtr->request_tracker_list();
+}
+
+void AppStage_TrackerSettings::request_tracker_reset_pose()
+{
+	if (m_menuState != AppStage_TrackerSettings::pendingTrackerResetPoseRequest)
+	{
+		m_menuState = AppStage_TrackerSettings::pendingTrackerResetPoseRequest;
+
+		RequestPtr request(new PSMoveProtocol::Request());
+		request->set_type(PSMoveProtocol::Request_RequestType_SET_TRACKER_POSE);
+
+
+		PSMoveProtocol::Request_RequestSetTrackerPose *set_pose_request =
+			request->mutable_request_set_tracker_pose();
+
+		set_pose_request->set_tracker_id(m_selectedTrackerIndex);
+
+		PSMoveProtocol::Pose *pose_request = set_pose_request->mutable_pose();
+		
+		{
+			PSMoveProtocol::Orientation *orientation_request = pose_request->mutable_orientation();
+
+			orientation_request->set_w(k_psm_quaternion_identity->w);
+			orientation_request->set_x(k_psm_quaternion_identity->x);
+			orientation_request->set_y(k_psm_quaternion_identity->y);
+			orientation_request->set_z(k_psm_quaternion_identity->z);
+		}
+
+		{
+			PSMoveProtocol::Position *position_request = pose_request->mutable_position();
+
+			position_request->set_x(0.f);
+			position_request->set_y(0.f);
+			position_request->set_z(0.f);
+		}
+
+
+		PSMRequestID request_id;
+		PSM_SendOpaqueRequest(&request, &request_id);
+		PSM_RegisterCallback(request_id, AppStage_TrackerSettings::handle_tracker_reset_pose_request, this);
+	}
+}
+
+void AppStage_TrackerSettings::handle_tracker_reset_pose_request(
+	const PSMResponseMessage *response_message,
+	void *userdata)
+{
+	AppStage_TrackerSettings *thisPtr = static_cast<AppStage_TrackerSettings *>(userdata);
+
+	const PSMResult ResultCode = response_message->result_code;
+	const PSMResponseHandle response_handle = response_message->opaque_response_handle;
+
+	switch (ResultCode)
+	{
+	case PSMResult_Success:
+	{
+		//const PSMoveProtocol::Response *response = GET_PSMOVEPROTOCOL_RESPONSE(response_handle);
+
+		thisPtr->m_menuState = AppStage_TrackerSettings::idle;
+	} break;
+
+	case PSMResult_Error:
+	case PSMResult_Canceled:
+	case PSMResult_Timeout:
+	{
+		thisPtr->m_menuState = AppStage_TrackerSettings::failedTrackerResetPoseRequest;
+	} break;
+	}
 }
 
 void AppStage_TrackerSettings::setPlayspaceOffsets(

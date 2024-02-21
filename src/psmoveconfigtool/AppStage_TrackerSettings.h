@@ -100,6 +100,11 @@ protected:
 		const PSMResponseMessage *response,
 		void *userdata);
 
+	void request_tracker_reset_pose();
+	static void handle_tracker_reset_pose_request(
+		const PSMResponseMessage * response_message, 
+		void * userdata);
+
 	void request_playspace_info();
 	static void handle_playspace_info_response(
 		const PSMResponseMessage *response,
@@ -129,6 +134,10 @@ protected:
 		pendingPlayspaceRequest,
 		failedPlayspaceRequest,
         pendingSearchForNewTrackersRequest,
+
+		trackerResetPoseWarning,
+		failedTrackerResetPoseRequest,
+		pendingTrackerResetPoseRequest,
     };
     eTrackerMenuState m_menuState;
 	std::vector<TrackerBusInfo> m_trackerBusInfo;
