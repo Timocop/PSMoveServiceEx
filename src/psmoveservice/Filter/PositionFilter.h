@@ -43,7 +43,8 @@ public:
 
 protected:
     PositionFilterConstants m_constants;
-    struct PositionFilterState *m_state;
+	struct PositionFilterState *m_state;
+	struct PositionInterpolationState *m_interpolationState;
 };
 
 /// Just use the optical orientation passed in unfiltered

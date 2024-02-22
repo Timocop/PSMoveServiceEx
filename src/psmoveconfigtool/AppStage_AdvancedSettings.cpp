@@ -225,19 +225,21 @@ TrackerConfig::config2ptree()
 	pt.put("optical_tracking_timeout", optical_tracking_timeout);
 	pt.put("use_bgr_to_hsv_lookup_table", use_bgr_to_hsv_lookup_table);
 	pt.put("thread_sleep_ms", thread_sleep_ms);
-
 	pt.put("excluded_opposed_cameras", exclude_opposed_cameras);
-
 	pt.put("min_valid_projection_area", min_valid_projection_area);
+	
 	pt.put("occluded_area_on_loss_size", occluded_area_on_loss_size);
 	pt.put("occluded_area_ignore_num_trackers", occluded_area_ignore_num_trackers);
 	pt.put("occluded_area_regain_projection_size", occluded_area_regain_projection_size);
+	
 	pt.put("projection_collision_avoid", projection_collision_avoid);
 	pt.put("projection_collision_offset", projection_collision_offset);
+	
 	pt.put("average_position_cache_enabled", average_position_cache_enabled);
 	pt.put("average_position_cache_cell_size", average_position_cache_cell_size);
 	pt.put("average_position_cache_avg_size", average_position_cache_avg_size);
 	pt.put("average_position_cache_limit", average_position_cache_limit);
+	
 	pt.put("min_points_in_contour", min_points_in_contour);
 	pt.put("max_tracker_position_deviation", max_tracker_position_deviation);
 
@@ -246,6 +248,8 @@ TrackerConfig::config2ptree()
 	pt.put("roi_size", roi_size);
 	pt.put("roi_search_size", roi_search_size);
 	pt.put("roi_edge_offset", roi_edge_offset);
+
+	pt.put("position_interpolation", position_interpolation);
 
 	pt.put("global_forward_degrees", global_forward_degrees);
 
@@ -263,19 +267,21 @@ TrackerConfig::ptree2config(const boost::property_tree::ptree &pt)
 	optical_tracking_timeout = pt.get<int>("optical_tracking_timeout", optical_tracking_timeout);
 	use_bgr_to_hsv_lookup_table = pt.get<bool>("use_bgr_to_hsv_lookup_table", use_bgr_to_hsv_lookup_table);
 	thread_sleep_ms = pt.get<int>("thread_sleep_ms", thread_sleep_ms);
-
 	exclude_opposed_cameras = pt.get<bool>("excluded_opposed_cameras", exclude_opposed_cameras);
-
 	min_valid_projection_area = pt.get<float>("min_valid_projection_area", min_valid_projection_area);
+	
 	occluded_area_on_loss_size = pt.get<float>("occluded_area_on_loss_size", occluded_area_on_loss_size);
 	occluded_area_ignore_num_trackers = pt.get<int>("occluded_area_ignore_num_trackers", occluded_area_ignore_num_trackers);
 	occluded_area_regain_projection_size = pt.get<float>("occluded_area_regain_projection_size", occluded_area_regain_projection_size);
+	
 	projection_collision_avoid = pt.get<bool>("projection_collision_avoid", projection_collision_avoid);
 	projection_collision_offset = pt.get<float>("projection_collision_offset", projection_collision_offset);
+	
 	average_position_cache_enabled = pt.get<bool>("average_position_cache_enabled", average_position_cache_enabled);
 	average_position_cache_cell_size = pt.get<float>("average_position_cache_cell_size", average_position_cache_cell_size);
 	average_position_cache_avg_size = pt.get<float>("average_position_cache_avg_size", average_position_cache_avg_size);
 	average_position_cache_limit = pt.get<float>("average_position_cache_limit", average_position_cache_limit);
+	
 	min_points_in_contour = pt.get<int>("min_points_in_contour", min_points_in_contour);
 	max_tracker_position_deviation = pt.get<float>("max_tracker_position_deviation", max_tracker_position_deviation);
 
@@ -284,6 +290,8 @@ TrackerConfig::ptree2config(const boost::property_tree::ptree &pt)
 	roi_size = pt.get<int>("roi_size", roi_size);
 	roi_search_size = pt.get<int>("roi_search_size", roi_search_size);
 	roi_edge_offset = pt.get<int>("roi_edge_offset", roi_edge_offset);
+
+	position_interpolation = pt.get<bool>("position_interpolation", position_interpolation);
 
 	global_forward_degrees = pt.get<float>("global_forward_degrees", global_forward_degrees);
 }
@@ -943,6 +951,20 @@ void AppStage_AdvancedSettings::renderUI()
 								"Adds an offset to the ROI (region of interest) on tracker edges.\n"
 								"Adding an slight offset can help avoid tracking jitter nearby tracker edges.\n"
 								"(The default value is 4)"
+							);
+					}
+
+					{
+						ImGui::Text("Position Interpolation:");
+						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+						ImGui::Checkbox("##PositionInterpolation", &cfg_tracker.position_interpolation);
+
+						if (ImGui::IsItemHovered())
+							ImGui::SetTooltip(
+								"Interpolation smoothes motion between previous and current position.\n"
+								"Interpolation adds a frame of delay because it has to wait for new positions to become available.\n"
+								"If you want more responsive motion, disable this feature.\n"
+								"(The default value is TRUE)"
 							);
 					}
 

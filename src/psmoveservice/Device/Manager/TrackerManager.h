@@ -83,6 +83,7 @@ public:
 	int roi_size;
 	int roi_search_size;
 	int roi_edge_offset;
+	bool position_interpolation;
     TrackerProfile default_tracker_profile;
 	float global_forward_degrees;
 

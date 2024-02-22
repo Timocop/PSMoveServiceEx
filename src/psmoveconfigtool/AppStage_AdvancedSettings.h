@@ -61,6 +61,7 @@ public:
 		roi_size = 32;
 		roi_search_size = 164;
 		roi_edge_offset = 4;
+		position_interpolation = true;
 		global_forward_degrees = 270.f; // Down -Z by default
 	};
 
@@ -93,6 +94,7 @@ public:
 	int roi_size;
 	int roi_search_size;
 	int roi_edge_offset;
+	bool position_interpolation;
 	float global_forward_degrees;
 };
 

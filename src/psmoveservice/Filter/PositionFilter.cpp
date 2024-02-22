@@ -39,6 +39,140 @@
 #define k_kalman_position_noise 300.0f
 
 // -- private definitions -----
+struct PositionInterpolationState
+{
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+	/// Is the current state valid
+	bool bIsValid;
+	t_high_resolution_timepoint current_timestamp;
+
+	Eigen::Vector3f last_position_meters; // meters
+	Eigen::Vector3f last_velocity_meters; // meters
+	t_high_resolution_timepoint last_timestamp;
+	Eigen::Vector3f previous_position_meters; // meters
+	Eigen::Vector3f previous_velocity_meters; // meters
+	t_high_resolution_timepoint previous_timestamp;
+
+	void reset()
+	{
+		bIsValid = false;
+		current_timestamp = t_high_resolution_timepoint();
+		last_position_meters = Eigen::Vector3f::Zero();
+		last_velocity_meters = Eigen::Vector3f::Zero();
+		last_timestamp = t_high_resolution_timepoint();
+		previous_position_meters = Eigen::Vector3f::Zero();
+		previous_velocity_meters = Eigen::Vector3f::Zero();
+		previous_timestamp = t_high_resolution_timepoint();
+	}
+
+	Eigen::Vector3f getInterpolatedPosition(const Eigen::Vector3f &position_meters)
+	{
+		if (!bIsValid)
+		{
+			return position_meters;
+		}
+
+		const t_high_resolution_duration_milli previous_time_delta = last_timestamp - previous_timestamp;
+		const t_high_resolution_duration_milli last_time_delta = current_timestamp - last_timestamp;
+		const float previous_time_delta_milli = previous_time_delta.count();
+		const float last_time_delta_milli = last_time_delta.count();
+
+		if (previous_time_delta_milli <= k_real_epsilon)
+		{
+			return position_meters;
+		}
+
+		float t = clampf01(last_time_delta_milli / previous_time_delta_milli);
+
+		Eigen::Vector3f lerped_pos = Eigen::Vector3f(
+			lerpf(previous_position_meters.x(), position_meters.x(), t),
+			lerpf(previous_position_meters.y(), position_meters.y(), t),
+			lerpf(previous_position_meters.z(), position_meters.z(), t));
+
+		return lerped_pos;
+	}
+
+	Eigen::Vector3f getInterpolatedVelocity(const Eigen::Vector3f &velocity_meters)
+	{
+		if (!bIsValid)
+		{
+			return velocity_meters;
+		}
+
+		const t_high_resolution_duration_milli previous_time_delta = last_timestamp - previous_timestamp;
+		const t_high_resolution_duration_milli last_time_delta = current_timestamp - last_timestamp;
+		const float previous_time_delta_milli = previous_time_delta.count();
+		const float last_time_delta_milli = last_time_delta.count();
+
+		if (previous_time_delta_milli <= k_real_epsilon)
+		{
+			return velocity_meters;
+		}
+
+		float t = clampf01(last_time_delta_milli / previous_time_delta_milli);
+
+		Eigen::Vector3f lerped_vel = Eigen::Vector3f(
+			lerpf(previous_velocity_meters.x(), velocity_meters.x(), t),
+			lerpf(previous_velocity_meters.y(), velocity_meters.y(), t),
+			lerpf(previous_velocity_meters.z(), velocity_meters.z(), t));
+
+		return lerped_vel;
+	}
+
+	void apply_interpolation_state(
+		const Eigen::Vector3f &new_position_m,
+		const t_high_resolution_timepoint timestamp)
+	{
+		apply_interpolation_state(new_position_m, Eigen::Vector3f::Zero(), timestamp);
+	}
+
+	void apply_interpolation_state(
+		const Eigen::Vector3f &new_position_m,
+		const Eigen::Vector3f &new_velocity_m_per_sec,
+		const t_high_resolution_timepoint timestamp)
+	{
+		if (bIsValid)
+		{
+			previous_timestamp = last_timestamp;
+		}
+		else
+		{
+			previous_timestamp = timestamp;
+		}
+
+		if (eigen_vector3f_is_valid(new_position_m))
+		{
+			previous_position_meters = last_position_meters;
+			last_position_meters = new_position_m;
+		}
+		else
+		{
+			SERVER_LOG_WARNING("PositionFilter") << "Position is NaN!";
+		}
+
+		if (eigen_vector3f_is_valid(new_velocity_m_per_sec))
+		{
+			previous_velocity_meters = last_velocity_meters;
+			last_velocity_meters = new_velocity_m_per_sec;
+		}
+		else
+		{
+			SERVER_LOG_WARNING("PositionFilter") << "Velocity is NaN!";
+		}
+
+		last_timestamp = timestamp;
+
+		// state is valid now that we have had an update
+		bIsValid = true;
+	}
+
+	void apply_timestamp_state(const t_high_resolution_timepoint timestamp)
+	{
+		current_timestamp = timestamp;
+	}
+};
+
 struct PositionFilterState
 {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -229,6 +363,7 @@ static void lowpass_filter_imu_step(
 //-- Orientation Filter -----
 PositionFilter::PositionFilter()
     : m_state(new PositionFilterState)
+	, m_interpolationState(new PositionInterpolationState)
 {
     memset(&m_constants, 0, sizeof(PositionFilterConstants));
     resetState();
@@ -236,7 +371,8 @@ PositionFilter::PositionFilter()
 
 PositionFilter::~PositionFilter()
 {
-    delete m_state;
+	delete m_state;
+	delete m_interpolationState;
 }
 
 bool PositionFilter::getIsStateValid() const
@@ -252,6 +388,7 @@ double PositionFilter::getTimeInSeconds() const
 void PositionFilter::resetState()
 {
     m_state->reset();
+	m_interpolationState->reset();
 }
 
 void PositionFilter::recenterOrientation(const Eigen::Quaternionf& q_pose)
@@ -272,6 +409,8 @@ bool PositionFilter::init(const PositionFilterConstants &constants, const Eigen:
 	m_constants = constants;
 	m_state->position_meters = initial_position;
 	m_state->bIsValid = true;
+	m_interpolationState->last_position_meters = initial_position;
+	m_interpolationState->bIsValid = true;
 
 	return true;
 }
@@ -282,16 +421,33 @@ Eigen::Vector3f PositionFilter::getPositionCm(float time) const
 
     if (m_state->bIsValid)
     {
+		Eigen::Vector3f position_meters = m_state->position_meters;
+		Eigen::Vector3f velocity_meters = m_state->velocity_m_per_sec;
+		
+		if (m_interpolationState->bIsValid)
+		{
+			bool positionInterpolation = true;
+
+#if !defined(IS_TESTING_KALMAN)
+			positionInterpolation = DeviceManager::getInstance()->m_tracker_manager->getConfig().position_interpolation;
+#endif
+
+			if (positionInterpolation)
+			{
+				position_meters = m_interpolationState->getInterpolatedPosition(position_meters);
+				velocity_meters = m_interpolationState->getInterpolatedVelocity(velocity_meters);
+			}
+		}
+
         Eigen::Vector3f predicted_position = 
             is_nearly_zero(time)
-            ? m_state->position_meters
-            : m_state->position_meters + m_state->velocity_m_per_sec * time;
+            ? position_meters
+            : position_meters + velocity_meters * time;
 
-        result= predicted_position - m_state->origin_position;
-        result= result * k_meters_to_centimeters;
+        result = predicted_position - m_state->origin_position;
     }
 
-    return result;
+    return result * k_meters_to_centimeters;
 }
 
 Eigen::Vector3f PositionFilter::getVelocityCmPerSec() const
@@ -316,6 +472,8 @@ void PositionFilterPassThru::update(
 {
 	float optical_delta_time = m_state->getOpticalTime(timestamp);
 	float imu_delta_time = m_state->getImuTime(timestamp);
+
+	m_interpolationState->apply_timestamp_state(timestamp);
 
 	float velocity_smoothing_factor = k_lowpass_velocity_smoothing_factor;
 	float position_prediction_cutoff = k_velocity_adaptive_prediction_cutoff;
@@ -436,6 +594,7 @@ void PositionFilterPassThru::update(
 		}
 
 		m_state->apply_optical_state(new_position_meters, new_position_meters_sec, timestamp);
+		m_interpolationState->apply_interpolation_state(new_position_meters, new_position_meters_sec, timestamp);
 	}
 }
 
@@ -446,6 +605,8 @@ void PositionFilterLowPassOptical::update(
 {
 	float optical_delta_time = m_state->getOpticalTime(timestamp);
 	float imu_delta_time = m_state->getImuTime(timestamp);
+
+	m_interpolationState->apply_timestamp_state(timestamp);
 
 	float smoothing_distance = k_max_lowpass_smoothing_distance;
 	float smoothing_power = k_lowpass_smoothing_power;
@@ -606,12 +767,15 @@ void PositionFilterLowPassIMU::update(
 	float optical_delta_time = m_state->getOpticalTime(timestamp);
 	float imu_delta_time = m_state->getImuTime(timestamp);
 
+	m_interpolationState->apply_timestamp_state(timestamp);
+
 	if (packet.has_optical_measurement() && packet.isSynced)
 	{
 		// Use the raw optical position unfiltered
 		const Eigen::Vector3f new_position_meters= packet.get_optical_position_in_meters();
 
 		m_state->apply_optical_state(new_position_meters, timestamp);
+		m_interpolationState->apply_interpolation_state(new_position_meters, timestamp);
     }
 
     if (packet.has_imu_measurements() && m_state->bIsValid)
@@ -643,6 +807,8 @@ void PositionFilterComplimentaryOpticalIMU::update(
 	float optical_delta_time = m_state->getOpticalTime(timestamp);
 	float imu_delta_time = m_state->getImuTime(timestamp);
 
+	m_interpolationState->apply_timestamp_state(timestamp);
+
 	static float g_max_unseen_position_timeout= k_max_unseen_position_timeout;
 
 	if (packet.has_optical_measurement() && packet.isSynced)
@@ -666,6 +832,7 @@ void PositionFilterComplimentaryOpticalIMU::update(
 		}
 
 		m_state->apply_optical_state(new_position_meters, timestamp);
+		m_interpolationState->apply_interpolation_state(new_position_meters, timestamp);
 		lastOpticalFrame = now;
     }
 
@@ -703,6 +870,8 @@ void PositionFilterLowPassExponential::update(
 {
 	float optical_delta_time = m_state->getOpticalTime(timestamp);
 	float imu_delta_time = m_state->getImuTime(timestamp);
+
+	m_interpolationState->apply_timestamp_state(timestamp);
 
 	const int history_queue_length = 20;
 
@@ -851,6 +1020,7 @@ void PositionFilterLowPassExponential::update(
         }
 
 		m_state->apply_optical_state(new_position_meters, new_velocity_m_per_sec, timestamp);
+		m_interpolationState->apply_interpolation_state(new_position_meters, timestamp);
     }
 }
 
@@ -860,6 +1030,8 @@ void PositionFilterKalman::update(
 {
 	float optical_delta_time = m_state->getOpticalTime(timestamp);
 	float imu_delta_time = m_state->getImuTime(timestamp);
+
+	m_interpolationState->apply_timestamp_state(timestamp);
 
 	float velocity_smoothing_factor = k_lowpass_velocity_smoothing_factor;
 	float position_prediction_cutoff = k_velocity_adaptive_prediction_cutoff;
@@ -1027,6 +1199,7 @@ void PositionFilterKalman::update(
 		}
 
 		m_state->apply_optical_state(new_position_meters, new_position_meters_sec, timestamp);
+		m_interpolationState->apply_interpolation_state(new_position_meters, new_position_meters_sec, timestamp);
 	}
 }
 
