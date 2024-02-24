@@ -250,6 +250,7 @@ TrackerConfig::config2ptree()
 	pt.put("roi_edge_offset", roi_edge_offset);
 
 	pt.put("position_interpolation", position_interpolation);
+	pt.put("thread_maximum_framrate", thread_maximum_framrate);
 
 	pt.put("global_forward_degrees", global_forward_degrees);
 
@@ -292,6 +293,7 @@ TrackerConfig::ptree2config(const boost::property_tree::ptree &pt)
 	roi_edge_offset = pt.get<int>("roi_edge_offset", roi_edge_offset);
 
 	position_interpolation = pt.get<bool>("position_interpolation", position_interpolation);
+	thread_maximum_framrate = pt.get<int>("thread_maximum_framrate", thread_maximum_framrate);
 
 	global_forward_degrees = pt.get<float>("global_forward_degrees", global_forward_degrees);
 }
@@ -601,13 +603,29 @@ void AppStage_AdvancedSettings::renderUI()
 						ImGui::PushItemWidth(100.f);
 						if (ImGui::InputInt("##ThreadSleep", &cfg_tracker.thread_sleep_ms))
 						{
-							cfg_tracker.thread_sleep_ms = static_cast<int>(std::fmax(0, std::fmin(99999, cfg_tracker.thread_sleep_ms)));
+							cfg_tracker.thread_sleep_ms = static_cast<int>(std::fmax(1, std::fmin(99999, cfg_tracker.thread_sleep_ms)));
 						}
 						ImGui::PopItemWidth();
 
 						if (ImGui::IsItemHovered())
 							ImGui::SetTooltip(
 								"(The default value is 1)"
+							);
+					}
+
+					{
+						ImGui::Text("Maximum Processing Thread Framerate:");
+						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+						ImGui::PushItemWidth(100.f);
+						if (ImGui::InputInt("##MaximumProcessingThreadFramerate", &cfg_tracker.thread_maximum_framrate))
+						{
+							cfg_tracker.thread_maximum_framrate = static_cast<int>(std::fmax(30, std::fmin(99999, cfg_tracker.thread_maximum_framrate)));
+						}
+						ImGui::PopItemWidth();
+
+						if (ImGui::IsItemHovered())
+							ImGui::SetTooltip(
+								"(The default value is 200)"
 							);
 					}
 

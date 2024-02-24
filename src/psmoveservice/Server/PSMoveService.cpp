@@ -124,6 +124,7 @@ public:
 				const TrackerManagerConfig &cfg = DeviceManager::getInstance()->m_tracker_manager->getConfig();
 				std::chrono::time_point<std::chrono::high_resolution_clock> m_lastSync = std::chrono::high_resolution_clock::now();
 				std::chrono::time_point<std::chrono::high_resolution_clock> m_lastFrame = std::chrono::high_resolution_clock::now();
+				std::chrono::time_point<std::chrono::high_resolution_clock> m_lastCapFrame = std::chrono::high_resolution_clock::now();
 
 				bool framesReport = true;
 				int frames = 0;
@@ -135,7 +136,23 @@ public:
 
                 while (m_status->state() != boost::application::status::stoped)
                 {
-                    if (m_status->state() != boost::application::status::paused)
+					bool doUpdate = false;
+					int threadSleep = (int)fmax(1, cfg.thread_sleep_ms);
+					int threadFrameMax = (int)fmax(30, cfg.thread_maximum_framrate);
+
+					// Maximum thread framerate cap
+					{
+						const std::chrono::duration<float, std::milli> timeSinceCapLast = std::chrono::high_resolution_clock::now() - m_lastCapFrame;
+						const float minThreadTimeMs = (1000.f / clampf(threadFrameMax, 1.f, 1000.f)) - 1.f;
+
+						if (timeSinceCapLast.count() > minThreadTimeMs)
+						{
+							doUpdate = true;
+							m_lastCapFrame = std::chrono::high_resolution_clock::now();
+						}
+					}
+
+                    if (doUpdate && m_status->state() != boost::application::status::paused)
                     {
                         update();
 
@@ -144,18 +161,19 @@ public:
 							SERVER_LOG_INFO("PSMoveServiceEx") << "------------------------------------------";
 							SERVER_LOG_INFO("PSMoveServiceEx") << "Successfully Initialized!";
 							SERVER_LOG_INFO("PSMoveServiceEx") << "------------------------------------------";
+							SERVER_LOG_INFO("PSMoveServiceEx") << "Maximum thread framerate is: " << threadFrameMax;
 							SERVER_LOG_INFO("PSMoveServiceEx") << "Calculating average main thread FPS...";
 
 							m_lastSync = std::chrono::high_resolution_clock::now();
 							m_lastFrame = std::chrono::high_resolution_clock::now();
+							m_lastCapFrame = std::chrono::high_resolution_clock::now();
 						}
 
 						//Write avg FPS to log
 						if (!firstUpdate && framesReport)
 						{
-							const std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
-							const std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastSync;
-							const std::chrono::duration<float, std::milli> timeFrameLast = now - m_lastFrame;
+							const std::chrono::duration<float, std::milli> timeSinceLast = std::chrono::high_resolution_clock::now() - m_lastSync;
+							const std::chrono::duration<float, std::milli> timeFrameLast = std::chrono::high_resolution_clock::now() - m_lastFrame;
 
 							frames++;
 							frame_count++;
@@ -196,20 +214,17 @@ public:
                     }
 
 #if defined(WIN32)
-					if (cfg.thread_sleep_ms > 0)
+					if (!usleep(threadSleep * 1000LL))
 					{
-						if (!usleep(cfg.thread_sleep_ms * 1000LL))
-						{
-							//###Externet Change the minimum resolution for periodic timers on Windows to 1ms.
-							// On some windows systems the default minimum resolution is ~15ms which can have undesiered effects for tracking.
-							// This is needed for Windows 10 2004 and prior versions since any app can change the minimum resolution globaly.
-							timeBeginPeriod(1);
-							std::this_thread::sleep_for(std::chrono::milliseconds(cfg.thread_sleep_ms));
-							timeEndPeriod(1);
-						}
+						//###Externet Change the minimum resolution for periodic timers on Windows to 1ms.
+						// On some windows systems the default minimum resolution is ~15ms which can have undesiered effects for tracking.
+						// This is needed for Windows 10 2004 and prior versions since any app can change the minimum resolution globaly.
+						timeBeginPeriod(1);
+						std::this_thread::sleep_for(std::chrono::milliseconds(threadSleep));
+						timeEndPeriod(1);
 					}
 #else
-					std::this_thread::sleep_for(std::chrono::milliseconds(cfg.thread_sleep_ms));
+					std::this_thread::sleep_for(std::chrono::milliseconds(threadSleep));
 #endif
                 }
             }
