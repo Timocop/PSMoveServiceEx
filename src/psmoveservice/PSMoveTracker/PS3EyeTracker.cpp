@@ -745,12 +745,13 @@ void PS3EyeTracker::getCameraIntrinsics(
 
 	// ###Externet $TODO Scale precomputed intrinsics if its other than 480p.
 	// 480p should be the default resolution for intrinsics.
-	const float N = static_cast<float>(getFrameWidth() / 640);
+	const float NW = static_cast<float>(getFrameWidth() / 640);
+	const float NH = static_cast<float>(getFrameHeight() / 480);
 
-	outFocalLengthX *= N; //F_PX
-	outFocalLengthY *= N; //F_PY
-	outPrincipalX *= N; //PrincipalX
-	outPrincipalY *= N; //PrincipalY
+	outFocalLengthX *= NW; //F_PX
+	outFocalLengthY *= NH; //F_PY
+	outPrincipalX *= NW; //PrincipalX
+	outPrincipalY *= NH; //PrincipalY
 	//outDistortionK1 *= N; //K1
 	//outDistortionK2 *= N; //K2
 	//outDistortionK3 *= N; //K3
@@ -776,12 +777,13 @@ void PS3EyeTracker::setCameraIntrinsics(
 
 	// ###Externet $TODO Scale precomputed intrinsics if its other than 480p.
 	// 480p should be the default resolution for intrinsics.
-	const float N = static_cast<float>(getFrameWidth() / 640);
+	const float NW = static_cast<float>(getFrameWidth() / 640);
+	const float NH = static_cast<float>(getFrameHeight() / 480);
 
-	cfg.focalLengthX /= N; //F_PX
-	cfg.focalLengthY /= N; //F_PY
-	cfg.principalX /= N; //PrincipalX
-	cfg.principalY /= N; //PrincipalY
+	cfg.focalLengthX /= NW; //F_PX
+	cfg.focalLengthY /= NH; //F_PY
+	cfg.principalX /= NW; //PrincipalX
+	cfg.principalY /= NH; //PrincipalY
 	//outDistortionK1 /= N; //K1
 	//outDistortionK2 /= N; //K2
 	//outDistortionK3 /= N; //K3
