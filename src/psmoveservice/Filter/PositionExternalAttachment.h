@@ -39,6 +39,7 @@ public:
 protected:
     PositionFilterConstants m_constants;
     struct ExternalAttachmentPositionFilterState *m_state;
+	struct PositionInterpolationState *m_interpolationState;
 
 	HANDLE attachmentPipe;
 	char pipeBuffer[512];

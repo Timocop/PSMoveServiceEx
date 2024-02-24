@@ -15,6 +15,142 @@
 //-- constants -----
 
 // -- private definitions -----
+
+// -- private definitions -----
+struct PositionInterpolationState
+{
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+		/// Is the current state valid
+		bool bIsValid;
+	t_high_resolution_timepoint current_timestamp;
+
+	Eigen::Vector3f last_position_meters; // meters
+	Eigen::Vector3f last_velocity_meters; // meters
+	t_high_resolution_timepoint last_timestamp;
+	Eigen::Vector3f previous_position_meters; // meters
+	Eigen::Vector3f previous_velocity_meters; // meters
+	t_high_resolution_timepoint previous_timestamp;
+
+	void reset()
+	{
+		bIsValid = false;
+		current_timestamp = t_high_resolution_timepoint();
+		last_position_meters = Eigen::Vector3f::Zero();
+		last_velocity_meters = Eigen::Vector3f::Zero();
+		last_timestamp = t_high_resolution_timepoint();
+		previous_position_meters = Eigen::Vector3f::Zero();
+		previous_velocity_meters = Eigen::Vector3f::Zero();
+		previous_timestamp = t_high_resolution_timepoint();
+	}
+
+	Eigen::Vector3f getInterpolatedPosition(const Eigen::Vector3f &position_meters)
+	{
+		if (!bIsValid)
+		{
+			return position_meters;
+		}
+
+		const t_high_resolution_duration_milli previous_time_delta = last_timestamp - previous_timestamp;
+		const t_high_resolution_duration_milli last_time_delta = current_timestamp - last_timestamp;
+		const float previous_time_delta_milli = previous_time_delta.count();
+		const float last_time_delta_milli = last_time_delta.count();
+
+		if (previous_time_delta_milli <= k_real_epsilon)
+		{
+			return position_meters;
+		}
+
+		float t = clampf01(last_time_delta_milli / previous_time_delta_milli);
+
+		Eigen::Vector3f lerped_pos = Eigen::Vector3f(
+			lerpf(previous_position_meters.x(), position_meters.x(), t),
+			lerpf(previous_position_meters.y(), position_meters.y(), t),
+			lerpf(previous_position_meters.z(), position_meters.z(), t));
+
+		return lerped_pos;
+	}
+
+	Eigen::Vector3f getInterpolatedVelocity(const Eigen::Vector3f &velocity_meters)
+	{
+		if (!bIsValid)
+		{
+			return velocity_meters;
+		}
+
+		const t_high_resolution_duration_milli previous_time_delta = last_timestamp - previous_timestamp;
+		const t_high_resolution_duration_milli last_time_delta = current_timestamp - last_timestamp;
+		const float previous_time_delta_milli = previous_time_delta.count();
+		const float last_time_delta_milli = last_time_delta.count();
+
+		if (previous_time_delta_milli <= k_real_epsilon)
+		{
+			return velocity_meters;
+		}
+
+		float t = clampf01(last_time_delta_milli / previous_time_delta_milli);
+
+		Eigen::Vector3f lerped_vel = Eigen::Vector3f(
+			lerpf(previous_velocity_meters.x(), velocity_meters.x(), t),
+			lerpf(previous_velocity_meters.y(), velocity_meters.y(), t),
+			lerpf(previous_velocity_meters.z(), velocity_meters.z(), t));
+
+		return lerped_vel;
+	}
+
+	void apply_interpolation_state(
+		const Eigen::Vector3f &new_position_m,
+		const t_high_resolution_timepoint timestamp)
+	{
+		apply_interpolation_state(new_position_m, Eigen::Vector3f::Zero(), timestamp);
+	}
+
+	void apply_interpolation_state(
+		const Eigen::Vector3f &new_position_m,
+		const Eigen::Vector3f &new_velocity_m_per_sec,
+		const t_high_resolution_timepoint timestamp)
+	{
+		if (bIsValid)
+		{
+			previous_timestamp = last_timestamp;
+		}
+		else
+		{
+			previous_timestamp = timestamp;
+		}
+
+		if (eigen_vector3f_is_valid(new_position_m))
+		{
+			previous_position_meters = last_position_meters;
+			last_position_meters = new_position_m;
+		}
+		else
+		{
+			SERVER_LOG_WARNING("PositionFilter") << "Position is NaN!";
+		}
+
+		if (eigen_vector3f_is_valid(new_velocity_m_per_sec))
+		{
+			previous_velocity_meters = last_velocity_meters;
+			last_velocity_meters = new_velocity_m_per_sec;
+		}
+		else
+		{
+			SERVER_LOG_WARNING("PositionFilter") << "Velocity is NaN!";
+		}
+
+		last_timestamp = timestamp;
+
+		// state is valid now that we have had an update
+		bIsValid = true;
+	}
+
+	void apply_timestamp_state(const t_high_resolution_timepoint timestamp)
+	{
+		current_timestamp = timestamp;
+	}
+};
+
 struct ExternalAttachmentPositionFilterState
 {
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -194,6 +330,7 @@ static Eigen::Vector3f lowpass_prediction_vector3f(
 //-- Orientation Filter -----
 PositionExternalAttachmentFilter::PositionExternalAttachmentFilter() :
 	m_state(new ExternalAttachmentPositionFilterState),
+	m_interpolationState(new PositionInterpolationState),
 	attachmentPipe(INVALID_HANDLE_VALUE)
 {
 #ifdef WIN32
@@ -222,6 +359,7 @@ PositionExternalAttachmentFilter::~PositionExternalAttachmentFilter()
 	}
 #endif
     delete m_state;
+	delete m_interpolationState;
 }
 
 bool PositionExternalAttachmentFilter::getIsStateValid() const
@@ -257,26 +395,45 @@ bool PositionExternalAttachmentFilter::init(const PositionFilterConstants &const
 	m_constants = constants;
 	m_state->position_meters = initial_position;
 	m_state->bIsValid = true;
+	m_interpolationState->last_position_meters = initial_position;
+	m_interpolationState->bIsValid = true;
 
 	return true;
 }
 
 Eigen::Vector3f PositionExternalAttachmentFilter::getPositionCm(float time) const
 {
-    Eigen::Vector3f result = Eigen::Vector3f::Zero();
+	Eigen::Vector3f result = Eigen::Vector3f::Zero();
 
-    if (m_state->bIsValid)
-    {
-        Eigen::Vector3f predicted_position = 
-            is_nearly_zero(time)
-            ? m_state->position_meters
-            : m_state->position_meters + m_state->velocity_m_per_sec * time;
+	if (m_state->bIsValid)
+	{
+		Eigen::Vector3f position_meters = m_state->position_meters;
+		Eigen::Vector3f velocity_meters = m_state->velocity_m_per_sec;
 
-        result= predicted_position - m_state->origin_position;
-        result= result * k_meters_to_centimeters;
-    }
+		if (m_interpolationState->bIsValid)
+		{
+			bool positionInterpolation = true;
 
-    return result;
+#if !defined(IS_TESTING_KALMAN)
+			positionInterpolation = DeviceManager::getInstance()->m_tracker_manager->getConfig().position_interpolation;
+#endif
+
+			if (positionInterpolation)
+			{
+				position_meters = m_interpolationState->getInterpolatedPosition(position_meters);
+				velocity_meters = m_interpolationState->getInterpolatedVelocity(velocity_meters);
+			}
+		}
+
+		Eigen::Vector3f predicted_position =
+			is_nearly_zero(time)
+			? position_meters
+			: position_meters + velocity_meters * time;
+
+		result = predicted_position - m_state->origin_position;
+	}
+
+	return result * k_meters_to_centimeters;
 }
 
 Eigen::Vector3f PositionExternalAttachmentFilter::getVelocityCmPerSec() const
@@ -312,6 +469,9 @@ void PositionFilterExternalAttachment::update(
 	{
 		return;
 	}
+
+	m_interpolationState->apply_timestamp_state(timestamp);
+
 	std::string pipeName = "\\\\.\\pipe\\PSMoveSerivceEx\\AttachPSmoveStream_";
 
 	char indexStr[20];
@@ -560,8 +720,8 @@ void PositionFilterExternalAttachment::update(
 
 		Eigen::Vector3f new_position_meters = (tracker_position + prime) * k_centimeters_to_meters;
 
-		Eigen::Vector3f new_position_meters_sec = Eigen::Vector3f::Zero();
-		m_state->apply_optical_state(new_position_meters, new_position_meters_sec, timestamp);
+		m_state->apply_optical_state(new_position_meters, timestamp);
+		m_interpolationState->apply_interpolation_state(new_position_meters, timestamp);
 	}
 
 #endif
