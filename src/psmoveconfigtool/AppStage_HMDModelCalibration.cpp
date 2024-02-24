@@ -357,11 +357,16 @@ AppStage_HMDModelCalibration::AppStage_HMDModelCalibration(App *app)
 
 AppStage_HMDModelCalibration::~AppStage_HMDModelCalibration()
 {
-	delete m_trackerPairState;
+	if (m_trackerPairState != nullptr)
+	{
+		delete m_trackerPairState;
+		m_trackerPairState = nullptr;
+	}
 
 	if (m_hmdModelState != nullptr)
 	{
 		delete m_hmdModelState;
+		m_hmdModelState = nullptr;
 	}
 }
 
@@ -1273,6 +1278,13 @@ void AppStage_HMDModelCalibration::handle_tracker_start_stream_response(
 		// Open the shared memory that the video stream is being written to
 		if (PSM_OpenTrackerVideoStream(trackerState.trackerView->tracker_info.tracker_id) == PSMResult_Success)
 		{
+			// Free the texture we were rendering to
+			if (trackerState.textureAsset != nullptr)
+			{
+				delete trackerState.textureAsset;
+				trackerState.textureAsset = nullptr;
+			}
+
 			// Create a texture to render the video frame to
 			trackerState.textureAsset = new TextureAsset();
 			trackerState.textureAsset->init(

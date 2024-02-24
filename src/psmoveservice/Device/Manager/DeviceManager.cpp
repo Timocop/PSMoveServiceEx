@@ -104,13 +104,26 @@ DeviceManager::DeviceManager()
 
 DeviceManager::~DeviceManager()
 {
-    delete m_controller_manager;
-    delete m_tracker_manager;
-    delete m_hmd_manager;
+	if (m_controller_manager != nullptr)
+	{
+		delete m_controller_manager;
+		m_controller_manager = nullptr;
+	}
+	if (m_tracker_manager != nullptr)
+	{
+		delete m_tracker_manager;
+		m_tracker_manager = nullptr;
+	}
+	if (m_hmd_manager != nullptr)
+	{
+		delete m_hmd_manager;
+		m_hmd_manager = nullptr;
+	}
 
 	if (m_platform_api != nullptr)
 	{
 		delete m_platform_api;
+		m_platform_api = nullptr;
 	}
 }
 
@@ -131,6 +144,12 @@ DeviceManager::startup()
 	if (m_config->platform_api_enabled)
 	{
 #ifdef WIN32
+		if (m_platform_api != nullptr)
+		{
+			delete m_platform_api;
+			m_platform_api = nullptr;
+		}
+
 		m_platform_api_type = _eDevicePlatformApiType_Win32;
 		m_platform_api = new PlatformDeviceAPIWin32;
 #endif

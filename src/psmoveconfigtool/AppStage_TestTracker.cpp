@@ -382,6 +382,13 @@ void AppStage_TestTracker::handle_tracker_start_stream_response(
             // Open the shared memory that the vidoe stream is being written to
             if (PSM_OpenTrackerVideoStream(trackerView->tracker_info.tracker_id) == PSMResult_Success)
             {
+				// Free the texture we were rendering to
+				if (thisPtr->m_video_texture != nullptr)
+				{
+					delete thisPtr->m_video_texture;
+					thisPtr->m_video_texture = nullptr;
+				}
+
                 // Create a texture to render the video frame to
                 thisPtr->m_video_texture = new TextureAsset();
                 thisPtr->m_video_texture->init(

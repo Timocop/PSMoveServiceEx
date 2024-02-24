@@ -88,18 +88,50 @@ public:
     virtual ~OpenCVBufferState()
     {
         // Video Frame data
-        delete bgrSourceBuffer;
-        delete gsBuffer;
-        delete gsBGRBuffer;
-        delete bgrUndistortBuffer;
+		if (bgrSourceBuffer != nullptr)
+		{
+			delete bgrSourceBuffer;
+			bgrSourceBuffer = nullptr;
+		}
+		if (gsBuffer != nullptr)
+		{
+			delete gsBuffer;
+			gsBuffer = nullptr;
+		}
+		if (gsBGRBuffer != nullptr)
+		{
+			delete gsBGRBuffer;
+			gsBGRBuffer = nullptr;
+		}
+		if (bgrUndistortBuffer != nullptr)
+		{
+			delete bgrUndistortBuffer;
+			bgrUndistortBuffer = nullptr;
+		}
 
         // Chessboard state
-        delete intrinsic_matrix;
-        delete distortion_coeffs;
+		if (intrinsic_matrix != nullptr)
+		{
+			delete intrinsic_matrix;
+			intrinsic_matrix = nullptr;
+		}
+		if (distortion_coeffs != nullptr)
+		{
+			delete distortion_coeffs;
+			distortion_coeffs = nullptr;
+		}
 
         // Distortion state
-        delete distortionMapX;
-        delete distortionMapY;
+		if (distortionMapX != nullptr)
+		{
+			delete distortionMapX;
+			distortionMapX = nullptr;
+		}
+		if (distortionMapY != nullptr)
+		{
+			delete distortionMapY;
+			distortionMapY = nullptr;
+		}
     }
 
     void resetCaptureState()
@@ -909,6 +941,13 @@ void AppStage_DistortionCalibration::handle_tracker_start_stream_response(
                 const PSMClientTrackerInfo &trackerInfo= trackerView->tracker_info;
                 const int width= static_cast<int>(trackerInfo.tracker_screen_dimensions.x);
                 const int height= static_cast<int>(trackerInfo.tracker_screen_dimensions.y);
+
+				// Free the texture we were rendering to
+				if (thisPtr->m_video_texture != nullptr)
+				{
+					delete thisPtr->m_video_texture;
+					thisPtr->m_video_texture = nullptr;
+				}
 
                 // Create a texture to render the video frame to
                 thisPtr->m_video_texture = new TextureAsset();

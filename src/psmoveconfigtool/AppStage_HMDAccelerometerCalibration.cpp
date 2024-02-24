@@ -106,7 +106,11 @@ AppStage_HMDAccelerometerCalibration::AppStage_HMDAccelerometerCalibration(App *
 
 AppStage_HMDAccelerometerCalibration::~AppStage_HMDAccelerometerCalibration()
 {
-    delete m_noiseSamples;
+	if (m_noiseSamples != nullptr)
+	{
+		delete m_noiseSamples;
+		m_noiseSamples = nullptr;
+	}
 }
 
 void AppStage_HMDAccelerometerCalibration::enter()

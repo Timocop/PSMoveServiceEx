@@ -250,10 +250,17 @@ AppStage_MagnetometerCalibration::AppStage_MagnetometerCalibration(App *app)
 
 AppStage_MagnetometerCalibration::~AppStage_MagnetometerCalibration()
 {
-    delete m_boundsStatistics;
-    m_boundsStatistics = nullptr;
-	delete m_identityStatistics;
-	m_identityStatistics = nullptr;
+	if (m_boundsStatistics != nullptr)
+	{
+		delete m_boundsStatistics;
+		m_boundsStatistics = nullptr;
+	}
+
+	if (m_identityStatistics != nullptr)
+	{
+		delete m_identityStatistics;
+		m_identityStatistics = nullptr;
+	}
 }
 
 void AppStage_MagnetometerCalibration::enter()

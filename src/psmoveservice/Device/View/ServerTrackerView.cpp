@@ -320,7 +320,11 @@ private:
 
     ~OpenCVBGRToHSVMapper()
     {
-        delete bgr2hsv;
+		if (bgr2hsv != nullptr)
+		{
+			delete bgr2hsv;
+			bgr2hsv = nullptr;
+		}
     }
 
     static int getLUTIndex(int r, int g, int b)
@@ -372,31 +376,37 @@ public:
         if (maskedBuffer != nullptr)
         {
             delete maskedBuffer;
+			maskedBuffer = nullptr;
         }
         
         if (gsLowerBuffer != nullptr)
         {
             delete gsLowerBuffer;
+			gsLowerBuffer = nullptr;
         }
         
         if (gsUpperBuffer != nullptr)
         {
             delete gsUpperBuffer;
+			gsUpperBuffer = nullptr;
         }
         
         if (hsvBuffer != nullptr)
         {
             delete hsvBuffer;
+			hsvBuffer = nullptr;
         }
         
         if (bgrShmemBuffer != nullptr)
         {
             delete bgrShmemBuffer;
+			bgrShmemBuffer = nullptr;
         }
         
         if (bgrBuffer != nullptr)
         {
             delete bgrBuffer;
+			bgrBuffer = nullptr;
         }
         
         if (bgr2hsv != nullptr)
@@ -871,16 +881,19 @@ ServerTrackerView::~ServerTrackerView()
     if (m_shared_memory_accesor != nullptr)
     {
         delete m_shared_memory_accesor;
+		m_shared_memory_accesor = nullptr;
     }
 
     if (m_opencv_buffer_state != nullptr)
     {
         delete m_opencv_buffer_state;
+		m_opencv_buffer_state = nullptr;
     }
 
     if (m_device != nullptr)
     {
         delete m_device;
+		m_device = nullptr;
     }
 }
 
@@ -1117,7 +1130,6 @@ void ServerTrackerView::setFrameWidth(double value, bool bUpdateConfig)
 		{
 			delete m_opencv_buffer_state;
 		}
-
         m_opencv_buffer_state = new OpenCVBufferState(m_device);
     }
     else
@@ -1172,7 +1184,6 @@ void ServerTrackerView::setFrameHeight(double value, bool bUpdateConfig)
 		{
 			delete m_opencv_buffer_state;
 		}
-
         m_opencv_buffer_state = new OpenCVBufferState(m_device);
     }
     else

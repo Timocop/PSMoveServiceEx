@@ -300,6 +300,7 @@ AppSubStage_CalibrateWithMat::~AppSubStage_CalibrateWithMat()
 	for (int location_index = 0; location_index < PSMOVESERVICE_MAX_TRACKER_COUNT; ++location_index)
 	{
 		delete m_deviceTrackerPoseStats[location_index];
+		m_deviceTrackerPoseStats[location_index] = nullptr;
 	}
 }
 

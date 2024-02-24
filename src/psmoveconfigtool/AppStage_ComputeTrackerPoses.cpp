@@ -63,7 +63,11 @@ AppStage_ComputeTrackerPoses::AppStage_ComputeTrackerPoses(App *app)
 
 AppStage_ComputeTrackerPoses::~AppStage_ComputeTrackerPoses()
 {
-    delete m_pCalibrateWithMat;
+	if (m_pCalibrateWithMat != nullptr)
+	{
+		delete m_pCalibrateWithMat;
+		m_pCalibrateWithMat = nullptr;
+	}
 }
 
 void AppStage_ComputeTrackerPoses::enterStageAndCalibrateTrackersWithController(App *app, PSMControllerID reqeusted_controller_id)
@@ -1513,10 +1517,12 @@ void AppStage_ComputeTrackerPoses::release_devices()
     {
         TrackerState &trackerState = iter->second;
 
-        if (trackerState.textureAsset != nullptr)
-        {
-            delete trackerState.textureAsset;
-        }
+		// Free the texture we were rendering to
+		if (trackerState.textureAsset != nullptr)
+		{
+			delete trackerState.textureAsset;
+			trackerState.textureAsset = nullptr;
+		}
 
         if (trackerState.trackerView != nullptr)
         {
@@ -2094,6 +2100,13 @@ void AppStage_ComputeTrackerPoses::handle_tracker_start_stream_response(
             // Open the shared memory that the video stream is being written to
             if (PSM_OpenTrackerVideoStream(trackerInfo.tracker_id) == PSMResult_Success)
             {
+				// Free the texture we were rendering to
+				if (trackerState.textureAsset != nullptr)
+				{
+					delete trackerState.textureAsset;
+					trackerState.textureAsset = nullptr;
+				}
+
                 // Create a texture to render the video frame to
                 trackerState.textureAsset = new TextureAsset();
                 trackerState.textureAsset->init(

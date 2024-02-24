@@ -121,7 +121,11 @@ AppStage_HMDGyroscopeCalibration::AppStage_HMDGyroscopeCalibration(App *app)
 
 AppStage_HMDGyroscopeCalibration::~AppStage_HMDGyroscopeCalibration()
 {
-    delete m_gyroNoiseSamples;
+	if (m_gyroNoiseSamples != nullptr)
+	{
+		delete m_gyroNoiseSamples;
+		m_gyroNoiseSamples = nullptr;
+	}
 }
 
 void AppStage_HMDGyroscopeCalibration::enter()

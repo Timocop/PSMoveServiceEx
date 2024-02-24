@@ -641,9 +641,13 @@ MorpheusHMD::~MorpheusHMD()
         SERVER_LOG_ERROR("~MorpheusHMD") << "HMD deleted without calling close() first!";
     }
 
-	if (m_HIDPacketProcessor)
+	if (m_HIDPacketProcessor != nullptr)
 	{
+		// halt the HID packet processing thread
+		m_HIDPacketProcessor->stop();
+
 		delete m_HIDPacketProcessor;
+		m_HIDPacketProcessor = nullptr;
 	}
 
     delete USBContext;
@@ -781,6 +785,7 @@ void MorpheusHMD::close()
 		{
 			// halt the HID packet processing thread
 			m_HIDPacketProcessor->stop();
+
 			delete m_HIDPacketProcessor;
 			m_HIDPacketProcessor = nullptr;
 		}

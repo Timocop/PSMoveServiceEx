@@ -698,7 +698,7 @@ KalmanOrientationFilter::~KalmanOrientationFilter()
     if (m_filter != nullptr)
     {
         delete m_filter;
-        m_filter;
+        m_filter = nullptr;
     }
 }
 
@@ -710,7 +710,7 @@ bool KalmanOrientationFilter::init(const OrientationFilterConstants &constants)
     if (m_filter != nullptr)
     {
         delete m_filter;
-        m_filter;
+		m_filter = nullptr;
     }
 
 	// Create and initialize the private filter implementation
@@ -731,7 +731,7 @@ bool KalmanOrientationFilter::init(
 	if (m_filter != nullptr)
 	{
 		delete m_filter;
-		m_filter;
+		m_filter = nullptr;
 	}
 
 	// Create and initialize the private filter implementation
