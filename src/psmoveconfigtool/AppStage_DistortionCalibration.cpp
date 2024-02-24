@@ -656,31 +656,53 @@ void AppStage_DistortionCalibration::renderUI()
     switch (m_menuState)
     {
 	case eMenuState::showWarning:
+	{
+		const float k_wide_panel_width = 350.f;
+		ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_wide_panel_width / 2.f, 20.f));
+		ImGui::SetNextWindowSize(ImVec2(k_wide_panel_width, 130));
+
+		ImGui::Begin("WARNING", nullptr, window_flags);
+
+		ImGui::TextWrapped(
+			"The tracker you want to calibrate already has pre-computed distortion and focal lengths." \
+			"If you proceed you will be overriding these defaults.");
+
+		ImGui::Spacing();
+
+		if (ImGui::Button("Continue"))
 		{
-			const float k_wide_panel_width = 350.f;
-			ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_wide_panel_width / 2.f, 20.f));
-			ImGui::SetNextWindowSize(ImVec2(k_wide_panel_width, 130));
+			m_menuState = eMenuState::enterBoardSettings;
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel"))
+		{
+			request_exit();
+		}
 
-			ImGui::Begin("WARNING", nullptr, window_flags);
+		ImGui::End();
+	} break;
+	case eMenuState::showWarningResolution:
+	{
+		const float k_wide_panel_width = 350.f;
+		ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_wide_panel_width / 2.f, 20.f));
+		ImGui::SetNextWindowSize(ImVec2(k_wide_panel_width, 150));
 
-			ImGui::TextWrapped(
-				"The tracker you want to calibrate already has pre-computed distortion and focal lengths." \
-				"If you proceed you will be overriding these defaults.");
+		ImGui::Begin("INCOMPATIBLE RESOLUTION", nullptr, window_flags);
 
-			ImGui::Spacing();
+		ImGui::TextWrapped(
+			"The tracker you want to calibrate uses an unsupported resolution for distortion calibration.\n"
+			"Please change the resolution to 640x480 for this tracker and try again."
+		);
 
-			if (ImGui::Button("Continue"))
-			{
-				m_menuState = eMenuState::enterBoardSettings;
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Cancel"))
-			{
-				request_exit();
-			}
+		ImGui::Spacing();
 
-			ImGui::End();
-		} break;
+		if (ImGui::Button(" OK "))
+		{
+			request_exit();
+		}
+
+		ImGui::End();
+	} break;
 	case eMenuState::enterBoardSettings:
 		{
 			const float k_wide_panel_width = 350.f;
@@ -967,28 +989,37 @@ void AppStage_DistortionCalibration::handle_tracker_start_stream_response(
 
                 thisPtr->m_opencv_state = new OpenCVBufferState(trackerInfo);
 
-				// Warn the user if they are about to change the distortion calibration settings for the PS3EYE
-				if (trackerInfo.tracker_type == PSMTrackerType::PSMTracker_PS3Eye)
+				// $TODO: 1080p distortion calibration does not work.
+				// However calibrating in 480p and then switching to 1080p works. Why? How knows.
+				//if (width != 640 || height != 480)
+				//{
+				//	thisPtr->m_menuState = AppStage_DistortionCalibration::showWarningResolution;
+				//}
+				//else
 				{
-					// Virtual trackers have a common device path "VirtualTracker_#"
-					// ###Externet $TODO: Add better virtual tracker check. Probably should do that after changing protocols.
-					bool is_virtual = (trackerInfo.device_path[0] == 'V');
+					// Warn the user if they are about to change the distortion calibration settings for the PS3EYE
+					if (trackerInfo.tracker_type == PSMTrackerType::PSMTracker_PS3Eye)
+					{
+						// Virtual trackers have a common device path "VirtualTracker_#"
+						// ###Externet $TODO: Add better virtual tracker check. Probably should do that after changing protocols.
+						bool is_virtual = (trackerInfo.device_path[0] == 'V');
 
-					// Virtual trackers dont have precomputed distortion calibration settings.
-					if (is_virtual)
+						// Virtual trackers dont have precomputed distortion calibration settings.
+						if (is_virtual)
+						{
+							// Start capturing chess boards
+							thisPtr->m_menuState = AppStage_DistortionCalibration::enterBoardSettings;
+						}
+						else
+						{
+							thisPtr->m_menuState = AppStage_DistortionCalibration::showWarning;
+						}
+					}
+					else
 					{
 						// Start capturing chess boards
 						thisPtr->m_menuState = AppStage_DistortionCalibration::enterBoardSettings;
 					}
-					else
-					{
-						thisPtr->m_menuState = AppStage_DistortionCalibration::showWarning;
-					}
-				}
-				else
-				{
-					// Start capturing chess boards
-					thisPtr->m_menuState = AppStage_DistortionCalibration::enterBoardSettings;
 				}
             }
             else

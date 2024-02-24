@@ -733,30 +733,20 @@ void PS3EyeTracker::getCameraIntrinsics(
     float &outDistortionK1, float &outDistortionK2, float &outDistortionK3,
     float &outDistortionP1, float &outDistortionP2) const
 {
-    outFocalLengthX = static_cast<float>(cfg.focalLengthX);
-    outFocalLengthY = static_cast<float>(cfg.focalLengthY);
-    outPrincipalX = static_cast<float>(cfg.principalX);
-    outPrincipalY = static_cast<float>(cfg.principalY);
-    outDistortionK1 = static_cast<float>(cfg.distortionK1);
-    outDistortionK2 = static_cast<float>(cfg.distortionK2);
-    outDistortionK3 = static_cast<float>(cfg.distortionK3);
-    outDistortionP1 = static_cast<float>(cfg.distortionP1);
-    outDistortionP2 = static_cast<float>(cfg.distortionP2);
-
 	// ###Externet $TODO Scale precomputed intrinsics if its other than 480p.
 	// 480p should be the default resolution for intrinsics.
 	const float NW = static_cast<float>(getFrameWidth() / 640);
 	const float NH = static_cast<float>(getFrameHeight() / 480);
 
-	outFocalLengthX *= NW; //F_PX
-	outFocalLengthY *= NH; //F_PY
-	outPrincipalX *= NW; //PrincipalX
-	outPrincipalY *= NH; //PrincipalY
-	//outDistortionK1 *= N; //K1
-	//outDistortionK2 *= N; //K2
-	//outDistortionK3 *= N; //K3
-	//outDistortionP1 *= N; //P1
-	//outDistortionP2 *= N; //P2
+    outFocalLengthX = static_cast<float>(cfg.focalLengthX) * NW;
+    outFocalLengthY = static_cast<float>(cfg.focalLengthY) * NH;
+    outPrincipalX = static_cast<float>(cfg.principalX) * NW;
+    outPrincipalY = static_cast<float>(cfg.principalY) * NH;
+    outDistortionK1 = static_cast<float>(cfg.distortionK1);
+    outDistortionK2 = static_cast<float>(cfg.distortionK2);
+    outDistortionK3 = static_cast<float>(cfg.distortionK3);
+    outDistortionP1 = static_cast<float>(cfg.distortionP1);
+    outDistortionP2 = static_cast<float>(cfg.distortionP2);
 }
 
 void PS3EyeTracker::setCameraIntrinsics(
@@ -765,30 +755,20 @@ void PS3EyeTracker::setCameraIntrinsics(
     float distortionK1, float distortionK2, float distortionK3,
     float distortionP1, float distortionP2)
 {
-    cfg.focalLengthX = focalLengthX;
-    cfg.focalLengthY = focalLengthY;
-    cfg.principalX = principalX;
-    cfg.principalY = principalY;
-    cfg.distortionK1 = distortionK1;
-    cfg.distortionK2 = distortionK2;
-    cfg.distortionK3 = distortionK3;
-    cfg.distortionP1 = distortionP1;
-    cfg.distortionP2 = distortionP2;
-
 	// ###Externet $TODO Scale precomputed intrinsics if its other than 480p.
 	// 480p should be the default resolution for intrinsics.
 	const float NW = static_cast<float>(getFrameWidth() / 640);
 	const float NH = static_cast<float>(getFrameHeight() / 480);
 
-	cfg.focalLengthX /= NW; //F_PX
-	cfg.focalLengthY /= NH; //F_PY
-	cfg.principalX /= NW; //PrincipalX
-	cfg.principalY /= NH; //PrincipalY
-	//outDistortionK1 /= N; //K1
-	//outDistortionK2 /= N; //K2
-	//outDistortionK3 /= N; //K3
-	//outDistortionP1 /= N; //P1
-	//outDistortionP2 /= N; //P2
+    cfg.focalLengthX = focalLengthX / NW;
+    cfg.focalLengthY = focalLengthY / NH;
+    cfg.principalX = principalX / NW;
+    cfg.principalY = principalY / NH;
+    cfg.distortionK1 = distortionK1;
+    cfg.distortionK2 = distortionK2;
+    cfg.distortionK3 = distortionK3;
+    cfg.distortionP1 = distortionP1;
+    cfg.distortionP2 = distortionP2;
 }
 
 CommonDevicePose PS3EyeTracker::getTrackerPose() const

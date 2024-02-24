@@ -50,6 +50,7 @@ private:
     {
         inactive,
 		showWarning,
+		showWarningResolution,
 		enterBoardSettings,
         capture,
         complete,
