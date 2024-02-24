@@ -264,7 +264,7 @@ public:
 
                     if (bCurrentImagePointsValid)
                     {
-                        bCurrentImagePointsValid= areGridLinesStraight(new_image_points);
+                        bCurrentImagePointsValid= areGridLinesStraight(new_image_points, STRAIGHT_LINE_TOLERANCE);
                     }
 
                     // If it's a valid new location, append it to the board list
@@ -297,7 +297,7 @@ public:
         }
     }
 
-    static bool areGridLinesStraight(const std::vector<cv::Point2f> &corners)
+    static bool areGridLinesStraight(const std::vector<cv::Point2f> &corners, const int tolerance)
     {
         assert(corners.size() == CORNER_COUNT);
         bool bAllLinesStraight= true;
@@ -314,7 +314,7 @@ public:
             {
                 cv::Point2f point= corners[point_index];
 
-                if (distanceToLine(line_start, line_end, point) > STRAIGHT_LINE_TOLERANCE)
+                if (distanceToLine(line_start, line_end, point) > tolerance)
                 {
                     bAllLinesStraight= false;
                 }
