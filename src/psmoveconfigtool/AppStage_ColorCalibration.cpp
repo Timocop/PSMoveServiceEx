@@ -346,9 +346,12 @@ void AppStage_ColorCalibration::update()
 
             // Copy the video frame buffer into the bgr opencv buffer
             {
-                const cv::Mat videoBufferMat(frameHeight, frameWidth, CV_8UC3, const_cast<unsigned char *>(video_buffer));
-
-                videoBufferMat.copyTo(*m_video_buffer_state->bgrBuffer);
+				// $TODO cv::Mat.copyTo() is rather slow, use reallocation instead.
+				if (m_video_buffer_state->bgrBuffer != nullptr)
+				{
+					delete m_video_buffer_state->bgrBuffer;
+				}
+				m_video_buffer_state->bgrBuffer = new cv::Mat(frameHeight, frameWidth, CV_8UC3, const_cast<unsigned char *>(video_buffer));
             }
 
             // Convert the video buffer to the HSV color space

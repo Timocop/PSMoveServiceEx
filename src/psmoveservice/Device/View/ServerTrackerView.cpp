@@ -407,23 +407,18 @@ public:
 
     void writeVideoFrame(const unsigned char *video_buffer)
     {
-		// $TODO Random crashes when changing resolution.
-		// For some reason the reallocating matrix uses less processing power.
-		//const cv::Mat videoBufferMat(frameHeight, frameWidth, CV_8UC3, const_cast<unsigned char *>(video_buffer));
-		//videoBufferMat.copyTo(*bgrBuffer);
-		//videoBufferMat.copyTo(*bgrShmemBuffer);
-
+		// $TODO cv::Mat.copyTo() crashes when changing resolution.
+		// $TODO cv::Mat.copyTo() is rather slow, use reallocation instead.
 		if (bgrBuffer != nullptr)
 		{
 			delete bgrBuffer;
 		}
+		bgrBuffer = new cv::Mat(frameHeight, frameWidth, CV_8UC3, const_cast<unsigned char *>(video_buffer));
 
 		if (bgrShmemBuffer != nullptr)
 		{
 			delete bgrShmemBuffer;
 		}
-
-		bgrBuffer = new cv::Mat(frameHeight, frameWidth, CV_8UC3, const_cast<unsigned char *>(video_buffer));
 		bgrShmemBuffer = new cv::Mat(frameHeight, frameWidth, CV_8UC3, const_cast<unsigned char *>(video_buffer));
     }
     
