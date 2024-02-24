@@ -638,6 +638,7 @@ public:
 			}
 
 			m_frameAvailable = false;
+			refreshPipe();
 			return true;
 		case CV_CAP_PROP_FRAME_WIDTH:
 			m_frameWidth = (int)round(value);
@@ -652,7 +653,9 @@ public:
 				m_frameWidth = 1920;
 				m_frameHeight = 1080;
 			}
+
 			m_frameAvailable = false;
+			refreshPipe();
 			return true;
 		case CV_CAP_PROP_FRAMEAVAILABLE:
 			m_frameAvailable = (bool)value;
@@ -672,8 +675,6 @@ public:
 		{
 			return grabFrameHD();
 		}
-
-		return false;
 	}
 
 	bool grabFrameSD()
@@ -983,49 +984,14 @@ protected:
 
 		std::cout << "ps3eye::VIRTUAL() index " << m_index << " open." << std::endl;
 
-		std::string pipeNameSD = "\\\\.\\pipe\\PSMoveSerivceEx\\VirtPSeyeStream0_";
-		std::string pipeNameHD = "\\\\.\\pipe\\PSMoveSerivceEx\\VirtPSeyeStream1_";
-
-		char indexStr[20];
-		pipeNameSD.append(itoa(m_index, indexStr, 10));
-		pipeNameHD.append(itoa(m_index, indexStr, 10));
-
-		capturePipeSD = CreateNamedPipe(
-			pipeNameSD.c_str(),
-			PIPE_ACCESS_INBOUND,
-			PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_NOWAIT,
-			1,
-			sizeof(pipeBufferSD),
-			sizeof(pipeBufferSD),
-			NMPWAIT_USE_DEFAULT_WAIT,
-			NULL
-		);
-
-		capturePipeHD = CreateNamedPipe(
-			pipeNameHD.c_str(),
-			PIPE_ACCESS_INBOUND,
-			PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_NOWAIT,
-			1,
-			sizeof(pipeBufferHD),
-			sizeof(pipeBufferHD),
-			NMPWAIT_USE_DEFAULT_WAIT,
-			NULL
-		);
-
-		if (capturePipeSD != INVALID_HANDLE_VALUE && pipeBufferHD != INVALID_HANDLE_VALUE)
+		if (refreshPipe())
 		{
-			std::cout << "ps3eye::VIRTUAL() " << pipeNameSD.c_str() << " pipe created." << std::endl;
-			std::cout << "ps3eye::VIRTUAL() " << pipeNameHD.c_str() << " pipe created." << std::endl;
-
 			// Try to connect to pipe and check for connection.
 			grabFrame();
 			return true;
 		}
 		else
 		{
-			std::cout << "ps3eye::VIRTUAL() " << pipeNameSD.c_str() << " pipe failed!, GLE=" << GetLastError() << std::endl;
-			std::cout << "ps3eye::VIRTUAL() " << pipeNameHD.c_str() << " pipe failed!, GLE=" << GetLastError() << std::endl;
-
 			m_index = -1;
 			return false;
 		}
@@ -1055,7 +1021,85 @@ protected:
 		m_isValid = false;
 	}
 
-	void refreshDimensions() {}
+	bool refreshPipe() 
+	{
+		if (capturePipeSD != INVALID_HANDLE_VALUE)
+		{
+			DisconnectNamedPipe(capturePipeSD);
+			CloseHandle(capturePipeSD);
+
+			capturePipeSD = INVALID_HANDLE_VALUE;
+		}
+
+		if (capturePipeHD != INVALID_HANDLE_VALUE)
+		{
+			DisconnectNamedPipe(capturePipeHD);
+			CloseHandle(capturePipeHD);
+
+			capturePipeHD = INVALID_HANDLE_VALUE;
+		}
+
+		std::string pipeNameSD = "\\\\.\\pipe\\PSMoveSerivceEx\\VirtPSeyeStream0_";
+		std::string pipeNameHD = "\\\\.\\pipe\\PSMoveSerivceEx\\VirtPSeyeStream1_";
+
+		char indexStr[20];
+		pipeNameSD.append(itoa(m_index, indexStr, 10));
+		pipeNameHD.append(itoa(m_index, indexStr, 10));
+
+		// 480p
+		if (capFrameSD.rows == m_frameHeight && capFrameSD.cols == m_frameWidth)
+		{
+			capturePipeSD = CreateNamedPipe(
+				pipeNameSD.c_str(),
+				PIPE_ACCESS_INBOUND,
+				PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_NOWAIT,
+				1,
+				sizeof(pipeBufferSD),
+				sizeof(pipeBufferSD),
+				NMPWAIT_USE_DEFAULT_WAIT,
+				NULL
+			);
+
+			if (capturePipeSD != INVALID_HANDLE_VALUE)
+			{
+				std::cout << "ps3eye::VIRTUAL() " << pipeNameSD.c_str() << " pipe created." << std::endl;
+				return true;
+			}
+			else
+			{
+				std::cout << "ps3eye::VIRTUAL() " << pipeNameSD.c_str() << " pipe failed!, GLE=" << GetLastError() << std::endl;
+				return false;
+			}
+		}
+
+		// 1080p
+		if (capFrameHD.rows == m_frameHeight && capFrameHD.cols == m_frameWidth)
+		{
+			capturePipeHD = CreateNamedPipe(
+				pipeNameHD.c_str(),
+				PIPE_ACCESS_INBOUND,
+				PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_NOWAIT,
+				1,
+				sizeof(pipeBufferHD),
+				sizeof(pipeBufferHD),
+				NMPWAIT_USE_DEFAULT_WAIT,
+				NULL
+			);
+
+			if (capturePipeHD != INVALID_HANDLE_VALUE)
+			{
+				std::cout << "ps3eye::VIRTUAL() " << pipeNameSD.c_str() << " pipe created." << std::endl;
+				return true;
+			}
+			else
+			{
+				std::cout << "ps3eye::VIRTUAL() " << pipeNameSD.c_str() << " pipe failed!, GLE=" << GetLastError() << std::endl;
+				return false;
+			}
+		}
+
+		return false;
+	}
 
 	int m_index;
 	bool m_frameAvailable;
