@@ -66,6 +66,8 @@ public:
         , frameWidth(static_cast<int>(_trackerInfo.tracker_screen_dimensions.x))
         , frameHeight(static_cast<int>(_trackerInfo.tracker_screen_dimensions.y))
         , capturedBoardCount(0)
+		, calibFixedAspectRatio(false)
+		, calibFixedFocalLength(false)
     {
         // Video Frame data
         bgrSourceBuffer = new cv::Mat(frameHeight, frameWidth, CV_8UC3);
@@ -334,7 +336,7 @@ public:
         return fabsf(safe_divide_with_default(area, line_length, 0.f));
     }
 
-    bool computeCameraCalibration(const float square_length_mm)
+    bool computeCameraCalibration(const float square_length_mm, int calibrationFlags)
     {
         bool bSuccess= false;
 
@@ -353,7 +355,7 @@ public:
                     cv::Size(frameWidth, frameHeight), 
                     *intrinsic_matrix, *distortion_coeffs, // Output we care about
                     cv::noArray(), cv::noArray(), // best fit board poses as rvec/tvec pairs
-                    cv::CALIB_FIX_ASPECT_RATIO,
+					calibrationFlags,
                     cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 30, DBL_EPSILON));
             
             // Regenerate the distortion map now for the new calibration
@@ -417,6 +419,10 @@ public:
     // Distortion preview
     cv::Mat *distortionMapX;
     cv::Mat *distortionMapY;
+
+	// Calibration flags
+	bool calibFixedAspectRatio;
+	bool calibFixedFocalLength;
 };
 
 //-- public methods -----
@@ -450,6 +456,8 @@ void AppStage_DistortionCalibration::enter()
 
 	assert(!m_bStreamIsActive);
 	request_tracker_start_stream();
+
+	m_videoDisplayMode = AppStage_DistortionCalibration::mode_bgr;
 }
 
 void AppStage_DistortionCalibration::exit()
@@ -530,8 +538,20 @@ void AppStage_DistortionCalibration::update()
 
                 if (m_opencv_state->capturedBoardCount >= DESIRED_CAPTURE_BOARD_COUNT)
                 {
-                    
-                    m_opencv_state->computeCameraCalibration(m_square_length_mm); //Will update intrinsic_matrix and distortion_coeffs
+					int calibFlags = 0;
+
+					if (m_opencv_state->calibFixedAspectRatio)
+					{
+						// Should never be fixed. Can cause problems with 1080p images when fixed.
+						calibFlags += cv::CALIB_FIX_ASPECT_RATIO;
+					}
+					if (m_opencv_state->calibFixedFocalLength)
+					{
+						// When everything fails, keep focal length.
+						calibFlags += cv::CALIB_FIX_FOCAL_LENGTH;
+					}
+
+                    m_opencv_state->computeCameraCalibration(m_square_length_mm, calibFlags); //Will update intrinsic_matrix and distortion_coeffs
                     cv::Mat *intrinsic_matrix= m_opencv_state->intrinsic_matrix;
                     cv::Mat *distortion_coeffs= m_opencv_state->distortion_coeffs;
                     
@@ -707,7 +727,7 @@ void AppStage_DistortionCalibration::renderUI()
 		{
 			const float k_wide_panel_width = 350.f;
 			ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_wide_panel_width / 2.f, 20.f));
-			ImGui::SetNextWindowSize(ImVec2(k_wide_panel_width, 100));
+			ImGui::SetNextWindowSize(ImVec2(k_wide_panel_width, 150));
 
 			ImGui::Begin("Enter Calibration Settings", nullptr, window_flags);
 
@@ -725,6 +745,23 @@ void AppStage_DistortionCalibration::renderUI()
 				}
 			}
 			ImGui::PopItemWidth();
+
+			if (m_opencv_state != nullptr)
+			{
+				ImGui::Checkbox("Fixed Aspect Ratio", &m_opencv_state->calibFixedAspectRatio);
+				if (ImGui::IsItemHovered())
+					ImGui::SetTooltip(
+						"Do not change the image aspect ratio when calibrating.\n"
+						"(Default: False)"
+					);
+
+				ImGui::Checkbox("Fixed Focal Length", &m_opencv_state->calibFixedFocalLength);
+				if (ImGui::IsItemHovered())
+					ImGui::SetTooltip(
+						"Do not change the focal length when calibrating.\n"
+						"(Default: False)"
+					);
+			}
 
 			ImGui::Spacing();
 
@@ -832,27 +869,46 @@ void AppStage_DistortionCalibration::renderUI()
 
     case eMenuState::complete:
         {
-            ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 10.f));
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 110));
-            ImGui::Begin(k_window_title, nullptr, window_flags);
+			{
+				ImGui::SetNextWindowPos(ImVec2(10.f, 10.f));
+				ImGui::SetNextWindowSize(ImVec2(275, 150));
+				ImGui::Begin("Video Controls", nullptr, window_flags);
 
-            ImGui::Text("Calibration complete!");
-            ImGui::Text("Error: %f", m_opencv_state->reprojectionError);
+				int displayMode = m_videoDisplayMode;
+				ImGui::Text("Video Preview:");
+				ImGui::PushItemWidth(200.f);
+				if (ImGui::Combo("##VideoFilterMode", &displayMode, "Color (BGR)\0Grayscale\0Undistorted\0\0"))
+				{
+					m_videoDisplayMode = static_cast<eVideoDisplayMode>(displayMode);
+				}
+				ImGui::PopItemWidth();
 
-            if (ImGui::Button(" OK "))
-            {
-                request_exit();
-            }
+				ImGui::End();
+			}
 
-            if (ImGui::Button("Redo Calibration"))
-            {
-                m_opencv_state->resetCaptureState();
-                m_opencv_state->resetCalibrationState();
-                m_videoDisplayMode= AppStage_DistortionCalibration::mode_bgr;
-                m_menuState= eMenuState::capture;
-            }
+			{
+				ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 10.f));
+				ImGui::SetNextWindowSize(ImVec2(k_panel_width, 110));
+				ImGui::Begin(k_window_title, nullptr, window_flags);
 
-            ImGui::End();
+				ImGui::Text("Calibration complete!");
+				ImGui::Text("Error: %f", m_opencv_state->reprojectionError);
+
+				if (ImGui::Button(" OK "))
+				{
+					request_exit();
+				}
+
+				if (ImGui::Button("Redo Calibration"))
+				{
+					m_opencv_state->resetCaptureState();
+					m_opencv_state->resetCalibrationState();
+					m_videoDisplayMode = AppStage_DistortionCalibration::mode_bgr;
+					m_menuState = eMenuState::capture;
+				}
+
+				ImGui::End();
+			}
         } break;
 
     case eMenuState::pendingTrackerStartStreamRequest:
