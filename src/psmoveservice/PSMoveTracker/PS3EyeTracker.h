@@ -105,7 +105,7 @@ public:
     ITrackerInterface::eDriverType getDriverType() const override;
     std::string getUSBDevicePath() const override;
     bool getVideoFrameDimensions(int *out_width, int *out_height, int *out_stride) const override;
-    const unsigned char *getVideoFrameBuffer() const override;
+    const unsigned char *getVideoFrameBuffer(int & frameHeight, int & frameWidth) const override;
     void loadSettings() override;
     void saveSettings() override;
 	void setFrameWidth(double value, bool bUpdateConfig) override;

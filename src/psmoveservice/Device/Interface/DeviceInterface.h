@@ -589,7 +589,7 @@ public:
     virtual bool getVideoFrameDimensions(int *out_width, int *out_height, int *out_stride) const = 0;
 
     // Returns a pointer to the last video frame buffer captured
-    virtual const unsigned char *getVideoFrameBuffer() const = 0;
+    virtual const unsigned char *getVideoFrameBuffer(int &frameHeight, int &frameWidth) const = 0;
 
     static const char *getDriverTypeString(eDriverType device_type)
     {

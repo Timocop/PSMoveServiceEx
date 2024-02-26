@@ -983,14 +983,21 @@ bool ServerTrackerView::poll()
 
     if (bSuccess && m_device != nullptr)
     {
-        const unsigned char *buffer = m_device->getVideoFrameBuffer();
+		int frameHeight;
+		int frameWidth;
+
+        const unsigned char *buffer = m_device->getVideoFrameBuffer(frameHeight, frameWidth);
 
         if (buffer != nullptr)
         {
             // Cache the raw video frame
             if (m_opencv_buffer_state != nullptr)
             {
-				m_opencv_buffer_state->writeVideoFrame(buffer);
+				if (m_opencv_buffer_state->frameHeight == frameHeight && 
+					m_opencv_buffer_state->frameWidth == frameWidth)
+				{
+					m_opencv_buffer_state->writeVideoFrame(buffer);
+				}
             }
         }
     }

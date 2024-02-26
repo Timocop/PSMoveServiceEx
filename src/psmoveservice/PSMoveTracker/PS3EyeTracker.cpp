@@ -22,9 +22,14 @@ class PSEyeCaptureData
 public:
     PSEyeCaptureData()
         : frame()
+		, frameHeight(-1)
+		, frameWidth(-1)
     {
 
     }
+
+	int frameHeight;
+	int frameWidth;
 
     cv::Mat frame;
 };
@@ -461,6 +466,9 @@ IDeviceInterface::ePollResult PS3EyeTracker::poll()
 				}
 				else
 				{
+					CaptureData->frameWidth = VideoCapture->get(CV_CAP_PROP_FRAME_WIDTH);
+					CaptureData->frameHeight = VideoCapture->get(CV_CAP_PROP_FRAME_HEIGHT);
+
 					// New data available. Keep iterating.
 					result = IControllerInterface::_PollResultSuccessNewData;
 
@@ -605,12 +613,15 @@ bool PS3EyeTracker::getVideoFrameDimensions(
     return bSuccess;
 }
 
-const unsigned char *PS3EyeTracker::getVideoFrameBuffer() const
+const unsigned char *PS3EyeTracker::getVideoFrameBuffer(int &frameHeight, int &frameWidth) const
 {
     const unsigned char *result = nullptr;
 
     if (CaptureData != nullptr)
     {
+		frameHeight = CaptureData->frameHeight;
+		frameWidth = CaptureData->frameWidth;
+
         return static_cast<const unsigned char *>(CaptureData->frame.data);
     }
 
