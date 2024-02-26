@@ -419,22 +419,9 @@ public:
     {
 		// $TODO Random crashes when changing resolution.
 		// For some reason the reallocating matrix uses less processing power.
-		//const cv::Mat videoBufferMat(frameHeight, frameWidth, CV_8UC3, const_cast<unsigned char *>(video_buffer));
-		//videoBufferMat.copyTo(*bgrBuffer);
-		//videoBufferMat.copyTo(*bgrShmemBuffer);
-
-		if (bgrBuffer != nullptr)
-		{
-			delete bgrBuffer;
-		}
-
-		if (bgrShmemBuffer != nullptr)
-		{
-			delete bgrShmemBuffer;
-		}
-
-		bgrBuffer = new cv::Mat(frameHeight, frameWidth, CV_8UC3, const_cast<unsigned char *>(video_buffer));
-		bgrShmemBuffer = new cv::Mat(frameHeight, frameWidth, CV_8UC3, const_cast<unsigned char *>(video_buffer));
+		const cv::Mat videoBufferMat(frameHeight, frameWidth, CV_8UC3, const_cast<unsigned char *>(video_buffer));
+		videoBufferMat.copyTo(*bgrBuffer);
+		videoBufferMat.copyTo(*bgrShmemBuffer);
     }
     
     void updateHsvBuffer()
