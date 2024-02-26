@@ -177,13 +177,10 @@ public:
 
     void applyVideoFrame(const unsigned char *video_buffer)
     {
+        const cv::Mat videoBufferMat(frameHeight, frameWidth, CV_8UC3, const_cast<unsigned char *>(video_buffer));
+
         // Copy and Flip image about the x-axis
-		// $TODO cv::Mat.copyTo() is rather slow, use reallocation instead.
-		if (bgrSourceBuffer != nullptr)
-		{
-			delete bgrSourceBuffer;
-		}
-		bgrSourceBuffer = new cv::Mat(frameHeight, frameWidth, CV_8UC3, const_cast<unsigned char *>(video_buffer));
+        videoBufferMat.copyTo(*bgrSourceBuffer);
 
         // Convert the video buffer to a grayscale image
         cv::cvtColor(*bgrSourceBuffer, *gsBuffer, cv::COLOR_BGR2GRAY);
@@ -1037,12 +1034,6 @@ void AppStage_DistortionCalibration::handle_tracker_start_stream_response(
                     nullptr);
 
                 // Allocate an opencv buffer 
-				if (thisPtr->m_opencv_state != nullptr)
-				{
-					delete thisPtr->m_opencv_state;
-					thisPtr->m_opencv_state = nullptr;
-				}
-
                 thisPtr->m_opencv_state = new OpenCVBufferState(trackerInfo);
 
 				// $TODO: 1080p distortion calibration does not work.
