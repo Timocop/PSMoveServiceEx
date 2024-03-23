@@ -2685,6 +2685,18 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
 		static_cast<int>(screenHeight)
 	);
 
+	bool auto_scale_roi = cfg.autoscale_roi;
+	float roi_res_scale = 1.f;
+
+	// Auto-scale ROI by resolution.
+	// Default is 480p for the settings.
+	if (auto_scale_roi)
+	{
+		roi_res_scale = (screenWidth / 640.f);
+		if (roi_res_scale < 0.1f)
+			roi_res_scale = 0.1;
+	}
+
 	int trackerId = tracker->getDeviceID();
 
 	while (true)
@@ -2702,7 +2714,7 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
 			{
 				bool roi_found = false;
 				int count = 0;
-				int cfg_roi_search_size = static_cast<int>(fmax(cfg.roi_search_size, 4));
+				int cfg_roi_search_size = static_cast<int>(fmax(cfg.roi_search_size * roi_res_scale, 4));
 
 				for (int x = 0; !roi_found && (x * cfg_roi_search_size) < static_cast<int>(screenWidth); x++)
 				{
@@ -2933,7 +2945,7 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
 
             const cv::Point2i roi_center(static_cast<int>(projection_pixel_center.x), static_cast<int>(projection_pixel_center.y));
 
-			const int cfg_roi_size = static_cast<int>(fmax(cfg.roi_size, 4));
+			const int cfg_roi_size = static_cast<int>(fmax(cfg.roi_size * roi_res_scale, 4));
 
             const int safe_proj_width = std::max(proj_width, cfg_roi_size);
             const int safe_proj_height = std::max(proj_height, cfg_roi_size);
@@ -2942,7 +2954,7 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
 			// Increase ROI size if the projection is moving
 			// This help fast controller movements on lower tracker Hz
 			float scale_axis = 0.f;
-			float scale_max = 4.f;
+			float scale_max = (2.f * roi_res_scale);
 
 			if (roi_index > -1)
 			{

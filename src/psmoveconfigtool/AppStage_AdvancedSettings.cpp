@@ -244,6 +244,7 @@ TrackerConfig::config2ptree()
 	pt.put("max_tracker_position_deviation", max_tracker_position_deviation);
 
 	pt.put("disable_roi", disable_roi);
+	pt.put("autoscale_roi", autoscale_roi);
 	pt.put("optimized_roi", optimized_roi);
 	pt.put("roi_size", roi_size);
 	pt.put("roi_search_size", roi_search_size);
@@ -287,6 +288,7 @@ TrackerConfig::ptree2config(const boost::property_tree::ptree &pt)
 	max_tracker_position_deviation = pt.get<float>("max_tracker_position_deviation", max_tracker_position_deviation);
 
 	disable_roi = pt.get<bool>("disable_roi", disable_roi);
+	autoscale_roi = pt.get<bool>("autoscale_roi", autoscale_roi);
 	optimized_roi = pt.get<bool>("optimized_roi", optimized_roi);
 	roi_size = pt.get<int>("roi_size", roi_size);
 	roi_search_size = pt.get<int>("roi_search_size", roi_search_size);
@@ -901,6 +903,18 @@ void AppStage_AdvancedSettings::renderUI()
 
 					ImGui::Indent();
 					{
+						{
+							ImGui::Text("Scale ROI (region of interest) by tracker resolution:");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::Checkbox("##ROIAutoscale", &cfg_tracker.autoscale_roi);
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"Scales the ROI (region of interest) uniformly between trackers running with different resolutions.\n"
+									"(The default value is TRUE)"
+								);
+						}
+
 						{
 							ImGui::Text("ROI (region of interest) size:");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);

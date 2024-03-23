@@ -57,6 +57,7 @@ public:
 		min_points_in_contour = 4;
 		max_tracker_position_deviation = 15.0f;
 		disable_roi = false;
+		autoscale_roi = true;
 		optimized_roi = true;
 		roi_size = 32;
 		roi_search_size = 164;
@@ -91,6 +92,7 @@ public:
 	int min_points_in_contour;
 	float max_tracker_position_deviation;
 	bool disable_roi;
+	bool autoscale_roi;
 	bool optimized_roi;
 	int roi_size;
 	int roi_search_size;

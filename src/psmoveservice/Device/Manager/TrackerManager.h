@@ -79,6 +79,7 @@ public:
 	int min_points_in_contour;
 	float max_tracker_position_deviation;
 	bool disable_roi;
+	bool autoscale_roi;
 	bool optimized_roi;
 	int roi_size;
 	int roi_search_size;

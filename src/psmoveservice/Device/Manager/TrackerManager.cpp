@@ -40,6 +40,7 @@ TrackerManagerConfig::TrackerManagerConfig(const std::string &fnamebase)
 	min_points_in_contour = 4;
 	max_tracker_position_deviation = 15.0f;
 	disable_roi = false;
+	autoscale_roi = true;
 	optimized_roi = true;
 	roi_size = 32;
 	roi_search_size = 164;
@@ -101,6 +102,7 @@ TrackerManagerConfig::config2ptree()
 	pt.put("max_tracker_position_deviation", max_tracker_position_deviation);
 
 	pt.put("disable_roi", disable_roi);
+	pt.put("autoscale_roi", autoscale_roi);
 	pt.put("optimized_roi", optimized_roi);
 	pt.put("roi_size", roi_size);
 	pt.put("roi_search_size", roi_search_size);
@@ -162,6 +164,7 @@ TrackerManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
 		max_tracker_position_deviation = pt.get<float>("max_tracker_position_deviation", max_tracker_position_deviation);
 
 		disable_roi = pt.get<bool>("disable_roi", disable_roi);
+		autoscale_roi = pt.get<bool>("autoscale_roi", autoscale_roi);
 		optimized_roi = pt.get<bool>("optimized_roi", optimized_roi);
 		roi_size = pt.get<int>("roi_size", roi_size);
 		roi_search_size = pt.get<int>("roi_search_size", roi_search_size);
