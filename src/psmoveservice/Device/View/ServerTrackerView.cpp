@@ -831,6 +831,10 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
     const IPoseFilter* pose_filter,
     const CommonDeviceTrackingProjection *prior_tracking_projection,
     const CommonDeviceTrackingShape *tracking_shape);
+static float lowpass_filter_value(
+	const float alpha, 
+	const float & old_filtered_vector, 
+	const float & new_vector);
 static bool computeBestFitTriangleForContour(
     const t_opencv_float_contour &opencv_contour,
     cv::Point2f &out_triangle_top,
@@ -2668,6 +2672,7 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
 	const int k_max_roi_number = (ControllerManager::k_max_devices + HMDManager::k_max_devices);
 	static int roi_counter[TrackerManager::k_max_devices][k_max_roi_number];
 	static int last_roi_center[TrackerManager::k_max_devices][k_max_roi_number][2];
+	static float roi_scale[TrackerManager::k_max_devices][k_max_roi_number];
 
     // Get expected ROI
     // Default to full screen.
@@ -2937,13 +2942,26 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
 			// Increase ROI size if the projection is moving
 			// This help fast controller movements on lower tracker Hz
 			float scale_axis = 0.f;
+			float scale_max = 4.f;
 
 			if (roi_index > -1)
 			{
 				const float scale_x = static_cast<float>(fmax(0, abs(roi_center.x - last_roi_center[trackerId][roi_index][0]) - (cfg_roi_size / 3)) / fmax(1, fmax(safe_proj_width, safe_proj_height) / 2));
 				const float scale_y = static_cast<float>(fmax(0, abs(roi_center.y - last_roi_center[trackerId][roi_index][1]) - (cfg_roi_size / 3)) / fmax(1, fmax(safe_proj_width, safe_proj_height) / 2));
+				
+				float last_roi_scale = roi_scale[trackerId][roi_index];
+				float new_roi_scale = fmin(scale_max, fmax(0.f, fmax(scale_x, scale_y)));
 
-				scale_axis = fmin(2.f, fmax(0.f, fmax(scale_x, scale_y)));
+				if (new_roi_scale > last_roi_scale)
+				{
+					roi_scale[trackerId][roi_index] = new_roi_scale;
+				}
+				else
+				{
+					roi_scale[trackerId][roi_index] = lowpass_filter_value(0.1f, last_roi_scale, new_roi_scale);
+				}
+
+				scale_axis = roi_scale[trackerId][roi_index];
 			}
 
             const cv::Point2i roi_top_left = roi_center + (cv::Point2i(-safe_proj_width, -safe_proj_height) * (1 + scale_axis));
@@ -2963,6 +2981,16 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
 	}
 
     return ROI;
+}
+
+static float lowpass_filter_value(
+	const float alpha,
+	const float &old_filtered_vector,
+	const float &new_vector)
+{
+	const float filtered_vector = alpha*new_vector + (1.f - alpha)*old_filtered_vector;
+
+	return filtered_vector;
 }
 
 static bool computeBestFitTriangleForContour(
