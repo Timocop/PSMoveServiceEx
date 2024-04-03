@@ -34,8 +34,8 @@ TrackerManagerConfig::TrackerManagerConfig(const std::string &fnamebase)
 	occluded_area_regain_projection_size = 32.f;
 	projection_collision_avoid = true;
 	projection_collision_offset = 5.0f;
-	average_position_cache_enabled = false;
-	average_position_cache_cell_size = 15.f;
+	average_position_cache_enabled = true;
+	average_position_cache_cell_size = 5.f;
 	average_position_cache_avg_size = 30.f;
 	average_position_cache_limit = 1000.f;
 	min_points_in_contour = 4;

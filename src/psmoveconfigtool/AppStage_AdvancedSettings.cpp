@@ -758,7 +758,7 @@ void AppStage_AdvancedSettings::renderUI()
 								"Gives each tracker a calculated offset from previous cached average positions.\n"
 								"Makes transitions between trackers smoother and reduces jitter.\n"
 								"However, the detection of unwanted color noise could result in persistent bad tracking behavior!\n"
-								"(The default value is FALSE)"
+								"(The default value is TRUE)"
 							);
 					}
 
@@ -778,7 +778,7 @@ void AppStage_AdvancedSettings::renderUI()
 								"If there are no nearby samples by this distance, new ones will be created.\n"
 								"The lower the value the more smoother and less jittery transitions between trackers will become.\n"
 								"Too low of a value can result in increased CPU usage.\n"
-								"(The default value is 15 (cm))"
+								"(The default value is 5 (cm))"
 							);
 					}
 					ImGui::Unindent();

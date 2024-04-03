@@ -48,8 +48,8 @@ public:
 		occluded_area_on_loss_size = 4.f;
 		occluded_area_ignore_num_trackers = 0;
 		occluded_area_regain_projection_size = 32.f;
-		average_position_cache_enabled = false;
-		average_position_cache_cell_size = 15.f;
+		average_position_cache_enabled = true;
+		average_position_cache_cell_size = 5.f;
 		average_position_cache_avg_size = 30.f;
 		average_position_cache_limit = 1000.f;
 		projection_collision_avoid = true;
