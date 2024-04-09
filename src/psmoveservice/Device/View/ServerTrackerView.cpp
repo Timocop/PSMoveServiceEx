@@ -2954,7 +2954,7 @@ static cv::Rect2i computeTrackerROIForPoseProjection(
 			// Increase ROI size if the projection is moving
 			// This help fast controller movements on lower tracker Hz
 			float scale_axis = 0.f;
-			float scale_max = (2.f * roi_res_scale);
+			float scale_max = 2.f;
 
 			if (roi_index > -1)
 			{
