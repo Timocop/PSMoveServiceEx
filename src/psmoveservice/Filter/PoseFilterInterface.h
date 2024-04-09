@@ -17,7 +17,7 @@ extern const Eigen::Matrix3f *k_eigen_sensor_transform_opengl;
 
 //-- constants -----
 static const float k_min_time_delta_seconds = 1 / 2500.f;
-static const float k_max_time_delta_seconds = 1 / 30.f;
+static const float k_max_time_delta_seconds = 1 / 5.f;
 
 //-- typedefs ----
 using t_high_resolution_timepoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
