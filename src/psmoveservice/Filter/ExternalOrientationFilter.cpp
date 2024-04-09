@@ -11,6 +11,152 @@
 #define k_adaptive_prediction_cutoff 0.25f
 
 // -- private definitions -----
+struct OrientationInterpolationState
+{
+	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+		/// Is the current state valid
+		bool bIsValid;
+	t_high_resolution_timepoint current_timestamp;
+
+	Eigen::Quaternionf last_orientation;
+	Eigen::Vector3f last_velocity;
+	Eigen::Vector3f last_acceleration;
+	t_high_resolution_timepoint last_timestamp;
+	Eigen::Quaternionf previous_orientation;
+	Eigen::Vector3f previous_velocity;
+	Eigen::Vector3f previous_acceleration;
+	t_high_resolution_timepoint previous_timestamp;
+
+	void reset()
+	{
+		bIsValid = false;
+		current_timestamp = t_high_resolution_timepoint();
+		last_orientation = Eigen::Quaternionf::Identity();
+		last_velocity = Eigen::Vector3f::Zero();
+		last_acceleration = Eigen::Vector3f::Zero();
+		last_timestamp = t_high_resolution_timepoint();
+		previous_orientation = Eigen::Quaternionf::Identity();
+		previous_velocity = Eigen::Vector3f::Zero();
+		previous_acceleration = Eigen::Vector3f::Zero();
+		previous_timestamp = t_high_resolution_timepoint();
+	}
+
+	Eigen::Quaternionf getInterpolatedOrientation(const Eigen::Quaternionf &orientation)
+	{
+		if (!bIsValid)
+		{
+			return orientation;
+		}
+
+		const t_high_resolution_duration_milli previous_time_delta = last_timestamp - previous_timestamp;
+		const t_high_resolution_duration_milli last_time_delta = current_timestamp - last_timestamp;
+		const float previous_time_delta_milli = previous_time_delta.count();
+		const float last_time_delta_milli = last_time_delta.count();
+
+		if ((previous_time_delta_milli / 1000.f) < k_min_time_delta_seconds || (previous_time_delta_milli / 1000.f) > k_max_time_delta_seconds)
+		{
+			return orientation;
+		}
+
+		float t = clampf01(last_time_delta_milli / previous_time_delta_milli);
+
+		Eigen::Quaternionf lerped_ang = previous_orientation.slerp(t, orientation);
+
+		return lerped_ang;
+	}
+
+	Eigen::Vector3f getInterpolatedVelocity(const Eigen::Vector3f &velocity)
+	{
+		if (!bIsValid)
+		{
+			return velocity;
+		}
+
+		const t_high_resolution_duration_milli previous_time_delta = last_timestamp - previous_timestamp;
+		const t_high_resolution_duration_milli last_time_delta = current_timestamp - last_timestamp;
+		const float previous_time_delta_milli = previous_time_delta.count();
+		const float last_time_delta_milli = last_time_delta.count();
+
+		if ((previous_time_delta_milli / 1000.f) < k_min_time_delta_seconds || (previous_time_delta_milli / 1000.f) > k_max_time_delta_seconds)
+		{
+			return velocity;
+		}
+
+		float t = clampf01(last_time_delta_milli / previous_time_delta_milli);
+
+		Eigen::Vector3f lerped_vel = Eigen::Vector3f(
+			lerpf(previous_velocity.x(), velocity.x(), t),
+			lerpf(previous_velocity.y(), velocity.y(), t),
+			lerpf(previous_velocity.z(), velocity.z(), t));
+
+		return lerped_vel;
+	}
+
+	void apply_interpolation_state(
+		const Eigen::Quaternionf &new_orientation,
+		const t_high_resolution_timepoint timestamp)
+	{
+		apply_interpolation_state(new_orientation, Eigen::Vector3f::Zero(), Eigen::Vector3f::Zero(), timestamp);
+	}
+
+	void apply_interpolation_state(
+		const Eigen::Quaternionf &new_orientation,
+		const Eigen::Vector3f &new_angular_velocity,
+		const Eigen::Vector3f &new_angular_acceleration,
+		const t_high_resolution_timepoint timestamp)
+	{
+		if (bIsValid)
+		{
+			previous_timestamp = last_timestamp;
+		}
+		else
+		{
+			previous_timestamp = timestamp;
+		}
+
+		if (eigen_quaternion_is_valid(new_orientation))
+		{
+			previous_orientation = last_orientation;
+			last_orientation = new_orientation;
+		}
+		else
+		{
+			SERVER_LOG_WARNING("OrientationFilter") << "Orientation is NaN!";
+		}
+
+		if (eigen_vector3f_is_valid(new_angular_velocity))
+		{
+			previous_velocity = last_velocity;
+			last_velocity = new_angular_velocity;
+		}
+		else
+		{
+			SERVER_LOG_WARNING("OrientationFilter") << "Angular Velocity is NaN!";
+		}
+
+		if (eigen_vector3f_is_valid(new_angular_acceleration))
+		{
+			previous_acceleration = last_acceleration;
+			last_acceleration = new_angular_acceleration;
+		}
+		else
+		{
+			SERVER_LOG_WARNING("OrientationFilter") << "Angular Acceleration is NaN!";
+		}
+
+		last_timestamp = timestamp;
+
+		// state is valid now that we have had an update
+		bIsValid = true;
+	}
+
+	void apply_timestamp_state(const t_high_resolution_timepoint timestamp)
+	{
+		current_timestamp = timestamp;
+	}
+};
+
 struct ExternalOrientationFilterState
 {
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -135,6 +281,7 @@ static Eigen::Vector3f lowpass_filter_vector3f(
 //-- Orientation Filter --
 ExternalOrientationFilter::ExternalOrientationFilter() :
 	m_state(new ExternalOrientationFilterState),
+	m_interpolationState(new OrientationInterpolationState),
 	orientationPipe(INVALID_HANDLE_VALUE),
 	showMessage(true)
 {
@@ -164,6 +311,7 @@ ExternalOrientationFilter::~ExternalOrientationFilter()
 	}
 #endif
 	delete m_state;
+	delete m_interpolationState;
 }
 
 bool ExternalOrientationFilter::getIsStateValid() const
@@ -179,6 +327,7 @@ double ExternalOrientationFilter::getTimeInSeconds() const
 void ExternalOrientationFilter::resetState()
 {
 	m_state->reset();
+	m_interpolationState->reset();
 }
 
 void ExternalOrientationFilter::recenterOrientation(const Eigen::Quaternionf& q_pose)
@@ -203,6 +352,8 @@ bool ExternalOrientationFilter::init(const OrientationFilterConstants &constants
 	m_constants = constants;
 	m_state->orientation = initial_orientation;
 	m_state->bIsValid = true;
+	m_interpolationState->last_orientation = initial_orientation;
+	m_interpolationState->bIsValid = true;
 
 	return true;
 }
@@ -213,15 +364,33 @@ Eigen::Quaternionf ExternalOrientationFilter::getOrientation(float time, float o
 
 	if (m_state->bIsValid)
 	{
-		Eigen::Quaternionf predicted_orientation = m_state->orientation;
+		Eigen::Quaternionf orientation = m_state->orientation;
+		Eigen::Vector3f ang_velocity = m_state->angular_velocity;
+
+		if (m_interpolationState->bIsValid)
+		{
+			bool orientationInterpolation = true;
+
+#if !defined(IS_TESTING_KALMAN)
+			orientationInterpolation = DeviceManager::getInstance()->m_tracker_manager->getConfig().angular_interpolation;
+#endif
+
+			if (orientationInterpolation)
+			{
+				orientation = m_interpolationState->getInterpolatedOrientation(orientation);
+				ang_velocity = m_interpolationState->getInterpolatedVelocity(ang_velocity);
+			}
+		}
+
+		Eigen::Quaternionf predicted_orientation = orientation;
 
 		if (fabsf(time) > k_real_epsilon)
 		{
 			const Eigen::Quaternionf &quaternion_derivative =
-				eigen_angular_velocity_to_quaternion_derivative(m_state->orientation, m_state->angular_velocity);
+				eigen_angular_velocity_to_quaternion_derivative(orientation, ang_velocity);
 
 			predicted_orientation = Eigen::Quaternionf(
-				m_state->orientation.coeffs()
+				orientation.coeffs()
 				+ quaternion_derivative.coeffs()*time).normalized();
 		}
 
@@ -265,6 +434,8 @@ void OrientationFilterExternal::update(
 #ifdef WIN32
 	float optical_delta_time = m_state->getOpticalTime(timestamp);
 	float imu_delta_time = m_state->getImuTime(timestamp);
+
+	m_interpolationState->apply_timestamp_state(timestamp);
 
 	if (packet.controllerDeviceId < 0)
 		return;
@@ -476,6 +647,7 @@ void OrientationFilterExternal::update(
 		const Eigen::Vector3f new_angular_acceleration = (new_angular_velocity - m_state->angular_velocity) / imu_delta_time;
 
 		m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, timestamp);
+		m_interpolationState->apply_interpolation_state(new_orientation, new_angular_velocity, new_angular_acceleration, timestamp);
 	}
 #endif
 }

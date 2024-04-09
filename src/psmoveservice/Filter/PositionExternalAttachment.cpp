@@ -56,7 +56,7 @@ struct PositionInterpolationState
 		const float previous_time_delta_milli = previous_time_delta.count();
 		const float last_time_delta_milli = last_time_delta.count();
 
-		if (previous_time_delta_milli <= k_real_epsilon)
+		if ((previous_time_delta_milli / 1000.f) < k_min_time_delta_seconds || (previous_time_delta_milli / 1000.f) > k_max_time_delta_seconds)
 		{
 			return position_meters;
 		}
@@ -83,7 +83,7 @@ struct PositionInterpolationState
 		const float previous_time_delta_milli = previous_time_delta.count();
 		const float last_time_delta_milli = last_time_delta.count();
 
-		if (previous_time_delta_milli <= k_real_epsilon)
+		if ((previous_time_delta_milli / 1000.f) < k_min_time_delta_seconds || (previous_time_delta_milli / 1000.f) > k_max_time_delta_seconds)
 		{
 			return velocity_meters;
 		}

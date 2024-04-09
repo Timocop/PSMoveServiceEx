@@ -47,6 +47,7 @@ TrackerManagerConfig::TrackerManagerConfig(const std::string &fnamebase)
 	roi_search_size = 164;
 	roi_edge_offset = 4;
 	position_interpolation = true;
+	angular_interpolation = true;
 	thread_maximum_framrate = 200;
 
 	default_tracker_profile.frame_width = 640;
@@ -110,6 +111,7 @@ TrackerManagerConfig::config2ptree()
 	pt.put("roi_edge_offset", roi_edge_offset);
 
 	pt.put("position_interpolation", position_interpolation);
+	pt.put("angular_interpolation", angular_interpolation);
 	pt.put("thread_maximum_framrate", thread_maximum_framrate);
 
 	pt.put("default_tracker_profile.frame_width", default_tracker_profile.frame_width);
@@ -172,6 +174,7 @@ TrackerManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
 		roi_edge_offset = pt.get<int>("roi_edge_offset", roi_edge_offset);
 
 		position_interpolation = pt.get<bool>("position_interpolation", position_interpolation);
+		angular_interpolation = pt.get<bool>("angular_interpolation", angular_interpolation);
 		thread_maximum_framrate = pt.get<int>("thread_maximum_framrate", thread_maximum_framrate);
 
 		default_tracker_profile.frame_width = pt.get<float>("default_tracker_profile.frame_width", 640);

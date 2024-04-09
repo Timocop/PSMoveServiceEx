@@ -251,6 +251,7 @@ TrackerConfig::config2ptree()
 	pt.put("roi_edge_offset", roi_edge_offset);
 
 	pt.put("position_interpolation", position_interpolation);
+	pt.put("angular_interpolation", angular_interpolation);
 	pt.put("thread_maximum_framrate", thread_maximum_framrate);
 
 	pt.put("global_forward_degrees", global_forward_degrees);
@@ -295,6 +296,7 @@ TrackerConfig::ptree2config(const boost::property_tree::ptree &pt)
 	roi_edge_offset = pt.get<int>("roi_edge_offset", roi_edge_offset);
 
 	position_interpolation = pt.get<bool>("position_interpolation", position_interpolation);
+	angular_interpolation = pt.get<bool>("angular_interpolation", angular_interpolation);
 	thread_maximum_framrate = pt.get<int>("thread_maximum_framrate", thread_maximum_framrate);
 
 	global_forward_degrees = pt.get<float>("global_forward_degrees", global_forward_degrees);
@@ -994,7 +996,21 @@ void AppStage_AdvancedSettings::renderUI()
 						if (ImGui::IsItemHovered())
 							ImGui::SetTooltip(
 								"Interpolation smoothes motion between previous and current position.\n"
-								"Interpolation adds a frame of delay because it has to wait for new positions to become available.\n"
+								"Interpolation adds a frame of delay because it has to wait for new data to become available.\n"
+								"If you want more responsive motion, disable this feature.\n"
+								"(The default value is TRUE)"
+							);
+					}
+
+					{
+						ImGui::Text("Angular Interpolation:");
+						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+						ImGui::Checkbox("##AngularInterpolation", &cfg_tracker.angular_interpolation);
+
+						if (ImGui::IsItemHovered())
+							ImGui::SetTooltip(
+								"Interpolation smoothes motion between previous and current orientation.\n"
+								"Interpolation adds a frame of delay because it has to wait for new data to become available.\n"
 								"If you want more responsive motion, disable this feature.\n"
 								"(The default value is TRUE)"
 							);

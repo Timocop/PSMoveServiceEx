@@ -85,6 +85,7 @@ public:
 	int roi_search_size;
 	int roi_edge_offset;
 	bool position_interpolation;
+	bool angular_interpolation;
 	int thread_maximum_framrate;
     TrackerProfile default_tracker_profile;
 	float global_forward_degrees;

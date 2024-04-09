@@ -63,6 +63,7 @@ public:
 		roi_search_size = 164;
 		roi_edge_offset = 4;
 		position_interpolation = true;
+		angular_interpolation = true;
 		thread_maximum_framrate = 200;
 		global_forward_degrees = 270.f; // Down -Z by default
 	};
@@ -98,6 +99,7 @@ public:
 	int roi_search_size;
 	int roi_edge_offset;
 	bool position_interpolation;
+	bool angular_interpolation;
 	int thread_maximum_framrate;
 	float global_forward_degrees;
 };

@@ -1016,6 +1016,21 @@ void ServerControllerView::updateStateAndPredict()
 		// Flag the state as unpublished, which will trigger an update to the client
 		markStateAsUnpublished();
 	}
+
+	//// Do empty update
+	//{
+	//	PoseFilterPacket filter_packet;
+	//	filter_packet.clear();
+
+	//	filter_packet.controllerDeviceId = this->getDeviceID();
+	//	filter_packet.isCurrentlyTracking = this->getIsCurrentlyTracking();
+	//	filter_packet.isSynced = DeviceManager::getInstance()->m_tracker_manager->trackersSynced();
+
+	//	// Process the filter packet
+	//	m_pose_filter->update(std::chrono::high_resolution_clock::now(), filter_packet);
+
+	//	markStateAsUnpublished();
+	//}
 }
 
 bool ServerControllerView::setHostBluetoothAddress(

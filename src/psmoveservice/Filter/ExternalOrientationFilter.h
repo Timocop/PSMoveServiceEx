@@ -52,6 +52,7 @@ public:
 protected:
 	OrientationFilterConstants m_constants;
 	struct ExternalOrientationFilterState *m_state;
+	struct OrientationInterpolationState *m_interpolationState;
 
 	HANDLE orientationPipe;
 	char pipeBuffer[128];
