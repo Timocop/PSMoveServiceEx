@@ -118,6 +118,8 @@ public:
 				SERVER_LOG_INFO("PSMoveServiceEx") << "------------------------------------------";
 				SERVER_LOG_INFO("PSMoveServiceEx") << "Startup successful! Entering main loop...";
 				SERVER_LOG_INFO("PSMoveServiceEx") << "------------------------------------------";
+				SERVER_LOG_INFO("PSMoveServiceEx") << "GitHub: https://github.com/Timocop/PSMoveServiceEx";
+				SERVER_LOG_INFO("PSMoveServiceEx") << "------------------------------------------";
 
                 m_status = context.find<boost::application::status>();
 
