@@ -1010,7 +1010,7 @@ void AppStage_ControllerSettings::renderUI()
 
 											settings_shown = false;
 
-											if (controllerInfo.OrientationFilterName == "ComplementaryMARG" || 
+											if (controllerInfo.OrientationFilterName == "ComplementaryMARG" ||
 												controllerInfo.OrientationFilterName == "MadgwickMARG" ||
 												controllerInfo.OrientationFilterName == "MadgwickARG" ||
 												controllerInfo.OrientationFilterName == "OrientationExternal" ||
@@ -1048,6 +1048,24 @@ void AppStage_ControllerSettings::renderUI()
 												if (ImGui::InputFloat("##AngularPredictionCutoff", &filter_angular_prediction_cutoff, 0.01f, 0.05f, 2))
 												{
 													controllerInfo.FilterAngularPredictionCutoff = clampf(filter_angular_prediction_cutoff, 0.0f, (1 << 16));
+
+													request_offset = true;
+												}
+												ImGui::PopItemWidth();
+											}
+
+											if (controllerInfo.OrientationFilterName == "ComplementaryMARG" ||
+												controllerInfo.OrientationFilterName == "MadgwickMARG")
+											{
+												settings_shown = true;
+
+												ImGui::Text("Magnetometer Deviation Cutoff: ");
+												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+												ImGui::PushItemWidth(120.f);
+												float filter_magnetometer_deviation_cutoff = controllerInfo.FilterMagnetometerDeviationCutoff;
+												if (ImGui::InputFloat("##FilterMagnetometerDeviationCutoff", &filter_magnetometer_deviation_cutoff, 0.01f, 0.05f, 2))
+												{
+													controllerInfo.FilterMagnetometerDeviationCutoff = clampf(filter_magnetometer_deviation_cutoff, 0.0f, 1.0f);
 
 													request_offset = true;
 												}
@@ -1323,6 +1341,7 @@ void AppStage_ControllerSettings::renderUI()
 												controllerInfo.FilterAngularSmoothingFactor = 0.25f;
 												controllerInfo.FilterVelocityPredictionCutoff = 1.0f;
 												controllerInfo.FilterAngularPredictionCutoff = 0.25f;
+												controllerInfo.FilterMagnetometerDeviationCutoff = 0.10f;
 												controllerInfo.FilterPositionKalmanError = 10.f;
 												controllerInfo.FilterPositionKalmanNoise = 300.f;
 												controllerInfo.FilterPositionKalmanDisableCutoff = true;
@@ -1352,6 +1371,7 @@ void AppStage_ControllerSettings::renderUI()
 												controllerInfo.FilterAngularSmoothingFactor = 0.25f;
 												controllerInfo.FilterVelocityPredictionCutoff = 1.0f;
 												controllerInfo.FilterAngularPredictionCutoff = 0.0f; //HMD
+												controllerInfo.FilterMagnetometerDeviationCutoff = 0.10f;
 												controllerInfo.FilterPositionKalmanError = 10.f;
 												controllerInfo.FilterPositionKalmanNoise = 200.f; //HMD
 												controllerInfo.FilterPositionKalmanDisableCutoff = true;
@@ -1382,6 +1402,7 @@ void AppStage_ControllerSettings::renderUI()
 												filterSettings.filter_angular_smoothing_factor = controllerInfo.FilterAngularSmoothingFactor;
 												filterSettings.filter_velocity_prediction_cutoff = controllerInfo.FilterVelocityPredictionCutoff;
 												filterSettings.filter_angular_prediction_cutoff = controllerInfo.FilterAngularPredictionCutoff;
+												filterSettings.filter_magnetometer_deviation_cutoff = controllerInfo.FilterMagnetometerDeviationCutoff;
 												filterSettings.filter_position_kalman_error = controllerInfo.FilterPositionKalmanError;
 												filterSettings.filter_position_kalman_noise = controllerInfo.FilterPositionKalmanNoise;
 												filterSettings.filter_position_kalman_disable_cutoff = controllerInfo.FilterPositionKalmanDisableCutoff;
@@ -2083,6 +2104,7 @@ void AppStage_ControllerSettings::request_set_controller_filter_settings(
 	filter_settings->set_filter_velocity_smoothing_factor(filterSettings.filter_velocity_smoothing_factor);
 	filter_settings->set_filter_angular_smoothing_factor(filterSettings.filter_angular_smoothing_factor);
 	filter_settings->set_filter_velocity_prediction_cutoff(filterSettings.filter_velocity_prediction_cutoff);
+	filter_settings->set_filter_magnetometer_deviation_cutoff(filterSettings.filter_magnetometer_deviation_cutoff);
 	filter_settings->set_filter_angular_prediction_cutoff(filterSettings.filter_angular_prediction_cutoff);
 	filter_settings->set_filter_position_kalman_error(filterSettings.filter_position_kalman_error);
 	filter_settings->set_filter_position_kalman_noise(filterSettings.filter_position_kalman_noise);
@@ -2195,6 +2217,7 @@ void AppStage_ControllerSettings::handle_controller_list_response(
 				ControllerInfo.FilterVelocitySmoothingFactor = ControllerResponse.filter_velocity_smoothing_factor();
 				ControllerInfo.FilterAngularSmoothingFactor = ControllerResponse.filter_angular_smoothing_factor();
 				ControllerInfo.FilterVelocityPredictionCutoff = ControllerResponse.filter_velocity_prediction_cutoff();
+				ControllerInfo.FilterMagnetometerDeviationCutoff = ControllerResponse.filter_magnetometer_deviation_cutoff();
 				ControllerInfo.FilterAngularPredictionCutoff = ControllerResponse.filter_angular_prediction_cutoff();
 				ControllerInfo.FilterPositionKalmanError = ControllerResponse.filter_position_kalman_error();
 				ControllerInfo.FilterPositionKalmanNoise = ControllerResponse.filter_position_kalman_noise();

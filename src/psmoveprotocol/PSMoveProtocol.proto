@@ -664,6 +664,7 @@ message Request {
 		bool filter_position_kalman_disable_cutoff = 23;
 		bool filter_madgwick_smart_correct = 24;
 		bool filter_madgwick_smart_instant = 25;
+		float filter_magnetometer_deviation_cutoff = 26;
     }
     RequestSetControllerFilterSettings request_set_controller_filter_settings = 55;
 	
@@ -844,6 +845,7 @@ message Response {
 			bool filter_position_kalman_disable_cutoff = 47;
 			bool filter_madgwick_smart_correct = 48;
 			bool filter_madgwick_smart_instant = 49;
+			float filter_magnetometer_deviation_cutoff = 50;
         }
         repeated ControllerInfo controllers = 1;
         string host_serial = 2;

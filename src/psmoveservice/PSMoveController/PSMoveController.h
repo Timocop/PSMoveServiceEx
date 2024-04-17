@@ -89,6 +89,7 @@ public:
 		, filter_angular_smoothing_factor(0.25f)
 		, filter_velocity_prediction_cutoff(1.0f)
 		, filter_angular_prediction_cutoff(0.25f)
+		, filter_magnetometer_deviation_cutoff(0.10f)
 		, filter_position_kalman_error(10.f)
 		, filter_position_kalman_noise(300.f)
 		, filter_position_kalman_disable_cutoff(true)
@@ -247,6 +248,7 @@ public:
 	float filter_angular_smoothing_factor;
 	float filter_velocity_prediction_cutoff;
 	float filter_angular_prediction_cutoff;
+	float filter_magnetometer_deviation_cutoff;
 
 	float filter_position_kalman_error;
 	float filter_position_kalman_noise;

@@ -72,6 +72,7 @@ public:
 		float filter_angular_smoothing_factor;
 		float filter_velocity_prediction_cutoff;
 		float filter_angular_prediction_cutoff;
+		float filter_magnetometer_deviation_cutoff;
 		float filter_position_kalman_error;
 		float filter_position_kalman_noise;
 		bool filter_position_kalman_disable_cutoff;
@@ -131,6 +132,7 @@ public:
 		float FilterAngularSmoothingFactor;
 		float FilterVelocityPredictionCutoff;
 		float FilterAngularPredictionCutoff;
+		float FilterMagnetometerDeviationCutoff;
 		float FilterPositionKalmanError;
 		float FilterPositionKalmanNoise;
 		bool FilterPositionKalmanDisableCutoff;

@@ -744,6 +744,7 @@ protected:
 				float filter_angular_smoothing_factor;
 				float filter_velocity_prediction_cutoff;
 				float filter_angular_prediction_cutoff;
+				float filter_magnetometer_deviation_cutoff;
 				float filter_position_kalman_error;
 				float filter_position_kalman_noise;
 				bool filter_position_kalman_disable_cutoff;
@@ -791,6 +792,7 @@ protected:
 						filter_angular_smoothing_factor = config->filter_angular_smoothing_factor;
 						filter_velocity_prediction_cutoff = config->filter_velocity_prediction_cutoff;
 						filter_angular_prediction_cutoff = config->filter_angular_prediction_cutoff;
+						filter_magnetometer_deviation_cutoff = config->filter_magnetometer_deviation_cutoff;
 						filter_position_kalman_error = config->filter_position_kalman_error;
 						filter_position_kalman_noise = config->filter_position_kalman_noise;
 						filter_position_kalman_disable_cutoff = config->filter_position_kalman_disable_cutoff;
@@ -979,6 +981,7 @@ protected:
 				controller_info->set_filter_angular_smoothing_factor(filter_angular_smoothing_factor);
 				controller_info->set_filter_velocity_prediction_cutoff(filter_velocity_prediction_cutoff);
 				controller_info->set_filter_angular_prediction_cutoff(filter_angular_prediction_cutoff);
+				controller_info->set_filter_magnetometer_deviation_cutoff(filter_magnetometer_deviation_cutoff);
 				controller_info->set_filter_position_kalman_error(filter_position_kalman_error);
 				controller_info->set_filter_position_kalman_noise(filter_position_kalman_noise);
 				controller_info->set_filter_position_kalman_disable_cutoff(filter_position_kalman_disable_cutoff);
@@ -3307,6 +3310,7 @@ protected:
 					config.filter_angular_smoothing_factor != request.filter_angular_smoothing_factor() ||
 					config.filter_velocity_prediction_cutoff != request.filter_velocity_prediction_cutoff() ||
 					config.filter_angular_prediction_cutoff != request.filter_angular_prediction_cutoff() ||
+					config.filter_magnetometer_deviation_cutoff != request.filter_magnetometer_deviation_cutoff() ||
 					config.filter_position_kalman_error != request.filter_position_kalman_error() ||
 					config.filter_position_kalman_noise != request.filter_position_kalman_noise() ||
 					config.filter_position_kalman_disable_cutoff != request.filter_position_kalman_disable_cutoff() ||
@@ -3331,6 +3335,7 @@ protected:
 					config.filter_angular_smoothing_factor = request.filter_angular_smoothing_factor();
 					config.filter_velocity_prediction_cutoff = request.filter_velocity_prediction_cutoff();
 					config.filter_angular_prediction_cutoff = request.filter_angular_prediction_cutoff();
+					config.filter_magnetometer_deviation_cutoff = request.filter_magnetometer_deviation_cutoff();
 					config.filter_position_kalman_error = request.filter_position_kalman_error();
 					config.filter_position_kalman_noise = request.filter_position_kalman_noise();
 					config.filter_position_kalman_disable_cutoff = request.filter_position_kalman_disable_cutoff();

@@ -39,6 +39,7 @@
 #define k_lowpass_velocity_smoothing_factor 0.25f
 
 #define k_adaptive_prediction_cutoff 0.25f
+#define k_magnetometer_deviation_cutoff 0.1f
 
 // -- private definitions -----
 struct OrientationInterpolationState
@@ -307,6 +308,20 @@ static Eigen::Vector3f lowpass_filter_vector3f(
 	const Eigen::Vector3f &old_filtered_vector,
 	const Eigen::Vector3f &new_vector);
 
+static bool magnetometer_in_bounds_vector(
+	const CommonRawDeviceVector raw_mag_int,
+	const EigenFitEllipsoid & ellipsoid,
+	float & m_mag_scale, 
+	const float smoothing, 
+	const float diviation);
+
+static bool magnetometer_in_bounds_vector3f(
+	const Eigen::Vector3f raw_mag,
+	const EigenFitEllipsoid & ellipsoid, 
+	float & m_mag_scale, 
+	const float smoothing, 
+	const float diviation);
+
 // -- public interface -----
 //-- Orientation Filter --
 OrientationFilter::OrientationFilter() :
@@ -454,7 +469,9 @@ void OrientationFilterPassThru::update(
 void OrientationFilterMadgwickARG::resetState()
 {
 	OrientationFilterComplementaryMARG::resetState();
-	m_reset = true;
+	m_smartOrientation = Eigen::Quaternionf::Identity();
+	m_smartReset = false;
+	m_smartResetTime = 0.0f;
 }
 
 // -- OrientationFilterMadgwickARG --
@@ -558,29 +575,6 @@ void OrientationFilterMadgwickARG::update(
 
 	if (packet.has_imu_measurements())
 	{
-		if (m_reset || m_recenter)
-		{
-			// Reset using complimentary
-			mg_reset = true;
-			ignoreSettings = true;
-
-			// Lets fully reset everything first.
-			resetState();
-			OrientationFilterComplementaryMARG::update(timestamp, packet);
-
-			m_reset = false;
-
-			if (m_recenter)
-			{
-				m_recenter = false;
-
-				// Only do recenter after we got a new reset orentation
-				OrientationFilterComplementaryMARG::recenterOrientation(m_recenterPose);
-			}
-
-			return;
-		}
-
 		const Eigen::Vector3f &current_omega= packet.imu_gyroscope_rad_per_sec;
 
 		Eigen::Vector3f current_g= packet.imu_accelerometer_g_units;
@@ -802,9 +796,10 @@ void OrientationFilterMadgwickARG::update(
 
 void OrientationFilterMadgwickARG::recenterOrientation(const Eigen::Quaternionf & q_pose)
 {
-	// We cant recenter here because we reset the orientation using complimentary first.
-	m_recenter = true;
-	m_recenterPose = q_pose;
+	Eigen::Quaternionf q_inverse = m_state->orientation.conjugate();
+
+	eigen_quaternion_normalize_with_default(q_inverse, Eigen::Quaternionf::Identity());
+	m_state->reset_orientation = q_pose*q_inverse;
 }
 
 // -- OrientationFilterMadgwickMARG --
@@ -815,7 +810,6 @@ void OrientationFilterMadgwickMARG::resetState()
 {
     OrientationFilterMadgwickARG::resetState();
     m_omega_bias_x= m_omega_bias_y= m_omega_bias_z= 0.f;
-	m_reset = true;
 }
 
 void OrientationFilterMadgwickMARG::update(
@@ -833,8 +827,12 @@ void OrientationFilterMadgwickMARG::update(
 	float filter_madgwick_stabilization_smoothing_factor = k_madgwick_beta_smoothing_factor;
 	float velocity_smoothing_factor = k_lowpass_velocity_smoothing_factor;
 	float angular_prediction_cutoff = k_adaptive_prediction_cutoff;
+	float filter_magnetometer_deviation_cutoff = k_magnetometer_deviation_cutoff;
 	bool filter_madgwick_smart_correct = true;
 	bool filter_madgwick_smart_instant = true;
+
+	EigenFitEllipsoid mag_ellipsoid;
+	mag_ellipsoid.clear();
 
 #if !defined(IS_TESTING_KALMAN) 
 	if (packet.controllerDeviceId > -1)
@@ -855,8 +853,11 @@ void OrientationFilterMadgwickMARG::update(
 				filter_madgwick_stabilization_smoothing_factor = config.filter_madgwick_stabilization_smoothing_factor;
 				velocity_smoothing_factor = config.filter_angular_smoothing_factor;
 				angular_prediction_cutoff = config.filter_angular_prediction_cutoff;
+				filter_magnetometer_deviation_cutoff = config.filter_magnetometer_deviation_cutoff;
 				filter_madgwick_smart_correct = config.filter_madgwick_smart_correct;
 				filter_madgwick_smart_instant = config.filter_madgwick_smart_instant;
+
+				config.getMagnetometerEllipsoid(&mag_ellipsoid);
 
 				break;
 			}
@@ -914,33 +915,10 @@ void OrientationFilterMadgwickMARG::update(
 	filter_madgwick_stabilization_smoothing_factor = clampf(filter_madgwick_stabilization_smoothing_factor, 0.01f, 1.0f);
 	velocity_smoothing_factor = clampf(velocity_smoothing_factor, 0.01f, 1.0f);
 	angular_prediction_cutoff = clampf(angular_prediction_cutoff, 0.0f, (1 << 16));
+	filter_magnetometer_deviation_cutoff = clampf(filter_magnetometer_deviation_cutoff, 0.0f, 1.0f);
 
 	if (packet.has_imu_measurements())
 	{
-		if (m_reset || m_recenter)
-		{
-			// Reset using complimentary
-			mg_reset = true;
-			ignoreSettings = true;
-
-			// Fresh start, reset the state so we dont have any orientation abnormalities.
-			resetState();
-			OrientationFilterComplementaryMARG::update(timestamp, packet);
-
-			// Add m_resert after, because update() will set it to true.
-			m_reset = false;
-
-			if (m_recenter)
-			{
-				m_recenter = false;
-
-				// Only do recenter after we got a new reset orentation
-				OrientationFilterComplementaryMARG::recenterOrientation(m_recenterPose);
-			}
-
-			return;
-		}
-
 		const Eigen::Vector3f &current_omega= packet.imu_gyroscope_rad_per_sec;
 
 		Eigen::Vector3f current_g= packet.imu_accelerometer_g_units;
@@ -951,6 +929,22 @@ void OrientationFilterMadgwickMARG::update(
 
 		// If there isn't a valid magnetometer or accelerometer vector, fall back to the IMU style update
 		if (current_g.isZero(k_normal_epsilon) || current_m.isZero(k_normal_epsilon))
+		{
+			OrientationFilterMadgwickARG::update(timestamp, packet);
+			return;
+		}
+
+		const CommonRawDeviceVector current_raw_mag = packet.raw_imu_magnetometer;
+
+		printf("m_mag_scale - %f\n", m_mag_scale);
+		printf("filter_magnetometer_deviation_cutoff - %f\n", filter_magnetometer_deviation_cutoff);
+
+		if (!magnetometer_in_bounds_vector(
+			current_raw_mag, 
+			mag_ellipsoid,
+			m_mag_scale, 
+			0.8f, 
+			filter_magnetometer_deviation_cutoff))
 		{
 			OrientationFilterMadgwickARG::update(timestamp, packet);
 			return;
@@ -1348,7 +1342,6 @@ void OrientationFilterComplementaryOpticalARG::update(
 void OrientationFilterComplementaryMARG::resetState()
 {
     OrientationFilter::resetState();
-	mg_reset = true;
 }
 
 static Eigen::Vector3f threshold_vector3f(const Eigen::Vector3f &vector, const float min_length)
@@ -1383,6 +1376,41 @@ static Eigen::Vector3f lowpass_filter_vector3f(
 	return filtered_vector;
 }
 
+static bool magnetometer_in_bounds_vector(
+	const CommonRawDeviceVector raw_mag_int,
+	const EigenFitEllipsoid &ellipsoid,
+	float &m_mag_scale,
+	const float smoothing,
+	const float diviation)
+{
+	Eigen::Vector3f raw_mag = Eigen::Vector3f(
+		static_cast<float>(raw_mag_int.i),
+		static_cast<float>(raw_mag_int.j),
+		static_cast<float>(raw_mag_int.k));
+
+	return magnetometer_in_bounds_vector3f(raw_mag, ellipsoid, m_mag_scale, smoothing, diviation);
+}
+
+static bool magnetometer_in_bounds_vector3f(
+	const Eigen::Vector3f raw_mag,
+	const EigenFitEllipsoid &ellipsoid,
+	float &m_mag_scale,
+	const float smoothing,
+	const float diviation)
+{
+	Eigen::Vector3f ellipsoid_sample =
+		eigen_alignment_project_point_on_ellipsoid_basis(raw_mag, ellipsoid);
+
+	const float ellipsoid_sample_q = sqrtf(
+		ellipsoid_sample.x() * ellipsoid_sample.x() +
+		ellipsoid_sample.y() * ellipsoid_sample.y() +
+		ellipsoid_sample.z() * ellipsoid_sample.z());
+
+	m_mag_scale = (smoothing*ellipsoid_sample_q + (1.f - smoothing)*m_mag_scale);
+
+	return (m_mag_scale > (1.f - diviation) && m_mag_scale < 1.f + diviation);
+}
+
 void OrientationFilterComplementaryMARG::update(
 	const t_high_resolution_timepoint timestamp, 
 	const PoseFilterPacket &packet)
@@ -1405,39 +1433,43 @@ void OrientationFilterComplementaryMARG::update(
 
 	float velocity_smoothing_factor = k_lowpass_velocity_smoothing_factor;
 	float angular_prediction_cutoff = k_adaptive_prediction_cutoff;
+	float filter_magnetometer_deviation_cutoff = k_magnetometer_deviation_cutoff;
+
+	EigenFitEllipsoid mag_ellipsoid;
+	mag_ellipsoid.clear();
 
 #if !defined(IS_TESTING_KALMAN) 
-	if (!ignoreSettings)
+	if (packet.controllerDeviceId > -1)
 	{
-		if (packet.controllerDeviceId > -1)
+		ServerControllerViewPtr ControllerView = DeviceManager::getInstance()->getControllerViewPtr(packet.controllerDeviceId);
+		if (ControllerView != nullptr && ControllerView->getIsOpen())
 		{
-			ServerControllerViewPtr ControllerView = DeviceManager::getInstance()->getControllerViewPtr(packet.controllerDeviceId);
-			if (ControllerView != nullptr && ControllerView->getIsOpen())
+			switch (ControllerView->getControllerDeviceType())
 			{
-				switch (ControllerView->getControllerDeviceType())
-				{
-				case CommonDeviceState::PSMove:
-				{
-					PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
-					PSMoveControllerConfig config = *controller->getConfig();
+			case CommonDeviceState::PSMove:
+			{
+				PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
+				PSMoveControllerConfig config = *controller->getConfig();
 
-					filter_enable_magnetometer = config.filter_enable_magnetometer;
+				filter_enable_magnetometer = config.filter_enable_magnetometer;
 
-					filter_use_passive_drift_correction = config.filter_use_passive_drift_correction;
-					filter_passive_drift_correction_method = static_cast<PassiveDriftCorrectionMethod>(config.filter_passive_drift_correction_method);
-					filter_passive_drift_correction_deadzone = config.filter_passive_drift_correction_deadzone;
-					filter_passive_drift_correction_gravity_deadzone = config.filter_passive_drift_correction_gravity_deadzone;
-					filter_passive_drift_correction_delay = config.filter_passive_drift_correction_delay;
+				filter_use_passive_drift_correction = config.filter_use_passive_drift_correction;
+				filter_passive_drift_correction_method = static_cast<PassiveDriftCorrectionMethod>(config.filter_passive_drift_correction_method);
+				filter_passive_drift_correction_deadzone = config.filter_passive_drift_correction_deadzone;
+				filter_passive_drift_correction_gravity_deadzone = config.filter_passive_drift_correction_gravity_deadzone;
+				filter_passive_drift_correction_delay = config.filter_passive_drift_correction_delay;
 
-					filter_use_stabilization = config.filter_use_stabilization;
-					filter_stabilization_min_scale = config.filter_stabilization_min_scale;
+				filter_use_stabilization = config.filter_use_stabilization;
+				filter_stabilization_min_scale = config.filter_stabilization_min_scale;
 
-					velocity_smoothing_factor = config.filter_angular_smoothing_factor;
-					angular_prediction_cutoff = config.filter_angular_prediction_cutoff;
+				velocity_smoothing_factor = config.filter_angular_smoothing_factor;
+				angular_prediction_cutoff = config.filter_angular_prediction_cutoff;
+				filter_magnetometer_deviation_cutoff = config.filter_magnetometer_deviation_cutoff;
 
-					break;
-				}
-				}
+				config.getMagnetometerEllipsoid(&mag_ellipsoid);
+
+				break;
+			}
 			}
 		}
 	}
@@ -1450,6 +1482,7 @@ void OrientationFilterComplementaryMARG::update(
 	filter_stabilization_min_scale = clampf(filter_stabilization_min_scale, 0.0f, 1.0f);
 	velocity_smoothing_factor = clampf(velocity_smoothing_factor, 0.01f, 1.0f);
 	angular_prediction_cutoff = clampf(angular_prediction_cutoff, 0.0f, (1 << 16));
+	filter_magnetometer_deviation_cutoff = clampf(filter_magnetometer_deviation_cutoff, 0.0f, 1.0f);
 
 	if (packet.has_imu_measurements())
 	{
@@ -1458,12 +1491,28 @@ void OrientationFilterComplementaryMARG::update(
 		Eigen::Vector3f current_g = packet.imu_accelerometer_g_units;
 		eigen_vector3f_normalize_with_default(current_g, Eigen::Vector3f::Zero());
 
-		Eigen::Vector3f current_m = Eigen::Vector3f::Zero();
+		Eigen::Vector3f current_m = packet.imu_magnetometer_unit;
+		eigen_vector3f_normalize_with_default(current_m, Eigen::Vector3f::Zero());
 
-		if (filter_enable_magnetometer)
+
+		const CommonRawDeviceVector current_raw_mag = packet.raw_imu_magnetometer;
+
+		printf("m_mag_scale - %f\n", m_mag_scale);
+		printf("filter_magnetometer_deviation_cutoff - %f\n", filter_magnetometer_deviation_cutoff);
+
+		if (!magnetometer_in_bounds_vector(
+			current_raw_mag, 
+			mag_ellipsoid, 
+			m_mag_scale, 
+			0.8f, 
+			filter_magnetometer_deviation_cutoff))
 		{
-			current_m = packet.imu_magnetometer_unit;
-			eigen_vector3f_normalize_with_default(current_m, Eigen::Vector3f::Zero());
+			current_m = Eigen::Vector3f::Zero();
+		}
+
+		if (!filter_enable_magnetometer)
+		{
+			current_m = Eigen::Vector3f::Zero();
 		}
 
 		// Get the direction of the magnetic fields in the identity pose.	
@@ -1534,13 +1583,6 @@ void OrientationFilterComplementaryMARG::update(
 				// -- Exponential blend the MG weight from 1 down to k_base_earth_frame_align_weight
 				mg_weight = lerp_clampf(mg_weight, k_base_earth_frame_align_weight, 0.9f);
 			}
-		}
-
-		if (mg_reset)
-		{
-			mg_reset = false;
-
-			mg_weight = 1.f;
 		}
 
 		// Blending Update

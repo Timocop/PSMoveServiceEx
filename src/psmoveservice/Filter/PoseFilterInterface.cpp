@@ -70,18 +70,21 @@ void PoseFilterSpace::createFilterPacket(
 
 	if (sensorPacket.has_gyroscope_measurement)
 	{
+		outFilterPacket.raw_imu_gyroscope = sensorPacket.raw_imu_gyroscope;
 	    outFilterPacket.imu_gyroscope_rad_per_sec= m_SensorTransform * sensorPacket.imu_gyroscope_rad_per_sec;
 		outFilterPacket.has_gyroscope_measurement= true;
 	}
 
 	if (sensorPacket.has_accelerometer_measurement)
 	{
+		outFilterPacket.raw_imu_accelerometer = sensorPacket.raw_imu_accelerometer;
 	    outFilterPacket.imu_accelerometer_g_units= m_SensorTransform * sensorPacket.imu_accelerometer_g_units;
 		outFilterPacket.has_accelerometer_measurement= true;
 	}
 
 	if (sensorPacket.has_magnetometer_measurement)
 	{
+		outFilterPacket.raw_imu_magnetometer = sensorPacket.raw_imu_magnetometer;
 	    outFilterPacket.imu_magnetometer_unit= m_SensorTransform * sensorPacket.imu_magnetometer_unit;
 		outFilterPacket.has_magnetometer_measurement= true;
 	}

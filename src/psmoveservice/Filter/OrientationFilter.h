@@ -69,7 +69,6 @@ public:
 		: OrientationFilter()
 		, mg_weight(1.f)
 		, mg_ignored(false)
-		, ignoreSettings(false)
 	{
 		timeStableDelay = std::chrono::high_resolution_clock::now();
 
@@ -97,13 +96,12 @@ public:
 
 protected:
 	float mg_weight;
-	bool mg_reset;
 	bool mg_ignored;
-	bool ignoreSettings;
 	std::chrono::time_point<std::chrono::high_resolution_clock> timeStableDelay;
 	Eigen::Vector3f last_accelerometer_g_units;
 	Eigen::Vector3f last_accelerometer_derivative_g_per_sec;
 	Eigen::Vector3f last_acceleration_m_per_sec_sqr;
+	float m_mag_scale;
 };
 
 /// Angular Rate and Gravity fusion algorithm from Madgwick
@@ -114,12 +112,9 @@ public:
 	OrientationFilterMadgwickARG() 
 		: OrientationFilterComplementaryMARG()
 		, m_beta(0.f)
-		, m_reset(true)
-		, m_recenter(false)
 		, m_smartReset(false)
 		, m_smartResetTime(0.0f)
 	{
-		m_recenterPose = Eigen::Quaternionf::Identity();
 		m_smartOrientation = Eigen::Quaternionf::Identity();
 		timeReset = std::chrono::high_resolution_clock::now();
 	}
@@ -130,12 +125,9 @@ public:
 
 protected:
 	float m_beta;
-	bool m_reset;
-	bool m_recenter;
 	bool m_smartReset;
 	float m_smartResetTime;
 	Eigen::Quaternionf m_smartOrientation;
-	Eigen::Quaternionf m_recenterPose;
 	std::chrono::time_point<std::chrono::high_resolution_clock> timeReset;
 };
 
@@ -160,6 +152,7 @@ protected:
     float m_omega_bias_y;
     float m_omega_bias_z;
 	std::chrono::time_point<std::chrono::high_resolution_clock> timeReset;
+	float m_mag_scale;
 };
 
 /// Angular Rate, Gravity, and Optical fusion algorithm
