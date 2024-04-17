@@ -16,7 +16,7 @@ A background service that manages multiple PSMove Controllers and PS3 Eye Camera
 # ❓ Getting Help
 Please start with the wiki. If you can't find help with your problem then please search through the issues (especially the closed ones) to see if your problem has been addressed already. 
 If you still find no previous mention of your problem then you have these options:
-- Join the official [PSMoveServiceEx Discord Server](https://discord.gg/CXPnUanhZT).
+- Join the official [PSMoveServiceEx Discord Server](https://discord.gg/mSk9ua7exg).
 - Use the [GitHub Discussions](https://github.com/Timocop/PSMoveServiceEx/discussions).
 - Create an issue if you think you found a bug or if you have a problem with the program.
   - *⚠️ The ``Issues`` page should not be used for regular questions!*
