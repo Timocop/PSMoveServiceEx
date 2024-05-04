@@ -485,7 +485,6 @@ void OrientationFilterMadgwickARG::update(
 	float velocity_smoothing_factor = k_lowpass_velocity_smoothing_factor;
 	float angular_prediction_cutoff = k_adaptive_prediction_cutoff;
 	bool filter_madgwick_smart_correct = true;
-	bool filter_madgwick_smart_instant = true;
 
 #if !defined(IS_TESTING_KALMAN) 
 	if (packet.controllerDeviceId > -1)
@@ -507,7 +506,6 @@ void OrientationFilterMadgwickARG::update(
 				velocity_smoothing_factor = config.filter_angular_smoothing_factor;
 				angular_prediction_cutoff = config.filter_angular_prediction_cutoff;
 				filter_madgwick_smart_correct = config.filter_madgwick_smart_correct;
-				filter_madgwick_smart_instant = config.filter_madgwick_smart_instant;
 
 				break;
 			}
@@ -523,7 +521,6 @@ void OrientationFilterMadgwickARG::update(
 				velocity_smoothing_factor = config.filter_angular_smoothing_factor;
 				angular_prediction_cutoff = config.filter_angular_prediction_cutoff;
 				filter_madgwick_smart_correct = config.filter_madgwick_smart_correct;
-				filter_madgwick_smart_instant = config.filter_madgwick_smart_instant;
 
 				break;
 			}
@@ -703,11 +700,8 @@ void OrientationFilterMadgwickARG::update(
 
 					if (m_smartResetTime > (k_madgwick_smart_correct_reset_time_ms / 1000.f))
 					{
-						if (filter_madgwick_smart_instant)
-						{
-							SEq_new = SEq_smart_new;
-							m_smartResetTime = 0.0f;
-						}
+						SEq_new = SEq_smart_new;
+						m_smartResetTime = 0.0f;
 					}
 				}
 				else
@@ -787,7 +781,6 @@ void OrientationFilterMadgwickMARG::update(
 	float angular_prediction_cutoff = k_adaptive_prediction_cutoff;
 	float filter_magnetometer_deviation_cutoff = k_magnetometer_deviation_cutoff;
 	bool filter_madgwick_smart_correct = true;
-	bool filter_madgwick_smart_instant = true;
 
 #if !defined(IS_TESTING_KALMAN) 
 	if (packet.controllerDeviceId > -1)
@@ -810,7 +803,6 @@ void OrientationFilterMadgwickMARG::update(
 				angular_prediction_cutoff = config.filter_angular_prediction_cutoff;
 				filter_magnetometer_deviation_cutoff = config.filter_magnetometer_deviation_cutoff;
 				filter_madgwick_smart_correct = config.filter_madgwick_smart_correct;
-				filter_madgwick_smart_instant = config.filter_madgwick_smart_instant;
 
 				break;
 			}
@@ -826,7 +818,6 @@ void OrientationFilterMadgwickMARG::update(
 				velocity_smoothing_factor = config.filter_angular_smoothing_factor;
 				angular_prediction_cutoff = config.filter_angular_prediction_cutoff;
 				filter_madgwick_smart_correct = config.filter_madgwick_smart_correct;
-				filter_madgwick_smart_instant = config.filter_madgwick_smart_instant;
 
 				break;
 			}
@@ -853,7 +844,6 @@ void OrientationFilterMadgwickMARG::update(
 				velocity_smoothing_factor = config.filter_angular_smoothing_factor;
 				angular_prediction_cutoff = config.filter_angular_prediction_cutoff;
 				filter_madgwick_smart_correct = config.filter_madgwick_smart_correct;
-				filter_madgwick_smart_instant = config.filter_madgwick_smart_instant;
 
 				break;
 			}
@@ -1074,11 +1064,8 @@ void OrientationFilterMadgwickMARG::update(
 
 					if (m_smartResetTime > (k_madgwick_smart_correct_reset_time_ms / 1000.f))
 					{
-						if (filter_madgwick_smart_instant)
-						{
-							SEq_new = SEq_smart_new;
-							m_smartResetTime = 0.0f;
-						}
+						SEq_new = SEq_smart_new;
+						m_smartResetTime = 0.0f;
 					}
 				}
 				else

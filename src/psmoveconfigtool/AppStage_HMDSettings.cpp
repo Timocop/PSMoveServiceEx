@@ -700,25 +700,6 @@ void AppStage_HMDSettings::renderUI()
 										"Smart Drift Correction detects excessive orientation deviations and attempts to aggressively correct drift."
 									);
 								}
-
-								if (hmdInfo.FilterMadgwickSmartCorrect)
-								{
-									ImGui::Indent();
-									{
-										ImGui::Text("Instant-Mode: ");
-										ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-										ImGui::PushItemWidth(120.f);
-										bool filter_madgwick_smart_instant = hmdInfo.FilterMadgwickSmartInstant;
-										if (ImGui::Checkbox("##MadgwickFilterMadgwickSmartInstant", &filter_madgwick_smart_instant))
-										{
-											hmdInfo.FilterMadgwickSmartInstant = filter_madgwick_smart_instant;
-
-											request_offset = true;
-										}
-										ImGui::PopItemWidth();
-									}
-									ImGui::Unindent();
-								}
 							}
 
 							if (!settings_shown)
@@ -744,7 +725,6 @@ void AppStage_HMDSettings::renderUI()
 								hmdInfo.FilterPositionKalmanNoise = 200.f;
 								hmdInfo.FilterPositionKalmanDisableCutoff = true;
 								hmdInfo.FilterMadgwickSmartCorrect = true;
-								hmdInfo.FilterMadgwickSmartInstant = true;
 
 								request_offset = true;
 							}
@@ -766,7 +746,6 @@ void AppStage_HMDSettings::renderUI()
 								filterSettings.filter_position_kalman_noise = hmdInfo.FilterPositionKalmanNoise;
 								filterSettings.filter_position_kalman_disable_cutoff = hmdInfo.FilterPositionKalmanDisableCutoff;
 								filterSettings.filter_madgwick_smart_correct = hmdInfo.FilterMadgwickSmartCorrect;
-								filterSettings.filter_madgwick_smart_instant = hmdInfo.FilterMadgwickSmartInstant;
 
 								request_set_hmd_filter_settings(hmdInfo.HmdID, filterSettings);
 							}
@@ -1278,7 +1257,6 @@ void AppStage_HMDSettings::request_set_hmd_filter_settings(
 	filter_settings->set_filter_position_kalman_noise(filterSettings.filter_position_kalman_noise);
 	filter_settings->set_filter_position_kalman_disable_cutoff(filterSettings.filter_position_kalman_disable_cutoff);
 	filter_settings->set_filter_madgwick_smart_correct(filterSettings.filter_madgwick_smart_correct);
-	filter_settings->set_filter_madgwick_smart_instant(filterSettings.filter_madgwick_smart_instant);
 
 	PSMRequestID request_id;
 	PSM_SendOpaqueRequest(&request, &request_id);
@@ -1388,7 +1366,6 @@ void AppStage_HMDSettings::handle_hmd_list_response(
 				HmdInfo.FilterPositionKalmanNoise = HmdResponse.filter_position_kalman_noise();
 				HmdInfo.FilterPositionKalmanDisableCutoff = HmdResponse.filter_position_kalman_disable_cutoff();
 				HmdInfo.FilterMadgwickSmartCorrect = HmdResponse.filter_madgwick_smart_correct();
-				HmdInfo.FilterMadgwickSmartInstant = HmdResponse.filter_madgwick_smart_instant();
 
                 if (HmdInfo.HmdType == AppStage_HMDSettings::Morpheus)
                 {

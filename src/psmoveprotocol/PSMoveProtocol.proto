@@ -664,7 +664,7 @@ message Request {
 		float filter_position_kalman_noise = 22;
 		bool filter_position_kalman_disable_cutoff = 23;
 		bool filter_madgwick_smart_correct = 24;
-		bool filter_madgwick_smart_instant = 25;
+		bool UNUSED_4567457475 = 25;
 		float filter_magnetometer_deviation_cutoff = 26;
     }
     RequestSetControllerFilterSettings request_set_controller_filter_settings = 55;
@@ -686,7 +686,7 @@ message Request {
 		float filter_position_kalman_noise = 13;
 		bool filter_position_kalman_disable_cutoff = 14;
 		bool filter_madgwick_smart_correct = 15;
-		bool filter_madgwick_smart_instant = 16;
+		bool UNUSED_4567457475 = 16;
     }
     RequestSetHmdFilterSettings request_set_hmd_filter_settings = 56;
 	
@@ -854,7 +854,7 @@ message Response {
 			float filter_position_kalman_noise = 46;
 			bool filter_position_kalman_disable_cutoff = 47;
 			bool filter_madgwick_smart_correct = 48;
-			bool filter_madgwick_smart_instant = 49;
+			bool UNUSED_4567457475 = 49;
 			float filter_magnetometer_deviation_cutoff = 50;
         }
         repeated ControllerInfo controllers = 1;
@@ -998,7 +998,7 @@ message Response {
 			float filter_position_kalman_noise = 24;
 			bool filter_position_kalman_disable_cutoff = 25;
 			bool filter_madgwick_smart_correct = 26;
-			bool filter_madgwick_smart_instant = 27;
+			bool UNUSED_4567457475 = 27;
         }
         repeated HMDInfo hmd_entries = 1;
     }

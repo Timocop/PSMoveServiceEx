@@ -72,7 +72,6 @@ public:
 		, filter_position_kalman_noise(200.f)
 		, filter_position_kalman_disable_cutoff(true)
 		, filter_madgwick_smart_correct(true)
-		, filter_madgwick_smart_instant(true)
     {
 		offset_position.set(0.0f, 0.0f, 0.0f);
 		offset_orientation.set(0.0f, 0.0f, 0.0f);
@@ -214,7 +213,6 @@ public:
 	float filter_madgwick_stabilization_min_beta;
 	float filter_madgwick_stabilization_smoothing_factor;
 	bool filter_madgwick_smart_correct;
-	bool filter_madgwick_smart_instant;
 
 	float filter_velocity_smoothing_factor;
 	float filter_angular_smoothing_factor;

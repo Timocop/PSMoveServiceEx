@@ -77,7 +77,6 @@ public:
 		float filter_position_kalman_noise;
 		bool filter_position_kalman_disable_cutoff;
 		bool filter_madgwick_smart_correct;
-		bool filter_madgwick_smart_instant;
 	};
 
 	struct ControllerInfo
@@ -137,7 +136,6 @@ public:
 		float FilterPositionKalmanNoise;
 		bool FilterPositionKalmanDisableCutoff;
 		bool FilterMadgwickSmartCorrect;
-		bool FilterMadgwickSmartInstant;
 
 		static bool ParentControllerComboItemGetter(void* userdata, int index, const char** out_string)
 		{

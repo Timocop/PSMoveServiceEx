@@ -753,7 +753,6 @@ protected:
 				float filter_position_kalman_noise;
 				bool filter_position_kalman_disable_cutoff;
 				bool filter_madgwick_smart_correct;
-				bool filter_madgwick_smart_instant;
 
                 switch(controller_view->getControllerDeviceType())
                 {
@@ -801,7 +800,6 @@ protected:
 						filter_position_kalman_noise = config->filter_position_kalman_noise;
 						filter_position_kalman_disable_cutoff = config->filter_position_kalman_disable_cutoff;
 						filter_madgwick_smart_correct = config->filter_madgwick_smart_correct;
-						filter_madgwick_smart_instant = config->filter_madgwick_smart_instant;
 
                         controller_info->set_controller_type(PSMoveProtocol::PSMOVE);
                     }
@@ -876,7 +874,6 @@ protected:
 						filter_position_kalman_noise = config->filter_position_kalman_noise;
 						filter_position_kalman_disable_cutoff = config->filter_position_kalman_disable_cutoff;
 						filter_madgwick_smart_correct = config->filter_madgwick_smart_correct;
-						filter_madgwick_smart_instant = config->filter_madgwick_smart_instant;
 
 						controller_info->set_controller_type(PSMoveProtocol::PSDUALSHOCK4);
                     }
@@ -990,7 +987,6 @@ protected:
 				controller_info->set_filter_position_kalman_noise(filter_position_kalman_noise);
 				controller_info->set_filter_position_kalman_disable_cutoff(filter_position_kalman_disable_cutoff);
 				controller_info->set_filter_madgwick_smart_correct(filter_madgwick_smart_correct);
-				controller_info->set_filter_madgwick_smart_instant(filter_madgwick_smart_instant);
             }
         }
 
@@ -3422,8 +3418,7 @@ protected:
 					config.filter_position_kalman_error != request.filter_position_kalman_error() ||
 					config.filter_position_kalman_noise != request.filter_position_kalman_noise() ||
 					config.filter_position_kalman_disable_cutoff != request.filter_position_kalman_disable_cutoff() ||
-					config.filter_madgwick_smart_correct != request.filter_madgwick_smart_correct() ||
-					config.filter_madgwick_smart_instant != request.filter_madgwick_smart_instant())
+					config.filter_madgwick_smart_correct != request.filter_madgwick_smart_correct())
 				{
 					config.filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
 					config.filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
@@ -3448,7 +3443,6 @@ protected:
 					config.filter_position_kalman_noise = request.filter_position_kalman_noise();
 					config.filter_position_kalman_disable_cutoff = request.filter_position_kalman_disable_cutoff();
 					config.filter_madgwick_smart_correct = request.filter_madgwick_smart_correct();
-					config.filter_madgwick_smart_instant = request.filter_madgwick_smart_instant();
 
 					controller->setConfig(&config);
 				}
@@ -3473,8 +3467,7 @@ protected:
 					config.filter_position_kalman_error != request.filter_position_kalman_error() ||
 					config.filter_position_kalman_noise != request.filter_position_kalman_noise() ||
 					config.filter_position_kalman_disable_cutoff != request.filter_position_kalman_disable_cutoff() ||
-					config.filter_madgwick_smart_correct != request.filter_madgwick_smart_correct() ||
-					config.filter_madgwick_smart_instant != request.filter_madgwick_smart_instant())
+					config.filter_madgwick_smart_correct != request.filter_madgwick_smart_correct())
 				{
 					config.filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
 					config.filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
@@ -3490,7 +3483,6 @@ protected:
 					config.filter_position_kalman_noise = request.filter_position_kalman_noise();
 					config.filter_position_kalman_disable_cutoff = request.filter_position_kalman_disable_cutoff();
 					config.filter_madgwick_smart_correct = request.filter_madgwick_smart_correct();
-					config.filter_madgwick_smart_instant = request.filter_madgwick_smart_instant();
 
 					controller->setConfig(&config);
 				}
@@ -3669,8 +3661,7 @@ protected:
 					config->filter_position_kalman_error != request.filter_position_kalman_error() ||
 					config->filter_position_kalman_noise != request.filter_position_kalman_noise() ||
 					config->filter_position_kalman_disable_cutoff != request.filter_position_kalman_disable_cutoff() ||
-					config->filter_madgwick_smart_correct != request.filter_madgwick_smart_correct() ||
-					config->filter_madgwick_smart_instant != request.filter_madgwick_smart_instant())
+					config->filter_madgwick_smart_correct != request.filter_madgwick_smart_correct())
 				{
 					config->filter_lowpassoptical_distance = request.filter_lowpassoptical_distance();
 					config->filter_lowpassoptical_smoothing = request.filter_lowpassoptical_smoothing();
@@ -3686,7 +3677,6 @@ protected:
 					config->filter_position_kalman_noise = request.filter_position_kalman_noise();
 					config->filter_position_kalman_disable_cutoff = request.filter_position_kalman_disable_cutoff();
 					config->filter_madgwick_smart_correct = request.filter_madgwick_smart_correct();
-					config->filter_madgwick_smart_instant = request.filter_madgwick_smart_instant();
 
 					config->save();
 				}
@@ -4046,7 +4036,6 @@ protected:
 				float filter_position_kalman_noise;
 				float filter_position_kalman_disable_cutoff;
 				float filter_madgwick_smart_correct;
-				float filter_madgwick_smart_instant;
 
                 switch (hmd_view->getHMDDeviceType())
                 {
@@ -4079,7 +4068,6 @@ protected:
 						filter_position_kalman_noise = config->filter_position_kalman_noise;
 						filter_position_kalman_disable_cutoff = config->filter_position_kalman_disable_cutoff;
 						filter_madgwick_smart_correct = config->filter_madgwick_smart_correct;
-						filter_madgwick_smart_instant = config->filter_madgwick_smart_instant;
 
 						hmd_info->set_hmd_type(PSMoveProtocol::Morpheus);
 
@@ -4152,7 +4140,6 @@ protected:
 				hmd_info->set_filter_position_kalman_noise(filter_position_kalman_noise);
 				hmd_info->set_filter_position_kalman_disable_cutoff(filter_position_kalman_disable_cutoff);
 				hmd_info->set_filter_madgwick_smart_correct(filter_madgwick_smart_correct);
-				hmd_info->set_filter_madgwick_smart_instant(filter_madgwick_smart_instant);
             }
         }
 
