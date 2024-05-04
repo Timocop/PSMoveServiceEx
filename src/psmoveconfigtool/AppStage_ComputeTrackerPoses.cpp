@@ -57,8 +57,13 @@ AppStage_ComputeTrackerPoses::AppStage_ComputeTrackerPoses(App *app)
 	, m_triangShowTrackerIds(false)
 	, m_triangShowBounds(true)
 	, m_triangCenter(false)
+	, m_hideGoodSamples(false)
+	, m_showTrackerFrustum(true)
+	, m_currentMag(1.f)
 { 
     m_renderTrackerIter = m_trackerViews.end();
+	m_triangInfo.clear();
+	m_magneticSamples.clear();
 }
 
 AppStage_ComputeTrackerPoses::~AppStage_ComputeTrackerPoses()
@@ -107,6 +112,11 @@ void AppStage_ComputeTrackerPoses::enter()
 	m_areAllControllerStreamsActive = false;
 	m_lastControllerSeqNum = -1;
 	
+	m_showTrackerFrustum = true;
+	m_currentMag = 1.f;
+
+	m_magneticSamples.clear();
+
 	// Only get the controller list if
     // A) No specific controller or HMD was requests
     // B) A specific controller was requested
@@ -160,6 +170,8 @@ void AppStage_ComputeTrackerPoses::update()
     case eMenuState::failedHmdListRequest:
     case eMenuState::failedHmdStartRequest:
 	case eMenuState::failedTrackerStartRequest:
+	case eMenuState::failedControllerMagnetometer:
+	case eMenuState::failedControllerUnsupported:
 	case eMenuState::failedControllerOffsets:
         break;
     case eMenuState::verifyTrackers:
@@ -194,8 +206,95 @@ void AppStage_ComputeTrackerPoses::update()
             }
         }
         break;
-    case eMenuState::testTracking:
-        break;
+	case eMenuState::testMagnetic:
+	{
+		t_controller_state_map_iterator m_controllerState = m_controllerViews.find(m_overrideControllerId);
+
+		if (m_controllerState == m_controllerViews.end())
+		{
+			setState(AppStage_ComputeTrackerPoses::failedControllerOffsets);
+		}
+		else
+		{
+			PSMController *controllerView = m_controllerState->second.controllerView;
+			if (controllerView == nullptr || !controllerView->bValid || controllerView->ControllerType != PSMControllerType::PSMController_Move)
+			{
+				setState(AppStage_ComputeTrackerPoses::failedControllerUnsupported);
+			}
+			else
+			{
+				if (m_areAllControllerStreamsActive && controllerView->OutputSequenceNum != m_lastControllerSeqNum)
+				{
+					m_lastControllerSeqNum = controllerView->OutputSequenceNum;
+
+					PSMVector3i raw_mag = controllerView->ControllerState.PSMoveState.RawSensorData.Magnetometer;
+					if (raw_mag.x == 0 && raw_mag.y == 0 && raw_mag.z == 0)
+					{
+						setState(AppStage_ComputeTrackerPoses::failedControllerMagnetometer);
+					}
+					else
+					{
+						PSMVector3f raw_mag = controllerView->ControllerState.PSMoveState.CalibratedSensorData.Magnetometer;
+						if (is_nearly_zero(raw_mag.x) &&
+							is_nearly_zero(raw_mag.y) &&
+							is_nearly_zero(raw_mag.z))
+						{
+							setState(AppStage_ComputeTrackerPoses::failedControllerMagnetometer);
+						}
+						else
+						{
+							const float k_sample_distance = 30.f;
+							const float k_sample_alpha = 0.1;
+
+							const float raw_mag_q = sqrtf(
+								raw_mag.x * raw_mag.x +
+								raw_mag.y * raw_mag.y +
+								raw_mag.z * raw_mag.z
+							);
+
+							m_currentMag = k_sample_alpha*raw_mag_q + (1.f - k_sample_alpha)*m_currentMag;
+
+							if (controllerView->ControllerState.PSMoveState.bIsCurrentlyTracking)
+							{
+								PSMVector3f position = controllerView->ControllerState.PSMoveState.Pose.Position;
+
+								bool bSampleFound = false;
+
+								for (auto it = m_magneticSamples.begin(); it != m_magneticSamples.end(); ++it)
+								{
+									float dx = (position.x - it->m_position.x);
+									float dy = (position.y - it->m_position.y);
+									float dz = (position.z - it->m_position.z);
+									float sample_distance = sqrtf(dx*dx + dy*dy + dz*dz);
+
+									if (sample_distance < k_sample_distance)
+									{
+										if (it->magnetic_strength < m_currentMag)
+											it->magnetic_strength = m_currentMag;
+
+										bSampleFound = true;
+										break;
+									}
+								}
+
+								if (!bSampleFound && m_magneticSamples.size() < 1000)
+								{
+									MagneticInfo info;
+									info.magnetic_strength = m_currentMag;
+									info.m_position = position;
+
+									m_magneticSamples.push_back(info);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		break;
+	}
+	case eMenuState::testTracking:
+		break;
     case eMenuState::showTrackerVideo:
         update_tracker_video();
         break;
@@ -219,7 +318,7 @@ void AppStage_ComputeTrackerPoses::update()
 				if (controllerView == nullptr || !controllerView->bValid ||
 					trackerView == nullptr)
 				{
-					setState(AppStage_ComputeTrackerPoses::failedControllerOffsets);
+					setState(AppStage_ComputeTrackerPoses::failedControllerUnsupported);
 				}
 				else
 				{
@@ -452,6 +551,8 @@ void AppStage_ComputeTrackerPoses::render()
     case eMenuState::failedTrackerListRequest:
 	case eMenuState::failedTrackerStartRequest:
 	case eMenuState::failedControllerOffsets:
+	case eMenuState::failedControllerMagnetometer:
+	case eMenuState::failedControllerUnsupported:
         break;
     case eMenuState::verifyTrackers:
         {
@@ -462,6 +563,8 @@ void AppStage_ComputeTrackerPoses::render()
     case eMenuState::calibrateWithMat:
         m_pCalibrateWithMat->render();
         break;
+
+	case eMenuState::testMagnetic:
     case eMenuState::testTracking:
         {
             // Draw the chaperone origin axes
@@ -485,7 +588,9 @@ void AppStage_ComputeTrackerPoses::render()
                 glm::vec3 color= does_tracker_see_any_device(trackerView) ? k_psmove_frustum_color : k_psmove_frustum_color_no_track;
 
                 drawTextAtWorldPosition(glm::mat4(1.f), psm_vector3f_to_glm_vec3(trackerPose.Position), "#%d", tracker_id);
-                drawTransformedFrustum(glm::mat4(1.f), &frustum, color);
+
+				if (m_showTrackerFrustum)
+					drawTransformedFrustum(glm::mat4(1.f), &frustum, color);
 
 				drawPS3EyeModel(trackerMat4);
                 drawTransformedAxes(trackerMat4, 20.f);
@@ -595,6 +700,36 @@ void AppStage_ComputeTrackerPoses::render()
 					}
 				}
             }
+
+			if (m_menuState == eMenuState::testMagnetic && m_magneticSamples.size() > 0)
+			{
+				for (auto it = m_magneticSamples.begin(); it != m_magneticSamples.end(); ++it)
+				{
+					float mag_str = fabsf(it->magnetic_strength - 1);
+
+					glm::vec3 color = glm::vec3(1.f, 1.f, 1.f);
+
+					if (mag_str > 0.075f)
+					{
+						color = glm::vec3(1.f, 0.f, 0.f);
+					}
+					else if (mag_str > 0.05f)
+					{
+						color = glm::vec3(1.f, 1.f, 0.f);
+					}
+					else 
+					{
+						if (m_hideGoodSamples)
+							continue;
+
+						color = glm::vec3(0.f, 1.f, 0.f);
+					}
+					
+
+					drawTextAtWorldPosition(glm::mat4(1.f), glm::vec3(it->m_position.x, it->m_position.y, it->m_position.z), "%.0f", mag_str * 100.f);
+					drawPointCloud(glm::mat4(1.f), color, reinterpret_cast<float *>(&it->m_position), 1);
+				}
+			}
 
         } break;
     case eMenuState::showTrackerVideo:
@@ -828,6 +963,8 @@ void AppStage_ComputeTrackerPoses::renderUI()
     case eMenuState::failedTrackerListRequest:
 	case eMenuState::failedTrackerStartRequest:
 	case eMenuState::failedControllerOffsets:
+	case eMenuState::failedControllerMagnetometer:
+	case eMenuState::failedControllerUnsupported:
         {
             ImGui::SetNextWindowPosCenter();
             ImGui::SetNextWindowSize(ImVec2(k_panel_width, 180));
@@ -836,25 +973,31 @@ void AppStage_ComputeTrackerPoses::renderUI()
             switch (m_menuState)
             {
             case eMenuState::failedControllerListRequest:
-                ImGui::Text("Failed controller list retrieval!");
+                ImGui::TextWrapped("Failed controller list retrieval!");
                 break;
             case eMenuState::failedControllerStartRequest:
-                ImGui::Text("Failed controller stream start!");
+                ImGui::TextWrapped("Failed controller stream start!");
                 break;
             case eMenuState::failedHmdListRequest:
-                ImGui::Text("Failed HMD list retrieval!");
+                ImGui::TextWrapped("Failed HMD list retrieval!");
                 break;
             case eMenuState::failedHmdStartRequest:
-                ImGui::Text("Failed HMD stream start!");
+                ImGui::TextWrapped("Failed HMD stream start!");
                 break;
             case eMenuState::failedTrackerListRequest:
-                ImGui::Text("Failed tracker list retrieval!");
+                ImGui::TextWrapped("Failed tracker list retrieval!");
                 break;
 			case eMenuState::failedTrackerStartRequest:
-				ImGui::Text("Failed tracker stream start!");
+				ImGui::TextWrapped("Failed tracker stream start!");
 				break;
 			case eMenuState::failedControllerOffsets:
-				ImGui::Text("Failed tracker data stream start!");
+				ImGui::TextWrapped("Failed tracker data stream start!");
+				break;
+			case eMenuState::failedControllerMagnetometer:
+				ImGui::TextWrapped("Failed to read controller magnetometer data!");
+				break;
+			case eMenuState::failedControllerUnsupported:
+				ImGui::TextWrapped("Controller does not support this action!");
 				break;
             }
 
@@ -953,10 +1096,64 @@ void AppStage_ComputeTrackerPoses::renderUI()
             m_pCalibrateWithMat->renderUI();
         } break;
 
-    case eMenuState::testTracking:
+	case eMenuState::testMagnetic:
+		{
+			ImGui::SetNextWindowPos(ImVec2(20.f, 20.f));
+			ImGui::SetNextWindowSize(ImVec2(250.f, 300.f));
+			ImGui::Begin("Test Magnetic Interferences", nullptr, window_flags);
+
+			ImGui::PushTextWrapPos();
+			ImGui::Bullet();
+			ImGui::SameLine();
+			ImGui::TextDisabled(
+				"This preview uses the device's magnetometer. Ensure that the magnetometer of this device is properly calibrated!");
+			ImGui::PopTextWrapPos();
+			ImGui::Separator();
+
+			int sample_count = 0;
+			float samples_avg = 0.f;
+
+			for (auto it = m_magneticSamples.begin(); it != m_magneticSamples.end(); ++it)
+			{
+				float mag_str = fabsf(it->magnetic_strength - 1);
+
+				samples_avg += mag_str;
+				++sample_count;
+			}
+
+			ImGui::Text("Overall Magnetic Quality:");
+			if (sample_count > 0)
+			{
+				ImGui::ProgressBar((1.f - ((samples_avg / sample_count) * 10.0f)), ImVec2(-1, 0), " ");
+			}
+			else
+			{
+				ImGui::ProgressBar(0.f, ImVec2(-1, 0), " ");
+			}
+
+			ImGui::Checkbox("Show Interferences Only", &m_hideGoodSamples);
+			ImGui::Checkbox("Show Tracker Frustum", &m_showTrackerFrustum);
+
+			if (ImGui::Button("Reset Samples"))
+			{
+				m_magneticSamples.clear();
+			}
+
+			ImGui::Separator();
+
+			if (ImGui::Button("Return to Test Tracking Pose"))
+			{
+				setState(eMenuState::testTracking);
+			}
+
+			ImGui::End();
+
+			break;
+		}
+	case eMenuState::testTracking:
         {
             ImGui::SetNextWindowPos(ImVec2(20.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(250.f, 300.f));
+            ImGui::SetNextWindowSize(ImVec2(250.f, 350.f));
             ImGui::Begin("Test Tracking Pose", nullptr, window_flags);
 
             // display per tracker UI
@@ -1004,6 +1201,11 @@ void AppStage_ComputeTrackerPoses::renderUI()
 				if (ImGui::Button("Show Tracker Triangulations"))
 				{
 					setState(eMenuState::pendingControllerOffsets);
+				}
+				if (ImGui::Button("Show Magnetic Interferences"))
+				{
+					m_magneticSamples.clear();
+					setState(eMenuState::testMagnetic);
 				}
 
 				ImGui::Separator();
@@ -1254,6 +1456,8 @@ void AppStage_ComputeTrackerPoses::onExitState(eMenuState newState)
     case eMenuState::failedTrackerListRequest:
 	case eMenuState::failedTrackerStartRequest:
 	case eMenuState::failedControllerOffsets:
+	case eMenuState::failedControllerMagnetometer:
+	case eMenuState::failedControllerUnsupported:
         break;
     case eMenuState::verifyTrackers:
         break;
@@ -1262,7 +1466,8 @@ void AppStage_ComputeTrackerPoses::onExitState(eMenuState newState)
     case eMenuState::calibrateWithMat:
         m_pCalibrateWithMat->exit();
         break;
-    case eMenuState::testTracking:
+	case eMenuState::testMagnetic:
+	case eMenuState::testTracking:
         m_app->setCameraType(_cameraFixed);
         break;
     case eMenuState::showTrackerVideo:
@@ -1281,6 +1486,8 @@ void AppStage_ComputeTrackerPoses::onExitState(eMenuState newState)
 
 void AppStage_ComputeTrackerPoses::onEnterState(eMenuState newState)
 {
+	m_showTrackerFrustum = true;
+
     switch (newState)
     {
     case eMenuState::inactive:
@@ -1311,6 +1518,8 @@ void AppStage_ComputeTrackerPoses::onEnterState(eMenuState newState)
     case eMenuState::failedTrackerListRequest:
 	case eMenuState::failedTrackerStartRequest:
 	case eMenuState::failedControllerOffsets:
+	case eMenuState::failedControllerMagnetometer:
+	case eMenuState::failedControllerUnsupported:
         break;
     case eMenuState::verifyTrackers:
         m_renderTrackerIter = m_trackerViews.begin();
@@ -1320,7 +1529,8 @@ void AppStage_ComputeTrackerPoses::onEnterState(eMenuState newState)
     case eMenuState::calibrateWithMat:
         m_pCalibrateWithMat->enter();
         break;
-    case eMenuState::testTracking:
+	case eMenuState::testMagnetic:
+	case eMenuState::testTracking:
         {
             for (t_controller_state_map_iterator controller_iter = m_controllerViews.begin(); controller_iter != m_controllerViews.end(); ++controller_iter)
             {
@@ -1763,7 +1973,8 @@ void AppStage_ComputeTrackerPoses::request_start_controller_stream(
     ++m_pendingControllerStartCount;
 
     unsigned int flags =
-        PSMStreamFlags_includePositionData |
+		PSMStreamFlags_includePositionData |
+		PSMStreamFlags_includeRawSensorData |
         PSMStreamFlags_includeCalibratedSensorData |
         PSMStreamFlags_includeRawTrackerData |
         PSMStreamFlags_includePhysicsData;
@@ -1953,6 +2164,7 @@ void AppStage_ComputeTrackerPoses::request_start_hmd_stream(
 
 	unsigned int flags =
 		PSMStreamFlags_includePositionData |
+		PSMStreamFlags_includeRawSensorData |
 		PSMStreamFlags_includeCalibratedSensorData |
 		PSMStreamFlags_includeRawTrackerData |
 		PSMStreamFlags_includePhysicsData;

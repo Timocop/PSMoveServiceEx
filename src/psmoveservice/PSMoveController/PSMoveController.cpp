@@ -935,12 +935,21 @@ void PSMoveControllerInputState::parseDataInput(
         calibrated_mag= eigen_alignment_project_point_on_ellipsoid_basis(raw_mag, ellipsoid);
 
         // Normalize the projected measurement (any deviation from unit length is error)
-		eigen_vector3f_normalize_with_default(calibrated_mag, Eigen::Vector3f(0.f, 1.f, 0.f));
+		// $TODO Externet: Dont normalize, we might need them unnormalized in the future. Normalize on demand instead!
+		//eigen_vector3f_normalize_with_default(calibrated_mag, Eigen::Vector3f(0.f, 1.f, 0.f));
+		
+		CalibratedMag[0] = 0.f;
+		CalibratedMag[1] = 0.f;
+		CalibratedMag[2] = 0.f;
 
-        // Save the calibrated magnetometer vector
-        CalibratedMag[0] = calibrated_mag.x();
-        CalibratedMag[1] = calibrated_mag.y();
-        CalibratedMag[2] = calibrated_mag.z();
+		const float calib_mag_length = calibrated_mag.norm();
+		if (calib_mag_length > k_real_epsilon)
+		{
+			// Save the calibrated magnetometer vector
+			CalibratedMag[0] = calibrated_mag.x();
+			CalibratedMag[1] = calibrated_mag.y();
+			CalibratedMag[2] = calibrated_mag.z();
+		}
 
 		// Other
 		SensorTwoFrames = true;

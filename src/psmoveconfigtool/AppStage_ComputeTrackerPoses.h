@@ -56,6 +56,12 @@ public:
 		PSMVector3f m_point;
 	};
 
+	struct MagneticInfo
+	{
+		float magnetic_strength;
+		PSMVector3f m_position;
+	};
+
     AppStage_ComputeTrackerPoses(class App *app);
     ~AppStage_ComputeTrackerPoses();
 
@@ -104,13 +110,16 @@ protected:
 		selectCalibrationMethod,
         calibrateWithMat,
 
-        testTracking,
+		testMagnetic,
+		testTracking,
 		showTrackerVideo,
         calibrateStepFailed,
 
 		pendingControllerOffsets,
 		showControllerOffsets,
 		failedControllerOffsets,
+		failedControllerMagnetometer,
+		failedControllerUnsupported,
     };
 
     void setState(eMenuState newState);
@@ -217,6 +226,11 @@ protected:
 	bool m_triangShowBounds;
 	bool m_triangCenter;
 	std::vector<TriangulationInfo> m_triangInfo;
+
+	std::vector<MagneticInfo> m_magneticSamples;
+	float m_currentMag;
+	bool m_hideGoodSamples;
+	bool m_showTrackerFrustum;
 };
 
 #endif // APP_STAGE_COMPUTE_TRACKER_POSES_H
