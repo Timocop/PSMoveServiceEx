@@ -112,7 +112,6 @@ public:
 	OrientationFilterMadgwickARG() 
 		: OrientationFilterComplementaryMARG()
 		, m_beta(0.f)
-		, m_smartReset(false)
 		, m_smartResetTime(0.0f)
 	{
 		m_smartOrientation = Eigen::Quaternionf::Identity();
@@ -125,7 +124,6 @@ public:
 
 protected:
 	float m_beta;
-	bool m_smartReset;
 	float m_smartResetTime;
 	Eigen::Quaternionf m_smartOrientation;
 	std::chrono::time_point<std::chrono::high_resolution_clock> timeReset;

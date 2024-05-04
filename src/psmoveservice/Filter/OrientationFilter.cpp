@@ -31,10 +31,10 @@
 #define k_madgwick_gyro_min_deg 1.5f
 #define k_madgwick_gyro_max_deg 15.0f
 #define k_madgwick_beta_smoothing_factor 0.1f
-#define k_madgwick_smart_correct_min_deg 5.0f
-#define k_madgwick_smart_correct_max_deg 25.0f
-#define k_madgwick_smart_correct_reset_time_ms 500.0f
+#define k_madgwick_smart_correct_max_deg 25.0f / 2.f
+#define k_madgwick_smart_correct_reset_time_ms 1000.0f
 #define k_madgwick_smart_correct_gravity_stable 0.8f
+#define k_madgwick_smart_correct_beta 0.2f
 
 #define k_lowpass_velocity_smoothing_factor 0.25f
 
@@ -470,7 +470,6 @@ void OrientationFilterMadgwickARG::resetState()
 {
 	OrientationFilterComplementaryMARG::resetState();
 	m_smartOrientation = Eigen::Quaternionf::Identity();
-	m_smartReset = false;
 	m_smartResetTime = 0.0f;
 }
 
@@ -619,26 +618,19 @@ void OrientationFilterMadgwickARG::update(
 				// normalize the gradient
 				eigen_quaternion_normalize_with_default(SEqHatDot, *k_eigen_quaternion_zero);
 
-				if (m_smartReset)
+				if (filter_madgwick_stabilization)
 				{
-					m_beta = 0.9f;
+					const float gyro_b = ((fminf(fminf(abs(current_omega.x()), abs(current_omega.y())), abs(current_omega.z())))) * k_radians_to_degreees;
+					const float gyro_multi = clampf((gyro_b - k_madgwick_gyro_min_deg) / k_madgwick_gyro_max_deg, 0.0f, 1.0f);
+
+					const float new_beta = clampf(filter_madgwick_beta * gyro_multi, filter_madgwick_stabilization_min_beta, 1.0f);
+					const float filtered_beta = filter_madgwick_stabilization_smoothing_factor * new_beta + (1.f - filter_madgwick_stabilization_smoothing_factor) * m_beta;
+
+					m_beta = filtered_beta;
 				}
 				else
 				{
-					if (filter_madgwick_stabilization)
-					{
-						const float gyro_b = ((fminf(fminf(abs(current_omega.x()), abs(current_omega.y())), abs(current_omega.z())))) * k_radians_to_degreees;
-						const float gyro_multi = clampf((gyro_b - k_madgwick_gyro_min_deg) / k_madgwick_gyro_max_deg, 0.0f, 1.0f);
-
-						const float new_beta = clampf(filter_madgwick_beta * gyro_multi, filter_madgwick_stabilization_min_beta, 1.0f);
-						const float filtered_beta = filter_madgwick_stabilization_smoothing_factor * new_beta + (1.f - filter_madgwick_stabilization_smoothing_factor) * m_beta;
-
-						m_beta = filtered_beta;
-					}
-					else
-					{
-						m_beta = filter_madgwick_beta;
-					}
+					m_beta = filter_madgwick_beta;
 				}
 
 				// Compute the estimated quaternion rate of change
@@ -692,7 +684,7 @@ void OrientationFilterMadgwickARG::update(
 
 					// Compute the estimated quaternion rate of change
 					// Eqn 43) SEq_est = SEqDot_omega - beta*SEqHatDot
-					Eigen::Quaternionf SEqDot_est = Eigen::Quaternionf(SEqDot_omega.coeffs() - SEqHatDot.coeffs()*0.9);
+					Eigen::Quaternionf SEqDot_est = Eigen::Quaternionf(SEqDot_omega.coeffs() - SEqHatDot.coeffs()*k_madgwick_smart_correct_beta);
 
 					// Compute then integrate the estimated quaternion rate
 					// Eqn 42) SEq_smart_new = SEq + SEqDot_est*imu_delta_time
@@ -710,46 +702,20 @@ void OrientationFilterMadgwickARG::update(
 			const Eigen::Vector3f &world_g = -packet.world_accelerometer;
 			const float accel_g = sqrtf(world_g.x() * world_g.x() + world_g.y() * world_g.y() + world_g.z() * world_g.z());
 			
-			if (m_smartReset)
+			if ((eigen_quaternion_unsigned_angle_between(SEq_smart_new, SEq_new) * k_radians_to_degreees) > k_madgwick_smart_correct_max_deg)
 			{
-				// Stop when deviation is too small
-				if ((eigen_quaternion_unsigned_angle_between(SEq_smart_new, SEq_new) * k_radians_to_degreees) < k_madgwick_smart_correct_min_deg)
-				{
-					m_smartReset = false;
-				}
-
-				// Stop if gravity is unstable
+				// Make sure smart madgwick its kind of stable
 				if (accel_g > k_madgwick_smart_correct_gravity_stable && accel_g < 1.f + (1.f - k_madgwick_smart_correct_gravity_stable))
 				{
-					m_smartReset = false;
-				}
-			}
-			else
-			{
-				if ((eigen_quaternion_unsigned_angle_between(SEq_smart_new, SEq_new) * k_radians_to_degreees) > k_madgwick_smart_correct_max_deg)
-				{
-					// Make sure smart madgwick its kind of stable
-					if (accel_g > k_madgwick_smart_correct_gravity_stable && accel_g < 1.f + (1.f - k_madgwick_smart_correct_gravity_stable))
-					{
-						m_smartResetTime += imu_delta_time;
+					m_smartResetTime += imu_delta_time;
 
-						if (m_smartResetTime > (k_madgwick_smart_correct_reset_time_ms / 1000.f))
-						{
-							if (filter_madgwick_smart_instant)
-							{
-								SEq_new = SEq_smart_new;
-								m_smartResetTime = 0.0f;
-							}
-							else
-							{
-								m_smartReset = true;
-							}
-						}
-					}
-					else
+					if (m_smartResetTime > (k_madgwick_smart_correct_reset_time_ms / 1000.f))
 					{
-						if (m_smartResetTime > 0.0f)
+						if (filter_madgwick_smart_instant)
+						{
+							SEq_new = SEq_smart_new;
 							m_smartResetTime = 0.0f;
+						}
 					}
 				}
 				else
@@ -758,11 +724,11 @@ void OrientationFilterMadgwickARG::update(
 						m_smartResetTime = 0.0f;
 				}
 			}
-		}
-		else
-		{
-			if (m_smartReset)
-				m_smartReset = false;
+			else
+			{
+				if (m_smartResetTime > 0.0f)
+					m_smartResetTime = 0.0f;
+			}
 		}
 
 
@@ -1013,26 +979,19 @@ void OrientationFilterMadgwickMARG::update(
 			// Eqn 12) q_dot = 0.5*q*omega
 			Eigen::Quaternionf SEqDot_omega = Eigen::Quaternionf(SEq.coeffs() * 0.5f) * corrected_omega;
 
-			if (m_smartReset)
+			if (filter_madgwick_stabilization)
 			{
-				m_beta = 0.9f;
+				const float gyro_b = ((fminf(fminf(abs(current_omega.x()), abs(current_omega.y())), abs(current_omega.z())))) * k_radians_to_degreees;
+				const float gyro_multi = clampf((gyro_b - k_madgwick_gyro_min_deg) / k_madgwick_gyro_max_deg, 0.0f, 1.0f);
+
+				const float new_beta = clampf(filter_madgwick_beta * gyro_multi, filter_madgwick_stabilization_min_beta, 1.0f);
+				const float filtered_beta = filter_madgwick_stabilization_smoothing_factor * new_beta + (1.f - filter_madgwick_stabilization_smoothing_factor) * m_beta;
+
+				m_beta = filtered_beta;
 			}
 			else
 			{
-				if (filter_madgwick_stabilization)
-				{
-					const float gyro_b = ((fminf(fminf(abs(current_omega.x()), abs(current_omega.y())), abs(current_omega.z())))) * k_radians_to_degreees;
-					const float gyro_multi = clampf((gyro_b - k_madgwick_gyro_min_deg) / k_madgwick_gyro_max_deg, 0.0f, 1.0f);
-
-					const float new_beta = clampf(filter_madgwick_beta * gyro_multi, filter_madgwick_stabilization_min_beta, 1.0f);
-					const float filtered_beta = filter_madgwick_stabilization_smoothing_factor * new_beta + (1.f - filter_madgwick_stabilization_smoothing_factor) * m_beta;
-
-					m_beta = filtered_beta;
-				}
-				else
-				{
-					m_beta = filter_madgwick_beta;
-				}
+				m_beta = filter_madgwick_beta;
 			}
 
 			// Compute the estimated quaternion rate of change
@@ -1108,7 +1067,7 @@ void OrientationFilterMadgwickMARG::update(
 
 				// Compute the estimated quaternion rate of change
 				// Eqn 43) SEq_est = SEqDot_omega - beta*SEqHatDot
-				Eigen::Quaternionf SEqDot_est = Eigen::Quaternionf(SEqDot_omega.coeffs() - SEqHatDot.coeffs()* 0.9f);
+				Eigen::Quaternionf SEqDot_est = Eigen::Quaternionf(SEqDot_omega.coeffs() - SEqHatDot.coeffs()* k_madgwick_smart_correct_beta);
 
 				// Compute then integrate the estimated quaternion rate
 				// Eqn 42) SEq_smart_new = SEq_smart + SEqDot_est*delta_t
@@ -1121,46 +1080,20 @@ void OrientationFilterMadgwickMARG::update(
 			const Eigen::Vector3f &world_g = -packet.world_accelerometer;
 			const float accel_g = sqrtf(world_g.x() * world_g.x() + world_g.y() * world_g.y() + world_g.z() * world_g.z());
 			
-			if (m_smartReset)
+			if ((eigen_quaternion_unsigned_angle_between(SEq_smart_new, SEq_new) * k_radians_to_degreees) > k_madgwick_smart_correct_max_deg)
 			{
-				// Stop when deviation is too small
-				if ((eigen_quaternion_unsigned_angle_between(SEq_smart_new, SEq_new) * k_radians_to_degreees) < k_madgwick_smart_correct_min_deg)
-				{
-					m_smartReset = false;
-				}
-
-				// Stop if gravity is unstable
+				// Make sure smart madgwick its kind of stable
 				if (accel_g > k_madgwick_smart_correct_gravity_stable && accel_g < 1.f + (1.f - k_madgwick_smart_correct_gravity_stable))
 				{
-					m_smartReset = false;
-				}
-			}
-			else
-			{
-				if ((eigen_quaternion_unsigned_angle_between(SEq_smart_new, SEq_new) * k_radians_to_degreees) > k_madgwick_smart_correct_max_deg)
-				{
-					// Make sure smart madgwick its kind of stable
-					if (accel_g > k_madgwick_smart_correct_gravity_stable && accel_g < 1.f + (1.f - k_madgwick_smart_correct_gravity_stable))
-					{
-						m_smartResetTime += imu_delta_time;
+					m_smartResetTime += imu_delta_time;
 
-						if (m_smartResetTime > (k_madgwick_smart_correct_reset_time_ms / 1000.f))
-						{
-							if (filter_madgwick_smart_instant)
-							{
-								SEq_new = SEq_smart_new;
-								m_smartResetTime = 0.0f;
-							}
-							else
-							{
-								m_smartReset = true;
-							}
-						}
-					}
-					else
+					if (m_smartResetTime > (k_madgwick_smart_correct_reset_time_ms / 1000.f))
 					{
-						if (m_smartResetTime > 0.0f)
+						if (filter_madgwick_smart_instant)
+						{
+							SEq_new = SEq_smart_new;
 							m_smartResetTime = 0.0f;
+						}
 					}
 				}
 				else
@@ -1169,11 +1102,11 @@ void OrientationFilterMadgwickMARG::update(
 						m_smartResetTime = 0.0f;
 				}
 			}
-		}
-		else
-		{
-			if (m_smartReset)
-				m_smartReset = false;
+			else
+			{
+				if (m_smartResetTime > 0.0f)
+					m_smartResetTime = 0.0f;
+			}
 		}
 		
 
