@@ -1206,21 +1206,47 @@ bool PSMoveController::open(
                 cfg = PSMoveControllerConfig(btaddr);
                 cfg.load();
 
-                if (!cfg.is_valid && !IsBluetooth)
-                {
-					SERVER_LOG_WARNING("PSMoveController::open") << "PSMoveController(" << cur_dev_path << ") has invalid calibration. Using device factory calibration.";
+				bool invalidCalibration = false;
 
-                    // Load calibration from controller internal memory.
-					if (getIsPS4Controller())
-						loadCalibrationZCM2();
+				// Check gyroscope config
+				if (fabsf(cfg.cal_ag_xyz_kbd[1][0][0]) >= 1.f || fabsf(cfg.cal_ag_xyz_kbd[1][1][0]) >= 1.f || fabsf(cfg.cal_ag_xyz_kbd[1][2][0]) >= 1.f ||
+					fabsf(cfg.cal_ag_xyz_kbd[1][0][0]) <= k_real_epsilon || fabsf(cfg.cal_ag_xyz_kbd[1][1][0]) <= k_real_epsilon || fabsf(cfg.cal_ag_xyz_kbd[1][2][0]) <= k_real_epsilon)
+				{
+					invalidCalibration = true;
+				}
+				// Check accelerometer config
+				if (fabsf(cfg.cal_ag_xyz_kbd[0][0][0]) >= 1.f || fabsf(cfg.cal_ag_xyz_kbd[0][1][0]) >= 1.f || fabsf(cfg.cal_ag_xyz_kbd[0][2][0]) >= 1.f ||
+					fabsf(cfg.cal_ag_xyz_kbd[0][0][0]) <= k_real_epsilon || fabsf(cfg.cal_ag_xyz_kbd[0][1][0]) <= k_real_epsilon || fabsf(cfg.cal_ag_xyz_kbd[0][2][0]) <= k_real_epsilon)
+				{
+					invalidCalibration = true;
+				}
+
+				if (!cfg.is_valid || invalidCalibration)
+				{
+					if (!IsBluetooth)
+					{
+						SERVER_LOG_WARNING("PSMoveController::open") << "PSMoveController(" << cur_dev_path << ") has invalid calibration. Using device factory calibration...";
+
+						// Load calibration from controller internal memory.
+						if (getIsPS4Controller())
+							loadCalibrationZCM2();
+						else
+							loadCalibrationZCM1();
+
+						invalidCalibration = false;
+
+						SERVER_LOG_WARNING("PSMoveController::open") << "... loaded factory calibration!";
+					}
 					else
-						loadCalibrationZCM1();
-                }
+					{
+						SERVER_LOG_ERROR("PSMoveController::open") << "PSMoveController(" << cur_dev_path << ") has invalid calibration. USB connection required to load factory calibration!";
+					}
+				}
 
 				// Always save the config back out in case some defaults changed
 				bSaveConfig = true;
 
-                success= true;
+                success = (cfg.is_valid && !invalidCalibration);
             }
             else
             {
