@@ -76,10 +76,6 @@ private:
     struct MagnetometerBoundsStatistics *m_boundsStatistics;
 	struct MagnetometerIdentityStatistics *m_identityStatistics;
 
-    int m_led_color_r;
-    int m_led_color_g;
-    int m_led_color_b;
-
     std::chrono::time_point<std::chrono::high_resolution_clock> m_stableStartTime;
     bool m_bIsStable;
 	bool m_bForceControllerStable;

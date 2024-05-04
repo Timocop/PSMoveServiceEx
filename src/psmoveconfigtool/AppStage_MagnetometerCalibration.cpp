@@ -237,9 +237,6 @@ AppStage_MagnetometerCalibration::AppStage_MagnetometerCalibration(App *app)
     , m_lastCalibratedAccelerometer()
     , m_boundsStatistics(new MagnetometerBoundsStatistics)
 	, m_identityStatistics(new MagnetometerIdentityStatistics)
-    , m_led_color_r(0)
-    , m_led_color_g(0)
-    , m_led_color_b(0)
     , m_stableStartTime()
     , m_bIsStable(false)
 	, m_bForceControllerStable(false)
@@ -285,10 +282,6 @@ void AppStage_MagnetometerCalibration::enter()
 
 	m_boundsStatistics->clear();
 	m_identityStatistics->clear();
-
-    m_led_color_r= 0;
-    m_led_color_g= 0;
-    m_led_color_b= 0;
 
 	m_stableStartTime = std::chrono::time_point<std::chrono::high_resolution_clock>();
     m_bIsStable= false;
@@ -345,8 +338,6 @@ void AppStage_MagnetometerCalibration::update()
 
 					m_boundsStatistics->clear();
                     
-                    m_led_color_r= 255; m_led_color_g= 0; m_led_color_b= 0;
-
                     if (m_bBypassCalibration)
                     {
                         m_app->getOrbitCamera()->resetOrientation();
@@ -373,19 +364,18 @@ void AppStage_MagnetometerCalibration::update()
             {
 				if (m_boundsStatistics->addSample(m_lastRawMagnetometer))
 				{
-                    int led_color_r = (255 * (100 - m_boundsStatistics->samplePercentage)) / 100;
-                    int led_color_g = (255 * m_boundsStatistics->samplePercentage) / 100;
-                    int led_color_b = 0;
-
-                    // Send request to change led color, don't care about callback
-                    if (led_color_r != m_led_color_r || led_color_g != m_led_color_g || led_color_b != m_led_color_b)
-                    {
-                        m_led_color_r = led_color_r;
-                        m_led_color_g = led_color_g;
-                        m_led_color_b = led_color_b;
-                            
-						PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, m_led_color_r, m_led_color_g, m_led_color_b);
-                    }
+					if (m_boundsStatistics->samplePercentage >= 100)
+					{
+						PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 255, 0);
+					}
+					else if (m_boundsStatistics->samplePercentage >= 50)
+					{
+						PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 255, 255, 0);
+					}
+					else
+					{
+						PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 255, 0, 0);
+					}
                 }
             }
         } break;
@@ -560,13 +550,8 @@ void AppStage_MagnetometerCalibration::render()
         } break;
     case eCalibrationMenuState::measureBExtents:
         {
-
-            float r= clampf01(static_cast<float>(m_led_color_r) / 255.f);
-            float g= clampf01(static_cast<float>(m_led_color_g) / 255.f);
-            float basis= clampf01(static_cast<float>(m_led_color_b) / 255.f);
-
             // Draw the psmove model in the middle
-            drawPSMoveModel(scaleAndRotateModelX90, glm::vec3(r, g, basis));
+            drawPSMoveModel(scaleAndRotateModelX90, glm::vec3(1.f, 1.f, 1.f));
 
             // Draw the sample point cloud around the origin
             drawPointCloud(
