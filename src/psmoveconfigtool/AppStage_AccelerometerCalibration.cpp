@@ -27,69 +27,140 @@ const char *AppStage_AccelerometerCalibration::APP_STAGE_NAME = "AcceleromterCal
 
 //-- constants -----
 static const double k_stabilize_wait_time_ms = 3000.f;
-static const int k_max_accelerometer_samples = 500;
+static const int k_max_accelerometer_samples = 100;
 
 static const float k_min_sample_distance = 1000.f;
 static const float k_min_sample_distance_sq = k_min_sample_distance*k_min_sample_distance;
 
 //-- definitions -----
-//-- definitions -----
-struct ControllerAccelerometerPoseSamples
+struct ControllerAccelerometerAxisSamples
 {
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	PSMVector3f raw_accelerometer_samples[k_max_accelerometer_samples];
-	PSMVector3f raw_average_gravity;
-	float raw_variance; // Max raw sensor variance (raw_sensor_units^2)
-	int sample_count;
+	PSMVector3f raw_accelerometer_samples[AppStage_AccelerometerCalibration::__MAX_AXIS][k_max_accelerometer_samples];
+	PSMVector3f raw_average_gravity[AppStage_AccelerometerCalibration::__MAX_AXIS];
+	float raw_variance[AppStage_AccelerometerCalibration::__MAX_AXIS]; // Max raw sensor variance (raw_sensor_units^2)
+	int sample_count[AppStage_AccelerometerCalibration::__MAX_AXIS];
 
 	void clear()
 	{
-		sample_count = 0;
-		raw_average_gravity = *k_psm_float_vector3_zero;
-		raw_variance = 0.f;
+		for (int i = 0; i < AppStage_AccelerometerCalibration::__MAX_AXIS; ++i)
+		{
+			sample_count[i] = 0;
+			raw_average_gravity[i] = *k_psm_float_vector3_zero;
+			raw_variance[i] = 0.f;
+		}
+	}
+
+	PSMVector3f getAvgSamples(AppStage_AccelerometerCalibration::eSampleAxis axis)
+	{
+		PSMVector3f raw_average_gravity = *k_psm_float_vector3_zero;
+		if (axis < 0 || axis > AppStage_AccelerometerCalibration::__MAX_AXIS - 1)
+		{
+			return raw_average_gravity;
+		}
+
+		const float N = static_cast<float>(k_max_accelerometer_samples);
+
+		for (int sample_index = 0; sample_index < k_max_accelerometer_samples; ++sample_index)
+		{
+			PSMVector3f signed_error_sample = raw_accelerometer_samples[axis][sample_index];
+			PSMVector3f unsigned_error_sample = PSM_Vector3fAbs(&signed_error_sample);
+
+			raw_average_gravity = PSM_Vector3fAdd(&raw_average_gravity, &signed_error_sample);
+		}
+
+		raw_average_gravity = PSM_Vector3fUnsafeScalarDivide(&raw_average_gravity, N);
+
+		return raw_average_gravity;
 	}
 
 	void computeStatistics()
 	{
-		const float N = static_cast<float>(k_max_accelerometer_samples);
-
-		// Compute both mean of signed and unsigned samples
-		PSMVector3f mean_acc_abs_error = *k_psm_float_vector3_zero;
-		raw_average_gravity = *k_psm_float_vector3_zero;
-		for (int sample_index = 0; sample_index < k_max_accelerometer_samples; ++sample_index)
+		for (int i = 0; i < AppStage_AccelerometerCalibration::__MAX_AXIS; ++i)
 		{
-			PSMVector3f signed_error_sample = raw_accelerometer_samples[sample_index];
-			PSMVector3f unsigned_error_sample = PSM_Vector3fAbs(&signed_error_sample);
+			const float N = static_cast<float>(k_max_accelerometer_samples);
 
-			mean_acc_abs_error = PSM_Vector3fAdd(&mean_acc_abs_error, &unsigned_error_sample);
-			raw_average_gravity = PSM_Vector3fAdd(&raw_average_gravity, &signed_error_sample);
+			// Compute both mean of signed and unsigned samples
+			PSMVector3f mean_acc_abs_error = *k_psm_float_vector3_zero;
+			raw_average_gravity[i] = *k_psm_float_vector3_zero;
+			for (int sample_index = 0; sample_index < k_max_accelerometer_samples; ++sample_index)
+			{
+				PSMVector3f signed_error_sample = raw_accelerometer_samples[i][sample_index];
+				PSMVector3f unsigned_error_sample = PSM_Vector3fAbs(&signed_error_sample);
+
+				mean_acc_abs_error = PSM_Vector3fAdd(&mean_acc_abs_error, &unsigned_error_sample);
+				raw_average_gravity[i] = PSM_Vector3fAdd(&raw_average_gravity[i], &signed_error_sample);
+			}
+			mean_acc_abs_error = PSM_Vector3fUnsafeScalarDivide(&mean_acc_abs_error, N);
+			raw_average_gravity[i] = PSM_Vector3fUnsafeScalarDivide(&raw_average_gravity[i], N);
+
+			// Compute the variance of the (unsigned) sample error, where "error" = abs(accelerometer_sample)
+			PSMVector3f var_accelerometer = *k_psm_float_vector3_zero;
+			for (int sample_index = 0; sample_index < sample_count[i]; sample_index++)
+			{
+				PSMVector3f unsigned_error_sample = PSM_Vector3fAbs(&raw_accelerometer_samples[i][sample_index]);
+				PSMVector3f diff_from_mean = PSM_Vector3fSubtract(&unsigned_error_sample, &mean_acc_abs_error);
+				PSMVector3f diff_from_mean_sqrd = PSM_Vector3fSquare(&diff_from_mean);
+
+				var_accelerometer = PSM_Vector3fAdd(&var_accelerometer, &diff_from_mean_sqrd);
+			}
+			var_accelerometer = PSM_Vector3fUnsafeScalarDivide(&var_accelerometer, N - 1);
+
+			// Use the max variance of all three axes (should be close)
+			raw_variance[i] = PSM_Vector3fMaxValue(&var_accelerometer);
 		}
-		mean_acc_abs_error = PSM_Vector3fUnsafeScalarDivide(&mean_acc_abs_error, N);
-		raw_average_gravity = PSM_Vector3fUnsafeScalarDivide(&raw_average_gravity, N);
+	}
 
-		// Compute the variance of the (unsigned) sample error, where "error" = abs(accelerometer_sample)
-		PSMVector3f var_accelerometer = *k_psm_float_vector3_zero;
-		for (int sample_index = 0; sample_index < sample_count; sample_index++)
+	void getCalibratedStatistics(PSMVector3f &accel_offset, PSMVector3f &accel_scale)
+	{
+		PSMVector3f normVec = *k_psm_float_vector3_zero;
+
+		float baseDistance = 0.f;
+
+		// Y Axis (drift, bias)
 		{
-			PSMVector3f unsigned_error_sample = PSM_Vector3fAbs(&raw_accelerometer_samples[sample_index]);
-			PSMVector3f diff_from_mean = PSM_Vector3fSubtract(&unsigned_error_sample, &mean_acc_abs_error);
-			PSMVector3f diff_from_mean_sqrd = PSM_Vector3fSquare(&diff_from_mean);
+			float avgY = PSM_Vector3fMaxValue(&raw_average_gravity[AppStage_AccelerometerCalibration::axisY]);
+			float avgYNeg = PSM_Vector3fMinValue(&raw_average_gravity[AppStage_AccelerometerCalibration::axisYNeg]);
 
-			var_accelerometer = PSM_Vector3fAdd(&var_accelerometer, &diff_from_mean_sqrd);
+			float distance = fabsf(avgY - avgYNeg);
+			float center = (avgY + avgYNeg) / 2.f;
+
+			baseDistance = distance;
+
+			accel_offset.y = center;
+			accel_scale.y = (1.f / (distance / 2.f));
 		}
-		var_accelerometer = PSM_Vector3fUnsafeScalarDivide(&var_accelerometer, N - 1);
 
-		// Use the max variance of all three axes (should be close)
-		raw_variance = PSM_Vector3fMaxValue(&var_accelerometer);
+		// X Axis (drift, bias) from Y
+		{
+			float avgX = PSM_Vector3fMaxValue(&raw_average_gravity[AppStage_AccelerometerCalibration::axisX]);
+
+			float distance = baseDistance;
+			float center = (avgX - (distance / 2.f));
+
+			accel_offset.x = center;
+			accel_scale.x = (1.f / (distance / 2.f));
+		}
+
+		// Z Axis (drift, bias) from Y
+		{
+			float avgZ = PSM_Vector3fMaxValue(&raw_average_gravity[AppStage_AccelerometerCalibration::axisZ]);
+
+			float distance = baseDistance;
+			float center = (avgZ - (distance / 2.f));
+
+			accel_offset.z = center;
+			accel_scale.z = (1.f / (distance / 2.f));
+		}
 	}
 };
 
 //-- private methods -----
 static void request_set_accelerometer_calibration(
-	const int controller_id,
-	const PSMVector3f &raw_average_gravity,
-	const float variance);
+	const int controller_id, 
+	const PSMVector3f & accel_offset, 
+	const PSMVector3f & accel_scale);
 static void drawController(PSMController *controllerView, const glm::mat4 &transform);
 
 //-- public methods -----
@@ -102,13 +173,14 @@ AppStage_AccelerometerCalibration::AppStage_AccelerometerCalibration(App *app)
     , m_isControllerStreamActive(false)
     , m_lastControllerSeqNum(-1)
 	, m_playspaceYawOffset(0.f)
-    , m_noiseSamples(new ControllerAccelerometerPoseSamples)
+	, m_axisSamples(new ControllerAccelerometerAxisSamples)
 {
+	m_axisSamples->clear();
 }
 
 AppStage_AccelerometerCalibration::~AppStage_AccelerometerCalibration()
 {
-    delete m_noiseSamples;
+	delete m_axisSamples;
 }
 
 void AppStage_AccelerometerCalibration::enter()
@@ -123,7 +195,7 @@ void AppStage_AccelerometerCalibration::enter()
     m_app->getOrbitCamera()->resetOrientation();
     m_app->getOrbitCamera()->setCameraOrbitRadius(1000.f); // zoom out to see the magnetometer data at scale
 
-    m_noiseSamples->clear();
+	m_axisSamples->clear();
 
     // Initialize the controller state
     assert(controllerInfo->ControllerID != -1);
@@ -134,6 +206,8 @@ void AppStage_AccelerometerCalibration::enter()
 	m_lastRawAccelerometer = *k_psm_int_vector3_zero;
 	m_lastCalibratedAccelerometer = *k_psm_float_vector3_zero;
     m_lastControllerSeqNum = -1;
+	m_lastUnstableTime = std::chrono::time_point<std::chrono::high_resolution_clock>();
+	m_isStable = false;
 
     // Start streaming in controller data
     assert(!m_isControllerStreamActive);
@@ -161,6 +235,7 @@ void AppStage_AccelerometerCalibration::exit()
 void AppStage_AccelerometerCalibration::update()
 {
     bool bControllerDataUpdatedThisFrame = false;
+	std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
 
     if (m_isControllerStreamActive && m_controllerView->OutputSequenceNum != m_lastControllerSeqNum)
     {
@@ -210,39 +285,136 @@ void AppStage_AccelerometerCalibration::update()
                 }
                 else
                 {
-                    m_menuState = AppStage_AccelerometerCalibration::placeController;
+                    m_menuState = AppStage_AccelerometerCalibration::measureAxisX;
                 }
             }
         } break;
     case eCalibrationMenuState::failedStreamStart:
-    case eCalibrationMenuState::placeController:
-        {
-        } break;
-    case eCalibrationMenuState::measureNoise:
-        {
-            if (bControllerDataUpdatedThisFrame && m_noiseSamples->sample_count < k_max_accelerometer_samples)
-            {
-                // Store the new sample
-				m_noiseSamples->raw_accelerometer_samples[m_noiseSamples->sample_count] = PSM_Vector3iCastToFloat(&m_lastRawAccelerometer);
-				++m_noiseSamples->sample_count;
+	case eCalibrationMenuState::measureAxisX:
+	case eCalibrationMenuState::measureAxisY:
+	case eCalibrationMenuState::measureAxisYNeg:
+	case eCalibrationMenuState::measureAxisZ:
+	{
+		bool stableAxis = false;
+		AppStage_AccelerometerCalibration::eSampleAxis axis = AppStage_AccelerometerCalibration::axisX;
+		const float acceleration_stable_range = cosf(10.f * k_degrees_to_radians);
 
-                // See if we filled all of the samples for this pose
-                if (m_noiseSamples->sample_count >= k_max_accelerometer_samples)
-                {
-					// Compute the average gravity value in this pose.
-					// This assumes that the acceleration noise has a Gaussian distribution.
-					m_noiseSamples->computeStatistics();
+		// Get the direction the gravity vector should be pointing 
+		// while the controller is in cradle pose.
+		const PSMVector3f acceleration_direction = PSM_Vector3iCastToFloat(&m_lastRawAccelerometer);
+		float acceleration_magnitude;
+		PSM_Vector3fNormalizeWithDefaultGetLength(&acceleration_direction, k_psm_float_vector3_zero, &acceleration_magnitude);
+		if (m_menuState == eCalibrationMenuState::measureAxisX)
+		{
+			PSMVector3f axisForward = eigen_vector3f_to_psm_vector3f(Eigen::Vector3f::UnitX());
 
-					// Tell the service what the new calibration constraints are
-					request_set_accelerometer_calibration(
-						m_controllerView->ControllerID,
-						m_noiseSamples->raw_average_gravity,
-						m_noiseSamples->raw_variance);
+			stableAxis =
+				(PSM_Vector3fDot(&axisForward, &acceleration_direction)
+					/ (PSM_Vector3fLength(&axisForward)
+						* PSM_Vector3fLength(&acceleration_direction))) >= acceleration_stable_range;
 
-                    m_menuState = AppStage_AccelerometerCalibration::measureComplete;
-                }
-            }
-        } break;
+			axis = AppStage_AccelerometerCalibration::axisX;
+		}
+		else if (m_menuState == eCalibrationMenuState::measureAxisY)
+		{
+			PSMVector3f axisForward = eigen_vector3f_to_psm_vector3f(Eigen::Vector3f::UnitY());
+
+			stableAxis =
+				(PSM_Vector3fDot(&axisForward, &acceleration_direction)
+					/ (PSM_Vector3fLength(&axisForward)
+						* PSM_Vector3fLength(&acceleration_direction))) >= acceleration_stable_range;
+
+			axis = AppStage_AccelerometerCalibration::axisY;
+		}
+		else if (m_menuState == eCalibrationMenuState::measureAxisYNeg)
+		{
+			PSMVector3f axisForward = eigen_vector3f_to_psm_vector3f(-Eigen::Vector3f::UnitY());
+
+			stableAxis =
+				(PSM_Vector3fDot(&axisForward, &acceleration_direction)
+					/ (PSM_Vector3fLength(&axisForward)
+						* PSM_Vector3fLength(&acceleration_direction))) >= acceleration_stable_range;
+
+			axis = AppStage_AccelerometerCalibration::axisYNeg;
+		}
+		else if (m_menuState == eCalibrationMenuState::measureAxisZ)
+		{
+			PSMVector3f axisForward = eigen_vector3f_to_psm_vector3f(Eigen::Vector3f::UnitZ());
+
+			stableAxis =
+				(PSM_Vector3fDot(&axisForward, &acceleration_direction)
+					/ (PSM_Vector3fLength(&axisForward)
+						* PSM_Vector3fLength(&acceleration_direction))) >= acceleration_stable_range;
+
+			axis = AppStage_AccelerometerCalibration::axisZ;
+		}
+
+		if (bControllerDataUpdatedThisFrame && m_axisSamples->sample_count[axis] < k_max_accelerometer_samples)
+		{
+			std::chrono::duration<double, std::milli> unstableDuration = now - m_lastUnstableTime;
+
+			if (stableAxis)
+			{
+				m_isStable = true;
+
+				PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 255, 0);
+
+				if (unstableDuration.count() >= k_stabilize_wait_time_ms)
+				{
+					// Store the new sample
+					m_axisSamples->raw_accelerometer_samples[axis][m_axisSamples->sample_count[axis]] = PSM_Vector3iCastToFloat(&m_lastRawAccelerometer);
+					++m_axisSamples->sample_count[axis];
+
+					// See if we filled all of the samples for this pose
+					if (m_axisSamples->sample_count[axis] >= k_max_accelerometer_samples)
+					{
+						if (m_menuState == eCalibrationMenuState::measureAxisX)
+							m_menuState = eCalibrationMenuState::measureAxisY;
+
+						else if (m_menuState == eCalibrationMenuState::measureAxisY)
+							m_menuState = eCalibrationMenuState::measureAxisYNeg;
+
+						else if (m_menuState == eCalibrationMenuState::measureAxisYNeg)
+							m_menuState = eCalibrationMenuState::measureAxisZ;
+
+						else if (m_menuState == eCalibrationMenuState::measureAxisZ)
+						{
+							// Compute the average gravity value in this pose.
+							// This assumes that the acceleration noise has a Gaussian distribution.
+							m_axisSamples->computeStatistics();
+
+							PSMVector3f accel_scale;
+							PSMVector3f accel_offset;
+							m_axisSamples->getCalibratedStatistics(accel_offset, accel_scale);
+
+							//// Tell the service what the new calibration constraints are
+							request_set_accelerometer_calibration(
+								m_controllerView->ControllerID,
+								accel_offset,
+								accel_scale);
+
+							PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
+							m_menuState = eCalibrationMenuState::measureComplete;
+						}
+					}
+				}
+			}
+			else
+			{
+				m_isStable = false;
+				m_lastUnstableTime = now;
+
+				if (m_axisSamples->sample_count[axis] > 0)
+				{
+					PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 255, 255, 0);
+				}
+				else
+				{
+					PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 255, 0, 0);
+				}
+			}
+		}
+	} break;
     case eCalibrationMenuState::measureComplete:
     case eCalibrationMenuState::test:
         {
@@ -284,48 +456,162 @@ void AppStage_AccelerometerCalibration::render()
     case eCalibrationMenuState::failedStreamStart:
         {
         } break;
-    case eCalibrationMenuState::placeController:
-        {
-			const float sampleScale = 0.05f;
-			glm::mat4 sampleTransform = glm::scale(glm::mat4(1.f), glm::vec3(sampleScale, sampleScale, sampleScale));
+	case eCalibrationMenuState::measureComplete:
+	{
+		const float sampleScale = 0.05f;
+		glm::mat4 sampleTransform = glm::scale(glm::mat4(1.f), glm::vec3(sampleScale, sampleScale, sampleScale));
 
-            // Draw the controller model in the pose we want the user place it in
-            drawController(m_controllerView, defaultControllerTransform);
+		// Draw the controller in the middle
+		drawController(m_controllerView, defaultControllerTransform);
 
-			// Draw the current raw accelerometer direction
+		// Draw the fixed world space axes
+		drawTransformedAxes(glm::scale(glm::mat4(1.f), glm::vec3(k_modelScale, k_modelScale, k_modelScale)), 20.f);
+
+		PSMVector3f lastRawAccel = PSM_Vector3iCastToFloat(&m_lastRawAccelerometer);
+		PSMVector3f normRawAccel;
+		PSMVector3f accelOffset;
+		PSMVector3f accelScale;
+		m_axisSamples->getCalibratedStatistics(accelOffset, accelScale);
+		normRawAccel.x = (lastRawAccel.x - accelOffset.x) * accelScale.x;
+		normRawAccel.y = (lastRawAccel.y - accelOffset.y) * accelScale.y;
+		normRawAccel.z = (lastRawAccel.z - accelOffset.z) * accelScale.z;
+
+		// Draw the current raw accelerometer direction
+		{
+			glm::vec3 m_start = glm::vec3(0.f, 0.f, 0.f);
+			glm::vec3 m_end = psm_vector3f_to_glm_vec3(lastRawAccel);
+
+			drawArrow(sampleTransform, m_start, m_end, 0.1f, glm::vec3(1.f, 0.f, 0.f));
+			drawTextAtWorldPosition(sampleTransform, m_end, "A: %.2f,%.2f,%.2f", 
+				normRawAccel.x, normRawAccel.y, normRawAccel.z);
+		}
+
+		// Draw the sample bounding box
+		{
+			PSMVector3f minSampleExtent = *k_psm_float_vector3_zero;
+			PSMVector3f maxSampleExtent = *k_psm_float_vector3_zero;
+
+			// Get average samples for bounding box
+			for (int i = 0; i < AppStage_AccelerometerCalibration::__MAX_AXIS; ++i)
 			{
-				PSMVector3f lastRawAccel = PSM_Vector3iCastToFloat(&m_lastRawAccelerometer);
-				glm::vec3 m_start = glm::vec3(0.f, 0.f, 0.f);
-				glm::vec3 m_end = psm_vector3f_to_glm_vec3(lastRawAccel);
+				PSMVector3f point = m_axisSamples->getAvgSamples(static_cast<AppStage_AccelerometerCalibration::eSampleAxis>(i));
+				minSampleExtent = PSM_Vector3fMin(&minSampleExtent, &point);
+				maxSampleExtent = PSM_Vector3fMax(&maxSampleExtent, &point);
 
-				drawArrow(sampleTransform, m_start, m_end, 0.1f, glm::vec3(1.f, 0.f, 0.f));
-				drawTextAtWorldPosition(sampleTransform, m_end, "A");
+				// Add missing negative axis
+				switch (i)
+				{
+				case AppStage_AccelerometerCalibration::axisX:
+				case AppStage_AccelerometerCalibration::axisZ:
+					// Combine, unused axis are zeroed anyways
+					point.x = -(point.x - accelOffset.x);
+					point.z = -(point.z - accelOffset.z);
+
+					minSampleExtent = PSM_Vector3fMin(&minSampleExtent, &point);
+					maxSampleExtent = PSM_Vector3fMax(&maxSampleExtent, &point);
+					break;
+				}
 			}
-        } break;
-    case eCalibrationMenuState::measureNoise:
-    case eCalibrationMenuState::measureComplete:
-        {
-            const float sampleScale = 0.05f;
-            glm::mat4 sampleTransform = glm::scale(glm::mat4(1.f), glm::vec3(sampleScale, sampleScale, sampleScale));
 
-            // Draw the controller in the middle            
-            drawController(m_controllerView, defaultControllerTransform);
-			
-            // Draw the sample point cloud around the origin
-            drawPointCloud(sampleTransform, glm::vec3(1.f, 1.f, 1.f), 
-                reinterpret_cast<float *>(m_noiseSamples->raw_accelerometer_samples), 
-                m_noiseSamples->sample_count);
+			glm::vec3 boxMin = psm_vector3f_to_glm_vec3(minSampleExtent);
+			glm::vec3 boxMax = psm_vector3f_to_glm_vec3(maxSampleExtent);
+			glm::vec3 boxCenter = (boxMax + boxMin) * 0.5f;
+			glm::vec3 boxExtents = (boxMax - boxMin) * 0.5f;
 
-            // Draw the current raw accelerometer direction
-            {
-				PSMVector3f lastRawAccel = PSM_Vector3iCastToFloat(&m_lastRawAccelerometer);
-                glm::vec3 m_start = glm::vec3(0.f, 0.f, 0.f);
-                glm::vec3 m_end = psm_vector3f_to_glm_vec3(lastRawAccel);
+			drawTransformedBox(sampleTransform, boxMin, boxMax, glm::vec3(1.f, 1.f, 1.f));
+			drawTextAtWorldPosition(sampleTransform, boxMin, "%.1f,%.1f,%.1f",
+				minSampleExtent.x, minSampleExtent.y, minSampleExtent.z);
+			drawTextAtWorldPosition(sampleTransform, boxMax, "%.1f,%.1f,%.1f",
+				maxSampleExtent.x, maxSampleExtent.y, maxSampleExtent.z);
+		}
+	} break;
+	case eCalibrationMenuState::measureAxisX:
+	case eCalibrationMenuState::measureAxisY:
+	case eCalibrationMenuState::measureAxisYNeg:
+	case eCalibrationMenuState::measureAxisZ:
+	{
+		int axis = AppStage_AccelerometerCalibration::axisX;
 
-                drawArrow(sampleTransform, m_start, m_end, 0.1f, glm::vec3(1.f, 0.f, 0.f));
-                drawTextAtWorldPosition(sampleTransform, m_end, "A");
-            }
-        } break;
+		const float sampleScale = 0.05f;
+		glm::mat4 sampleTransform = glm::scale(glm::mat4(1.f), glm::vec3(sampleScale, sampleScale, sampleScale));
+
+		if (m_menuState == eCalibrationMenuState::measureAxisX)
+		{
+			glm::vec3 m_start = glm::vec3(0.f, 0.f, 0.f);
+			glm::vec3 m_end = glm::vec3(20.f * 300.f, 0.f, 0.f);
+
+			axis = AppStage_AccelerometerCalibration::axisX;
+
+			drawArrow(sampleTransform, m_start, m_end, 1.0f, glm::vec3(1.f, 0.f, 0.f));
+		}
+		else if (m_menuState == eCalibrationMenuState::measureAxisY)
+		{
+			glm::vec3 m_start = glm::vec3(0.f, 0.f, 0.f);
+			glm::vec3 m_end = glm::vec3(0.f, 20.f * 300.f, 0.f);
+
+			axis = AppStage_AccelerometerCalibration::axisY;
+
+			drawArrow(sampleTransform, m_start, m_end, 1.0f, glm::vec3(0.f, 1.f, 0.f));
+		}
+		else if (m_menuState == eCalibrationMenuState::measureAxisYNeg)
+		{
+			glm::vec3 m_start = glm::vec3(0.f, 0.f, 0.f);
+			glm::vec3 m_end = -glm::vec3(0.f, 20.f * 300.f, 0.f);
+
+			axis = AppStage_AccelerometerCalibration::axisYNeg;
+
+			drawArrow(sampleTransform, m_start, m_end, 1.0f, glm::vec3(0.f, 1.f, 0.f));
+		}
+		else if (m_menuState == eCalibrationMenuState::measureAxisZ)
+		{
+			glm::vec3 m_start = glm::vec3(0.f, 0.f, 0.f);
+			glm::vec3 m_end = glm::vec3(0.f, 0.f, 20.f * 300.f);
+
+			axis = AppStage_AccelerometerCalibration::axisZ;
+
+			drawArrow(sampleTransform, m_start, m_end, 0.0f, glm::vec3(0.f, 0.f, 1.f));
+		}
+
+		// Draw the controller in the middle            
+		drawController(m_controllerView, defaultControllerTransform);
+
+		// Draw the sample point cloud around the origin
+		for (int i = 0; i < AppStage_AccelerometerCalibration::__MAX_AXIS; ++i)
+		{
+			if (m_axisSamples->sample_count[i] < 1)
+				continue;
+
+			glm::vec3 color = glm::vec3(1.f, 1.f, 1.f);
+			switch (i)
+			{
+			case AppStage_AccelerometerCalibration::axisX:
+				color = glm::vec3(1.f, 0.f, 0.f);
+				break;
+			case AppStage_AccelerometerCalibration::axisY:
+				color = glm::vec3(0.f, 1.f, 0.f);
+				break;
+			case AppStage_AccelerometerCalibration::axisYNeg:
+				color = glm::vec3(0.f, 0.5f, 0.f);
+				break;
+			case AppStage_AccelerometerCalibration::axisZ:
+				color = glm::vec3(0.f, 0.f, 1.f);
+				break;
+			}
+			drawPointCloud(sampleTransform, color,
+				reinterpret_cast<float *>(m_axisSamples->raw_accelerometer_samples[i]),
+				m_axisSamples->sample_count[i]);
+		}
+
+		// Draw the current raw accelerometer direction
+		{
+			PSMVector3f lastRawAccel = PSM_Vector3iCastToFloat(&m_lastRawAccelerometer);
+			glm::vec3 m_start = glm::vec3(0.f, 0.f, 0.f);
+			glm::vec3 m_end = psm_vector3f_to_glm_vec3(lastRawAccel);
+
+			drawArrow(sampleTransform, m_start, m_end, 0.1f, glm::vec3(1.f, 0.f, 0.f));
+			drawTextAtWorldPosition(sampleTransform, m_end, "A");
+		}
+	} break;
     case eCalibrationMenuState::test:
         {
 			const float k_sensorScale = 200.f;
@@ -455,53 +741,73 @@ void AppStage_AccelerometerCalibration::renderUI()
 
             ImGui::End();
         } break;
-    case eCalibrationMenuState::placeController:
-        {
-            ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
-            ImGui::Begin(k_window_title, nullptr, window_flags);
+	case eCalibrationMenuState::measureAxisX:
+	case eCalibrationMenuState::measureAxisY:
+	case eCalibrationMenuState::measureAxisYNeg:
+	case eCalibrationMenuState::measureAxisZ:
+	{
+		ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
+		ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
+		ImGui::Begin(k_window_title, nullptr, window_flags);
 
-			switch(m_controllerView->ControllerType)
+		std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<double, std::milli> unstableDuration = now - m_lastUnstableTime;
+		float fraction = static_cast<float>(unstableDuration.count() / k_stabilize_wait_time_ms);
+
+		if (!m_isStable)
+			fraction = 0.0f;
+
+		if (fraction < 1.0f)
+		{
+			ImGui::Text(
+				"Please align the accelerometer with the X/Y/Z axis and\n"
+				"then hold the controller still!"
+			);
+			ImGui::ProgressBar(fraction);
+			ImGui::Spacing(); 
+		}
+		else
+		{
+			if (m_menuState == eCalibrationMenuState::measureAxisX)
 			{
-			case PSMController_Move:
-				ImGui::Text(
-					"Stand the controller on a flat, level surface.\n"
-					"Do not move the controller while sampling is in progress!");
-				break;
-			case PSMController_DualShock4:
-				ImGui::Text(
-					"Lay the controller on a flat, level surface.\n"
-					"Do not move the controller while sampling is in progress!");
-				break;
+				float sampleFraction =
+					static_cast<float>(m_axisSamples->sample_count[AppStage_AccelerometerCalibration::axisX])
+					/ static_cast<float>(k_max_accelerometer_samples);
+
+				ImGui::Text("Sampling accelerometer axis scale X. Please hold still!");
+				ImGui::ProgressBar(sampleFraction);
 			}
+			else if (m_menuState == eCalibrationMenuState::measureAxisY)
+			{
+				float sampleFraction =
+					static_cast<float>(m_axisSamples->sample_count[AppStage_AccelerometerCalibration::axisY])
+					/ static_cast<float>(k_max_accelerometer_samples);
 
-            if (ImGui::Button("Start Sampling"))
-            {
-                m_menuState = eCalibrationMenuState::measureNoise;
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("Cancel"))
-            {
-                request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
-            }
+				ImGui::Text("Sampling accelerometer axis scale Y. Please hold still!");
+				ImGui::ProgressBar(sampleFraction);
+			}
+			else if (m_menuState == eCalibrationMenuState::measureAxisYNeg)
+			{
+				float sampleFraction =
+					static_cast<float>(m_axisSamples->sample_count[AppStage_AccelerometerCalibration::axisYNeg])
+					/ static_cast<float>(k_max_accelerometer_samples);
 
-            ImGui::End();
-        } break;
-    case eCalibrationMenuState::measureNoise:
-        {
-            ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
-            ImGui::Begin(k_window_title, nullptr, window_flags);
+				ImGui::Text("Sampling accelerometer axis scale negative Y. Please hold still!");
+				ImGui::ProgressBar(sampleFraction);
+			}
+			else if (m_menuState == eCalibrationMenuState::measureAxisZ)
+			{
+				float sampleFraction =
+					static_cast<float>(m_axisSamples->sample_count[AppStage_AccelerometerCalibration::axisZ])
+					/ static_cast<float>(k_max_accelerometer_samples);
 
-            float sampleFraction =
-                static_cast<float>(m_noiseSamples->sample_count)
-                / static_cast<float>(k_max_accelerometer_samples);
+				ImGui::Text("Sampling accelerometer axis scale Z. Please hold still!");
+				ImGui::ProgressBar(sampleFraction);
+			}
+		}
 
-            ImGui::Text("Sampling accelerometer.");
-            ImGui::ProgressBar(sampleFraction, ImVec2(250, 20));
-
-            ImGui::End();
-        } break;
+		ImGui::End();
+	} break;
     case eCalibrationMenuState::measureComplete:
         {
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
@@ -521,8 +827,10 @@ void AppStage_AccelerometerCalibration::renderUI()
             if (ImGui::Button("Redo"))
             {
                 // Reset the sample info for the current pose
-                m_noiseSamples->clear();
-                m_menuState = eCalibrationMenuState::placeController;
+				m_axisSamples->clear();
+
+				PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
+                m_menuState = eCalibrationMenuState::measureAxisX;
             }
 
             ImGui::End();
@@ -579,8 +887,8 @@ void AppStage_AccelerometerCalibration::renderUI()
 //-- private methods -----
 static void request_set_accelerometer_calibration(
 	const int controller_id,
-	const PSMVector3f &raw_average_gravity,
-	const float variance)
+	const PSMVector3f &accel_offset,
+	const PSMVector3f &accel_scale)
 {
 	RequestPtr request(new PSMoveProtocol::Request());
 	request->set_type(PSMoveProtocol::Request_RequestType_SET_CONTROLLER_ACCELEROMETER_CALIBRATION_EX);
@@ -589,10 +897,15 @@ static void request_set_accelerometer_calibration(
 		request->mutable_set_controller_accelerometer_calibration_ex_request();
 
 	calibration->set_controller_id(controller_id);
-	calibration->mutable_raw_average_gravity()->set_i(raw_average_gravity.x);
-	calibration->mutable_raw_average_gravity()->set_j(raw_average_gravity.y);
-	calibration->mutable_raw_average_gravity()->set_k(raw_average_gravity.z);
-	calibration->set_raw_variance(variance);
+	calibration->mutable_drift_gravity()->set_i(accel_offset.x);
+	calibration->mutable_drift_gravity()->set_j(accel_offset.y);
+	calibration->mutable_drift_gravity()->set_k(accel_offset.z);
+	calibration->mutable_scale_gravity()->set_i(accel_scale.x);
+	calibration->mutable_scale_gravity()->set_j(accel_scale.y);
+	calibration->mutable_scale_gravity()->set_k(accel_scale.z);
+	calibration->mutable_offset_gravity()->set_i(0.f);
+	calibration->mutable_offset_gravity()->set_j(0.f);
+	calibration->mutable_offset_gravity()->set_k(0.f);
 
 	PSMRequestID request_id;
 	PSM_SendOpaqueRequest(&request, &request_id);
@@ -666,6 +979,8 @@ void AppStage_AccelerometerCalibration::request_exit_to_app_stage(const char *ap
 {
 	if (m_isControllerStreamActive)
 	{
+		PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
+
 		PSMRequestID request_id;
 		PSM_StopControllerDataStreamAsync(m_controllerView->ControllerID, &request_id);
 		PSM_EatResponse(request_id);

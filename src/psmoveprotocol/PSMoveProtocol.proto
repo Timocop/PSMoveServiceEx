@@ -216,7 +216,8 @@ message Request {
         SET_CONTROLLER_MAGNETOMETER_CALIBRATION_BASIC= 57;
         SET_CONTROLLER_ANG_PREDICTION_TIME= 58;
         SET_HMD_ANG_PREDICTION_TIME= 59;
-        SET_CONTROLLER_ACCELEROMETER_CALIBRATION_EX= 60;
+        SET_CONTROLLER_ACCELEROMETER_CALIBRATION_AVG= 60;
+        SET_CONTROLLER_ACCELEROMETER_CALIBRATION_EX = 61;
     }
     RequestType type = 2;
 
@@ -716,12 +717,21 @@ message Request {
     RequestSetHmdOrientationPredictionTime request_set_hmd_orientation_prediction_time = 59;
 
     // Parameters for SET_CONTROLLER_ACCELEROMETER_CALIBRATION_EX
-    message RequestSetControllerAccelerometerCalibrationEx {
+    message RequestSetControllerAccelerometerCalibrationAvg {
         int32 controller_id = 1;
         FloatVector raw_average_gravity= 2;
         float raw_variance= 3;
     }
-    RequestSetControllerAccelerometerCalibrationEx set_controller_accelerometer_calibration_ex_request = 60;
+    RequestSetControllerAccelerometerCalibrationAvg set_controller_accelerometer_calibration_avg_request = 60;
+	
+    // Parameters for SET_CONTROLLER_ACCELEROMETER_CALIBRATION_EX
+    message RequestSetControllerAccelerometerCalibrationEx {
+        int32 controller_id = 1;
+        FloatVector scale_gravity= 2;
+        FloatVector offset_gravity= 3;
+        FloatVector drift_gravity= 4;
+    }
+    RequestSetControllerAccelerometerCalibrationEx set_controller_accelerometer_calibration_ex_request = 61;
 }
 
 // Reliable (TCP) responses to requests

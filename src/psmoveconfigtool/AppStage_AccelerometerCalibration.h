@@ -17,6 +17,16 @@ struct EigenFitEllipsoid;
 class AppStage_AccelerometerCalibration : public AppStage
 {
 public:
+	enum eSampleAxis
+	{
+		axisX,
+		axisY,
+		axisYNeg,
+		axisZ,
+
+		__MAX_AXIS
+	};
+
     AppStage_AccelerometerCalibration(class App *app);
     virtual ~AppStage_AccelerometerCalibration();
 
@@ -53,8 +63,10 @@ private:
 		pendingPlayspaceRequest,
         waitingForStreamStartResponse,
         failedStreamStart,
-        placeController,
-        measureNoise,
+		measureAxisX,
+		measureAxisY,
+		measureAxisYNeg,
+		measureAxisZ,
         measureComplete,
         test
     };
@@ -73,11 +85,14 @@ private:
     bool m_isControllerStreamActive;
     int m_lastControllerSeqNum;
 	float m_playspaceYawOffset;
+	bool m_isStable;
+	std::chrono::time_point<std::chrono::high_resolution_clock> m_lastUnstableTime;
 
 	PSMVector3i m_lastRawAccelerometer;
 	PSMVector3f m_lastCalibratedAccelerometer;
 
-	struct ControllerAccelerometerPoseSamples *m_noiseSamples;
+	struct ControllerAccelerometerAxisSamples *m_axisSamples;
 };
 
 #endif // APP_STAGE_ACCELEROMETER_CALIBRATION_H
+

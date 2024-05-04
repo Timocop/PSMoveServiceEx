@@ -936,9 +936,6 @@ void OrientationFilterMadgwickMARG::update(
 
 		const CommonRawDeviceVector current_raw_mag = packet.raw_imu_magnetometer;
 
-		printf("m_mag_scale - %f\n", m_mag_scale);
-		printf("filter_magnetometer_deviation_cutoff - %f\n", filter_magnetometer_deviation_cutoff);
-
 		if (!magnetometer_in_bounds_vector(
 			current_raw_mag, 
 			mag_ellipsoid,
@@ -1496,9 +1493,6 @@ void OrientationFilterComplementaryMARG::update(
 
 
 		const CommonRawDeviceVector current_raw_mag = packet.raw_imu_magnetometer;
-
-		printf("m_mag_scale - %f\n", m_mag_scale);
-		printf("filter_magnetometer_deviation_cutoff - %f\n", filter_magnetometer_deviation_cutoff);
 
 		if (!magnetometer_in_bounds_vector(
 			current_raw_mag, 

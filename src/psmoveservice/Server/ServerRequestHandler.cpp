@@ -430,6 +430,10 @@ public:
 				response = new PSMoveProtocol::Response;
 				handle_request__set_hmd_orientation_prediction_time(context, response);
 				break;
+			case PSMoveProtocol::Request_RequestType_SET_CONTROLLER_ACCELEROMETER_CALIBRATION_AVG:
+				response = new PSMoveProtocol::Response;
+				handle_request__set_controller_accelerometer_calibration_avg(context, response);
+				break;
 			case PSMoveProtocol::Request_RequestType_SET_CONTROLLER_ACCELEROMETER_CALIBRATION_EX:
 				response = new PSMoveProtocol::Response;
 				handle_request__set_controller_accelerometer_calibration_ex(context, response);
@@ -1485,11 +1489,11 @@ protected:
 		}
 	}
 
-	void handle_request__set_controller_accelerometer_calibration_ex(
+	void handle_request__set_controller_accelerometer_calibration_avg(
 		const RequestContext &context,
 		PSMoveProtocol::Response *response)
 	{
-		const int controller_id = context.request->set_controller_accelerometer_calibration_ex_request().controller_id();
+		const int controller_id = context.request->set_controller_accelerometer_calibration_avg_request().controller_id();
 
 		ServerControllerViewPtr ControllerView = m_device_manager.getControllerViewPtr(controller_id);
 
@@ -1500,31 +1504,31 @@ protected:
 				PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
 				PSMoveControllerConfig config = *controller->getConfig();
 
-				const auto &request = context.request->set_controller_accelerometer_calibration_ex_request();
+				const auto &request = context.request->set_controller_accelerometer_calibration_avg_request();
 
 				CommonDeviceVector measured_g;
 				set_config_vector(request.raw_average_gravity(), measured_g);
 				float length = sqrtf(measured_g.i*measured_g.i + measured_g.j*measured_g.j + measured_g.k*measured_g.k);
 				if (length > k_real_epsilon)
 				{
-					// Check if gain is valid
+					// Check if Scale/Gain is valid
 					if (config.cal_ag_xyz_kbd[0][0][0] > k_real_epsilon &&
 						config.cal_ag_xyz_kbd[0][1][0] > k_real_epsilon &&
 						config.cal_ag_xyz_kbd[0][2][0] > k_real_epsilon)
 					{
-						// Check if gain offset is valid
+						// Check if Drift is valid
 						if (config.cal_ag_xyz_kbd[0][0][1] > k_real_epsilon &&
 							config.cal_ag_xyz_kbd[0][1][1] > k_real_epsilon &&
 							config.cal_ag_xyz_kbd[0][2][1] > k_real_epsilon)
 						{
-							// Bias														// Gain                                                 // Offset
+							// Offset/Bias												// Scale/Gain                                           // Drift
 							config.cal_ag_xyz_kbd[0][0][2] = measured_g.i * (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][0][0])) - (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][0][1]));
 							config.cal_ag_xyz_kbd[0][1][2] = measured_g.j * (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][1][0])) - (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][1][1]));
 							config.cal_ag_xyz_kbd[0][2][2] = measured_g.k * (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][2][0])) - (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][2][1]));
 						}
 						else
 						{
-							// Bias														// Gain
+							// Offset/Bias												// Scale/Gain
 							config.cal_ag_xyz_kbd[0][0][2] = measured_g.i * (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][0][0]));
 							config.cal_ag_xyz_kbd[0][1][2] = measured_g.j * (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][1][0]));
 							config.cal_ag_xyz_kbd[0][2][2] = measured_g.k * (1.f - 1.f / (length*config.cal_ag_xyz_kbd[0][2][0]));
@@ -1532,7 +1536,7 @@ protected:
 					}
 					else
 					{
-						// Bias
+						// Offset/Bias
 						config.cal_ag_xyz_kbd[0][0][2] = measured_g.i;
 						config.cal_ag_xyz_kbd[0][1][2] = measured_g.j;
 						config.cal_ag_xyz_kbd[0][2][2] = measured_g.k;
@@ -1552,13 +1556,14 @@ protected:
 				PSDualShock4Controller *controller = ControllerView->castChecked<PSDualShock4Controller>();
 				PSDualShock4ControllerConfig config = *controller->getConfig();
 
-				const auto &request = context.request->set_controller_accelerometer_calibration_ex_request();
+				const auto &request = context.request->set_controller_accelerometer_calibration_avg_request();
 
 				CommonDeviceVector measured_g;
 				set_config_vector(request.raw_average_gravity(), measured_g);
 				float length = sqrtf(measured_g.i*measured_g.i + measured_g.j*measured_g.j + measured_g.k*measured_g.k);
 				if (length > k_real_epsilon)
 				{
+					// Check if Scale/Gain is valid
 					if (config.accelerometer_gain.i > k_real_epsilon &&
 						config.accelerometer_gain.j > k_real_epsilon &&
 						config.accelerometer_gain.k > k_real_epsilon)
@@ -1576,6 +1581,109 @@ protected:
 				}
 
 				config.accelerometer_variance = request.raw_variance();
+
+				controller->setConfig(&config);
+
+				ControllerView->resetPoseFilter();
+
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+			}
+			else
+			{
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+			}
+		}
+		else
+		{
+			response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+		}
+	}
+
+	void handle_request__set_controller_accelerometer_calibration_ex(
+		const RequestContext &context,
+		PSMoveProtocol::Response *response)
+	{
+		const int controller_id = context.request->set_controller_accelerometer_calibration_ex_request().controller_id();
+
+		ServerControllerViewPtr ControllerView = m_device_manager.getControllerViewPtr(controller_id);
+
+		if (ControllerView && ControllerView->getIsOpen())
+		{
+			if (ControllerView->getControllerDeviceType() == CommonDeviceState::PSMove)
+			{
+				PSMoveController *controller = ControllerView->castChecked<PSMoveController>();
+				PSMoveControllerConfig config = *controller->getConfig();
+
+				const auto &request = context.request->set_controller_accelerometer_calibration_ex_request();
+
+				CommonDeviceVector measured_scale;
+				CommonDeviceVector measured_offset;
+				CommonDeviceVector measured_drift;
+				set_config_vector(request.scale_gravity(), measured_scale);
+				set_config_vector(request.offset_gravity(), measured_offset);
+				set_config_vector(request.drift_gravity(), measured_drift);
+
+				float length = sqrtf(measured_scale.i*measured_scale.i + measured_scale.j*measured_scale.j + measured_scale.k*measured_scale.k);
+				if (length > k_real_epsilon)
+				{
+					// Scale/Gain
+					config.cal_ag_xyz_kbd[0][0][0] = measured_scale.i;
+					config.cal_ag_xyz_kbd[0][1][0] = measured_scale.j;
+					config.cal_ag_xyz_kbd[0][2][0] = measured_scale.k;
+
+					// Offset/Bias
+					config.cal_ag_xyz_kbd[0][0][1] = measured_offset.i;
+					config.cal_ag_xyz_kbd[0][1][1] = measured_offset.j;
+					config.cal_ag_xyz_kbd[0][2][1] = measured_offset.k;
+
+					// Drift
+					config.cal_ag_xyz_kbd[0][0][2] = measured_drift.i;
+					config.cal_ag_xyz_kbd[0][1][2] = measured_drift.j;
+					config.cal_ag_xyz_kbd[0][2][2] = measured_drift.k;
+				}
+
+				config.accelerometer_variance = 0.f;
+
+				controller->setConfig(&config);
+
+				ControllerView->resetPoseFilter();
+
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+			}
+			else if (ControllerView->getControllerDeviceType() == CommonDeviceState::PSDualShock4)
+			{
+				PSDualShock4Controller *controller = ControllerView->castChecked<PSDualShock4Controller>();
+				PSDualShock4ControllerConfig config = *controller->getConfig();
+
+				const auto &request = context.request->set_controller_accelerometer_calibration_ex_request();
+
+				CommonDeviceVector measured_scale;
+				CommonDeviceVector measured_offset;
+				CommonDeviceVector measured_drift;
+				set_config_vector(request.scale_gravity(), measured_scale);
+				set_config_vector(request.offset_gravity(), measured_offset);
+				set_config_vector(request.drift_gravity(), measured_drift);
+
+				float length = sqrtf(measured_scale.i*measured_scale.i + measured_scale.j*measured_scale.j + measured_scale.k*measured_scale.k);
+				if (length > k_real_epsilon)
+				{
+					// Scale/Gain
+					config.accelerometer_gain.i = measured_scale.i;
+					config.accelerometer_gain.j = measured_scale.j;
+					config.accelerometer_gain.k = measured_scale.k;
+
+					// Offset/Bias
+					config.accelerometer_bias.i = measured_offset.i;
+					config.accelerometer_bias.j = measured_offset.j;
+					config.accelerometer_bias.k = measured_offset.k;
+
+					// Drift
+					config.accelerometer_drift.i = measured_drift.i;
+					config.accelerometer_drift.j = measured_drift.j;
+					config.accelerometer_drift.k = measured_drift.k;
+				}
+
+				config.accelerometer_variance = 0.f;
 
 				controller->setConfig(&config);
 

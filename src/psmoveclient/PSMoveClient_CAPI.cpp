@@ -1155,7 +1155,7 @@ PSMResult PSM_GetIsControllerStable(PSMControllerID controller_id, bool *out_is_
         {
         case PSMController_Move:
             {
-				const float k_cosine_10_degrees = 0.984808f;
+				const float acceleration_stable_range = cosf(10.f * k_degrees_to_radians);
 
 				// Get the direction the gravity vector should be pointing 
 				// while the controller is in cradle pose.
@@ -1167,7 +1167,7 @@ PSMResult PSM_GetIsControllerStable(PSMControllerID controller_id, bool *out_is_
 					is_nearly_equal(1.f, acceleration_magnitude, 0.1f) &&
 					(PSM_Vector3fDot(&k_identity_gravity_calibration_direction, &acceleration_direction)
 						/ (PSM_Vector3fLength(&k_identity_gravity_calibration_direction) 
-							* PSM_Vector3fLength(&acceleration_direction))) >= k_cosine_10_degrees;
+							* PSM_Vector3fLength(&acceleration_direction))) >= acceleration_stable_range;
 
 				result= PSMResult_Success;
             } break;

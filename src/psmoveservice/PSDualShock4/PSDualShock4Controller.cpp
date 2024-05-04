@@ -478,9 +478,12 @@ PSDualShock4ControllerConfig::config2ptree()
     pt.put("Calibration.Accel.X.k", accelerometer_gain.i);
     pt.put("Calibration.Accel.Y.k", accelerometer_gain.j);
     pt.put("Calibration.Accel.Z.k", accelerometer_gain.k);
-    pt.put("Calibration.Accel.X.b", accelerometer_bias.i);
-    pt.put("Calibration.Accel.Y.b", accelerometer_bias.j);
-    pt.put("Calibration.Accel.Z.b", accelerometer_bias.k);
+	pt.put("Calibration.Accel.X.b", accelerometer_bias.i);
+	pt.put("Calibration.Accel.Y.b", accelerometer_bias.j);
+	pt.put("Calibration.Accel.Z.b", accelerometer_bias.k);
+	pt.put("Calibration.Accel.X.d", accelerometer_drift.i);
+	pt.put("Calibration.Accel.Y.d", accelerometer_drift.j);
+	pt.put("Calibration.Accel.Z.d", accelerometer_drift.k);
 	pt.put("Calibration.Accel.Variance", accelerometer_variance);
     pt.put("Calibration.Gyro.Gain", gyro_gain);
     pt.put("Calibration.Gyro.Variance", gyro_variance);
@@ -563,9 +566,12 @@ PSDualShock4ControllerConfig::ptree2config(const boost::property_tree::ptree &pt
         accelerometer_gain.i = pt.get<float>("Calibration.Accel.X.k", accelerometer_gain.i);
         accelerometer_gain.j = pt.get<float>("Calibration.Accel.Y.k", accelerometer_gain.j);
         accelerometer_gain.k = pt.get<float>("Calibration.Accel.Z.k", accelerometer_gain.k);
-        accelerometer_bias.i = pt.get<float>("Calibration.Accel.X.b", accelerometer_bias.i);
-        accelerometer_bias.j = pt.get<float>("Calibration.Accel.Y.b", accelerometer_bias.j);
-        accelerometer_bias.k = pt.get<float>("Calibration.Accel.Z.b", accelerometer_bias.k);
+		accelerometer_bias.i = pt.get<float>("Calibration.Accel.X.b", accelerometer_bias.i);
+		accelerometer_bias.j = pt.get<float>("Calibration.Accel.Y.b", accelerometer_bias.j);
+		accelerometer_bias.k = pt.get<float>("Calibration.Accel.Z.b", accelerometer_bias.k);
+		accelerometer_drift.i = pt.get<float>("Calibration.Accel.X.d", accelerometer_drift.i);
+		accelerometer_drift.j = pt.get<float>("Calibration.Accel.Y.d", accelerometer_drift.j);
+		accelerometer_drift.k = pt.get<float>("Calibration.Accel.Z.d", accelerometer_drift.k);
 		accelerometer_variance= pt.get<float>("Calibration.Accel.Variance", accelerometer_variance);
 		position_variance_exp_fit_a= pt.get<float>("Calibration.Position.VarianceExpFitA", position_variance_exp_fit_a);
 		position_variance_exp_fit_b= pt.get<float>("Calibration.Position.VarianceExpFitB", position_variance_exp_fit_b);
@@ -800,16 +806,15 @@ void DualShock4ControllerInputState::parseDataInput(
         RawGyro[1] = static_cast<int>(raw_gyroY);
         RawGyro[2] = static_cast<int>(raw_gyroZ);
 
+
+		const CommonDeviceVector accel_k = config->accelerometer_gain; // calibration scale
+		const CommonDeviceVector accel_b = config->accelerometer_bias; // calibration offset
+		const CommonDeviceVector accel_d = config->accelerometer_drift; // calibration drift
+
         // calibrated_acc= raw_acc*acc_gain + acc_bias
-        CalibratedAccelerometer.i = 
-            static_cast<float>(RawAccelerometer[0]) * config->accelerometer_gain.i 
-            + config->accelerometer_bias.i;
-        CalibratedAccelerometer.j =
-            static_cast<float>(RawAccelerometer[1]) * config->accelerometer_gain.j
-            + config->accelerometer_bias.j;
-        CalibratedAccelerometer.k =
-            static_cast<float>(RawAccelerometer[2]) * config->accelerometer_gain.k
-            + config->accelerometer_bias.k;
+        CalibratedAccelerometer.i = (static_cast<float>(RawAccelerometer[0]) - accel_d.i) * accel_k.i + accel_b.i;
+        CalibratedAccelerometer.j = (static_cast<float>(RawAccelerometer[1]) - accel_d.j) * accel_k.j + accel_b.j;
+        CalibratedAccelerometer.k = (static_cast<float>(RawAccelerometer[2]) - accel_d.k) * accel_k.k + accel_b.k;
 
         // calibrated_gyro= raw_gyro*gyro_gain + gyro_bias
         CalibratedGyro.i = static_cast<float>(RawGyro[0]) * config->gyro_gain;

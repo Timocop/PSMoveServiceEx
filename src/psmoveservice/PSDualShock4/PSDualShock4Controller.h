@@ -127,9 +127,13 @@ public:
         
         // Accelerometer bias computed from accelerometer calibration in the config tool is really close to 0
         // This is because the raw gyro readings are likely pre-calibrated
-        accelerometer_bias.i = 0.f;
-        accelerometer_bias.j = 0.f;
-        accelerometer_bias.k = 0.f;
+		accelerometer_bias.i = 0.f;
+		accelerometer_bias.j = 0.f;
+		accelerometer_bias.k = 0.f;
+
+		accelerometer_drift.i = 0.f;
+		accelerometer_drift.j = 0.f;
+		accelerometer_drift.k = 0.f;
 
 		// Gyro gain mode can vary from controller to controller
 		// Initially assume that this controller is using the '±2000°/s' mode 
@@ -163,7 +167,8 @@ public:
 
     // calibrated_acc= raw_acc*acc_gain + acc_bias
     CommonDeviceVector accelerometer_gain;
-    CommonDeviceVector accelerometer_bias;
+	CommonDeviceVector accelerometer_bias;
+	CommonDeviceVector accelerometer_drift;
 
 	// The offset added in post
 	CommonDevicePosition offset_position;
