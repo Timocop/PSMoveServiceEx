@@ -763,7 +763,7 @@ void AppStage_AccelerometerCalibration::renderUI()
 				"Please align the accelerometer with the X/Y/Z axis and\n"
 				"then hold the controller still!"
 			);
-			ImGui::ProgressBar(fraction);
+			ImGui::ProgressBar(fraction, ImVec2(250, 20));
 			ImGui::Spacing(); 
 		}
 		else
@@ -775,7 +775,7 @@ void AppStage_AccelerometerCalibration::renderUI()
 					/ static_cast<float>(k_max_accelerometer_samples);
 
 				ImGui::Text("Sampling accelerometer axis scale X. Please hold still!");
-				ImGui::ProgressBar(sampleFraction);
+				ImGui::ProgressBar(sampleFraction, ImVec2(250, 20));
 			}
 			else if (m_menuState == eCalibrationMenuState::measureAxisY)
 			{
@@ -784,7 +784,7 @@ void AppStage_AccelerometerCalibration::renderUI()
 					/ static_cast<float>(k_max_accelerometer_samples);
 
 				ImGui::Text("Sampling accelerometer axis scale Y. Please hold still!");
-				ImGui::ProgressBar(sampleFraction);
+				ImGui::ProgressBar(sampleFraction, ImVec2(250, 20));
 			}
 			else if (m_menuState == eCalibrationMenuState::measureAxisYNeg)
 			{
@@ -793,7 +793,7 @@ void AppStage_AccelerometerCalibration::renderUI()
 					/ static_cast<float>(k_max_accelerometer_samples);
 
 				ImGui::Text("Sampling accelerometer axis scale negative Y. Please hold still!");
-				ImGui::ProgressBar(sampleFraction);
+				ImGui::ProgressBar(sampleFraction, ImVec2(250, 20));
 			}
 			else if (m_menuState == eCalibrationMenuState::measureAxisZ)
 			{
@@ -802,8 +802,23 @@ void AppStage_AccelerometerCalibration::renderUI()
 					/ static_cast<float>(k_max_accelerometer_samples);
 
 				ImGui::Text("Sampling accelerometer axis scale Z. Please hold still!");
-				ImGui::ProgressBar(sampleFraction);
+				ImGui::ProgressBar(sampleFraction, ImVec2(250, 20));
 			}
+		}
+
+		if (ImGui::Button("Abort"))
+		{
+			PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
+			request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Redo"))
+		{
+			// Reset the sample info for the current pose
+			m_axisSamples->clear();
+
+			PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
+			m_menuState = eCalibrationMenuState::measureAxisX;
 		}
 
 		ImGui::End();
