@@ -58,7 +58,7 @@ struct MagnetometerBoundsStatistics
 		, samplePercentage(0)
 		, minSampleExtent()
 		, maxSampleExtent()
-		, ellipseFitMethod(_ellipse_fit_method_least_squares)
+		, ellipseFitMethod(_ellipse_fit_method_box)
 	{
 		clear();
 	}
@@ -823,7 +823,8 @@ void AppStage_MagnetometerCalibration::renderUI()
                 ImGui::End();
             }
 
-            {
+			// $TODO: least squares fit method does not work with non-uniform samples. Use box fit.
+            /*{
                 ImGui::SetNextWindowPos(ImVec2(10.f, 450.f));
                 ImGui::SetNextWindowSize(ImVec2(170.f, 80.f));
                 ImGui::Begin("Ellipse Fitting Mode", nullptr, window_flags);
@@ -847,7 +848,7 @@ void AppStage_MagnetometerCalibration::renderUI()
                 }
 
                 ImGui::End();
-            }
+            }*/
         } break;
     case eCalibrationMenuState::waitForGravityAlignment:
         {
