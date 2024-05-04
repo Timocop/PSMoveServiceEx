@@ -22,6 +22,9 @@
 #include <imgui.h>
 #include <sstream>
 
+const float k_magnetic_bad = 0.2f;
+const float k_magnetic_warn = 0.1f;
+
 //-- statics ----
 const char *AppStage_ComputeTrackerPoses::APP_STAGE_NAME = "ComputeTrackerPoses";
 
@@ -59,7 +62,7 @@ AppStage_ComputeTrackerPoses::AppStage_ComputeTrackerPoses(App *app)
 	, m_triangCenter(false)
 	, m_hideGoodSamples(false)
 	, m_showTrackerFrustum(true)
-	, m_currentMag(1.f)
+	, m_currentMag(0.f)
 { 
     m_renderTrackerIter = m_trackerViews.end();
 	m_triangInfo.clear();
@@ -113,7 +116,7 @@ void AppStage_ComputeTrackerPoses::enter()
 	m_lastControllerSeqNum = -1;
 	
 	m_showTrackerFrustum = true;
-	m_currentMag = 1.f;
+	m_currentMag = 0.f;
 
 	m_magneticSamples.clear();
 
@@ -235,9 +238,7 @@ void AppStage_ComputeTrackerPoses::update()
 					else
 					{
 						PSMVector3f raw_mag = controllerView->ControllerState.PSMoveState.CalibratedSensorData.Magnetometer;
-						if (is_nearly_zero(raw_mag.x) &&
-							is_nearly_zero(raw_mag.y) &&
-							is_nearly_zero(raw_mag.z))
+						if (is_nearly_zero(raw_mag.x) && is_nearly_zero(raw_mag.y) && is_nearly_zero(raw_mag.z))
 						{
 							setState(AppStage_ComputeTrackerPoses::failedControllerMagnetometer);
 						}
@@ -246,11 +247,11 @@ void AppStage_ComputeTrackerPoses::update()
 							const float k_sample_distance = 30.f;
 							const float k_sample_alpha = 0.1;
 
-							const float raw_mag_q = sqrtf(
+							const float raw_mag_q = fabsf(sqrtf(
 								raw_mag.x * raw_mag.x +
 								raw_mag.y * raw_mag.y +
 								raw_mag.z * raw_mag.z
-							);
+							) - 1.f);
 
 							m_currentMag = k_sample_alpha*raw_mag_q + (1.f - k_sample_alpha)*m_currentMag;
 
@@ -258,26 +259,30 @@ void AppStage_ComputeTrackerPoses::update()
 							{
 								PSMVector3f position = controllerView->ControllerState.PSMoveState.Pose.Position;
 
-								bool bSampleFound = false;
-
-								for (auto it = m_magneticSamples.begin(); it != m_magneticSamples.end(); ++it)
+								int targetIndex = -1;
+								float nearestDistance = k_sample_distance;
+								for (int j = m_magneticSamples.size()-1; j > -1; --j)
 								{
-									float dx = (position.x - it->m_position.x);
-									float dy = (position.y - it->m_position.y);
-									float dz = (position.z - it->m_position.z);
+									float dx = (position.x - m_magneticSamples[j].m_position.x);
+									float dy = (position.y - m_magneticSamples[j].m_position.y);
+									float dz = (position.z - m_magneticSamples[j].m_position.z);
 									float sample_distance = sqrtf(dx*dx + dy*dy + dz*dz);
 
-									if (sample_distance < k_sample_distance)
+									if (nearestDistance < 0.f || sample_distance < nearestDistance)
 									{
-										if (it->magnetic_strength < m_currentMag)
-											it->magnetic_strength = m_currentMag;
-
-										bSampleFound = true;
-										break;
+										nearestDistance = sample_distance;
+										targetIndex = j;
 									}
 								}
 
-								if (!bSampleFound && m_magneticSamples.size() < 1000)
+								if (targetIndex > -1)
+								{
+									m_magneticSamples[targetIndex].magnetic_strength = 
+										k_sample_alpha*m_currentMag + 
+										(1.f - k_sample_alpha)*m_magneticSamples[targetIndex].magnetic_strength;
+								}
+
+								if (targetIndex == -1 && m_magneticSamples.size() < 1000)
 								{
 									MagneticInfo info;
 									info.magnetic_strength = m_currentMag;
@@ -705,15 +710,15 @@ void AppStage_ComputeTrackerPoses::render()
 			{
 				for (auto it = m_magneticSamples.begin(); it != m_magneticSamples.end(); ++it)
 				{
-					float mag_str = fabsf(it->magnetic_strength - 1);
+					float mag_str = fabsf(it->magnetic_strength);
 
 					glm::vec3 color = glm::vec3(1.f, 1.f, 1.f);
 
-					if (mag_str > 0.075f)
+					if (mag_str > k_magnetic_bad)
 					{
 						color = glm::vec3(1.f, 0.f, 0.f);
 					}
-					else if (mag_str > 0.05f)
+					else if (mag_str > k_magnetic_warn)
 					{
 						color = glm::vec3(1.f, 1.f, 0.f);
 					}
@@ -1115,7 +1120,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
 
 			for (auto it = m_magneticSamples.begin(); it != m_magneticSamples.end(); ++it)
 			{
-				float mag_str = fabsf(it->magnetic_strength - 1);
+				float mag_str = fabsf(it->magnetic_strength);
 
 				samples_avg += mag_str;
 				++sample_count;
@@ -1124,7 +1129,8 @@ void AppStage_ComputeTrackerPoses::renderUI()
 			ImGui::Text("Overall Magnetic Quality:");
 			if (sample_count > 0)
 			{
-				ImGui::ProgressBar((1.f - ((samples_avg / sample_count) * 10.0f)), ImVec2(-1, 0), " ");
+				float percent = (samples_avg / sample_count) / k_magnetic_bad;
+				ImGui::ProgressBar(1.f - percent, ImVec2(-1, 0), " ");
 			}
 			else
 			{
