@@ -308,18 +308,10 @@ static Eigen::Vector3f lowpass_filter_vector3f(
 	const Eigen::Vector3f &old_filtered_vector,
 	const Eigen::Vector3f &new_vector);
 
-static bool magnetometer_in_bounds_vector(
-	const CommonRawDeviceVector raw_mag_int,
-	const EigenFitEllipsoid & ellipsoid,
-	float & m_mag_scale, 
-	const float smoothing, 
-	const float diviation);
-
 static bool magnetometer_in_bounds_vector3f(
-	const Eigen::Vector3f raw_mag,
-	const EigenFitEllipsoid & ellipsoid, 
-	float & m_mag_scale, 
-	const float smoothing, 
+	const Eigen::Vector3f calib_mag,
+	float &m_mag_scale,
+	const float smoothing,
 	const float diviation);
 
 // -- public interface -----
@@ -797,9 +789,6 @@ void OrientationFilterMadgwickMARG::update(
 	bool filter_madgwick_smart_correct = true;
 	bool filter_madgwick_smart_instant = true;
 
-	EigenFitEllipsoid mag_ellipsoid;
-	mag_ellipsoid.clear();
-
 #if !defined(IS_TESTING_KALMAN) 
 	if (packet.controllerDeviceId > -1)
 	{
@@ -822,8 +811,6 @@ void OrientationFilterMadgwickMARG::update(
 				filter_magnetometer_deviation_cutoff = config.filter_magnetometer_deviation_cutoff;
 				filter_madgwick_smart_correct = config.filter_madgwick_smart_correct;
 				filter_madgwick_smart_instant = config.filter_madgwick_smart_instant;
-
-				config.getMagnetometerEllipsoid(&mag_ellipsoid);
 
 				break;
 			}
@@ -890,7 +877,8 @@ void OrientationFilterMadgwickMARG::update(
 		Eigen::Vector3f current_g= packet.imu_accelerometer_g_units;
 		eigen_vector3f_normalize_with_default(current_g, Eigen::Vector3f::Zero());
 
-		Eigen::Vector3f current_m= packet.imu_magnetometer_unit;
+		Eigen::Vector3f current_m = packet.imu_magnetometer_unit;
+		Eigen::Vector3f current_uncap_m = current_m;
 		eigen_vector3f_normalize_with_default(current_m, Eigen::Vector3f::Zero());
 
 		// If there isn't a valid magnetometer or accelerometer vector, fall back to the IMU style update
@@ -900,11 +888,8 @@ void OrientationFilterMadgwickMARG::update(
 			return;
 		}
 
-		const CommonRawDeviceVector current_raw_mag = packet.raw_imu_magnetometer;
-
-		if (!magnetometer_in_bounds_vector(
-			current_raw_mag, 
-			mag_ellipsoid,
+		if (!magnetometer_in_bounds_vector3f(
+			current_uncap_m,
 			m_mag_scale, 
 			0.8f, 
 			filter_magnetometer_deviation_cutoff))
@@ -1306,37 +1291,18 @@ static Eigen::Vector3f lowpass_filter_vector3f(
 	return filtered_vector;
 }
 
-static bool magnetometer_in_bounds_vector(
-	const CommonRawDeviceVector raw_mag_int,
-	const EigenFitEllipsoid &ellipsoid,
-	float &m_mag_scale,
-	const float smoothing,
-	const float diviation)
-{
-	Eigen::Vector3f raw_mag = Eigen::Vector3f(
-		static_cast<float>(raw_mag_int.i),
-		static_cast<float>(raw_mag_int.j),
-		static_cast<float>(raw_mag_int.k));
-
-	return magnetometer_in_bounds_vector3f(raw_mag, ellipsoid, m_mag_scale, smoothing, diviation);
-}
-
 static bool magnetometer_in_bounds_vector3f(
-	const Eigen::Vector3f raw_mag,
-	const EigenFitEllipsoid &ellipsoid,
+	const Eigen::Vector3f calib_mag,
 	float &m_mag_scale,
 	const float smoothing,
 	const float diviation)
 {
-	Eigen::Vector3f ellipsoid_sample =
-		eigen_alignment_project_point_on_ellipsoid_basis(raw_mag, ellipsoid);
+	const float calib_mag_q = sqrtf(
+		calib_mag.x() * calib_mag.x() +
+		calib_mag.y() * calib_mag.y() +
+		calib_mag.z() * calib_mag.z());
 
-	const float ellipsoid_sample_q = sqrtf(
-		ellipsoid_sample.x() * ellipsoid_sample.x() +
-		ellipsoid_sample.y() * ellipsoid_sample.y() +
-		ellipsoid_sample.z() * ellipsoid_sample.z());
-
-	m_mag_scale = (smoothing*ellipsoid_sample_q + (1.f - smoothing)*m_mag_scale);
+	m_mag_scale = (smoothing*calib_mag_q + (1.f - smoothing)*m_mag_scale);
 
 	return (m_mag_scale > (1.f - diviation) && m_mag_scale < 1.f + diviation);
 }
@@ -1364,9 +1330,6 @@ void OrientationFilterComplementaryMARG::update(
 	float velocity_smoothing_factor = k_lowpass_velocity_smoothing_factor;
 	float angular_prediction_cutoff = k_adaptive_prediction_cutoff;
 	float filter_magnetometer_deviation_cutoff = k_magnetometer_deviation_cutoff;
-
-	EigenFitEllipsoid mag_ellipsoid;
-	mag_ellipsoid.clear();
 
 #if !defined(IS_TESTING_KALMAN) 
 	if (packet.controllerDeviceId > -1)
@@ -1396,8 +1359,6 @@ void OrientationFilterComplementaryMARG::update(
 				angular_prediction_cutoff = config.filter_angular_prediction_cutoff;
 				filter_magnetometer_deviation_cutoff = config.filter_magnetometer_deviation_cutoff;
 
-				config.getMagnetometerEllipsoid(&mag_ellipsoid);
-
 				break;
 			}
 			}
@@ -1422,16 +1383,13 @@ void OrientationFilterComplementaryMARG::update(
 		eigen_vector3f_normalize_with_default(current_g, Eigen::Vector3f::Zero());
 
 		Eigen::Vector3f current_m = packet.imu_magnetometer_unit;
+		Eigen::Vector3f current_uncap_m = current_m;
 		eigen_vector3f_normalize_with_default(current_m, Eigen::Vector3f::Zero());
 
-
-		const CommonRawDeviceVector current_raw_mag = packet.raw_imu_magnetometer;
-
-		if (!magnetometer_in_bounds_vector(
-			current_raw_mag, 
-			mag_ellipsoid, 
-			m_mag_scale, 
-			0.8f, 
+		if (!magnetometer_in_bounds_vector3f(
+			current_uncap_m,
+			m_mag_scale,
+			0.8f,
 			filter_magnetometer_deviation_cutoff))
 		{
 			current_m = Eigen::Vector3f::Zero();
