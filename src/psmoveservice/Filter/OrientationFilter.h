@@ -135,9 +135,6 @@ class OrientationFilterMadgwickMARG : public OrientationFilterMadgwickARG
 public:
     OrientationFilterMadgwickMARG()
         : OrientationFilterMadgwickARG()
-        , m_omega_bias_x(0.f)
-        , m_omega_bias_y(0.f)
-        , m_omega_bias_z(0.f)
     {
 		timeReset = std::chrono::high_resolution_clock::now();
 	}
@@ -146,9 +143,6 @@ public:
     void update(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet) override;
 
 protected:
-    float m_omega_bias_x;
-    float m_omega_bias_y;
-    float m_omega_bias_z;
 	std::chrono::time_point<std::chrono::high_resolution_clock> timeReset;
 	float m_mag_scale;
 };

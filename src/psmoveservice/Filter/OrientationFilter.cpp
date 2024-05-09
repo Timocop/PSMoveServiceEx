@@ -26,10 +26,10 @@
 // Decay rate to apply to the velocity
 #define k_velocity_decay 0.8f
 
-#define k_madgwick_beta 0.50f
+#define k_madgwick_beta 0.20f
 #define k_madgwick_stabil_min_beta 0.02f
 #define k_madgwick_gyro_min_deg 2.5f
-#define k_madgwick_gyro_max_deg ((k_madgwick_beta / 0.1f) * 25.0f) // 0.1 beta should be default at 25°
+#define k_madgwick_gyro_max_deg 25.f
 #define k_madgwick_beta_smoothing_factor 0.1f
 #define k_madgwick_smart_correct_max_deg 25.0f / 2.f
 #define k_madgwick_smart_correct_reset_time_ms 1000.0f
@@ -573,12 +573,9 @@ void OrientationFilterMadgwickARG::update(
 
 		// Current orientation from earth frame to sensor frame
 		const Eigen::Quaternionf SEq = m_state->orientation;
-		const Eigen::Quaternionf SEq_smart = m_smartOrientation;
 
 		Eigen::Quaternionf corrected_omega;
-		Eigen::Quaternionf corrected_smart_omega;
 		Eigen::Quaternionf SEq_new = SEq;
-		Eigen::Quaternionf SEq_smart_new = SEq_smart;
 
 		{ // Main Madgwick
 			// Compute the quaternion derivative measured by gyroscopes
@@ -646,90 +643,10 @@ void OrientationFilterMadgwickARG::update(
 			SEq_new.normalize();
 		}
 
-		if (filter_madgwick_smart_correct)
-		{
-			{ // Smart Madgwick
-			  // Compute the quaternion derivative measured by gyroscopes
-			  // Eqn 12) q_dot = 0.5*q*omega
-				Eigen::Quaternionf omega = Eigen::Quaternionf(0.f, current_omega.x(), current_omega.y(), current_omega.z());
-				Eigen::Quaternionf SEqDot_omega = Eigen::Quaternionf(SEq_smart.coeffs() * 0.5f) *omega;
-
-				if (!current_g.isApprox(Eigen::Vector3f::Zero(), k_normal_epsilon))
-				{
-					// Get the direction of the gravitational fields in the identity pose		
-					Eigen::Vector3f k_identity_g_direction = m_constants.gravity_calibration_direction;
-
-					// Eqn 15) Applied to the gravity vector
-					// Fill in the 3x1 objective function matrix f(SEq_smart, Sa) =|f_g|
-					Eigen::Matrix<float, 3, 1> f_g;
-					eigen_alignment_compute_objective_vector(SEq_smart, k_identity_g_direction, current_g, f_g, NULL);
-
-					// Eqn 21) Applied to the gravity vector
-					// Fill in the 4x3 objective function Jacobian matrix: J_gb(SEq_smart)= [J_g]
-					Eigen::Matrix<float, 4, 3> J_g;
-					eigen_alignment_compute_objective_jacobian(SEq_smart, k_identity_g_direction, J_g);
-
-					// Eqn 34) gradient_F= J_g(SEq_smart)*f(SEq_smart, Sa)
-					// Compute the gradient of the objective function
-					Eigen::Matrix<float, 4, 1> gradient_f = J_g * f_g;
-					Eigen::Quaternionf SEqHatDot =
-						Eigen::Quaternionf(gradient_f(0, 0), gradient_f(1, 0), gradient_f(2, 0), gradient_f(3, 0));
-
-					// normalize the gradient
-					eigen_quaternion_normalize_with_default(SEqHatDot, *k_eigen_quaternion_zero);
-
-					// Compute the estimated quaternion rate of change
-					// Eqn 43) SEq_est = SEqDot_omega - beta*SEqHatDot
-					Eigen::Quaternionf SEqDot_est = Eigen::Quaternionf(SEqDot_omega.coeffs() - SEqHatDot.coeffs()*k_madgwick_smart_correct_beta);
-
-					// Compute then integrate the estimated quaternion rate
-					// Eqn 42) SEq_smart_new = SEq_smart + SEqDot_est*imu_delta_time
-					SEq_smart_new = Eigen::Quaternionf(SEq_smart.coeffs() + SEqDot_est.coeffs()*imu_delta_time);
-				}
-				else
-				{
-					SEq_smart_new = Eigen::Quaternionf(SEq_smart.coeffs() + SEqDot_omega.coeffs()*imu_delta_time);
-				}
-
-				// Make sure the net quaternion is a pure rotation quaternion
-				SEq_smart_new.normalize();
-			}
-
-			const Eigen::Vector3f &world_g = -packet.world_accelerometer;
-			const float accel_g = sqrtf(world_g.x() * world_g.x() + world_g.y() * world_g.y() + world_g.z() * world_g.z());
-			
-			if ((eigen_quaternion_unsigned_angle_between(SEq_smart_new, SEq_new) * k_radians_to_degreees) > k_madgwick_smart_correct_max_deg)
-			{
-				// Make sure smart madgwick its kind of stable
-				if (accel_g > k_madgwick_smart_correct_gravity_stable && accel_g < 1.f + (1.f - k_madgwick_smart_correct_gravity_stable))
-				{
-					m_smartResetTime += imu_delta_time;
-
-					if (m_smartResetTime > (k_madgwick_smart_correct_reset_time_ms / 1000.f))
-					{
-						SEq_new = SEq_smart_new;
-						m_smartResetTime = 0.0f;
-					}
-				}
-				else
-				{
-					if (m_smartResetTime > 0.0f)
-						m_smartResetTime = 0.0f;
-				}
-			}
-			else
-			{
-				if (m_smartResetTime > 0.0f)
-					m_smartResetTime = 0.0f;
-			}
-		}
-
-
 		// Save the new quaternion and first derivative back into the orientation state
 		// Derive the second derivative
 		{
 			const Eigen::Quaternionf &new_orientation = SEq_new;
-			const Eigen::Quaternionf &new_smart_orientation = SEq_smart_new;
 			Eigen::Vector3f new_angular_velocity= current_omega;
 
 			// Smooth angular velocity
@@ -746,7 +663,7 @@ void OrientationFilterMadgwickARG::update(
 
 			const Eigen::Vector3f new_angular_acceleration = (current_omega - m_state->angular_velocity) / imu_delta_time;
 
-			m_smartOrientation = new_smart_orientation;
+			m_smartOrientation = new_orientation;
 			m_state->apply_imu_state(new_orientation, new_angular_velocity, new_angular_acceleration, timestamp);
 			m_interpolationState->apply_interpolation_state(new_orientation, new_angular_velocity, new_angular_acceleration, timestamp);
 		}
@@ -768,7 +685,6 @@ void OrientationFilterMadgwickARG::recenterOrientation(const Eigen::Quaternionf 
 void OrientationFilterMadgwickMARG::resetState()
 {
     OrientationFilterMadgwickARG::resetState();
-    m_omega_bias_x= m_omega_bias_y= m_omega_bias_z= 0.f;
 }
 
 void OrientationFilterMadgwickMARG::update(
