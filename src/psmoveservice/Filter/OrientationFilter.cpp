@@ -26,15 +26,18 @@
 // Decay rate to apply to the velocity
 #define k_velocity_decay 0.8f
 
-#define k_madgwick_beta 0.20f
+#define k_madgwick_beta 0.50f
 #define k_madgwick_stabil_min_beta 0.02f
-#define k_madgwick_gyro_min_deg 1.5f
-#define k_madgwick_gyro_max_deg 15.0f
+#define k_madgwick_gyro_min_deg 2.5f
+#define k_madgwick_gyro_max_deg ((k_madgwick_beta / 0.1f) * 25.0f) // 0.1 beta should be default at 25°
 #define k_madgwick_beta_smoothing_factor 0.1f
 #define k_madgwick_smart_correct_max_deg 25.0f / 2.f
 #define k_madgwick_smart_correct_reset_time_ms 1000.0f
 #define k_madgwick_smart_correct_gravity_stable 0.8f
 #define k_madgwick_smart_correct_beta 0.2f
+
+#define k_blend_gyro_min_deg 2.5f
+#define k_blend_gyro_max_deg 25.0f
 
 #define k_lowpass_velocity_smoothing_factor 0.25f
 
@@ -609,8 +612,12 @@ void OrientationFilterMadgwickARG::update(
 
 				if (filter_madgwick_stabilization)
 				{
-					const float gyro_b = ((fminf(fminf(abs(current_omega.x()), abs(current_omega.y())), abs(current_omega.z())))) * k_radians_to_degreees;
-					const float gyro_multi = clampf((gyro_b - k_madgwick_gyro_min_deg) / k_madgwick_gyro_max_deg, 0.0f, 1.0f);
+					const float gyro_q = sqrtf(
+						current_omega.x() * current_omega.x() +
+						current_omega.y() * current_omega.y() +
+						current_omega.z() * current_omega.z()) * k_radians_to_degreees;
+
+					const float gyro_multi = clampf((gyro_q - k_madgwick_gyro_min_deg) / k_madgwick_gyro_max_deg, 0.0f, 1.0f);
 
 					const float new_beta = clampf(filter_madgwick_beta * gyro_multi, filter_madgwick_stabilization_min_beta, 1.0f);
 					const float filtered_beta = filter_madgwick_stabilization_smoothing_factor * new_beta + (1.f - filter_madgwick_stabilization_smoothing_factor) * m_beta;
@@ -956,8 +963,14 @@ void OrientationFilterMadgwickMARG::update(
 
 			if (filter_madgwick_stabilization)
 			{
-				const float gyro_b = ((fminf(fminf(abs(current_omega.x()), abs(current_omega.y())), abs(current_omega.z())))) * k_radians_to_degreees;
-				const float gyro_multi = clampf((gyro_b - k_madgwick_gyro_min_deg) / k_madgwick_gyro_max_deg, 0.0f, 1.0f);
+				const float gyro_q = sqrtf(
+					current_omega.x() * current_omega.x() +
+					current_omega.y() * current_omega.y() +
+					current_omega.z() * current_omega.z()) * k_radians_to_degreees;
+
+				const float gyro_multi = clampf((gyro_q - k_madgwick_gyro_min_deg) / k_madgwick_gyro_max_deg, 0.0f, 1.0f);
+
+				printf("gyro_multi - %f\n", gyro_multi);
 
 				const float new_beta = clampf(filter_madgwick_beta * gyro_multi, filter_madgwick_stabilization_min_beta, 1.0f);
 				const float filtered_beta = filter_madgwick_stabilization_smoothing_factor * new_beta + (1.f - filter_madgwick_stabilization_smoothing_factor) * m_beta;
@@ -1544,27 +1557,37 @@ bool OrientationFilterComplementaryMARG::filter_process_passive_drift_correction
 	std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
 
 	const Eigen::Vector3f &world_g = -packet.world_accelerometer;
-	const float accel_g = sqrtf(world_g.x() * world_g.x() + world_g.y() * world_g.y() + world_g.z() * world_g.z());
+	const float grav_q = sqrtf(
+		world_g.x() * world_g.x() + 
+		world_g.y() * world_g.y() + 
+		world_g.z() * world_g.z());
+
+	const float gyro_q = sqrtf(
+		current_omega.x() * current_omega.x() +
+		current_omega.y() * current_omega.y() +
+		current_omega.z() * current_omega.z());
+	
+	const float accel_q = sqrtf(
+		new_acceleration.x() * new_acceleration.x() +
+		new_acceleration.y() * new_acceleration.y() +
+		new_acceleration.z() * new_acceleration.z());
+
 
 	bool gravity_stable = false;
 	bool gyro_stable = false;
 	bool accel_stable = false;
-	if (accel_g > filter_passive_drift_correction_gravity_deadzone &&
-		accel_g < 1.f + (1.f - filter_passive_drift_correction_gravity_deadzone))
+	if (grav_q > filter_passive_drift_correction_gravity_deadzone &&
+		grav_q < 1.f + (1.f - filter_passive_drift_correction_gravity_deadzone))
 	{
 		gravity_stable = true;
 	}
 
-	if (abs(current_omega.x()) < filter_passive_drift_correction_deadzone &&
-		abs(current_omega.y()) < filter_passive_drift_correction_deadzone &&
-		abs(current_omega.z()) < filter_passive_drift_correction_deadzone)
+	if (gyro_q < filter_passive_drift_correction_deadzone)
 	{
 		gyro_stable = true;
 	}
 
-	if (abs(new_acceleration.x()) < filter_passive_drift_correction_deadzone &&
-		abs(new_acceleration.y()) < filter_passive_drift_correction_deadzone &&
-		abs(new_acceleration.z()) < filter_passive_drift_correction_deadzone)
+	if (accel_q < filter_passive_drift_correction_deadzone)
 	{
 		accel_stable = true;
 	}
@@ -1617,11 +1640,13 @@ void OrientationFilterComplementaryMARG::filter_process_stabilization(
 {
 	const Eigen::Vector3f &current_omega = packet.imu_gyroscope_rad_per_sec;
 
-	const float k_gyro_multi = 1.f;
+	const float gyro_q = sqrtf(
+		current_omega.x() * current_omega.x() +
+		current_omega.y() * current_omega.y() +
+		current_omega.z() * current_omega.z()) * k_radians_to_degreees;
 
-	float gyro_max = fmaxf(abs(current_omega.x()), fmaxf(abs(current_omega.y()), abs(current_omega.z()))) * k_gyro_multi;
-
-	float align_weight = lerp_clampf(0.f, k_base_earth_frame_align_weight, clampf(gyro_max, clampf(filter_stabilization_min_scale, 0.0f, 1.0f), 1.f));
+	const float gyro_multi = (gyro_q - k_blend_gyro_min_deg) / k_blend_gyro_max_deg;
+	const float align_weight = lerp_clampf(0.f, k_base_earth_frame_align_weight, clampf(gyro_multi, clampf(filter_stabilization_min_scale, 0.0f, 1.0f), 1.f));
 
 	// Update the blend weight
 	// -- Exponential blend the MG weight from 1 down to k_base_earth_frame_align_weight
