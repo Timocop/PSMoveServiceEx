@@ -38,7 +38,7 @@
 
 #define k_lowpass_velocity_smoothing_factor 0.25f
 
-#define k_adaptive_prediction_cutoff 0.25f
+#define k_angular_prediction_cutoff 0.25f
 #define k_magnetometer_deviation_cutoff 0.1f
 
 // -- private definitions -----
@@ -483,7 +483,7 @@ void OrientationFilterMadgwickARG::update(
 	float filter_madgwick_stabilization_min_beta = k_madgwick_stabil_min_beta;
 	float filter_madgwick_stabilization_smoothing_factor = k_madgwick_beta_smoothing_factor;
 	float velocity_smoothing_factor = k_lowpass_velocity_smoothing_factor;
-	float angular_prediction_cutoff = k_adaptive_prediction_cutoff;
+	float angular_prediction_cutoff = k_angular_prediction_cutoff;
 	bool filter_madgwick_smart_correct = true;
 
 #if !defined(IS_TESTING_KALMAN) 
@@ -778,7 +778,7 @@ void OrientationFilterMadgwickMARG::update(
 	float filter_madgwick_stabilization_min_beta = k_madgwick_stabil_min_beta;
 	float filter_madgwick_stabilization_smoothing_factor = k_madgwick_beta_smoothing_factor;
 	float velocity_smoothing_factor = k_lowpass_velocity_smoothing_factor;
-	float angular_prediction_cutoff = k_adaptive_prediction_cutoff;
+	float angular_prediction_cutoff = k_angular_prediction_cutoff;
 	float filter_magnetometer_deviation_cutoff = k_magnetometer_deviation_cutoff;
 	bool filter_madgwick_smart_correct = true;
 
@@ -1315,7 +1315,7 @@ void OrientationFilterComplementaryMARG::update(
 	float filter_stabilization_min_scale = 0.1f;
 
 	float velocity_smoothing_factor = k_lowpass_velocity_smoothing_factor;
-	float angular_prediction_cutoff = k_adaptive_prediction_cutoff;
+	float angular_prediction_cutoff = k_angular_prediction_cutoff;
 	float filter_magnetometer_deviation_cutoff = k_magnetometer_deviation_cutoff;
 
 #if !defined(IS_TESTING_KALMAN) 
