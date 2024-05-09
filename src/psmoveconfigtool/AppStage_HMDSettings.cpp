@@ -330,9 +330,10 @@ void AppStage_HMDSettings::renderUI()
 									ImGui::ProgressBar(hmdInfo.PredictionTime / k_max_hmd_prediction_time, ImVec2(195.f - 55.f, 0.f), " ");
 									ImGui::SameLine();
 									ImGui::PushItemWidth(96);
-									if (ImGui::InputFloat("Prediction Time (ms)##PredictionTime", &hmdInfo.PredictionTime, 0.005f, 0.025f, 3))
+									float hmdPrediction = (hmdInfo.PredictionTime * 1000.f);
+									if (ImGui::InputFloat("Prediction Time (ms)##PredictionTime", &hmdPrediction, 5.f, 25.f, 0))
 									{
-										hmdInfo.PredictionTime = clampf(hmdInfo.PredictionTime, 0.f, k_max_hmd_prediction_time);
+										hmdInfo.PredictionTime = clampf(hmdPrediction / 1000.f, 0.f, k_max_hmd_prediction_time);
 										request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
 									}
 									ImGui::PopItemWidth();
@@ -340,9 +341,10 @@ void AppStage_HMDSettings::renderUI()
 									ImGui::ProgressBar(hmdInfo.AngPredictionTime / k_max_hmd_prediction_time, ImVec2(195.f - 55.f, 0.f), " ");
 									ImGui::SameLine();
 									ImGui::PushItemWidth(96);
-									if (ImGui::InputFloat("Angular Prediction Time (ms)##AngPredictionTime", &hmdInfo.AngPredictionTime, 0.005f, 0.025f, 3))
+									float hmdAngPrediction = (hmdInfo.AngPredictionTime * 1000.f);
+									if (ImGui::InputFloat("Angular Prediction Time (ms)##AngPredictionTime", &hmdAngPrediction, 5.f, 25.f, 0))
 									{
-										hmdInfo.AngPredictionTime = clampf(hmdInfo.AngPredictionTime, 0.f, k_max_hmd_prediction_time);
+										hmdInfo.AngPredictionTime = clampf(hmdAngPrediction / 1000.f, 0.f, k_max_hmd_prediction_time);
 										request_set_hmd_angular_prediction(hmdInfo.HmdID, hmdInfo.AngPredictionTime);
 									}
 									ImGui::PopItemWidth();
@@ -392,9 +394,10 @@ void AppStage_HMDSettings::renderUI()
 									ImGui::ProgressBar(hmdInfo.PredictionTime / k_max_hmd_prediction_time, ImVec2(195.f - 55.f, 0.f), " ");
 									ImGui::SameLine();
 									ImGui::PushItemWidth(96);
-									if (ImGui::InputFloat("Prediction Time (ms)##PredictionTime", &hmdInfo.PredictionTime, 0.005f, 0.025f, 3))
+									float hmdPrediction = (hmdInfo.PredictionTime * 1000.f);
+									if (ImGui::InputFloat("Prediction Time (ms)##PredictionTime", &hmdPrediction, 5.f, 25.f, 3))
 									{
-										hmdInfo.PredictionTime = clampf(hmdInfo.PredictionTime, 0.f, k_max_hmd_prediction_time);
+										hmdInfo.PredictionTime = clampf(hmdPrediction / 1000.f, 0.f, k_max_hmd_prediction_time);
 										request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);
 									}
 									ImGui::PopItemWidth();

@@ -747,9 +747,10 @@ void AppStage_ControllerSettings::renderUI()
 											ImGui::ProgressBar(controllerInfo.PredictionTime / k_max_hmd_prediction_time, ImVec2(195.f - 55.f, 0.f), " ");
 											ImGui::SameLine();
 											ImGui::PushItemWidth(96);
-											if (ImGui::InputFloat("Prediction Time (ms)##PredictionTime", &controllerInfo.PredictionTime, 0.005f, 0.025f, 3))
+											float controllerPrediction = (controllerInfo.PredictionTime * 1000.f);
+											if (ImGui::InputFloat("Prediction Time (ms)##PredictionTime", &controllerPrediction, 5.f, 25.f, 0))
 											{
-												controllerInfo.PredictionTime = clampf(controllerInfo.PredictionTime, 0.f, k_max_hmd_prediction_time);
+												controllerInfo.PredictionTime = clampf(controllerPrediction / 1000.f, 0.f, k_max_hmd_prediction_time);
 												request_set_controller_prediction(controllerInfo.ControllerID, controllerInfo.PredictionTime);
 											}
 											ImGui::PopItemWidth();
@@ -757,9 +758,10 @@ void AppStage_ControllerSettings::renderUI()
 											ImGui::ProgressBar(controllerInfo.AngPredictionTime / k_max_hmd_prediction_time, ImVec2(195.f - 55.f, 0.f), " ");
 											ImGui::SameLine();
 											ImGui::PushItemWidth(96);
-											if (ImGui::InputFloat("Angular Prediction Time (ms)##AngPredictionTime", &controllerInfo.AngPredictionTime, 0.005f, 0.025f, 3))
+											float controllerAngPrediction = (controllerInfo.AngPredictionTime * 1000.f);
+											if (ImGui::InputFloat("Angular Prediction Time (ms)##AngPredictionTime", &controllerAngPrediction, 5.f, 25.f, 0))
 											{
-												controllerInfo.AngPredictionTime = clampf(controllerInfo.AngPredictionTime, 0.f, k_max_hmd_prediction_time);
+												controllerInfo.AngPredictionTime = clampf(controllerAngPrediction / 1000.f, 0.f, k_max_hmd_prediction_time);
 												request_set_controller_angular_prediction(controllerInfo.ControllerID, controllerInfo.AngPredictionTime);
 											}
 											ImGui::PopItemWidth();
@@ -817,9 +819,10 @@ void AppStage_ControllerSettings::renderUI()
 											ImGui::ProgressBar(controllerInfo.PredictionTime / k_max_hmd_prediction_time, ImVec2(195.f - 55.f, 0.f), " ");
 											ImGui::SameLine();
 											ImGui::PushItemWidth(96);
-											if (ImGui::InputFloat("Prediction Time (ms)##PredictionTime", &controllerInfo.PredictionTime, 0.005f, 0.025f, 3))
+											float controllerPrediction = (controllerInfo.PredictionTime * 1000.f);
+											if (ImGui::InputFloat("Prediction Time (ms)##PredictionTime", &controllerPrediction, 5.f, 25.f, 0))
 											{
-												controllerInfo.PredictionTime = clampf(controllerInfo.PredictionTime, 0.f, k_max_hmd_prediction_time);
+												controllerInfo.PredictionTime = clampf(controllerPrediction / 1000.f, 0.f, k_max_hmd_prediction_time);
 												request_set_controller_prediction(controllerInfo.ControllerID, controllerInfo.PredictionTime);
 											}
 											ImGui::PopItemWidth();
@@ -827,9 +830,10 @@ void AppStage_ControllerSettings::renderUI()
 											ImGui::ProgressBar(controllerInfo.AngPredictionTime / k_max_hmd_prediction_time, ImVec2(195.f - 55.f, 0.f), " ");
 											ImGui::SameLine();
 											ImGui::PushItemWidth(96);
-											if (ImGui::InputFloat("Angular Prediction Time (ms)##AngPredictionTime", &controllerInfo.AngPredictionTime, 0.005f, 0.025f, 3))
+											float controllerAngPrediction = (controllerInfo.AngPredictionTime * 1000.f);
+											if (ImGui::InputFloat("Angular Prediction Time (ms)##AngPredictionTime", &controllerAngPrediction, 5.f, 25.f, 0))
 											{
-												controllerInfo.AngPredictionTime = clampf(controllerInfo.AngPredictionTime, 0.f, k_max_hmd_prediction_time);
+												controllerInfo.AngPredictionTime = clampf(controllerAngPrediction / 1000.f, 0.f, k_max_hmd_prediction_time);
 												request_set_controller_angular_prediction(controllerInfo.ControllerID, controllerInfo.AngPredictionTime);
 											}
 											ImGui::PopItemWidth();
