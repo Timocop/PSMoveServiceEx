@@ -29,7 +29,7 @@
 #define k_madgwick_beta 0.20f
 #define k_madgwick_stabil_min_beta 0.02f
 #define k_madgwick_gyro_min_deg 2.5f
-#define k_madgwick_gyro_max_deg 25.f
+#define k_madgwick_gyro_max_deg 125.f
 #define k_madgwick_beta_smoothing_factor 0.1f
 #define k_madgwick_smart_correct_max_deg 25.0f / 2.f
 #define k_madgwick_smart_correct_reset_time_ms 1000.0f

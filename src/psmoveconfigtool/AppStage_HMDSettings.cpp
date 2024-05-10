@@ -685,23 +685,26 @@ void AppStage_HMDSettings::renderUI()
 									ImGui::Unindent();
 								}
 
-								ImGui::Text("Smart Drift Correction: ");
-								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-								ImGui::PushItemWidth(120.f);
-								bool filter_madgwick_smart_correct = hmdInfo.FilterMadgwickSmartCorrect;
-								if (ImGui::Checkbox("##MadgwickSmartDriftCorrection", &filter_madgwick_smart_correct))
+								if (hmdInfo.OrientationFilterName == "MadgwickMARG")
 								{
-									hmdInfo.FilterMadgwickSmartCorrect = filter_madgwick_smart_correct;
+									ImGui::Text("Smart Drift Correction: ");
+									ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+									ImGui::PushItemWidth(120.f);
+									bool filter_madgwick_smart_correct = hmdInfo.FilterMadgwickSmartCorrect;
+									if (ImGui::Checkbox("##MadgwickSmartDriftCorrection", &filter_madgwick_smart_correct))
+									{
+										hmdInfo.FilterMadgwickSmartCorrect = filter_madgwick_smart_correct;
 
-									request_offset = true;
-								}
-								ImGui::PopItemWidth();
+										request_offset = true;
+									}
+									ImGui::PopItemWidth();
 
-								if (ImGui::IsItemHovered())
-								{
-									ImGui::SetTooltip(
-										"Smart Drift Correction detects excessive orientation deviations and attempts to aggressively correct drift."
-									);
+									if (ImGui::IsItemHovered())
+									{
+										ImGui::SetTooltip(
+											"Smart Drift Correction detects excessive orientation deviations and attempts to aggressively correct drift."
+										);
+									}
 								}
 							}
 
@@ -716,9 +719,9 @@ void AppStage_HMDSettings::renderUI()
 							{
 								hmdInfo.FilterLowPassOpticalDistance = 1.f;
 								hmdInfo.FilterLowPassOpticalSmoothing = 0.10f;
-								hmdInfo.FilterMadgwickBeta = 0.1f;
+								hmdInfo.FilterMadgwickBeta = 0.05f;
 								hmdInfo.FilterMadgwickStabilization = true;
-								hmdInfo.FilterMadgwickStabilizationMinBeta = 0.02f;
+								hmdInfo.FilterMadgwickStabilizationMinBeta = 0.00f;
 								hmdInfo.FilterMadgwickStabilizationSmoothingFactor = 0.1f;
 								hmdInfo.FilterVelocitySmoothingFactor = 0.25f;
 								hmdInfo.FilterAngularSmoothingFactor = 0.25f;

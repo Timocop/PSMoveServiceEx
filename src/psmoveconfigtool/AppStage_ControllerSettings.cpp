@@ -1279,23 +1279,26 @@ void AppStage_ControllerSettings::renderUI()
 													ImGui::Unindent();
 												}
 
-												ImGui::Text("Smart Drift Correction: ");
-												ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-												ImGui::PushItemWidth(120.f);
-												bool filter_madgwick_smart_correct = controllerInfo.FilterMadgwickSmartCorrect;
-												if (ImGui::Checkbox("##MadgwickSmartDriftCorrection", &filter_madgwick_smart_correct))
+												if (controllerInfo.OrientationFilterName == "MadgwickMARG")
 												{
-													controllerInfo.FilterMadgwickSmartCorrect = filter_madgwick_smart_correct;
+													ImGui::Text("Smart Drift Correction: ");
+													ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+													ImGui::PushItemWidth(120.f);
+													bool filter_madgwick_smart_correct = controllerInfo.FilterMadgwickSmartCorrect;
+													if (ImGui::Checkbox("##MadgwickSmartDriftCorrection", &filter_madgwick_smart_correct))
+													{
+														controllerInfo.FilterMadgwickSmartCorrect = filter_madgwick_smart_correct;
 
-													request_offset = true;
-												}
-												ImGui::PopItemWidth();
+														request_offset = true;
+													}
+													ImGui::PopItemWidth();
 
-												if (ImGui::IsItemHovered())
-												{
-													ImGui::SetTooltip(
-														"Smart Drift Correction detects excessive orientation deviations and attempts to aggressively correct drift."
-													);
+													if (ImGui::IsItemHovered())
+													{
+														ImGui::SetTooltip(
+															"Smart Drift Correction detects excessive orientation deviations and attempts to aggressively correct drift."
+														);
+													}
 												}
 											}
 
@@ -1347,9 +1350,9 @@ void AppStage_ControllerSettings::renderUI()
 												controllerInfo.FilterPassiveDriftCorrectionDelay = 100.f;
 												controllerInfo.FilterUseStabilization = false;
 												controllerInfo.FilterStabilizationMinScale = 0.1f;
-												controllerInfo.FilterMadgwickBeta = 0.1f; // HMD
+												controllerInfo.FilterMadgwickBeta = 0.05f; // HMD
 												controllerInfo.FilterMadgwickStabilization = true;
-												controllerInfo.FilterMadgwickStabilizationMinBeta = 0.02f;
+												controllerInfo.FilterMadgwickStabilizationMinBeta = 0.00f;
 												controllerInfo.FilterMadgwickStabilizationSmoothingFactor = 0.1f;
 												controllerInfo.FilterVelocitySmoothingFactor = 0.25f;
 												controllerInfo.FilterAngularSmoothingFactor = 0.25f;
