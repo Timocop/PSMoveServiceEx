@@ -219,7 +219,10 @@ AppStage_ControllerSettings::AppStage_ControllerSettings(App *app)
 	, m_menuState(AppStage_ControllerSettings::inactive)
 	, m_selectedControllerIndex(-1)
 	, m_gamepadCount(0)
-{ }
+	, m_indicatorControllerIndex(-1)
+{
+	m_lastIndicatorControllerTime = std::chrono::high_resolution_clock::now();
+}
 
 void AppStage_ControllerSettings::enter()
 {
@@ -236,6 +239,12 @@ void AppStage_ControllerSettings::exit()
 {
     m_menuState= AppStage_ControllerSettings::inactive;
 
+	if (m_indicatorControllerIndex >= 0 && m_indicatorControllerIndex < m_controllerInfos.size())
+	{
+		PSM_SetControllerLEDOverrideColor(m_indicatorControllerIndex, 0, 0, 0);
+	}
+	m_indicatorControllerIndex = -1;
+
 	for (PSMControllerID controller_id : m_controllersStreams)
 	{
 		PSMRequestID request_id;
@@ -250,6 +259,74 @@ void AppStage_ControllerSettings::exit()
 
 void AppStage_ControllerSettings::update()
 {
+	switch (m_menuState)
+	{
+	case eControllerMenuState::idle:
+	{
+		if (m_indicatorControllerIndex >= 0 && m_indicatorControllerIndex < m_controllerInfos.size())
+		{
+			const ControllerInfo &controllerInfo = m_controllerInfos[m_indicatorControllerIndex];
+
+			switch (controllerInfo.ControllerType)
+			{
+			case PSMController_Move:
+			case PSMController_DualShock4:
+			case PSMController_Virtual:
+			{
+				std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+				std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastIndicatorControllerTime;
+
+				const float colorScale = (1.f - clampf01(timeSinceLast.count() / 1000.f));
+
+				PSMVector3f bulb_color = { 1.f, 1.f, 1.f };
+
+				switch (controllerInfo.TrackingColorType)
+				{
+				case PSMTrackingColorType_Magenta:
+					bulb_color = { 1.f, 0.f, 1.f };
+					break;
+				case PSMTrackingColorType_Cyan:
+					bulb_color = { 0.f, 1.f, 1.f };
+					break;
+				case PSMTrackingColorType_Yellow:
+					bulb_color = { 1.f, 1.f, 0.f };
+					break;
+				case PSMTrackingColorType_Red:
+					bulb_color = { 1.f, 0.f, 0.f };
+					break;
+				case PSMTrackingColorType_Green:
+					bulb_color = { 0.f, 1.f, 0.f };
+					break;
+				case PSMTrackingColorType_Blue:
+					bulb_color = { 0.f, 0.f, 1.f };
+					break;
+				default:
+					break;
+				}
+
+				if (colorScale > 0.0f)
+				{
+					PSM_SetControllerLEDOverrideColor(
+						m_indicatorControllerIndex,
+						colorScale * (bulb_color.x * 255),
+						colorScale * (bulb_color.y * 255),
+						colorScale * (bulb_color.z * 255));
+				}
+				else
+				{
+					PSM_SetControllerLEDOverrideColor(m_indicatorControllerIndex, 0, 0, 0);
+					m_indicatorControllerIndex = -1;
+				}
+				break;
+			}
+			default:
+				m_indicatorControllerIndex = -1;
+				break;
+			}
+		}
+		break;
+	}
+	}
 }
     
 void AppStage_ControllerSettings::render()
@@ -645,6 +722,18 @@ void AppStage_ControllerSettings::renderUI()
 									ImGui::PopTextWrapPos();
 								}
 #endif
+								if (controllerInfo.IsBluetooth)
+								{
+									ImGui::Separator();
+									if (ImGui::Button("Identify Controller"))
+									{
+										if (m_indicatorControllerIndex < 0)
+										{
+											m_indicatorControllerIndex = controllerInfo.ControllerID;
+											m_lastIndicatorControllerTime = std::chrono::high_resolution_clock::now();
+										}
+									}
+								}
 							}
 						}
 						ImGui::EndGroup();

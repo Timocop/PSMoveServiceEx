@@ -247,6 +247,9 @@ private:
     int m_selectedControllerIndex;
     
     static const char *GAMEPAD_COMBO_LABELS[MAX_GAMEPAD_LABELS];
+
+	int m_indicatorControllerIndex;
+	std::chrono::time_point<std::chrono::high_resolution_clock> m_lastIndicatorControllerTime;
 };
 
 #endif // APP_STAGE_SELECT_CONTROLLER_H
