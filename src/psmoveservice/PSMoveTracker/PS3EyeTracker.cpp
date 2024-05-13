@@ -80,7 +80,10 @@ PS3EyeTrackerConfig::config2ptree()
     boost::property_tree::ptree pt;
 
     pt.put("is_valid", is_valid);
+
     pt.put("version", PS3EyeTrackerConfig::CONFIG_VERSION);
+	pt.put("legacy", DeviceManager().getInstance()->isLegacyService());
+
 	pt.put("lens_calibration_version", PS3EyeTrackerConfig::LENS_CALIBRATION_VERSION);
     pt.put("max_poll_failure_timeout_ms", max_poll_failure_timeout_ms);
 	pt.put("frame_width", frame_width);
@@ -134,8 +137,10 @@ PS3EyeTrackerConfig::config2ptree()
 void
 PS3EyeTrackerConfig::ptree2config(const boost::property_tree::ptree &pt)
 {
-    int config_version = pt.get<int>("version", 0);
-    if (config_version == PS3EyeTrackerConfig::CONFIG_VERSION)
+    int version = pt.get<int>("version", 0);
+	bool legacy = pt.get<bool>("legacy", false);
+
+	if (version == PS3EyeTrackerConfig::CONFIG_VERSION && legacy == DeviceManager().getInstance()->isLegacyService())
     {
         is_valid = pt.get<bool>("is_valid", false);
 		max_poll_failure_timeout_ms = pt.get<long>("max_poll_failure_timeout_ms", max_poll_failure_timeout_ms);
@@ -224,7 +229,7 @@ PS3EyeTrackerConfig::ptree2config(const boost::property_tree::ptree &pt)
     else
     {
         SERVER_LOG_WARNING("PS3EyeTrackerConfig") <<
-            "Config version " << config_version << " does not match expected version " <<
+            "Config version " << version << " does not match expected version " <<
             PS3EyeTrackerConfig::CONFIG_VERSION << ", Using defaults.";
     }
 }

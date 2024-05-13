@@ -77,7 +77,9 @@ public:
 	void handle_device_disconnected(enum DeviceClass device_class, const std::string &device_path) override;
 	void handle_bluetooth_request_started();
 	void handle_bluetooth_request_finished();
-    
+
+	bool isLegacyService() const;
+
 private:
 	/// Singleton instance of the class
 	/// Assigned in startup, cleared in teardown

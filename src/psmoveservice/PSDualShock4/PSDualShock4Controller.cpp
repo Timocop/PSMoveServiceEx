@@ -2,6 +2,9 @@
 #include "AtomicPrimitives.h"
 #include "PSDualShock4Controller.h"
 #include "ControllerDeviceEnumerator.h"
+#if !defined(IS_TESTING)
+#include "DeviceManager.h"
+#endif
 #include "MathUtility.h"
 #include "ServerLog.h"
 #include "ServerUtility.h"
@@ -473,7 +476,11 @@ PSDualShock4ControllerConfig::config2ptree()
     boost::property_tree::ptree pt;
 
     pt.put("is_valid", is_valid);
-    pt.put("version", PSDualShock4ControllerConfig::CONFIG_VERSION);
+	pt.put("version", PSDualShock4ControllerConfig::CONFIG_VERSION);
+
+#if !defined(IS_TESTING)
+	pt.put("legacy", DeviceManager().getInstance()->isLegacyService());
+#endif
 
     pt.put("Calibration.Accel.X.k", accelerometer_gain.i);
     pt.put("Calibration.Accel.Y.k", accelerometer_gain.j);
@@ -552,9 +559,14 @@ PSDualShock4ControllerConfig::config2ptree()
 void
 PSDualShock4ControllerConfig::ptree2config(const boost::property_tree::ptree &pt)
 {
-    version = pt.get<int>("version", 0);
+	version = pt.get<int>("version", 0);
+	bool legacy = pt.get<bool>("legacy", false);
 
-    if (version == PSDualShock4ControllerConfig::CONFIG_VERSION)
+#if !defined(IS_TESTING)
+	if (version == PSDualShock4ControllerConfig::CONFIG_VERSION && legacy == DeviceManager().getInstance()->isLegacyService())
+#else
+	if (version == PSDualShock4ControllerConfig::CONFIG_VERSION)
+#endif
     {
         is_valid = pt.get<bool>("is_valid", false);
 		prediction_time = pt.get<float>("prediction_time", prediction_time);

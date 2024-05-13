@@ -1,6 +1,9 @@
 //-- includes -----
 #include "HMDManager.h"
 #include "HMDDeviceEnumerator.h"
+#if !defined(IS_TESTING)
+#include "DeviceManager.h"
+#endif
 #include "ServerLog.h"
 #include "ServerHMDView.h"
 #include "ServerDeviceView.h"
@@ -26,6 +29,11 @@ HMDManagerConfig::config2ptree()
     boost::property_tree::ptree pt;
 
     pt.put("version", HMDManagerConfig::CONFIG_VERSION);
+
+#if !defined(IS_TESTING)
+	pt.put("legacy", DeviceManager().getInstance()->isLegacyService());
+#endif
+
 	pt.put("virtual_hmd_count", virtual_hmd_count);
 	pt.put("enable_morpheus", enable_morpheus);
 
@@ -36,8 +44,13 @@ void
 HMDManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
 {
     version = pt.get<int>("version", 0);
+	bool legacy = pt.get<bool>("legacy", false);
 
-    if (version == HMDManagerConfig::CONFIG_VERSION)
+#if !defined(IS_TESTING)
+	if (version == HMDManagerConfig::CONFIG_VERSION && legacy == DeviceManager().getInstance()->isLegacyService())
+#else
+	if (version == HMDManagerConfig::CONFIG_VERSION)
+#endif
     {
 		virtual_hmd_count = pt.get<int>("virtual_hmd_count", virtual_hmd_count);
 		enable_morpheus = pt.get<bool>("enable_morpheus", enable_morpheus);

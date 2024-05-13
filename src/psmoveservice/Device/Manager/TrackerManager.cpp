@@ -78,6 +78,7 @@ TrackerManagerConfig::config2ptree()
     boost::property_tree::ptree pt;
 
     pt.put("version", TrackerManagerConfig::CONFIG_VERSION);
+	pt.put("legacy", DeviceManager().getInstance()->isLegacyService());
 
 	pt.put("virtual_tracker_count", virtual_tracker_count);
 	pt.put("ignore_pose_from_one_tracker", ignore_pose_from_one_tracker);
@@ -140,7 +141,9 @@ TrackerManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
 {
     version = pt.get<int>("version", 0);
 
-    if (version == TrackerManagerConfig::CONFIG_VERSION)
+	bool legacy = pt.get<bool>("legacy", false);
+
+	if (version == TrackerManagerConfig::CONFIG_VERSION && legacy == DeviceManager().getInstance()->isLegacyService())
     {
 		virtual_tracker_count = pt.get<int>("virtual_tracker_count", virtual_tracker_count);
 		ignore_pose_from_one_tracker = pt.get<bool>("ignore_pose_from_one_tracker", ignore_pose_from_one_tracker);

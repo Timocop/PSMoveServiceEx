@@ -5,6 +5,9 @@
 #include "DeviceManager.h"
 #include "HMDDeviceEnumerator.h"
 #include "HidHMDDeviceEnumerator.h"
+#if !defined(IS_TESTING)
+#include "DeviceManager.h"
+#endif
 #include "HMDManager.h"
 #include "MathUtility.h"
 #include "ServerLog.h"
@@ -397,6 +400,10 @@ MorpheusHMDConfig::config2ptree()
 	pt.put("is_valid", is_valid);
 	pt.put("version", MorpheusHMDConfig::CONFIG_VERSION);
 
+#if !defined(IS_TESTING)
+	pt.put("legacy", DeviceManager().getInstance()->isLegacyService());
+#endif
+
 	pt.put("Calibration.Accel.X.k", accelerometer_gain.i);
 	pt.put("Calibration.Accel.Y.k", accelerometer_gain.j);
 	pt.put("Calibration.Accel.Z.k", accelerometer_gain.k);
@@ -474,8 +481,13 @@ void
 MorpheusHMDConfig::ptree2config(const boost::property_tree::ptree &pt)
 {
     version = pt.get<int>("version", 0);
+	bool legacy = pt.get<bool>("legacy", false);
 
-    if (version == MorpheusHMDConfig::CONFIG_VERSION)
+#if !defined(IS_TESTING)
+	if (version == MorpheusHMDConfig::CONFIG_VERSION && legacy == DeviceManager().getInstance()->isLegacyService())
+#else
+	if (version == MorpheusHMDConfig::CONFIG_VERSION)
+#endif
     {
 		is_valid = pt.get<bool>("is_valid", false);
 

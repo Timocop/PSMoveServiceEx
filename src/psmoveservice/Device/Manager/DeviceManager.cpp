@@ -40,6 +40,8 @@ public:
 		, gamepad_api_enabled(true)
 		, gamepad_api_xinput_only(true)
 		, platform_api_enabled(true)
+		, legacy_psmoveservice(false)
+		, legacy_require_factory_reset(false)
     {};
 
     const boost::property_tree::ptree
@@ -47,13 +49,22 @@ public:
     {
         boost::property_tree::ptree pt;
     
-        pt.put("version", DeviceManagerConfig::CONFIG_VERSION+0);
+        pt.put("version", DeviceManagerConfig::CONFIG_VERSION);
+		pt.put("legacy", DeviceManager().getInstance()->isLegacyService());
+
         pt.put("controller_reconnect_interval", controller_reconnect_interval);
         pt.put("tracker_reconnect_interval", tracker_reconnect_interval);
         pt.put("hmd_reconnect_interval", hmd_reconnect_interval);
 		pt.put("gamepad_api_enabled", gamepad_api_enabled);
 		pt.put("gamepad_api_xinput_only", gamepad_api_xinput_only);
 		pt.put("platform_api_enabled", platform_api_enabled);
+
+		// Legacy PSMoveService Detection
+		pt.put("controller_poll_interval", -1.f);
+		pt.put("tracker_poll_interval", -1.f);
+		pt.put("hmd_poll_interval", -1.f);
+
+		pt.put("legacy_require_factory_reset", legacy_require_factory_reset);
 
         return pt;
     }
@@ -62,22 +73,32 @@ public:
     ptree2config(const boost::property_tree::ptree &pt)
     {
         version = pt.get<int>("version", 0);
+		bool legacy = pt.get<bool>("legacy", false);
 
-        if (version == (DeviceManagerConfig::CONFIG_VERSION+0))
+		// Legacy PSMoveService Detection
+		legacy_psmoveservice |= (pt.get<float>("controller_poll_interval", -1.f) > -1.f);
+		legacy_psmoveservice |= (pt.get<float>("tracker_poll_interval", -1.f) > -1.f);
+		legacy_psmoveservice |= (pt.get<float>("hmd_poll_interval", -1.f) > -1.f);
+
+		legacy_require_factory_reset |= pt.get<bool>("legacy_require_factory_reset", legacy_require_factory_reset);
+		legacy_require_factory_reset |= legacy_psmoveservice;
+
+		if (version == DeviceManagerConfig::CONFIG_VERSION && legacy == DeviceManager().getInstance()->isLegacyService())
         {
             controller_reconnect_interval = pt.get<int>("controller_reconnect_interval", k_default_controller_reconnect_interval);
             tracker_reconnect_interval = pt.get<int>("tracker_reconnect_interval", k_default_tracker_reconnect_interval);
             hmd_reconnect_interval = pt.get<int>("hmd_reconnect_interval", k_default_hmd_reconnect_interval);
 			gamepad_api_enabled = pt.get<bool>("gamepad_api_enabled", gamepad_api_enabled);
 			gamepad_api_xinput_only = pt.get<bool>("gamepad_api_xinput_only", gamepad_api_xinput_only);
-		    platform_api_enabled = pt.get<bool>("platform_api_enabled", platform_api_enabled);
+			platform_api_enabled = pt.get<bool>("platform_api_enabled", platform_api_enabled);
         }
         else
         {
             SERVER_LOG_WARNING("DeviceManagerConfig") <<
                 "Config version " << version << " does not match expected version " <<
-                (DeviceManagerConfig::CONFIG_VERSION+0) << ", Using defaults.";
+                (DeviceManagerConfig::CONFIG_VERSION) << ", Using defaults.";
         }
+
     }
 
     int version;
@@ -87,6 +108,9 @@ public:
 	bool gamepad_api_enabled;
 	bool gamepad_api_xinput_only;
 	bool platform_api_enabled;
+
+	bool legacy_psmoveservice;
+	bool legacy_require_factory_reset;
 };
 
 // DeviceManager - This is the interface used by PSMoveService
@@ -96,7 +120,7 @@ DeviceManager::DeviceManager()
     : m_config() // NULL config until startup
 	, m_platform_api_type(_eDevicePlatformApiType_None)
 	, m_platform_api(nullptr)
-    , m_controller_manager(new ControllerManager())
+	, m_controller_manager(new ControllerManager())
     , m_tracker_manager(new TrackerManager())
     , m_hmd_manager(new HMDManager())
 {
@@ -132,14 +156,21 @@ DeviceManager::startup()
 {
     bool success= true;
 
+	m_instance = this;
+
     m_config = DeviceManagerConfigPtr(new DeviceManagerConfig);
 
 	// Load the config from disk
     m_config->load();
 
+	if (m_config->legacy_psmoveservice || m_config->legacy_require_factory_reset)
+	{
+		SERVER_LOG_WARNING("DeviceManager::startup") << "Legacy PSMoveService config detected! Will factory reset all legacy configs.";
+	}
+
 	// Save the config back out again in case defaults changed
 	m_config->save();
-    
+
 	// Optionally create the platform device hot plug API
 	if (m_config->platform_api_enabled)
 	{
@@ -191,8 +222,6 @@ DeviceManager::startup()
 
     m_hmd_manager->reconnect_interval = hmd_reconnect_interval;
     success &= m_hmd_manager->startup();    
-    
-    m_instance= this;
     
     return success;
 }
@@ -394,4 +423,9 @@ DeviceManager::handle_bluetooth_request_finished()
 			it->listener->handle_device_connected(DeviceClass::DeviceClass_HID, "");
 		}
 	}
+}
+
+bool DeviceManager::isLegacyService() const
+{
+	return (m_config->legacy_psmoveservice || m_config->legacy_require_factory_reset);
 }

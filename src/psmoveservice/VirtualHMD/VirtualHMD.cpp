@@ -1,9 +1,11 @@
 //-- includes -----
 #include "VirtualHMD.h"
 #include "DeviceInterface.h"
-#include "DeviceManager.h"
 #include "HMDDeviceEnumerator.h"
 #include "VirtualHMDDeviceEnumerator.h"
+#if !defined(IS_TESTING)
+#include "DeviceManager.h"
+#endif
 #include "MathUtility.h"
 #include "ServerLog.h"
 #include "ServerUtility.h"
@@ -30,6 +32,10 @@ VirtualHMDConfig::config2ptree()
 
     pt.put("is_valid", is_valid);
     pt.put("version", VirtualHMDConfig::CONFIG_VERSION);
+
+#if !defined(IS_TESTING)
+	pt.put("legacy", DeviceManager().getInstance()->isLegacyService());
+#endif
 
     pt.put("Calibration.Position.VarianceExpFitA", position_variance_exp_fit_a);
     pt.put("Calibration.Position.VarianceExpFitB", position_variance_exp_fit_b);
@@ -77,8 +83,13 @@ void
 VirtualHMDConfig::ptree2config(const boost::property_tree::ptree &pt)
 {
     version = pt.get<int>("version", 0);
+	bool legacy = pt.get<bool>("legacy", false);
 
-    if (version == VirtualHMDConfig::CONFIG_VERSION)
+#if !defined(IS_TESTING)
+	if (version == VirtualHMDConfig::CONFIG_VERSION && legacy == DeviceManager().getInstance()->isLegacyService())
+#else
+	if (version == VirtualHMDConfig::CONFIG_VERSION)
+#endif
     {
         is_valid = pt.get<bool>("is_valid", false);
 

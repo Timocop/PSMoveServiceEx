@@ -1,6 +1,9 @@
 //-- includes -----
 #include "VirtualController.h"
 #include "ControllerDeviceEnumerator.h"
+#if !defined(IS_TESTING)
+#include "DeviceManager.h"
+#endif
 #include "ServerLog.h"
 #include "ServerUtility.h"
 #include <vector>
@@ -21,6 +24,10 @@ VirtualControllerConfig::config2ptree()
 
     pt.put("is_valid", is_valid);
     pt.put("version", VirtualControllerConfig::CONFIG_VERSION);
+
+#if !defined(IS_TESTING)
+	pt.put("legacy", DeviceManager().getInstance()->isLegacyService());
+#endif
 
     pt.put("gamepad_index", gamepad_index);
 	pt.put("psmove_emulation", psmove_emulation);
@@ -73,8 +80,13 @@ void
 VirtualControllerConfig::ptree2config(const boost::property_tree::ptree &pt)
 {
     version = pt.get<int>("version", 0);
+	bool legacy = pt.get<bool>("legacy", false);
 
-    if (version == VirtualControllerConfig::CONFIG_VERSION)
+#if !defined(IS_TESTING)
+	if (version == VirtualControllerConfig::CONFIG_VERSION && legacy == DeviceManager().getInstance()->isLegacyService())
+#else
+	if (version == VirtualControllerConfig::CONFIG_VERSION)
+#endif
     {
         is_valid = pt.get<bool>("is_valid", false);
 

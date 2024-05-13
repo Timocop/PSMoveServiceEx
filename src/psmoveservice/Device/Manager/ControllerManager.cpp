@@ -32,6 +32,8 @@ ControllerManagerConfig::config2ptree()
     boost::property_tree::ptree pt;
 
     pt.put("version", ControllerManagerConfig::CONFIG_VERSION);
+	pt.put("legacy", DeviceManager().getInstance()->isLegacyService());
+
 	pt.put("virtual_controller_count", virtual_controller_count);
 
     return pt;
@@ -41,8 +43,9 @@ void
 ControllerManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
 {
     version = pt.get<int>("version", 0);
+	bool legacy = pt.get<bool>("legacy", false);
 
-    if (version == ControllerManagerConfig::CONFIG_VERSION)
+	if (version == ControllerManagerConfig::CONFIG_VERSION && legacy == DeviceManager().getInstance()->isLegacyService())
     {
 		virtual_controller_count = pt.get<int>("virtual_controller_count", 0);
     }

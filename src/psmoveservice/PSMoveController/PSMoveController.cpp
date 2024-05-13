@@ -37,6 +37,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "AtomicPrimitives.h"
 #include "PSMoveController.h"
 #include "ControllerDeviceEnumerator.h"
+#if !defined(IS_TESTING)
+#include "DeviceManager.h"
+#endif
 #include "ServerLog.h"
 #include "ServerUtility.h"
 #include "BluetoothQueries.h"
@@ -519,6 +522,10 @@ PSMoveControllerConfig::config2ptree()
     pt.put("is_valid", is_valid);
     pt.put("version", PSMoveControllerConfig::CONFIG_VERSION);
 
+#if !defined(IS_TESTING)
+	pt.put("legacy", DeviceManager().getInstance()->isLegacyService());
+#endif
+
 	pt.put("firmware_version", firmware_version);
 	pt.put("bt_firmware_version", bt_firmware_version);
 	pt.put("firmware_revision", firmware_revision);
@@ -645,8 +652,13 @@ void
 PSMoveControllerConfig::ptree2config(const boost::property_tree::ptree &pt)
 {
     version = pt.get<int>("version", 0);
+	bool legacy = pt.get<bool>("legacy", false);
 
-    if (version == PSMoveControllerConfig::CONFIG_VERSION)
+#if !defined(IS_TESTING)
+	if (version == PSMoveControllerConfig::CONFIG_VERSION && legacy == DeviceManager().getInstance()->isLegacyService())
+#else
+	if (version == PSMoveControllerConfig::CONFIG_VERSION)
+#endif
     {
         is_valid = pt.get<bool>("is_valid", false);
 
