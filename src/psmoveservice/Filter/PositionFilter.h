@@ -78,19 +78,6 @@ public:
 	bool m_resetVelocity;
 };
 
-class PositionFilterLowPassIMU : public PositionFilter
-{
-public:
-    void update(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet) override;
-};
-
-class PositionFilterLowPassExponential : public PositionFilter
-{
-	void update(const t_high_resolution_timepoint timestamp, const PoseFilterPacket &packet) override;
-	std::list<float> deltaTimeHistory;
-	std::list<Eigen::Vector3f> blendedPositionHistory;
-};
-
 class PositionFilterComplimentaryOpticalIMU : public PositionFilter
 {
 public:

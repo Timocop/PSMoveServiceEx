@@ -2494,14 +2494,6 @@ pose_filter_factory(
         {
             position_filter_enum= PositionFilterTypeLowPassOptical;
         }
-        else if (position_filter_type == "LowPassIMU")
-        {
-            position_filter_enum= PositionFilterTypeLowPassIMU;
-        }
-        else if (position_filter_type == "LowPassExponential")
-        {
-            position_filter_enum = PositionFilterTypeLowPassExponential;
-        }
         else if (position_filter_type == "ComplimentaryOpticalIMU")
         {
             position_filter_enum= PositionFilterTypeComplimentaryOpticalIMU;

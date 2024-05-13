@@ -185,13 +185,13 @@ const char *AppStage_ControllerSettings::GAMEPAD_COMBO_LABELS[MAX_GAMEPAD_LABELS
 };
 
 //-- constants -----
-const int k_default_position_filter_index = 5; // PositionKalman
+const int k_default_position_filter_index = 3; // PositionKalman
 const int k_default_psmove_orientation_filter_index = 2; // MadgwickMARG
-const int k_default_ds4_position_filter_index = 4; // ComplimentaryOpticalIMU
+const int k_default_ds4_position_filter_index = 2; // ComplimentaryOpticalIMU
 const int k_default_ds4_orientation_filter_index = 2; // ComplementaryOpticalARG
 const int k_default_ds4_gyro_gain_index = 4; // 2000deg/s
 
-const char* k_controller_position_filter_names[] = { "PassThru", "LowPassOptical", "LowPassIMU", "LowPassExponential", "ComplimentaryOpticalIMU", "PositionKalman" , "PositionExternalAttachment" };
+const char* k_controller_position_filter_names[] = { "PassThru", "LowPassOptical", "ComplimentaryOpticalIMU", "PositionKalman" , "PositionExternalAttachment" };
 const char* k_psmove_orientation_filter_names[] = { "PassThru", "MadgwickARG", "MadgwickMARG", "ComplementaryMARG", "ComplementaryOpticalARG", /*"OrientationTargetOpticalARG",*/ "OrientationExternal" };
 const char* k_ds4_orientation_filter_names[] = { "PassThru", "MadgwickARG", "ComplementaryOpticalARG", "OrientationExternal" };
 const char* k_ds4_gyro_gain_setting_labels[] = { "125deg/s", "250deg/s", "500deg/s", "1000deg/s", "2000deg/s", "custom"};
@@ -2610,20 +2610,6 @@ void AppStage_ControllerSettings::show_position_filter_tooltip(const std::string
 			"but behaves like PassThru on larger quicker movements."
 		);
 	}
-	else if (name == "LowPassIMU")
-	{
-		ImGui::SetTooltip(
-			"Predictive smoothing filter using device accelerometer.\n"
-			"Uses the device's accelerometer to predict and smooth optical movement."
-		);
-	}
-	else if (name == "LowPassExponential")
-	{
-		ImGui::SetTooltip(
-			"Optical smoothing filter using exponential curve.\n"
-			"Reduces optical jitter greatly but can also causes springy tracking and over prediction."
-		);
-	}
 	else if (name == "ComplimentaryOpticalIMU")
 	{
 		ImGui::SetTooltip(
@@ -2637,7 +2623,7 @@ void AppStage_ControllerSettings::show_position_filter_tooltip(const std::string
 	{
 		ImGui::SetTooltip(
 			"Optical smoothing filter using kalman.\n"
-			"Smooths optical tracking and reduces optical noise by tracker projection and distance."
+			"Smooths optical tracking and reduces optical jitter greatly."
 		);
 	}
 	else if (name == "PositionExternalAttachment")

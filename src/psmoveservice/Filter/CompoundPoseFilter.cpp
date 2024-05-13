@@ -115,14 +115,8 @@ void CompoundPoseFilter::allocate_filters(
     case PositionFilterTypeLowPassOptical:
 		m_position_filter = new PositionFilterLowPassOptical;
 		break;
-    case PositionFilterTypeLowPassIMU:
-		m_position_filter = new PositionFilterLowPassIMU;
-		break;
     case PositionFilterTypeComplimentaryOpticalIMU:
 		m_position_filter = new PositionFilterComplimentaryOpticalIMU;
-		break;
-	case PositionFilterTypeLowPassExponential:
-		m_position_filter = new PositionFilterLowPassExponential;
 		break;
 	case PositionFilterTypeKalman:
 		m_position_filter = new PositionFilterKalman;

@@ -21,9 +21,7 @@ enum PositionFilterType {
     PositionFilterTypeNone,
     PositionFilterTypePassThru,
     PositionFilterTypeLowPassOptical,
-    PositionFilterTypeLowPassIMU,
     PositionFilterTypeComplimentaryOpticalIMU,
-	PositionFilterTypeLowPassExponential,
 	PositionFilterTypeKalman,
 	PositionFilterTypeExternalAttachment,
 };

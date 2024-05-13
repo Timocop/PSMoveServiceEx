@@ -21,11 +21,11 @@
 const char *AppStage_HMDSettings::APP_STAGE_NAME= "HMDSettings";
 
 //-- constants -----
-const int k_default_hmd_position_filter_index = 5; // PositionKalman
-const int k_default_morpheus_position_filter_index = 5; // PositionKalman
+const int k_default_hmd_position_filter_index = 3; // PositionKalman
+const int k_default_morpheus_position_filter_index = 3; // PositionKalman
 const int k_default_morpheus_orientation_filter_index = 1; // MadgwickARG
 
-const char* k_hmd_position_filter_names[] = { "PassThru", "LowPassOptical", "LowPassIMU", "LowPassExponential", "ComplimentaryOpticalIMU", "PositionKalman" };
+const char* k_hmd_position_filter_names[] = { "PassThru", "LowPassOptical", "ComplimentaryOpticalIMU", "PositionKalman" };
 const char* k_morpheus_orientation_filter_names[] = { "PassThru", "MadgwickARG", "ComplementaryOpticalARG" };
 
 const float k_max_hmd_prediction_time = 0.15f; // About 150ms seems to be about the point where you start to get really bad over-prediction 
@@ -1446,20 +1446,6 @@ void AppStage_HMDSettings::show_position_filter_tooltip(const std::string name)
 			"but behaves like PassThru on larger quicker movements."
 		);
 	}
-	else if (name == "LowPassIMU")
-	{
-		ImGui::SetTooltip(
-			"Predictive smoothing filter using device accelerometer.\n"
-			"Uses the device's accelerometer to predict and smooth optical movement."
-		);
-	}
-	else if (name == "LowPassExponential")
-	{
-		ImGui::SetTooltip(
-			"Optical smoothing filter using exponential curve.\n"
-			"Reduces optical jitter greatly but can also causes springy tracking and over prediction."
-		);
-	}
 	else if (name == "ComplimentaryOpticalIMU")
 	{
 		ImGui::SetTooltip(
@@ -1473,7 +1459,7 @@ void AppStage_HMDSettings::show_position_filter_tooltip(const std::string name)
 	{
 		ImGui::SetTooltip(
 			"Optical smoothing filter using kalman.\n"
-			"Smooths optical tracking and reduces optical noise by tracker projection and distance."
+			"Smooths optical tracking and reduces optical jitter greatly."
 		);
 	}
 	else if (name == "PositionExternalAttachment")
