@@ -1072,15 +1072,50 @@ static bool morpheus_open_usb_device(
 
 	if (bSuccess)
 	{
-		morpheus_context->usb_device_handle = 
-			libusb_open_device_with_vid_pid(
-				morpheus_context->usb_context,
-				MORPHEUS_VENDOR_ID, MORPHEUS_PRODUCT_ID);
+		libusb_device *dev;
+		libusb_device **devs;
+		libusb_device_handle *devhandle;
+		int i = 0;
+		int cnt;
 
-		if (morpheus_context->usb_device_handle == nullptr)
-		{
-			SERVER_LOG_ERROR("morpeus_open_usb_device") << "Morpheus USB device not found!";
+		cnt = (int)libusb_get_device_list(morpheus_context->usb_context, &devs);
+
+		if (cnt < 0) {
+			SERVER_LOG_ERROR("morpeus_open_usb_device") << "Unable to list libusb devices!";
 			bSuccess = false;
+		}
+		else
+		{
+			cnt = 0;
+			while ((dev = devs[i++]) != NULL)
+			{
+				struct libusb_device_descriptor desc;
+				if (libusb_get_device_descriptor(dev, &desc) != LIBUSB_SUCCESS)
+					continue;
+
+				// libusb_open_device_with_vid_pid() just fails when first hit fails. So we do it ourselfs and validate using libusb_open().
+				// See https://github.com/libusb/libusb/blob/master/libusb/core.c
+				if (desc.idVendor == MORPHEUS_VENDOR_ID && desc.idProduct == MORPHEUS_PRODUCT_ID)
+				{
+					int result = libusb_open(dev, &morpheus_context->usb_device_handle);
+
+					SERVER_LOG_INFO("morpeus_open_usb_device") << "libusb_open index " << i << " returned " << libusb_error_name(result);
+
+					if (result == LIBUSB_SUCCESS)
+					{
+						cnt++;
+						break;
+					}
+				}
+			}
+
+			libusb_free_device_list(devs, 1);
+
+			if (cnt == 0 || morpheus_context->usb_device_handle == nullptr)
+			{
+				SERVER_LOG_ERROR("morpeus_open_usb_device") << "Morpheus USB device not found!";
+				bSuccess = false;
+			}
 		}
 	}
 
