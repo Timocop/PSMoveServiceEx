@@ -218,6 +218,7 @@ message Request {
         SET_HMD_ANG_PREDICTION_TIME= 59;
         SET_CONTROLLER_ACCELEROMETER_CALIBRATION_AVG= 60;
         SET_CONTROLLER_ACCELEROMETER_CALIBRATION_EX = 61;
+		SET_HMD_TRACKING_LED_OVERRIDES = 62;
     }
     RequestType type = 2;
 
@@ -716,7 +717,7 @@ message Request {
     }
     RequestSetHmdOrientationPredictionTime request_set_hmd_orientation_prediction_time = 59;
 
-    // Parameters for SET_CONTROLLER_ACCELEROMETER_CALIBRATION_EX
+    // Parameters for SET_CONTROLLER_ACCELEROMETER_CALIBRATION_AVG
     message RequestSetControllerAccelerometerCalibrationAvg {
         int32 controller_id = 1;
         FloatVector raw_average_gravity= 2;
@@ -732,6 +733,14 @@ message Request {
         FloatVector drift_gravity= 4;
     }
     RequestSetControllerAccelerometerCalibrationEx set_controller_accelerometer_calibration_ex_request = 61;
+	
+    // Parameters for SET_HMD_TRACKING_LED_OVERRIDES
+    message RequestSetHmdTrackingLedOverrides {
+        int32 hmd_id = 1;
+        bool use_custom = 2;
+        int32 led_overrides = 3;
+    }
+    RequestSetHmdTrackingLedOverrides set_hmd_tracking_led_overrides_request = 62;
 }
 
 // Reliable (TCP) responses to requests
@@ -999,6 +1008,9 @@ message Response {
 			bool filter_position_kalman_disable_cutoff = 25;
 			bool filter_madgwick_smart_correct = 26;
 			bool UNUSED_4567457475 = 27;
+			
+			bool use_custom_optical_tracking = 28;
+			int32 override_custom_tracking_leds = 29;
         }
         repeated HMDInfo hmd_entries = 1;
     }

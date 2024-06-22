@@ -1031,7 +1031,7 @@ void ServerHMDView::set_tracking_enabled_internal(bool bEnabled)
 		switch (getHMDDeviceType())
 		{
 		case CommonHMDState::Morpheus:
-			castChecked<MorpheusHMD>()->setTrackingEnabled(bEnabled);
+			castChecked<MorpheusHMD>()->setTrackingEnabled(bEnabled, false);
 			break;
 		case CommonHMDState::VirtualHMD:
 			castChecked<VirtualHMD>()->setTrackingEnabled(bEnabled);

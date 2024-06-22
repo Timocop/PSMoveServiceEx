@@ -298,6 +298,48 @@ void AppStage_HMDSettings::renderUI()
 							ImGui::PopItemWidth();
 						}
 
+						if (hmdInfo.HmdType == AppStage_HMDSettings::Morpheus)
+						{
+							int useCustomOpticalTracking = (hmdInfo.UseCustomOpticalTracking) ? 1 : 0;
+							
+							ImGui::PushItemWidth(195);
+							if (ImGui::Combo("Tracking Method", &useCustomOpticalTracking, "Build-in Tracking Lights\0Custom Tracking Bulb\0\0"))
+							{
+								hmdInfo.UseCustomOpticalTracking = (useCustomOpticalTracking > 0);
+
+								request_set_hmd_tracking_leds(hmdInfo.HmdID, hmdInfo.UseCustomOpticalTracking, hmdInfo.OverrideCustomTrackingLeds);
+							}
+							ImGui::PopItemWidth();
+
+							if (hmdInfo.UseCustomOpticalTracking)
+							{
+								const int centerLed = (1 << 4);
+								bool centerOverride = (hmdInfo.OverrideCustomTrackingLeds == centerLed);
+
+								ImGui::Indent();
+								{
+									if (ImGui::Checkbox("Enable Center Tracking Light", &centerOverride))
+									{
+										hmdInfo.OverrideCustomTrackingLeds = (centerOverride) ? centerLed : 0;
+
+										request_set_hmd_tracking_leds(hmdInfo.HmdID, hmdInfo.UseCustomOpticalTracking, hmdInfo.OverrideCustomTrackingLeds);
+									}
+								}
+								ImGui::Unindent();
+							}
+							else
+							{
+								ImGui::ColorButton(ImColor(1.f, 0.f, 0.f), true);
+								if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+								ImGui::SameLine();
+								ImGui::PushTextWrapPos();
+								ImGui::TextDisabled(
+									"This tracking method is currently unavailable!"
+								);
+								ImGui::PopTextWrapPos();
+							}
+						}
+
 						if (hmdInfo.HmdType == AppStage_HMDSettings::eHMDType::Morpheus)
 						{
 							if (ImGui::CollapsingHeader("Filters", 0, true, false))
@@ -1304,6 +1346,26 @@ void AppStage_HMDSettings::request_set_hmd_offsets(
 	}
 }
 
+void AppStage_HMDSettings::request_set_hmd_tracking_leds(
+	int HmdID,
+	bool UseCustom,
+	int TrackingLedOverrrides)
+{
+	if (HmdID != -1)
+	{
+		RequestPtr request(new PSMoveProtocol::Request());
+		request->set_type(PSMoveProtocol::Request_RequestType_SET_HMD_TRACKING_LED_OVERRIDES);
+
+		request->mutable_set_hmd_tracking_led_overrides_request()->set_hmd_id(HmdID);
+		request->mutable_set_hmd_tracking_led_overrides_request()->set_use_custom(UseCustom);
+		request->mutable_set_hmd_tracking_led_overrides_request()->set_led_overrides(TrackingLedOverrrides);
+
+		PSMRequestID request_id;
+		PSM_SendOpaqueRequest(&request, &request_id);
+		PSM_EatResponse(request_id);
+	}
+}
+
 void AppStage_HMDSettings::handle_hmd_list_response(
     const PSMResponseMessage *response,
     void *userdata)
@@ -1372,6 +1434,9 @@ void AppStage_HMDSettings::handle_hmd_list_response(
 				HmdInfo.FilterPositionKalmanNoise = HmdResponse.filter_position_kalman_noise();
 				HmdInfo.FilterPositionKalmanDisableCutoff = HmdResponse.filter_position_kalman_disable_cutoff();
 				HmdInfo.FilterMadgwickSmartCorrect = HmdResponse.filter_madgwick_smart_correct();
+
+				HmdInfo.UseCustomOpticalTracking = HmdResponse.use_custom_optical_tracking();
+				HmdInfo.OverrideCustomTrackingLeds = HmdResponse.override_custom_tracking_leds();
 
                 if (HmdInfo.HmdType == AppStage_HMDSettings::Morpheus)
                 {

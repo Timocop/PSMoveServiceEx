@@ -96,6 +96,9 @@ public:
 		float FilterPositionKalmanNoise;
 		bool FilterPositionKalmanDisableCutoff;
 		bool FilterMadgwickSmartCorrect;
+
+		bool UseCustomOpticalTracking;
+		int OverrideCustomTrackingLeds;
     };
 
 
@@ -145,6 +148,8 @@ protected:
 	void request_set_hmd_offsets(
 		int HmdID,
 		OffsetSettings offset_settings);
+
+	void request_set_hmd_tracking_leds(int HmdID, bool UseCustom, int TrackingLedOverrrides);
 
 
 private:

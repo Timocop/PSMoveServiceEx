@@ -467,6 +467,7 @@ MorpheusHMDConfig::config2ptree()
 	pt.put("FilterSettings.AngularPredictionCutoff", filter_angular_prediction_cutoff);
 
 	pt.put("use_custom_optical_tracking", use_custom_optical_tracking);
+	pt.put("override_custom_tracking_leds", override_custom_tracking_leds);
 
 	pt.put("FilterSettings.PositionKalman.Error", filter_position_kalman_error);
 	pt.put("FilterSettings.PositionKalman.ProcessNoise", filter_position_kalman_noise);
@@ -562,6 +563,7 @@ MorpheusHMDConfig::ptree2config(const boost::property_tree::ptree &pt)
 		filter_angular_prediction_cutoff = pt.get<float>("FilterSettings.AngularPredictionCutoff", filter_angular_prediction_cutoff);
 
 		use_custom_optical_tracking = pt.get<bool>("use_custom_optical_tracking", use_custom_optical_tracking);
+		override_custom_tracking_leds = pt.get<int>("override_custom_tracking_leds", override_custom_tracking_leds);
 
 		filter_position_kalman_error = pt.get<float>("FilterSettings.PositionKalman.Error", filter_position_kalman_error);
 		filter_position_kalman_noise = pt.get<float>("FilterSettings.PositionKalman.ProcessNoise", filter_position_kalman_noise);
@@ -741,31 +743,9 @@ bool MorpheusHMD::open(
 				//morpheus_enable_tracking() resets morpheus_set_led_brightness() LED settings?
 				//Lets just wait a bit.
 				std::this_thread::sleep_for(std::chrono::milliseconds(1500));
-
-				morpheus_set_led_brightness(_MorpheusLED_FRONT, 0);
-				morpheus_set_led_brightness(_MorpheusLED_BACK, 50);
-
-				/*
-				std::string identifier = "Morpheus_";
-
-				char usb_port_path[128];
-				if (getUSBPortPath(usb_port_path, sizeof(usb_port_path)))
-				{
-					identifier.append(usb_port_path);
-
-					// Load the config file
-					cfg = MorpheusHMDConfig(identifier);
-					cfg.load();
-				}
-				else
-				{
-					SERVER_LOG_ERROR("MorpheusHMD::open") << "getUSBPortPath() failed!";
-
-					// Load the config file
-					cfg = MorpheusHMDConfig();
-					cfg.load();
-				}
-				*/
+				morpheus_set_led_brightness(_MorpheusLED_ALL, 50);
+				std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+				setTrackingEnabled(false, true);
 
 				// Reset the polling sequence counter
 				NextPollSequenceNumber = 0;
@@ -965,16 +945,21 @@ long MorpheusHMD::getMaxPollFailureCount() const
     return cfg.max_poll_failure_timeout_ms;
 }
 
-void MorpheusHMD::setTrackingEnabled(bool bEnable)
+void MorpheusHMD::setTrackingEnabled(bool bEnable, bool bForce)
 {
 	if (USBContext->usb_device_handle != nullptr)
 	{
-		if (!bIsTracking && bEnable)
+		int override_led = getConfig()->override_custom_tracking_leds;
+		if (override_led < 0 || override_led > _MorpheusLED_ALL)
+			override_led = 0;
+
+		if ((bForce || !bIsTracking) && bEnable)
 		{
 			if (getConfig()->use_custom_optical_tracking)
 			{
-				// We are using a custom bulb. Disable all LEDs.
+				// We are using a custom bulb. Disable all LEDs or use override.
 				morpheus_set_led_brightness(_MorpheusLED_ALL, 0);
+				morpheus_set_led_brightness(override_led, 50);
 			}
 			else
 			{
@@ -984,10 +969,19 @@ void MorpheusHMD::setTrackingEnabled(bool bEnable)
 
 			bIsTracking = true;
 		}
-		else if (bIsTracking && !bEnable)
+		else if ((bForce || bIsTracking) && !bEnable)
 		{
-			morpheus_set_led_brightness(_MorpheusLED_FRONT, 0);
-			morpheus_set_led_brightness(_MorpheusLED_BACK, 50);
+			if (getConfig()->use_custom_optical_tracking)
+			{
+				// We are using a custom bulb. Disable all LEDs or use override.
+				morpheus_set_led_brightness(_MorpheusLED_ALL, 0);
+				morpheus_set_led_brightness(override_led, 50);
+			}
+			else
+			{
+				morpheus_set_led_brightness(_MorpheusLED_FRONT, 0);
+				morpheus_set_led_brightness(_MorpheusLED_BACK, 50);
+			}
 
 			bIsTracking = false;
 		}

@@ -438,6 +438,10 @@ public:
 				response = new PSMoveProtocol::Response;
 				handle_request__set_controller_accelerometer_calibration_ex(context, response);
 				break;
+			case PSMoveProtocol::Request_RequestType_SET_HMD_TRACKING_LED_OVERRIDES:
+				response = new PSMoveProtocol::Response;
+				handle_request__set_hmd_tracking_led_overrides(context, response);
+				break;
 
             default:
                 assert(0 && "Whoops, bad request!");
@@ -4037,6 +4041,9 @@ protected:
 				float filter_position_kalman_disable_cutoff;
 				float filter_madgwick_smart_correct;
 
+				bool use_custom_optical_tracking;
+				int override_custom_tracking_leds;
+
                 switch (hmd_view->getHMDDeviceType())
                 {
                 case CommonHMDState::Morpheus:
@@ -4068,6 +4075,9 @@ protected:
 						filter_position_kalman_noise = config->filter_position_kalman_noise;
 						filter_position_kalman_disable_cutoff = config->filter_position_kalman_disable_cutoff;
 						filter_madgwick_smart_correct = config->filter_madgwick_smart_correct;
+
+						use_custom_optical_tracking = config->use_custom_optical_tracking;
+						override_custom_tracking_leds = config->override_custom_tracking_leds;
 
 						hmd_info->set_hmd_type(PSMoveProtocol::Morpheus);
 
@@ -4140,6 +4150,9 @@ protected:
 				hmd_info->set_filter_position_kalman_noise(filter_position_kalman_noise);
 				hmd_info->set_filter_position_kalman_disable_cutoff(filter_position_kalman_disable_cutoff);
 				hmd_info->set_filter_madgwick_smart_correct(filter_madgwick_smart_correct);
+
+				hmd_info->set_use_custom_optical_tracking(use_custom_optical_tracking);
+				hmd_info->set_override_custom_tracking_leds(override_custom_tracking_leds);
             }
         }
 
@@ -4589,6 +4602,46 @@ protected:
 				{
 					config->ang_prediction_time = request.ang_prediction_time();
 					config->save();
+				}
+
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+			}
+			else
+			{
+				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+			}
+		}
+		else
+		{
+			response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
+		}
+	}
+
+	void handle_request__set_hmd_tracking_led_overrides(
+		const RequestContext &context,
+		PSMoveProtocol::Response *response)
+	{
+		const int hmd_id = context.request->set_hmd_tracking_led_overrides_request().hmd_id();
+
+		ServerHMDViewPtr HmdView = m_device_manager.getHMDViewPtr(hmd_id);
+		const PSMoveProtocol::Request_RequestSetHmdTrackingLedOverrides &request =
+			context.request->set_hmd_tracking_led_overrides_request();
+
+		if (HmdView && HmdView->getIsOpen())
+		{
+			if (HmdView->getHMDDeviceType() == CommonDeviceState::Morpheus)
+			{
+				MorpheusHMD *hmd = HmdView->castChecked<MorpheusHMD>();
+				MorpheusHMDConfig *config = hmd->getConfigMutable();
+
+				if (config->use_custom_optical_tracking != request.use_custom() ||
+					config->override_custom_tracking_leds != request.led_overrides())
+				{
+					config->use_custom_optical_tracking = request.use_custom();
+					config->override_custom_tracking_leds = request.led_overrides();
+					config->save();
+
+					hmd->setTrackingEnabled(hmd->getTrackingEnabled(), true);
 				}
 
 				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
