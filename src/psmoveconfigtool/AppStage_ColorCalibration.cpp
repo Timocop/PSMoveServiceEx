@@ -29,8 +29,9 @@
 #define snprintf _snprintf
 #endif
 
-const int k_color_autodetect_probe_max = 64; 
+const int k_color_autodetect_probe_max = 64;
 const int k_color_autodetect_probe_step = 8;
+const int k_color_autodetect_probe_step_good = 16;
 
 const int k_auto_calib_sleep = 350;
 
@@ -191,6 +192,7 @@ AppStage_ColorCalibration::AppStage_ColorCalibration(App *app)
 	, m_bDetectingColors(false)
 	, m_iDetectingControllersLeft(0)
 	, m_iDetectingExposure(0)
+	, m_bDetectingExposureGood(false)
 	, m_iDetectingAdjustMethod(eDetectionAdjustMethod::adjust_exposure)
 	, m_bDetectingCancel(false)
 	, m_iDetectingFailReason(eDetectionFailReason::failreason_unknown)
@@ -2084,6 +2086,7 @@ void AppStage_ColorCalibration::renderUI()
 				}
 
 				m_iDetectingExposure = k_color_autodetect_probe_step;
+				m_bDetectingExposureGood = false;
 				setState(eMenuState::detection_exposure_adjust);
 			}
 		}
@@ -2105,6 +2108,7 @@ void AppStage_ColorCalibration::renderUI()
 				}
 
 				m_iDetectingExposure = k_color_autodetect_probe_step;
+				m_bDetectingExposureGood = false;
 				setState(eMenuState::detection_exposure_adjust);
 			}
 		}
@@ -2388,9 +2392,25 @@ void AppStage_ColorCalibration::renderUI()
 							setState(eMenuState::detection_exposure_adjust);
 						}
 					}
-					
 				}
 				break;
+			}
+
+			// Apply some buffer for exposure/gain
+			if (!m_bDetectingExposureGood)
+			{
+				m_bDetectingExposureGood = true;
+
+				if (!is_tracker_virtual() && m_iDetectingAdjustMethod != eDetectionAdjustMethod::adjust_keep)
+				{
+					m_iDetectingExposure += (k_color_autodetect_probe_step_good);
+
+					if (m_iDetectingExposure >= k_color_autodetect_probe_max)
+						m_iDetectingExposure = k_color_autodetect_probe_max;
+
+					setState(eMenuState::detection_exposure_adjust);
+					break;
+				}
 			}
 
 			// We dont want to search for custom colors presets
@@ -2497,6 +2517,10 @@ void AppStage_ColorCalibration::renderUI()
 			if (ImGui::Button("Go Back"))
 			{
 				setState(eMenuState::manualConfig);
+
+				// Reset
+				request_change_controller(0);
+				request_change_tracker(0);
 			}
 
 			ImGui::End();
@@ -2513,6 +2537,10 @@ void AppStage_ColorCalibration::renderUI()
 			if (ImGui::Button("Go Back"))
 			{
 				setState(eMenuState::manualConfig);
+
+				// Reset
+				request_change_controller(0);
+				request_change_tracker(0);
 			}
 
 			ImGui::End();
@@ -2531,6 +2559,10 @@ void AppStage_ColorCalibration::renderUI()
 			if (ImGui::Button("Go Back"))
 			{
 				setState(eMenuState::manualConfig);
+
+				// Reset
+				request_change_controller(0);
+				request_change_tracker(0);
 			}
 
 			ImGui::End();
@@ -2559,6 +2591,10 @@ void AppStage_ColorCalibration::renderUI()
 			if (ImGui::Button("Go Back"))
 			{
 				setState(eMenuState::manualConfig);
+
+				// Reset
+				request_change_controller(0);
+				request_change_tracker(0);
 			}
 
 			ImGui::End();
@@ -2583,6 +2619,10 @@ void AppStage_ColorCalibration::renderUI()
 			if (ImGui::Button("Go Back"))
 			{
 				setState(eMenuState::manualConfig);
+
+				// Reset
+				request_change_controller(0);
+				request_change_tracker(0);
 			}
 
 			ImGui::End();
@@ -2607,6 +2647,10 @@ void AppStage_ColorCalibration::renderUI()
 		if (ImGui::Button(" OK "))
 		{
 			setState(eMenuState::manualConfig);
+
+			// Reset
+			request_change_controller(0);
+			request_change_tracker(0);
 		}
 
 		ImGui::End();
@@ -2641,8 +2685,8 @@ void AppStage_ColorCalibration::renderUI()
 		{
 			setState(eMenuState::manualConfig);
 		}
-		request_change_controller(1);
 
+		request_change_controller(1);
 		break;
     case eMenuState::changeTracker:
 		if (m_bDetectingColors)
