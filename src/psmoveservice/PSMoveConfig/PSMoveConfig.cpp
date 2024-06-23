@@ -1,4 +1,5 @@
 #include "PSMoveConfig.h"
+#include "ServerLog.h"
 #include "DeviceInterface.h"
 #include "ServerUtility.h"
 #include <boost/filesystem.hpp>
@@ -86,6 +87,22 @@ PSMoveConfig::load()
         boost::property_tree::read_json(configPath, pt);
         ptree2config(pt);
         bLoadedOk = true;
+
+		if (!bHasLoaded)
+		{
+			// Open the file
+			std::ifstream file(configPath);
+			if (file.is_open()) {
+				// Read the file content into a stringstream
+				std::ostringstream configStream;
+				configStream << file.rdbuf();
+
+				// Close the file
+				file.close();
+				
+				SERVER_LOG_FILE_INFO(configPath.c_str()) << configStream.str();
+			}
+		}
     }
 
 	bHasLoaded = true;

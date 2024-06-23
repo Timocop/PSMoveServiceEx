@@ -1,4 +1,9 @@
 #include "PSEyeVideoCapture.h"
+
+#if !DISABLE_SERVER_LOG
+	#include "ServerLog.h"
+#endif
+
 #include <opencv2/videoio/videoio.hpp>
 #include <opencv2/videoio/videoio_c.h>
 #include "opencv2/imgproc.hpp"
@@ -223,10 +228,21 @@ protected:
     bool open(int _index) {
         close();
         int cams = CLEyeGetCameraCount();
-        std::cout << "CLEyeGetCameraCount() found " << cams << " devices." << std::endl;
+
+#ifdef SERVER_LOG_H
+		SERVER_LOG_INFO("CLEyeGetCameraCount()") << "Found " << cams << " devices.";
+#else
+		std::cout << "CLEyeGetCameraCount() found " << cams << " devices." << std::endl;
+#endif
+
         if (_index < cams)
         {
-            std::cout << "Attempting to open camera " << _index << " of " << cams << "." << std::endl;
+#ifdef SERVER_LOG_H
+			SERVER_LOG_INFO("PSEYECaptureCAM_CLMULTI::open()") << "Attempting to open camera " << _index << " of " << cams << "."";
+#else
+			std::cout << "Attempting to open camera " << _index << " of " << cams << "." << std::endl;
+#endif
+
             GUID guid = CLEyeGetCameraUUID(_index);
             m_eye = CLEyeCreateCamera(guid, CLEYE_COLOR_PROCESSED, CLEYE_VGA, 75);
             CLEyeCameraGetFrameDimensions(m_eye, m_width, m_height);
@@ -505,8 +521,13 @@ protected:
 
         // Enumerate libusb devices
         std::vector<ps3eye::PS3EYECam::PS3EYERef> devices = ps3eye::PS3EYECam::getDevices();
-		std::cout << "ps3eye::PS3EYECam::getDevices() found " << devices.size() << " devices." << std::endl;
-        
+
+#ifdef SERVER_LOG_H
+		SERVER_LOG_INFO("ps3eye::PS3EYECam::getDevices()") << "Found " << devices.size() << " devices.";
+#else
+		std::cout << "ps3eye::PS3EYECam::getDevices() Found " << devices.size() << " devices." << std::endl;
+#endif
+
         if (devices.size() > (unsigned int)_index) {
             
             eye = devices[_index];
@@ -533,7 +554,11 @@ protected:
     
     void close()
     {
-		std::cout << "ps3eye::PS3EYECam() index " << m_index << " closed." << std::endl;
+#ifdef SERVER_LOG_H
+		SERVER_LOG_INFO("ps3eye::PS3EYECam()") << "Index " << m_index << " closed.";
+#else
+		std::cout << "ps3eye::PS3EYECam() Index " << m_index << " closed." << std::endl;
+#endif
 
         // eye will close itself when going out of scope.
         m_index = -1;
@@ -698,7 +723,13 @@ public:
 
 		BOOL connected = ConnectNamedPipe(capturePipeSD, NULL);
 		if (connected)
+		{
+#ifdef SERVER_LOG_H
+			SERVER_LOG_INFO("ps3eye::VIRTUAL()") << "ConnectNamedPipe success, index " << m_index;
+#else
 			std::cout << "ps3eye::VIRTUAL() ConnectNamedPipe success, index " << m_index << std::endl;
+#endif
+		}
 
 		if (!connected)
 			connected = (GetLastError() == ERROR_PIPE_CONNECTED);
@@ -706,8 +737,11 @@ public:
 		if (!connected)
 		{
 			if (GetLastError() != ERROR_PIPE_LISTENING) {
+#ifdef SERVER_LOG_H
+				SERVER_LOG_ERROR("ps3eye::VIRTUAL()") << "ConnectNamedPipe failed, index " << m_index << ", GLE=" << GetLastError() << ".";
+#else
 				std::cout << "ps3eye::VIRTUAL() ConnectNamedPipe failed, index " << m_index << ", GLE=" << GetLastError() << "." << std::endl;
-
+#endif
 				DisconnectNamedPipe(capturePipeSD);
 			}
 		}
@@ -741,7 +775,11 @@ public:
 			{
 			case ERROR_BROKEN_PIPE:
 			{
-				std::cout << "ps3eye::VIRTUAL() client disconnected, index " << m_index << "." << std::endl;
+#ifdef SERVER_LOG_H
+				SERVER_LOG_INFO("ps3eye::VIRTUAL()") << "Client disconnected, index " << m_index << "." << ".";
+#else
+				std::cout << "ps3eye::VIRTUAL() Client disconnected, index " << m_index << "." << std::endl;
+#endif
 				break;
 			}
 			case ERROR_PIPE_LISTENING:
@@ -756,7 +794,11 @@ public:
 			}
 			default:
 			{
+#ifdef SERVER_LOG_H
+				SERVER_LOG_ERROR("ps3eye::VIRTUAL()") << "ReadFile failed, index " << m_index << ", GLE=" << GetLastError() << ".";
+#else
 				std::cout << "ps3eye::VIRTUAL() ReadFile failed, index " << m_index << ", GLE=" << GetLastError() << "." << std::endl;
+#endif
 				break;
 			}
 			}
@@ -811,7 +853,13 @@ public:
 
 		BOOL connected = ConnectNamedPipe(capturePipeHD, NULL);
 		if (connected)
+		{
+#ifdef SERVER_LOG_H
+			SERVER_LOG_INFO("ps3eye::VIRTUAL()") << "ConnectNamedPipe success, index " << m_index;
+#else
 			std::cout << "ps3eye::VIRTUAL() ConnectNamedPipe success, index " << m_index << std::endl;
+#endif
+		}
 
 		if (!connected)
 			connected = (GetLastError() == ERROR_PIPE_CONNECTED);
@@ -819,7 +867,11 @@ public:
 		if (!connected)
 		{
 			if (GetLastError() != ERROR_PIPE_LISTENING) {
+#ifdef SERVER_LOG_H
+				SERVER_LOG_INFO("ps3eye::VIRTUAL()") << "ConnectNamedPipe failed, index " << m_index << ", GLE=" << GetLastError() << ".";
+#else
 				std::cout << "ps3eye::VIRTUAL() ConnectNamedPipe failed, index " << m_index << ", GLE=" << GetLastError() << "." << std::endl;
+#endif
 
 				DisconnectNamedPipe(capturePipeHD);
 			}
@@ -854,7 +906,12 @@ public:
 			{
 			case ERROR_BROKEN_PIPE:
 			{
-				std::cout << "ps3eye::VIRTUAL() client disconnected, index " << m_index << "." << std::endl;
+#ifdef SERVER_LOG_H
+				SERVER_LOG_INFO("ps3eye::VIRTUAL()") << "Client disconnected, index " << m_index << ".";
+#else
+				std::cout << "ps3eye::VIRTUAL() Client disconnected, index " << m_index << "." << std::endl;
+#endif
+
 				break;
 			}
 			case ERROR_PIPE_LISTENING:
@@ -869,7 +926,12 @@ public:
 			}
 			default:
 			{
+#ifdef SERVER_LOG_H
+				SERVER_LOG_ERROR("ps3eye::VIRTUAL()") << "ReadFile failed, index " << m_index << ", GLE=" << GetLastError() << ".";
+#else
 				std::cout << "ps3eye::VIRTUAL() ReadFile failed, index " << m_index << ", GLE=" << GetLastError() << "." << std::endl;
+#endif
+
 				break;
 			}
 			}
@@ -982,7 +1044,11 @@ protected:
 		capFrameSD = cv::Mat(480, 640, CV_8UC3, CvScalar(0, 0, 0));
 		capFrameHD = cv::Mat(1080, 1920, CV_8UC3, CvScalar(0, 0, 0));
 
-		std::cout << "ps3eye::VIRTUAL() index " << m_index << " open." << std::endl;
+#ifdef SERVER_LOG_H
+		SERVER_LOG_INFO("ps3eye::VIRTUAL()") << "Index " << m_index << " open.";
+#else
+		std::cout << "ps3eye::VIRTUAL() Index " << m_index << " open." << std::endl;
+#endif
 
 		if (refreshPipe())
 		{
@@ -999,7 +1065,11 @@ protected:
 
 	void close()
 	{
-		std::cout << "ps3eye::VIRTUAL() index " << m_index << " closed." << std::endl;
+#ifdef SERVER_LOG_H
+		SERVER_LOG_INFO("ps3eye::VIRTUAL()") << "Index " << m_index << " closed.";
+#else
+		std::cout << "ps3eye::VIRTUAL() Index " << m_index << " closed." << std::endl;
+#endif
 
 		if (capturePipeSD != INVALID_HANDLE_VALUE)
 		{
@@ -1062,12 +1132,22 @@ protected:
 
 			if (capturePipeSD != INVALID_HANDLE_VALUE)
 			{
+#ifdef SERVER_LOG_H
+				SERVER_LOG_INFO("ps3eye::VIRTUAL()") << pipeNameSD.c_str() << " pipe created.";
+#else
 				std::cout << "ps3eye::VIRTUAL() " << pipeNameSD.c_str() << " pipe created." << std::endl;
+#endif
+
 				return true;
 			}
 			else
 			{
+#ifdef SERVER_LOG_H
+				SERVER_LOG_ERROR("ps3eye::VIRTUAL()") << pipeNameSD.c_str() << " pipe failed!, GLE=" << GetLastError();
+#else
 				std::cout << "ps3eye::VIRTUAL() " << pipeNameSD.c_str() << " pipe failed!, GLE=" << GetLastError() << std::endl;
+#endif
+
 				return false;
 			}
 		}
@@ -1088,12 +1168,22 @@ protected:
 
 			if (capturePipeHD != INVALID_HANDLE_VALUE)
 			{
-				std::cout << "ps3eye::VIRTUAL() " << pipeNameSD.c_str() << " pipe created." << std::endl;
+#ifdef SERVER_LOG_H
+				SERVER_LOG_INFO("ps3eye::VIRTUAL()") << pipeNameHD.c_str() << " pipe created.";
+#else
+				std::cout << "ps3eye::VIRTUAL() " << pipeNameHD.c_str() << " pipe created." << std::endl;
+#endif
+
 				return true;
 			}
 			else
 			{
-				std::cout << "ps3eye::VIRTUAL() " << pipeNameSD.c_str() << " pipe failed!, GLE=" << GetLastError() << std::endl;
+#ifdef SERVER_LOG_H
+				SERVER_LOG_ERROR("ps3eye::VIRTUAL()") << pipeNameHD.c_str() << " pipe failed!, GLE=" << GetLastError();
+#else
+				std::cout << "ps3eye::VIRTUAL() " << pipeNameHD.c_str() << " pipe failed!, GLE=" << GetLastError() << std::endl;
+#endif
+
 				return false;
 			}
 		}
@@ -1168,11 +1258,20 @@ bool PSEyeVideoCapture::open(int index)
 		if (usingCLEyeDriver())
 		{
 			m_api_index = index;
+
+#ifdef SERVER_LOG_H
+			SERVER_LOG_INFO("PSEyeVideoCapture::open()") << "CL Eye Driver being used with native DShow. Setting m_index to " << m_api_index;
+#else
 			std::cout << "CL Eye Driver being used with native DShow. Setting m_index to " << m_api_index << std::endl;
+#endif
 
 			if (!isOpened())
 			{
+#ifdef SERVER_LOG_H
+				SERVER_LOG_INFO("PSEyeVideoCapture::open()") << "Attempting cv::VideoCapture::open(index) for CLEye DShow camera.";
+#else
 				std::cout << "Attempting cv::VideoCapture::open(index) for CLEye DShow camera." << std::endl;
+#endif
 
 				return cv::VideoCapture::open(index);
 			}
@@ -1251,7 +1350,12 @@ bool PSEyeVideoCapture::set(int propId, double value)
 
         // restart the camera capture
         if (param_set && icap) {
-            std::cout << "Parameter changed via registry. Resetting capture device." << std::endl;
+#ifdef SERVER_LOG_H
+			SERVER_LOG_INFO("PSEyeVideoCapture::set()") << "Parameter changed via registry. Resetting capture device.";
+#else
+			std::cout << "Parameter changed via registry. Resetting capture device." << std::endl;
+#endif
+
             cv::VideoCapture::open(m_index);
         }
 
@@ -1361,7 +1465,12 @@ cv::Ptr<cv::IVideoCapture> PSEyeVideoCapture::pseyeVideoCapture_create(int index
                 // So we will return empty capture here.
                 if (usingCLEyeDriver())
                 {
-                    std::cout << "CL Eye Driver detected." << std::endl;
+#ifdef SERVER_LOG_H
+					SERVER_LOG_INFO("PSEyeVideoCapture::pseyeVideoCapture_create()") << "CL Eye Driver detected.";
+#else
+					std::cout << "CL Eye Driver detected." << std::endl;
+#endif
+
                     capture = cv::Ptr<cv::IVideoCapture>();
 
                     m_indentifier = "opencv_";

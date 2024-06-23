@@ -71,6 +71,13 @@ std::string log_get_timestamp_prefix();
 #define SERVER_LOG_ERROR(function_name) SELECT_LOG_STREAM(_log_severity_level_error) << log_get_timestamp_prefix() << function_name << " - "
 #define SERVER_LOG_FATAL(function_name) SELECT_LOG_STREAM(_log_severity_level_fatal) << log_get_timestamp_prefix() << function_name << " - "
 
+#define SERVER_LOG_FILE_TRACE(function_name) SELECT_LOG_STREAM(_log_severity_level_trace) << "#" << log_get_timestamp_prefix() << function_name << " - "
+#define SERVER_LOG_FILE_DEBUG(function_name) SELECT_LOG_STREAM(_log_severity_level_debug) << "#" << log_get_timestamp_prefix() << function_name << " - "
+#define SERVER_LOG_FILE_INFO(function_name) SELECT_LOG_STREAM(_log_severity_level_info) << "#" << log_get_timestamp_prefix() << function_name << " - "
+#define SERVER_LOG_FILE_WARNING(function_name) SELECT_LOG_STREAM(_log_severity_level_warning) << "#" << log_get_timestamp_prefix() << function_name << " - "
+#define SERVER_LOG_FILE_ERROR(function_name) SELECT_LOG_STREAM(_log_severity_level_error) << "#" << log_get_timestamp_prefix() << function_name << " - "
+#define SERVER_LOG_FILE_FATAL(function_name) SELECT_LOG_STREAM(_log_severity_level_fatal) << "#" << log_get_timestamp_prefix() << function_name << " - "
+
 // Thread Safe Logger Macros
 // Uses thread safe locking before appending data to the logging stream
 // Only use this when logging from other threads
@@ -80,6 +87,13 @@ std::string log_get_timestamp_prefix();
 #define SERVER_MT_LOG_WARNING(function_name) SELECT_MT_LOG_STREAM(_log_severity_level_warning) << log_get_timestamp_prefix() << function_name << " - "
 #define SERVER_MT_LOG_ERROR(function_name) SELECT_MT_LOG_STREAM(_log_severity_level_error) << log_get_timestamp_prefix() << function_name << " - "
 #define SERVER_MT_LOG_FATAL(function_name) SELECT_MT_LOG_STREAM(_log_severity_level_fatal) << log_get_timestamp_prefix() << function_name << " - "
+
+#define SERVER_MT_LOG_FILE_TRACE(function_name) SELECT_MT_LOG_STREAM(_log_severity_level_trace) << "#" << log_get_timestamp_prefix() << function_name << " - "
+#define SERVER_MT_LOG_FILE_DEBUG(function_name) SELECT_MT_LOG_STREAM(_log_severity_level_debug) << "#" << log_get_timestamp_prefix() << function_name << " - "
+#define SERVER_MT_LOG_FILE_INFO(function_name) SELECT_MT_LOG_STREAM(_log_severity_level_info) << "#" << log_get_timestamp_prefix() << function_name << " - "
+#define SERVER_MT_LOG_FILE_WARNING(function_name) SELECT_MT_LOG_STREAM(_log_severity_level_warning) << "#" << log_get_timestamp_prefix() << function_name << " - "
+#define SERVER_MT_LOG_FILE_ERROR(function_name) SELECT_MT_LOG_STREAM(_log_severity_level_error) << "#" << log_get_timestamp_prefix() << function_name << " - "
+#define SERVER_MT_LOG_FILE_FATAL(function_name) SELECT_MT_LOG_STREAM(_log_severity_level_fatal) << "#" << log_get_timestamp_prefix() << function_name << " - "
  
 #endif  // SERVER_LOG_H
 

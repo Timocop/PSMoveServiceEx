@@ -114,9 +114,17 @@ void LoggerStream::write_line()
 {
 	if (m_bEmitLine)
 	{
-		const std::string line = m_lineBuffer.str();
+		std::string line = m_lineBuffer.str();
 
-		if (g_console_stream != nullptr)
+		// Check for prefix to write in file only.
+		bool fileOnly = false;
+		if (line.find('#') == 0)
+		{
+			fileOnly = true;
+			line.erase(0, 1);
+		}
+
+		if (g_console_stream != nullptr && !fileOnly)
 		{
 			*g_console_stream << line << std::endl;
 		}
