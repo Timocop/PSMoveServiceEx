@@ -574,29 +574,29 @@ void AppStage_TrackerSettings::renderUI()
 												AppStage_ComputeTrackerPoses::enterStageAndCalibrateTrackersWithController(m_app, controllerID);
 											}
 
-											const ControllerInfo *controller = get_selected_controller();
-											if (controller != NULL)
-											{
-												if (ImGui::Button("Calibrate Optical Noise##Controller"))
-												{
-													const PSMClientTrackerInfo &trackerInfo = m_trackerInfos[m_selectedTrackerIndex];
-													m_app->getAppStage<AppStage_OpticalCalibration>()->setBypassCalibrationFlag(false);
-													m_app->getAppStage<AppStage_OpticalCalibration>()->setTargetTrackerId(trackerInfo.tracker_id);
-													m_app->getAppStage<AppStage_OpticalCalibration>()->setTargetControllerId(controller->ControllerID);
-													m_app->setAppStage(AppStage_OpticalCalibration::APP_STAGE_NAME);
-												}
-											}
-											else
-											{
-												ImGui::Button("Calibrate Optical Noise (Unavailable)##Controller");
-											}
+											//const ControllerInfo *controller = get_selected_controller();
+											//if (controller != NULL)
+											//{
+											//	if (ImGui::Button("Calibrate Optical Noise##Controller"))
+											//	{
+											//		const PSMClientTrackerInfo &trackerInfo = m_trackerInfos[m_selectedTrackerIndex];
+											//		m_app->getAppStage<AppStage_OpticalCalibration>()->setBypassCalibrationFlag(false);
+											//		m_app->getAppStage<AppStage_OpticalCalibration>()->setTargetTrackerId(trackerInfo.tracker_id);
+											//		m_app->getAppStage<AppStage_OpticalCalibration>()->setTargetControllerId(controller->ControllerID);
+											//		m_app->setAppStage(AppStage_OpticalCalibration::APP_STAGE_NAME);
+											//	}
+											//}
+											//else
+											//{
+											//	ImGui::Button("Calibrate Optical Noise (Unavailable)##Controller");
+											//}
 
-											if (ImGui::IsItemHovered())
-												ImGui::SetTooltip(
-													"NOTE: This only appiles for following positional filters:\n"
-													" - ComplimentaryOpticalIMU\n"
-													" - PositionKalman"
-												);
+											//if (ImGui::IsItemHovered())
+											//	ImGui::SetTooltip(
+											//		"NOTE: This only appiles for following positional filters:\n"
+											//		" - ComplimentaryOpticalIMU\n"
+											//		" - PositionKalman"
+											//	);
 
 
 											//ImGui::Separator();
@@ -616,7 +616,7 @@ void AppStage_TrackerSettings::renderUI()
 										{
 											ImGui::Button("Calibrate Tracking Colors (Unavailable)");
 											ImGui::Button("Calibrate Tracker Poses (Unavailable)");
-											ImGui::Button("Calibrate Optical Noise (Unavailable)");
+											//ImGui::Button("Calibrate Optical Noise (Unavailable)");
 
 											//ImGui::Separator();
 
@@ -650,22 +650,22 @@ void AppStage_TrackerSettings::renderUI()
 											AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, controllerID, -1);
 										}
 
-										const ControllerInfo *controller = get_selected_controller();
-										if (controller != NULL)
-										{
-											if (ImGui::Button("Test Optical Noise##Controller"))
-											{
-												const PSMClientTrackerInfo &trackerInfo = m_trackerInfos[m_selectedTrackerIndex];
-												m_app->getAppStage<AppStage_OpticalCalibration>()->setBypassCalibrationFlag(true);
-												m_app->getAppStage<AppStage_OpticalCalibration>()->setTargetTrackerId(trackerInfo.tracker_id);
-												m_app->getAppStage<AppStage_OpticalCalibration>()->setTargetControllerId(controller->ControllerID);
-												m_app->setAppStage(AppStage_OpticalCalibration::APP_STAGE_NAME);
-											}
-										}
-										else
-										{
-											ImGui::Button("Test Optical Noise (Unavailable)##Controller");
-										}
+										//const ControllerInfo *controller = get_selected_controller();
+										//if (controller != NULL)
+										//{
+										//	if (ImGui::Button("Test Optical Noise##Controller"))
+										//	{
+										//		const PSMClientTrackerInfo &trackerInfo = m_trackerInfos[m_selectedTrackerIndex];
+										//		m_app->getAppStage<AppStage_OpticalCalibration>()->setBypassCalibrationFlag(true);
+										//		m_app->getAppStage<AppStage_OpticalCalibration>()->setTargetTrackerId(trackerInfo.tracker_id);
+										//		m_app->getAppStage<AppStage_OpticalCalibration>()->setTargetControllerId(controller->ControllerID);
+										//		m_app->setAppStage(AppStage_OpticalCalibration::APP_STAGE_NAME);
+										//	}
+										//}
+										//else
+										//{
+										//	ImGui::Button("Test Optical Noise (Unavailable)##Controller");
+										//}
 									}
 									ImGui::EndGroup();
 									if (ImGui::IsItemVisible())
