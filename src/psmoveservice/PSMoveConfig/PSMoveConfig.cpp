@@ -37,6 +37,7 @@ const CommonHSVColorRange *k_default_color_presets = g_default_color_presets;
 PSMoveConfig::PSMoveConfig(const std::string &fnamebase)
 	: ConfigFileBase(fnamebase)
 	, bHasLoaded(false)
+	, bHasSaved(false)
 {
 }
 
@@ -72,7 +73,34 @@ PSMoveConfig::save()
 	if (!bHasLoaded)
 		return;
 
-    boost::property_tree::write_json(getConfigPath(), config2ptree());
+	std::string configPath = getConfigPath();
+
+    boost::property_tree::write_json(configPath, config2ptree());
+
+	if (bHasSaved)
+	{
+		SERVER_LOG_FILE_INFO(configPath.c_str()) << "Configuration saved!";
+	}
+	else
+	{
+		if (boost::filesystem::exists(configPath))
+		{
+			// Open the file
+			std::ifstream file(configPath);
+			if (file.is_open()) {
+				// Read the file content into a stringstream
+				std::ostringstream configStream;
+				configStream << file.rdbuf();
+
+				// Close the file
+				file.close();
+
+				SERVER_LOG_FILE_INFO(configPath.c_str()) << configStream.str();
+			}
+		}
+	}
+
+	bHasSaved = true;
 }
 
 bool
@@ -87,23 +115,16 @@ PSMoveConfig::load()
         boost::property_tree::read_json(configPath, pt);
         ptree2config(pt);
         bLoadedOk = true;
-
-		if (!bHasLoaded)
-		{
-			// Open the file
-			std::ifstream file(configPath);
-			if (file.is_open()) {
-				// Read the file content into a stringstream
-				std::ostringstream configStream;
-				configStream << file.rdbuf();
-
-				// Close the file
-				file.close();
-				
-				SERVER_LOG_FILE_INFO(configPath.c_str()) << configStream.str();
-			}
-		}
     }
+
+	if (bLoadedOk)
+	{
+		SERVER_LOG_FILE_INFO(configPath.c_str()) << "Configuration loaded!";
+	}
+	else
+	{
+		SERVER_LOG_FILE_INFO(configPath.c_str()) << "Configuration failed to load!";
+	}
 
 	bHasLoaded = true;
 

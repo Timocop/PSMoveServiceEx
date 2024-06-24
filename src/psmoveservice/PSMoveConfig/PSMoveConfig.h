@@ -45,6 +45,7 @@ public:
 private:
     const std::string getConfigPath();
 	bool bHasLoaded;
+	bool bHasSaved;
 };
 /*
 Note that PSMoveConfig is an abstract class because it has 2 pure virtual functions.
