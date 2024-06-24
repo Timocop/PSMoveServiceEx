@@ -60,9 +60,11 @@ public:
 		pt.put("platform_api_enabled", platform_api_enabled);
 
 		// Legacy PSMoveService Detection
-		pt.put("controller_poll_interval", -1.f);
-		pt.put("tracker_poll_interval", -1.f);
-		pt.put("hmd_poll_interval", -1.f);
+		// We use -0.1 and should be rounded to floor -1.0 with PSMSX.
+		// Legacy PSMS however uses int and will round to nearest and should result in 0.0 instead.
+		pt.put("controller_poll_interval", -0.1f);
+		pt.put("tracker_poll_interval", -0.1f);
+		pt.put("hmd_poll_interval", -0.1f);
 
 		pt.put("legacy_require_factory_reset", legacy_require_factory_reset);
 
@@ -76,9 +78,9 @@ public:
 		bool legacy = pt.get<bool>("legacy", false);
 
 		// Legacy PSMoveService Detection
-		legacy_psmoveservice |= (pt.get<float>("controller_poll_interval", -1.f) > -1.f);
-		legacy_psmoveservice |= (pt.get<float>("tracker_poll_interval", -1.f) > -1.f);
-		legacy_psmoveservice |= (pt.get<float>("hmd_poll_interval", -1.f) > -1.f);
+		legacy_psmoveservice |= (floorf(pt.get<float>("controller_poll_interval", -0.1f)) > -1.f);
+		legacy_psmoveservice |= (floorf(pt.get<float>("tracker_poll_interval", -0.1f)) > -1.f);
+		legacy_psmoveservice |= (floorf(pt.get<float>("hmd_poll_interval", -0.1f)) > -1.f);
 
 		legacy_require_factory_reset |= pt.get<bool>("legacy_require_factory_reset", legacy_require_factory_reset);
 		legacy_require_factory_reset |= legacy_psmoveservice;
