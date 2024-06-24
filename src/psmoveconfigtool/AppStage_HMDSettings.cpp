@@ -990,9 +990,10 @@ void AppStage_HMDSettings::renderUI()
 								hmdInfo.OffsetScale.y != 1.0f ||
 								hmdInfo.OffsetScale.z != 1.0f)
 							{
-								ImGui::Bullet();
-								ImGui::SameLine();
 								ImGui::PushTextWrapPos();
+								ImGui::ColorButton(ImColor(1.f, .5f, 0.f), true);
+								if (ImGui::IsItemHovered()) ImGui::SetTooltip("");
+								ImGui::SameLine();
 								ImGui::TextDisabled(
 									"HMD scale or position has been changed!\n"
 									"Changing the scale or position can cause abnormal artifacts in pose previews!"

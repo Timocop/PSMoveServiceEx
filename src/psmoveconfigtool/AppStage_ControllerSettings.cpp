@@ -715,9 +715,11 @@ void AppStage_ControllerSettings::renderUI()
 									{
 										adminCheck.RestartAdminMode();
 									}
-									ImGui::Bullet();
-									ImGui::SameLine();
+
 									ImGui::PushTextWrapPos();
+									ImGui::ColorButton(ImColor(1.f, .5f, 0.f), true);
+									if (ImGui::IsItemHovered()) ImGui::SetTooltip("");
+									ImGui::SameLine();
 									ImGui::TextDisabled("Administrator privileges are required to pair or unpair controllers.");
 									ImGui::PopTextWrapPos();
 								}
@@ -1697,9 +1699,10 @@ void AppStage_ControllerSettings::renderUI()
 											controllerInfo.OffsetScale.y != 1.0f ||
 											controllerInfo.OffsetScale.z != 1.0f)
 										{
-											ImGui::Bullet();
-											ImGui::SameLine();
 											ImGui::PushTextWrapPos();
+											ImGui::ColorButton(ImColor(1.f, .5f, 0.f), true);
+											if (ImGui::IsItemHovered()) ImGui::SetTooltip("");
+											ImGui::SameLine();
 											ImGui::TextDisabled(
 												"Controller scale or position has been changed!\n"
 												"Changing the scale or position can cause abnormal artifacts in pose previews!"
@@ -1790,9 +1793,10 @@ void AppStage_ControllerSettings::renderUI()
 								else
 								{
 									ImGui::Button("Calibrate Magnetometer (Unavailable)");
-									ImGui::Bullet();
-									ImGui::SameLine();
 									ImGui::PushTextWrapPos();
+									ImGui::ColorButton(ImColor(1.f, 0.f, 0.f), true);
+									if (ImGui::IsItemHovered()) ImGui::SetTooltip("");
+									ImGui::SameLine();
 									ImGui::TextDisabled(
 										"The magnetometer for this controller has been disabled or is not available. "
 										"Magnetometers are only available for first generation PS3 PSmove controllers."
@@ -1854,9 +1858,10 @@ void AppStage_ControllerSettings::renderUI()
 										m_app->setAppStage(AppStage_GyroscopeCalibration::APP_STAGE_NAME);
 									}
 
-									ImGui::Bullet();
-									ImGui::SameLine();
 									ImGui::PushTextWrapPos();
+									ImGui::ColorButton(ImColor(0.f, 0.f, 1.f), true);
+									if (ImGui::IsItemHovered()) ImGui::SetTooltip("");
+									ImGui::SameLine();
 									ImGui::TextDisabled(
 										"Requires PSmove emulation to be enabled."
 									);

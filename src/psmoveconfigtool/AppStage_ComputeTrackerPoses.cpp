@@ -1108,7 +1108,8 @@ void AppStage_ComputeTrackerPoses::renderUI()
 			ImGui::Begin("Test Magnetic Interferences", nullptr, window_flags);
 
 			ImGui::PushTextWrapPos();
-			ImGui::Bullet();
+			ImGui::ColorButton(ImColor(0.f, 0.f, 1.f), true);
+			if (ImGui::IsItemHovered()) ImGui::SetTooltip("");
 			ImGui::SameLine();
 			ImGui::TextDisabled(
 				"This preview uses the device's magnetometer. Ensure that the magnetometer of this device is properly calibrated!");
@@ -1378,9 +1379,9 @@ void AppStage_ComputeTrackerPoses::renderUI()
 				ImGui::Text("Triangulation Quality:");
 
 				// Should be more than 100cm away for measure
-				if (center_distance > 100.f)
+				if (m_triangInfo.size() > 1)
 				{
-					if (m_triangInfo.size() > 1)
+					if (center_distance > 100.f)
 					{
 						if (distance > 0.75f) {
 							ImGui::ProgressBar(distance, ImVec2(-1, 0), "Perfect");
@@ -1398,20 +1399,25 @@ void AppStage_ComputeTrackerPoses::renderUI()
 					else
 					{
 						ImGui::ProgressBar(0.0f, ImVec2(-1, 0), "Failed");
-						ImGui::Bullet();
+
+						ImGui::PushTextWrapPos();
+						ImGui::ColorButton(ImColor(1.f, 0.f, 0.f), true);
+						if (ImGui::IsItemHovered()) ImGui::SetTooltip("");
 						ImGui::SameLine();
-						ImGui::TextDisabled(
-							"More than 2 triangulation points\n"
-							"are required."
-						);
+						ImGui::TextDisabled("Point too close to playspace center.");
+						ImGui::PopTextWrapPos();
 					}
 				}
 				else
 				{
 					ImGui::ProgressBar(0.0f, ImVec2(-1, 0), "Failed");
-					ImGui::Bullet();
+
+					ImGui::PushTextWrapPos();
+					ImGui::ColorButton(ImColor(1.f, 0.f, 0.f), true);
+					if (ImGui::IsItemHovered()) ImGui::SetTooltip("");
 					ImGui::SameLine();
-					ImGui::TextDisabled("Too close to playspace center.");
+					ImGui::TextDisabled("More than 2 triangulation points are required.");
+					ImGui::PopTextWrapPos();
 				}
 			}
 

@@ -954,9 +954,10 @@ void AppStage_TrackerSettings::renderUI()
 							playspace_scale_y != 1.0f ||
 							playspace_scale_z != 1.0f)
 						{
-							ImGui::Bullet();
-							ImGui::SameLine();
 							ImGui::PushTextWrapPos();
+							ImGui::ColorButton(ImColor(1.f, .5f, 0.f), true);
+							if (ImGui::IsItemHovered()) ImGui::SetTooltip("");
+							ImGui::SameLine();
 							ImGui::TextDisabled(
 								"Playspace scale has been changed!\n"
 								"Scaling will not be applied to trackers.\n"
