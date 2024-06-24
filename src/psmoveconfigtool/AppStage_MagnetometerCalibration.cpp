@@ -868,22 +868,27 @@ void AppStage_MagnetometerCalibration::renderUI()
 					ImGui::Separator();
 					ImGui::Spacing();
 
-					ImGui::TextWrapped(
-						"Calibrating the default orientation needs to be done at least once otherwise the magnetometer will not work.\n"
-						"If you already done this before, click 'Done' instead."
+					ImGui::PushTextWrapPos();
+					ImGui::ColorButton(ImColor(1.f, 0.5f, 0.f), true);
+					if (ImGui::IsItemHovered()) ImGui::SetTooltip("");
+					ImGui::SameLine();
+					ImGui::TextDisabled(
+						"Calibrating the default orientation needs to be done at least once otherwise the magnetometer can not be used.\n"
+						"If you already done this before, click 'Skip' instead."
 					);
+					ImGui::PopTextWrapPos();
+
+					ImGui::Spacing();
+					ImGui::Separator();
+					ImGui::Spacing();
 
 					if (ImGui::Button("Calibrate Default Orientation"))
 					{
 						PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
 						m_menuState = waitForGravityAlignment;
 					}
-
-					ImGui::Spacing();
-					ImGui::Separator();
-					ImGui::Spacing();
-
-					if (ImGui::Button("Done"))
+					ImGui::SameLine();
+					if (ImGui::Button("Skip"))
 					{
 						PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
 						m_menuState = skipBDirection;
