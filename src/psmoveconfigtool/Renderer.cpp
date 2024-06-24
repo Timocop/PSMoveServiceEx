@@ -321,9 +321,15 @@ void Renderer::renderUIBegin()
     }
 
     // Setup display size (every frame to accommodate for window resizing)
-    int w, h;
-    SDL_GetWindowSize(m_window, &w, &h);
-    io.DisplaySize = ImVec2((float)w, (float)h);
+	int w, h;
+	SDL_GetWindowSize(m_window, &w, &h);
+	ImVec2 windowSize = ImVec2((float)w, (float)h);
+    io.DisplaySize = windowSize;
+
+	// Change the perspective aspect ratio
+	if (windowSize.x > k_real_epsilon && windowSize.y > k_real_epsilon)
+		setProjectionMatrix(
+			glm::perspective(k_camera_vfov, windowSize.x / windowSize.y, k_camera_z_near, k_camera_z_far));
 
     // Setup time step
     Uint32 time = SDL_GetTicks();
