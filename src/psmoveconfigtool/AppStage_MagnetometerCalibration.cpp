@@ -46,6 +46,8 @@ struct MagnetometerBoundsStatistics
     Eigen::Vector3f magnetometerEigenSamples[k_max_bounds_magnetometer_samples];
     int sampleCount;
     int samplePercentage;
+	int sampleQuality;
+	bool sampleSkip;
 
     PSMVector3i minSampleExtent;
     PSMVector3i maxSampleExtent;
@@ -56,6 +58,8 @@ struct MagnetometerBoundsStatistics
 	MagnetometerBoundsStatistics()
 		: sampleCount(0)
 		, samplePercentage(0)
+		, sampleQuality(0)
+		, sampleSkip(false)
 		, minSampleExtent()
 		, maxSampleExtent()
 		, ellipseFitMethod(_ellipse_fit_method_box)
@@ -63,15 +67,77 @@ struct MagnetometerBoundsStatistics
 		clear();
 	}
 
+	void setCompleted()
+	{
+		sampleSkip = true;
+	}
+
 	bool getIsComplete() const 
 	{
-		return sampleCount >= k_max_bounds_magnetometer_samples;
+		return sampleCount >= k_max_bounds_magnetometer_samples || sampleSkip;
+	}
+
+	int getQuality() const
+	{
+		if (sampleCount < 3)
+			return 0;
+
+		const int size = 6;
+
+		PSMVector3f forward[size];
+		forward[0] = eigen_vector3f_to_psm_vector3f(Eigen::Vector3f::UnitX());
+		forward[1] = eigen_vector3f_to_psm_vector3f(Eigen::Vector3f::UnitY());
+		forward[2] = eigen_vector3f_to_psm_vector3f(Eigen::Vector3f::UnitZ());
+		forward[3] = eigen_vector3f_to_psm_vector3f(-Eigen::Vector3f::UnitX());
+		forward[4] = eigen_vector3f_to_psm_vector3f(-Eigen::Vector3f::UnitY());
+		forward[5] = eigen_vector3f_to_psm_vector3f(-Eigen::Vector3f::UnitZ());
+
+		float maxAng[size];
+		for (int i = 0; i < size; ++i)
+			maxAng[i] = 180.f;
+
+		PSMVector3f boundsMax = PSM_Vector3iCastToFloat(&maxSampleExtent);
+		PSMVector3f boundsMin = PSM_Vector3iCastToFloat(&minSampleExtent);
+		PSMVector3f boundsCenter = PSM_Vector3fAdd(&boundsMax, &boundsMin);
+		boundsCenter = PSM_Vector3fScale(&boundsCenter, 0.5f);
+
+		for (int i = 0; i < sampleCount; ++i)
+		{
+			PSMVector3f sample = eigen_vector3f_to_psm_vector3f(magnetometerEigenSamples[i]);
+			PSMVector3f vecCent = PSM_Vector3fSubtract(&sample, &boundsCenter);
+
+			for (int j = 0; j < size; ++j)
+			{
+				float ang =
+					acosf(PSM_Vector3fDot(&forward[j], &vecCent)
+						/ (PSM_Vector3fLength(&forward[j])
+							* PSM_Vector3fLength(&vecCent))) * k_radians_to_degreees;
+
+				if (maxAng[j] > ang)
+					maxAng[j] = ang;
+			}
+		}
+
+		const float scale = 45.f;
+		
+		// Clamp to the worest angle sample
+		float quality = 0.f;
+		for (int i = 0; i < size; ++i)
+			quality = fmaxf(quality, maxAng[i] / scale);
+
+		const float quality_offset = 0.1f;
+
+		quality = clampf(quality - quality_offset, 0.0f, 1.0f);
+
+		return (int)((1.f - (quality)) * 100.f);
 	}
 
 	void clear()
 	{
 		sampleCount= 0;
 		samplePercentage= 0;
+		sampleQuality = 0;
+		sampleSkip = false;
 
 		minSampleExtent= *k_psm_int_vector3_zero;
 		maxSampleExtent= *k_psm_int_vector3_zero;
@@ -127,6 +193,8 @@ struct MagnetometerBoundsStatistics
             {
                 samplePercentage = 
 					std::min((100 * sampleCount) / k_max_bounds_magnetometer_samples, 100);
+
+				sampleQuality = getQuality();
             }
 		}
 
@@ -776,14 +844,21 @@ void AppStage_MagnetometerCalibration::renderUI()
 					m_lastControllerSeqNum,
 					m_lastRawMagnetometer.x, m_lastRawMagnetometer.y, m_lastRawMagnetometer.z);
 
-                if (m_boundsStatistics->samplePercentage < 100)
+				if (!m_boundsStatistics->getIsComplete())
                 {
-                    ImGui::ProgressBar(static_cast<float>(m_boundsStatistics->samplePercentage) / 100.f, ImVec2(250, 20));
+					ImGui::ProgressBar(static_cast<float>(m_boundsStatistics->samplePercentage) / 100.f, ImVec2(250, 20));
+					ImGui::SameLine();
+					ImGui::Text("Progress");
+
+					ImGui::ProgressBar(static_cast<float>(m_boundsStatistics->sampleQuality) / 100.f, ImVec2(250, 20), " ");
+					ImGui::SameLine();
+					ImGui::Text("Quality");
+					ImGui::Spacing();
 
                     if (ImGui::Button("Force Accept"))
                     {
 						PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
-                        m_menuState = waitForGravityAlignment;
+						m_boundsStatistics->setCompleted();
                     }
                     ImGui::SameLine();
                 }
