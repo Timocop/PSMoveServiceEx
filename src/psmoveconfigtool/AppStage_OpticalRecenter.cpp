@@ -62,6 +62,8 @@ AppStage_OpticalRecenter::~AppStage_OpticalRecenter()
 void AppStage_OpticalRecenter::enter()
 {
 	m_app->setCameraType(_cameraOrbit);
+	m_app->getOrbitCamera()->resetOrientation();
+	m_app->getOrbitCamera()->setCameraOrbitLocation(45.f, 25.f, 1000.f);
 	m_menuState = eCalibrationMenuState::inactive;
 
     // Initialize the controller state

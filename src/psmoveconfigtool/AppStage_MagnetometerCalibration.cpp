@@ -269,7 +269,7 @@ void AppStage_MagnetometerCalibration::enter()
 	
     m_app->setCameraType(_cameraOrbit);
     m_app->getOrbitCamera()->resetOrientation();
-    m_app->getOrbitCamera()->setCameraOrbitRadius(1000.f); // zoom out to see the magnetometer data at scale
+	m_app->getOrbitCamera()->setCameraOrbitLocation(45.f, 25.f, 1000.f);
 
     assert(controllerInfo->ControllerID != -1);
     assert(m_controllerView == nullptr);
@@ -341,6 +341,7 @@ void AppStage_MagnetometerCalibration::update()
                     if (m_bBypassCalibration)
                     {
                         m_app->getOrbitCamera()->resetOrientation();
+						m_app->getOrbitCamera()->setCameraOrbitLocation(45.f, 25.f, 1000.f);
                         m_menuState= AppStage_MagnetometerCalibration::complete;
                     }
                     else
@@ -1100,6 +1101,7 @@ void AppStage_MagnetometerCalibration::handle_set_magnetometer_calibration(
     if (response->result_code == PSMResult_Success)
     {
         thisPtr->m_app->getOrbitCamera()->resetOrientation();
+		thisPtr->m_app->getOrbitCamera()->setCameraOrbitLocation(45.f, 25.f, 1000.f);
         thisPtr->m_menuState= AppStage_MagnetometerCalibration::complete;
     }
     else

@@ -206,6 +206,8 @@ AppStage_OpticalCalibration::~AppStage_OpticalCalibration()
 void AppStage_OpticalCalibration::enter()
 {
 	m_app->setCameraType(_cameraOrbit);
+	m_app->getOrbitCamera()->resetOrientation();
+	m_app->getOrbitCamera()->setCameraOrbitLocation(45.f, 25.f, 1000.f);
 	m_menuState = eCalibrationMenuState::inactive;
 
     // Reset all of the sampling state

@@ -1554,6 +1554,8 @@ void AppStage_ComputeTrackerPoses::onEnterState(eMenuState newState)
             }
 
             m_app->setCameraType(_cameraOrbit);
+			m_app->getOrbitCamera()->resetOrientation();
+			m_app->getOrbitCamera()->setCameraOrbitLocation(45.f, 25.f, 1000.f);
         }
         break;
     case eMenuState::showTrackerVideo:
@@ -1577,6 +1579,8 @@ void AppStage_ComputeTrackerPoses::onEnterState(eMenuState newState)
 	case eMenuState::showControllerOffsets:
 		
 		m_app->setCameraType(_cameraOrbit);
+		m_app->getOrbitCamera()->resetOrientation();
+		m_app->getOrbitCamera()->setCameraOrbitLocation(45.f, 25.f, 1000.f);
 		break;
     default:
         assert(0 && "unreachable");

@@ -136,7 +136,7 @@ void AppStage_HMDGyroscopeCalibration::enter()
     // Reset the menu state
     m_app->setCameraType(_cameraOrbit);
     m_app->getOrbitCamera()->resetOrientation();
-    m_app->getOrbitCamera()->setCameraOrbitRadius(1000.f); // zoom out to see the magnetometer data at scale
+	m_app->getOrbitCamera()->setCameraOrbitLocation(45.f, 25.f, 1000.f);
 
     // Reset all of the sampling state
 	m_gyroNoiseSamples->clear();
@@ -238,6 +238,7 @@ void AppStage_HMDGyroscopeCalibration::update()
                 if (m_bBypassCalibration)
                 {
                     m_app->getOrbitCamera()->resetOrientation();
+					m_app->getOrbitCamera()->setCameraOrbitLocation(45.f, 25.f, 1000.f);
                     m_menuState = AppStage_HMDGyroscopeCalibration::test;
                 }
                 else

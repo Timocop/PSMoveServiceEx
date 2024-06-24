@@ -193,7 +193,7 @@ void AppStage_AccelerometerCalibration::enter()
     // Reset the menu state
     m_app->setCameraType(_cameraOrbit);
     m_app->getOrbitCamera()->resetOrientation();
-    m_app->getOrbitCamera()->setCameraOrbitRadius(1000.f); // zoom out to see the magnetometer data at scale
+	m_app->getOrbitCamera()->setCameraOrbitLocation(45.f, 25.f, 1000.f);
 
 	m_axisSamples->clear();
 
@@ -281,6 +281,7 @@ void AppStage_AccelerometerCalibration::update()
                 if (m_bBypassCalibration)
                 {
                     m_app->getOrbitCamera()->resetOrientation();
+					m_app->getOrbitCamera()->setCameraOrbitLocation(45.f, 25.f, 1000.f);
                     m_menuState = AppStage_AccelerometerCalibration::test;
                 }
                 else

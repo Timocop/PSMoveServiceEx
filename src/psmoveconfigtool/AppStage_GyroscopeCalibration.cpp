@@ -642,7 +642,7 @@ void AppStage_GyroscopeCalibration::onEnterState(eCalibrationMenuState newState)
 		// Reset the menu state
 		m_app->setCameraType(_cameraOrbit);
 		m_app->getOrbitCamera()->resetOrientation();
-		m_app->getOrbitCamera()->setCameraOrbitRadius(1000.f); // zoom out to see the accelerometer data at scale
+		m_app->getOrbitCamera()->setCameraOrbitLocation(45.f, 25.f, 1000.f);
 		break;
 	case eCalibrationMenuState::waitingForStreamStartResponse:
 	case eCalibrationMenuState::failedStreamStart:
@@ -657,7 +657,7 @@ void AppStage_GyroscopeCalibration::onEnterState(eCalibrationMenuState newState)
 		// Reset the menu state
 		m_app->setCameraType(_cameraOrbit);
 		m_app->getOrbitCamera()->resetOrientation();
-		m_app->getOrbitCamera()->setCameraOrbitRadius(1000.f); // zoom out to see the accelerometer data at scale
+		m_app->getOrbitCamera()->setCameraOrbitLocation(45.f, 25.f, 1000.f);
 		break;
 	case eCalibrationMenuState::test:
 		{
@@ -673,8 +673,7 @@ void AppStage_GyroscopeCalibration::onEnterState(eCalibrationMenuState newState)
 
 			m_app->setCameraType(_cameraOrbit);
 			m_app->getOrbitCamera()->resetOrientation();
-			m_app->getOrbitCamera()->setCameraOrbitRadius(1000.f); // zoom out to see the accelerometer data at scale
-			m_app->getOrbitCamera()->setCameraOrbitYaw(m_global_forward_degrees - k_camera_default_forward_degrees);
+			m_app->getOrbitCamera()->setCameraOrbitLocation(45.f, 25.f, 1000.f);
 		}
 		break;
 	default:
