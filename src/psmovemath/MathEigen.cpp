@@ -459,3 +459,42 @@ eigen_quaternionf_to_euler_angles(const Eigen::Quaternionf &q)
 {
 	return eigen_quaternion_to_euler_angles<float>(q);
 }
+
+void
+lowpass_vector3f_kalman(
+	Eigen::Vector3f &new_value,
+	const Eigen::Vector3f old_value,
+	Eigen::Vector3f &kal_gain,
+	Eigen::Vector3f &kal_err_estimate,
+	Eigen::Vector3f &kal_current_estimate,
+	const float kalman_position_error,
+	const float kalman_position_noise,
+	const float deltatime)
+{
+	for (int i = 0; i < 3; ++i)
+	{
+		lowpass_kalman(new_value[i], old_value[i], kal_gain[i], kal_err_estimate[i], kal_current_estimate[i], kalman_position_error, kalman_position_noise, deltatime);
+	}
+}
+
+void
+lowpass_kalman(
+	float &new_value,
+	const float old_value,
+	float &kal_gain,
+	float &kal_err_estimate,
+	float &kal_current_estimate,
+	const float kalman_position_error,
+	const float kalman_position_noise,
+	const float deltatime)
+{
+	if (kal_err_estimate <= k_real_epsilon || (kal_err_estimate + kalman_position_error) <= k_real_epsilon)
+	{
+		kal_err_estimate = kalman_position_error;
+	}
+
+	kal_gain = kal_err_estimate / (kal_err_estimate + kalman_position_error);
+	kal_current_estimate = old_value + kal_gain * (new_value - old_value);
+	kal_err_estimate = (1.0 - kal_gain) * kal_err_estimate + std::abs(old_value - kal_current_estimate) * kalman_position_noise * deltatime;
+	new_value = kal_current_estimate;
+}

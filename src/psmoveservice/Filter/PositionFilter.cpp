@@ -565,6 +565,7 @@ void PositionFilterPassThru::update(
 	{
 		Eigen::Vector3f old_position_meters = m_state->position_meters;
 		Eigen::Vector3f new_position_meters = packet.get_optical_position_in_meters();
+		Eigen::Vector3f old_position_meters_sec = m_state->velocity_m_per_sec;
 		Eigen::Vector3f new_position_meters_sec;
 
 		if (m_resetVelocity)
@@ -575,13 +576,18 @@ void PositionFilterPassThru::update(
 		}
 		else
 		{
-			Eigen::Vector3f new_velocity(
+			new_position_meters_sec = Eigen::Vector3f(
 				(new_position_meters.x() - old_position_meters.x()) / optical_delta_time,
 				(new_position_meters.y() - old_position_meters.y()) / optical_delta_time,
 				(new_position_meters.z() - old_position_meters.z()) / optical_delta_time
 			);
 
-			new_position_meters_sec = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->velocity_m_per_sec, new_velocity);
+			Eigen::Vector3f old_velocity_cm = old_position_meters_sec * k_meters_to_centimeters;
+			Eigen::Vector3f new_velocity_cm = new_position_meters_sec * k_meters_to_centimeters;
+
+			new_velocity_cm = lowpass_filter_vector3f(velocity_smoothing_factor, old_velocity_cm, new_velocity_cm);
+
+			new_position_meters_sec = new_velocity_cm * k_centimeters_to_meters;
 
 			if (position_prediction_cutoff > k_real_epsilon)
 			{
@@ -712,6 +718,7 @@ void PositionFilterLowPassOptical::update(
 	{
 		Eigen::Vector3f old_position_meters = m_state->position_meters;
 		Eigen::Vector3f new_position_meters;
+		Eigen::Vector3f old_position_meters_sec = m_state->velocity_m_per_sec;
 		Eigen::Vector3f new_position_meters_sec;
 
         if (m_state->bIsValid)
@@ -737,13 +744,18 @@ void PositionFilterLowPassOptical::update(
 		}
 		else
 		{
-			Eigen::Vector3f new_velocity(
+			new_position_meters_sec = Eigen::Vector3f(
 				(new_position_meters.x() - old_position_meters.x()) / optical_delta_time,
 				(new_position_meters.y() - old_position_meters.y()) / optical_delta_time,
 				(new_position_meters.z() - old_position_meters.z()) / optical_delta_time
 			);
 
-			new_position_meters_sec = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->velocity_m_per_sec, new_velocity);
+			Eigen::Vector3f old_velocity_cm = old_position_meters_sec * k_meters_to_centimeters;
+			Eigen::Vector3f new_velocity_cm = new_position_meters_sec * k_meters_to_centimeters;
+
+			new_velocity_cm = lowpass_filter_vector3f(velocity_smoothing_factor, old_velocity_cm, new_velocity_cm);
+
+			new_position_meters_sec = new_velocity_cm * k_centimeters_to_meters;
 
 			if (position_prediction_cutoff > k_real_epsilon)
 			{
@@ -943,6 +955,7 @@ void PositionFilterKalman::update(
 	{
 		Eigen::Vector3f old_position_meters = m_state->position_meters;
 		Eigen::Vector3f new_position_meters = packet.get_optical_position_in_meters();
+		Eigen::Vector3f old_position_meters_sec = m_state->velocity_m_per_sec;
 		Eigen::Vector3f new_position_meters_sec;
 
 		if (m_resetVelocity)
@@ -956,36 +969,42 @@ void PositionFilterKalman::update(
 			Eigen::Vector3f old_position_cm = old_position_meters * k_meters_to_centimeters;
 			Eigen::Vector3f new_position_cm = new_position_meters * k_meters_to_centimeters;
 
-			// Update for each dimension
-			for (int i = 0; i < 3; ++i) {
-				if (kal_err_estimate[i] <= k_real_epsilon || (kal_err_estimate[i] + kalman_position_error) <= k_real_epsilon)
-				{
-					kal_err_estimate[i] = kalman_position_error;
-				}
-
-				// Update Kalman gain
-				kal_gain[i] = kal_err_estimate[i] / (kal_err_estimate[i] + kalman_position_error);
-
-				// Update current estimate
-				kal_current_estimate[i] = old_position_cm[i] + kal_gain[i] * (new_position_cm[i] - old_position_cm[i]);
-
-				// Update estimation error
-				kal_err_estimate[i] = (1.0 - kal_gain[i]) * kal_err_estimate[i] + std::abs(old_position_cm[i] - kal_current_estimate[i]) * kalman_position_noise * optical_delta_time;
-
-				// Update last estimate for each dimension
-				new_position_cm[i] = kal_current_estimate[i];
-			}
+			lowpass_vector3f_kalman(
+				new_position_cm, 
+				old_position_cm, 
+				kal_pos_gain, 
+				kal_pos_err_estimate, 
+				kal_pos_current_estimate,
+				kalman_position_error, 
+				kalman_position_noise, 
+				optical_delta_time);
 
 			new_position_meters = new_position_cm * k_centimeters_to_meters;
 
-
-			Eigen::Vector3f new_velocity(
+			new_position_meters_sec = Eigen::Vector3f(
 				(new_position_meters.x() - old_position_meters.x()) / optical_delta_time,
 				(new_position_meters.y() - old_position_meters.y()) / optical_delta_time,
 				(new_position_meters.z() - old_position_meters.z()) / optical_delta_time
 			);
 
-			new_position_meters_sec = lowpass_filter_vector3f(velocity_smoothing_factor, m_state->velocity_m_per_sec, new_velocity);
+			Eigen::Vector3f old_velocity_cm = old_position_meters_sec * k_meters_to_centimeters;
+			Eigen::Vector3f new_velocity_cm = new_position_meters_sec * k_meters_to_centimeters;
+
+			new_velocity_cm = lowpass_filter_vector3f(velocity_smoothing_factor, old_velocity_cm, new_velocity_cm);
+
+			/*
+			// $TODO WIP Kalman velocity
+			lowpass_vector3f_kalman(
+				new_velocity_cm,
+				old_velocity_cm,
+				kal_vel_gain,
+				kal_vel_err_estimate,
+				kal_vel_current_estimate,
+				0.1f,
+				1.0f * velocity_smoothing_factor,
+				optical_delta_time);*/
+
+			new_position_meters_sec = new_velocity_cm * k_centimeters_to_meters;
 
 			if (!kalman_position_noise_disable_cutoff && position_prediction_cutoff > k_real_epsilon)
 			{
@@ -1001,7 +1020,6 @@ void PositionFilterKalman::update(
 		m_interpolationState->apply_interpolation_state(new_position_meters, new_position_meters_sec, timestamp);
 	}
 }
-
 
 //-- helper functions ---
 static Eigen::Vector3f threshold_vector3f(const Eigen::Vector3f &vector, const float min_length)

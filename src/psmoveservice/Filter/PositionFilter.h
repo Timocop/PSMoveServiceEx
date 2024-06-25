@@ -98,12 +98,12 @@ public:
 		: PositionFilter()
 		, m_resetVelocity(false)
 	{
-		kal_err_estimate[0] = 0.0;
-		kal_err_estimate[1] = 0.0;
-		kal_err_estimate[2] = 0.0;
-
-		kal_current_estimate = Eigen::Vector3f::Zero();
-		kal_gain = Eigen::Vector3f::Zero();
+		kal_pos_err_estimate = Eigen::Vector3f::Zero();
+		kal_pos_current_estimate = Eigen::Vector3f::Zero();
+		kal_pos_gain = Eigen::Vector3f::Zero();
+		kal_pos_err_estimate = Eigen::Vector3f::Zero();
+		kal_vel_err_estimate = Eigen::Vector3f::Zero();
+		kal_vel_current_estimate = Eigen::Vector3f::Zero();
 		lastOpticalFrame = std::chrono::high_resolution_clock::now();
 	}
 
@@ -112,9 +112,12 @@ public:
 	bool m_resetVelocity;
 
 private:
-	float kal_err_estimate[3];
-	Eigen::Vector3f kal_current_estimate;
-	Eigen::Vector3f kal_gain;
+	Eigen::Vector3f kal_pos_err_estimate;
+	Eigen::Vector3f kal_pos_current_estimate;
+	Eigen::Vector3f kal_pos_gain;
+	Eigen::Vector3f kal_vel_err_estimate;
+	Eigen::Vector3f kal_vel_current_estimate;
+	Eigen::Vector3f kal_vel_gain;
 };
 
 

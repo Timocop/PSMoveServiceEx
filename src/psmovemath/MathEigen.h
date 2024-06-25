@@ -178,6 +178,28 @@ eigen_quaterniond_to_euler_angles(const Eigen::Quaterniond &q);
 Eigen::EulerAnglesf
 eigen_quaternionf_to_euler_angles(const Eigen::Quaternionf &q);
 
+void
+lowpass_vector3f_kalman(
+	Eigen::Vector3f & new_value, 
+	const Eigen::Vector3f old_value,
+	Eigen::Vector3f & kal_gain,
+	Eigen::Vector3f & kal_err_estimate, 
+	Eigen::Vector3f & kal_current_estimate,
+	const float kalman_position_error, 
+	const float kalman_position_noise, 
+	const float deltatime);
+
+void 
+lowpass_kalman(
+	float & new_value, 
+	const float old_value, 
+	float & kal_gain, 
+	float & kal_err_estimate, 
+	float & kal_current_estimate,
+	const float kalman_position_error,
+	const float kalman_position_noise, 
+	const float deltatime);
+
 Eigen::Vector3f
 eigen_vector3f_projection(const Eigen::Vector3f &a, const Eigen::Vector3f &b);
 
