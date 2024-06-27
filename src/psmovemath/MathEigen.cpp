@@ -498,3 +498,11 @@ lowpass_kalman(
 	kal_err_estimate = (1.0 - kal_gain) * kal_err_estimate + std::abs(old_value - kal_current_estimate) * kalman_position_noise * deltatime;
 	new_value = kal_current_estimate;
 }
+
+float lowpass_filter(
+	const float alpha,
+	const float old_filtered_vector,
+	const float new_vector)
+{
+	return alpha*new_vector + (1.f - alpha)*old_filtered_vector;
+}

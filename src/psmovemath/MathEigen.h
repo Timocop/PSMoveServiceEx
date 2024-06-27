@@ -200,6 +200,12 @@ lowpass_kalman(
 	const float kalman_position_noise, 
 	const float deltatime);
 
+float 
+lowpass_filter(
+	const float alpha,
+	const float old_filtered_vector,
+	const float new_vector);
+
 Eigen::Vector3f
 eigen_vector3f_projection(const Eigen::Vector3f &a, const Eigen::Vector3f &b);
 
