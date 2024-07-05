@@ -30,8 +30,8 @@ public:
 		, mean_update_time_delta(0.008333f)
 		, position_variance_exp_fit_a(0.0994158462f)
 		, position_variance_exp_fit_b(-0.000567041978f)
-		, prediction_time(0.f)
-		, ang_prediction_time(0.f)
+		, prediction_time(0.025f)
+		, ang_prediction_time(0.025f)
 		, tracking_color_id(eCommonTrackingColorID::Blue)
         , bulb_radius(2.25f) // The radius of the psmove tracking bulb in cm
 		, hand("Any")

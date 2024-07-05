@@ -861,8 +861,8 @@ void AppStage_ControllerSettings::renderUI()
 
 											if (ImGui::Button("Reset Filter Defaults"))
 											{
-												controllerInfo.PredictionTime = 0.0f;
-												controllerInfo.AngPredictionTime = 0.0f;
+												controllerInfo.PredictionTime = 0.025f;
+												controllerInfo.AngPredictionTime = 0.025f;
 												controllerInfo.PositionFilterIndex = k_default_position_filter_index;
 												controllerInfo.PositionFilterName = k_controller_position_filter_names[k_default_position_filter_index];
 												request_set_controller_prediction(controllerInfo.ControllerID, controllerInfo.PredictionTime);
@@ -933,8 +933,8 @@ void AppStage_ControllerSettings::renderUI()
 
 											if (ImGui::Button("Reset Filter Defaults"))
 											{
-												controllerInfo.PredictionTime = 0.0f;
-												controllerInfo.AngPredictionTime = 0.0f;
+												controllerInfo.PredictionTime = 0.025f;
+												controllerInfo.AngPredictionTime = 0.025f;
 												controllerInfo.PositionFilterIndex = k_default_ds4_position_filter_index;
 												controllerInfo.OrientationFilterIndex = k_default_ds4_orientation_filter_index;
 												controllerInfo.GyroGainIndex = k_default_ds4_gyro_gain_index;
