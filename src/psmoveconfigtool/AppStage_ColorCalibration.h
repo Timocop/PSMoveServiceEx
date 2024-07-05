@@ -248,6 +248,8 @@ protected:
 
 	bool AppStage_ColorCalibration::is_tracker_virtual();
 
+	bool get_average_color_point(float x, float y, int hue_range, int saturation_range, int value_range, PSMVector3f & color);
+
 private:
     // ClientPSMoveAPI state
 	int m_overrideControllerId;	

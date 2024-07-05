@@ -787,56 +787,56 @@ void AppStage_ColorCalibration::renderUI()
 			if (m_bAlignDetectColor && ImGui::IsMouseClicked(0))
 			{
 				ImVec2 mousePos = ImGui::GetMousePos();
-				ImVec2 dispSize = ImGui::GetIO().DisplaySize;
-				int img_x = (static_cast<int>(mousePos.x) * m_video_buffer_state->hsvBuffer->cols) / static_cast<int>(dispSize.x);
-				int img_y = (static_cast<int>(mousePos.y) * m_video_buffer_state->hsvBuffer->rows) / static_cast<int>(dispSize.y);
-				cv::Vec< unsigned char, 3 > hsv_pixel = m_video_buffer_state->hsvBuffer->at<cv::Vec< unsigned char, 3 >>(cv::Point(img_x, img_y));
 
-				TrackerColorPreset preset = getColorPreset();
-				preset.hue_center = hsv_pixel[0];
-				preset.saturation_center = hsv_pixel[1];
-				preset.value_center = hsv_pixel[2];
-
-				if (m_masterControllerView != nullptr)
+				PSMVector3f pick_color;
+				if (get_average_color_point(mousePos.x, mousePos.y, 10, 32, 32, pick_color))
 				{
-					auto_adjust_color_sensitivity(preset, m_masterControllerView->ControllerType != PSMController_Virtual && !is_tracker_virtual());
-				}
-				else
-				{
-					auto_adjust_color_sensitivity(preset, !is_tracker_virtual());
-				}
-				request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+					TrackerColorPreset preset = getColorPreset();
+					preset.hue_center = pick_color.x;
+					preset.saturation_center = pick_color.y;
+					preset.value_center = pick_color.z;
 
-				if (m_masterControllerView != nullptr)
-				{
-					if (m_bAutoChangeColor) {
-						m_mAlignPosition[0] = mousePos.x;
-						m_mAlignPosition[1] = mousePos.y;
-						m_bAlignPinned = true;
-
-						setState(eMenuState::autoConfig_wait1);
-						request_set_controller_tracking_color(m_masterControllerView, PSMTrackingColorType_Magenta);
-						m_masterTrackingColorType = PSMTrackingColorType_Magenta;
-					}
-					else if (m_bAutoChangeController) {
-						setState(eMenuState::changeController);
-					}
-					else if (m_bAutoChangeTracker) {
-						setState(eMenuState::changeTracker);
+					if (m_masterControllerView != nullptr)
+					{
+						auto_adjust_color_sensitivity(preset, m_masterControllerView->ControllerType != PSMController_Virtual && !is_tracker_virtual());
 					}
 					else
 					{
-						m_bAlignDetectColor = false;
+						auto_adjust_color_sensitivity(preset, !is_tracker_virtual());
 					}
-				}
-				else if (m_hmdView != nullptr)
-				{
-					if (m_bAutoChangeTracker) {
-						setState(eMenuState::changeTracker);
-					}
-					else
+					request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+
+					if (m_masterControllerView != nullptr)
 					{
-						m_bAlignDetectColor = false;
+						if (m_bAutoChangeColor) {
+							m_mAlignPosition[0] = mousePos.x;
+							m_mAlignPosition[1] = mousePos.y;
+							m_bAlignPinned = true;
+
+							setState(eMenuState::autoConfig_wait1);
+							request_set_controller_tracking_color(m_masterControllerView, PSMTrackingColorType_Magenta);
+							m_masterTrackingColorType = PSMTrackingColorType_Magenta;
+						}
+						else if (m_bAutoChangeController) {
+							setState(eMenuState::changeController);
+						}
+						else if (m_bAutoChangeTracker) {
+							setState(eMenuState::changeTracker);
+						}
+						else
+						{
+							m_bAlignDetectColor = false;
+						}
+					}
+					else if (m_hmdView != nullptr)
+					{
+						if (m_bAutoChangeTracker) {
+							setState(eMenuState::changeTracker);
+						}
+						else
+						{
+							m_bAlignDetectColor = false;
+						}
 					}
 				}
 			}
@@ -1954,41 +1954,46 @@ void AppStage_ColorCalibration::renderUI()
             static_cast<PSMTrackingColorType>(
             (m_masterTrackingColorType + 1) % PSMTrackingColorType_Custom0); //PSMTrackingColorType_MaxColorTypes
 
-		ImVec2 dispSize = ImGui::GetIO().DisplaySize;
-		int img_x = (static_cast<int>(m_mAlignPosition[0]) * m_video_buffer_state->hsvBuffer->cols) / static_cast<int>(dispSize.x);
-		int img_y = (static_cast<int>(m_mAlignPosition[1]) * m_video_buffer_state->hsvBuffer->rows) / static_cast<int>(dispSize.y);
-		cv::Vec< unsigned char, 3 > hsv_pixel = m_video_buffer_state->hsvBuffer->at<cv::Vec< unsigned char, 3 >>(cv::Point(img_x, img_y));
-
-		TrackerColorPreset preset = getColorPreset();
-		preset.hue_center = hsv_pixel[0];
-		preset.saturation_center = hsv_pixel[1];
-		preset.value_center = hsv_pixel[2];
-
-		auto_adjust_color_sensitivity(preset, m_masterControllerView->ControllerType != PSMController_Virtual && !is_tracker_virtual());
-		request_tracker_set_color_preset(m_masterTrackingColorType, preset);
-		request_set_controller_tracking_color(m_masterControllerView, new_color);
-
-        if (new_color == PSMTrackingColorType_Magenta) 
+		PSMVector3f pick_color;
+		if (!get_average_color_point(m_mAlignPosition[0], m_mAlignPosition[1], 10, 32, 32, pick_color))
 		{
-			if (m_bAutoChangeController)
-			{
-				setState(eMenuState::changeController);
-			}
-			else if (m_bAutoChangeTracker)
-			{
-				setState(eMenuState::changeTracker);
-			}
-			else 
-			{
-				setState(eMenuState::manualConfig);
-			}
-        }
+			m_iDetectingFailReason = eDetectionFailReason::failreason_no_detection;
+			setState(eMenuState::detection_fail_pre);
+		}
 		else
 		{
-			setState(eMenuState::autoConfig_wait1);
+			TrackerColorPreset preset = getColorPreset();
+			preset.hue_center = pick_color.x;
+			preset.saturation_center = pick_color.y;
+			preset.value_center = pick_color.z;
+
+			auto_adjust_color_sensitivity(preset, m_masterControllerView->ControllerType != PSMController_Virtual && !is_tracker_virtual());
+			request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+			request_set_controller_tracking_color(m_masterControllerView, new_color);
+
+			if (new_color == PSMTrackingColorType_Magenta)
+			{
+				if (m_bAutoChangeController)
+				{
+					setState(eMenuState::changeController);
+				}
+				else if (m_bAutoChangeTracker)
+				{
+					setState(eMenuState::changeTracker);
+				}
+				else
+				{
+					setState(eMenuState::manualConfig);
+				}
+			}
+			else
+			{
+				setState(eMenuState::autoConfig_wait1);
+			}
+
+			m_masterTrackingColorType = new_color;
 		}
 
-        m_masterTrackingColorType = new_color;
     } break;
 
 	case eMenuState::detection_init:
@@ -2418,40 +2423,44 @@ void AppStage_ColorCalibration::renderUI()
 				static_cast<PSMTrackingColorType>(
 				(m_masterTrackingColorType + 1) % PSMTrackingColorType_Custom0); //PSMTrackingColorType_MaxColorTypes
 
-			ImVec2 dispSize = ImGui::GetIO().DisplaySize;
-			int img_x = (contures[0][0] * m_video_buffer_state->hsvBuffer->cols) / static_cast<int>(dispSize.x);
-			int img_y = (contures[0][1] * m_video_buffer_state->hsvBuffer->rows) / static_cast<int>(dispSize.y);
-			cv::Vec< unsigned char, 3 > hsv_pixel = m_video_buffer_state->hsvBuffer->at<cv::Vec< unsigned char, 3 >>(cv::Point(img_x, img_y));
-
-			TrackerColorPreset preset = getColorPreset();
-			preset.hue_center = hsv_pixel[0];
-			preset.hue_range = 10.f;
-			preset.saturation_center = hsv_pixel[1];
-			preset.saturation_range = 32.f;
-			preset.value_center = hsv_pixel[2];
-			preset.value_range = 32.f;
-
-			auto_adjust_color_sensitivity(preset, m_masterControllerView->ControllerType != PSMController_Virtual && !is_tracker_virtual());
-			request_tracker_set_color_preset(m_masterTrackingColorType, preset);
-			request_set_controller_tracking_color(m_masterControllerView, new_color);
-
-			if (new_color == PSMTrackingColorType_Magenta)
+			PSMVector3f pick_color;
+			if (!get_average_color_point(contures[0][0], contures[0][1], 10, 32, 32, pick_color))
 			{
-				if (--m_iDetectingControllersLeft > 0)
-				{
-					setState(eMenuState::changeController);
-				}
-				else
-				{
-					setState(eMenuState::detection_finish);
-				}
+				m_iDetectingFailReason = eDetectionFailReason::failreason_no_detection;
+				setState(eMenuState::detection_fail_pre);
 			}
 			else
 			{
-				setState(eMenuState::detection_change_color_wait1);
-			}
+				TrackerColorPreset preset = getColorPreset();
+				preset.hue_center = pick_color.x;
+				preset.hue_range = 10.f;
+				preset.saturation_center = pick_color.y;
+				preset.saturation_range = 32.f;
+				preset.value_center = pick_color.z;
+				preset.value_range = 32.f;
 
-			m_masterTrackingColorType = new_color;
+				auto_adjust_color_sensitivity(preset, m_masterControllerView->ControllerType != PSMController_Virtual && !is_tracker_virtual());
+				request_tracker_set_color_preset(m_masterTrackingColorType, preset);
+				request_set_controller_tracking_color(m_masterControllerView, new_color);
+
+				if (new_color == PSMTrackingColorType_Magenta)
+				{
+					if (--m_iDetectingControllersLeft > 0)
+					{
+						setState(eMenuState::changeController);
+					}
+					else
+					{
+						setState(eMenuState::detection_finish);
+					}
+				}
+				else
+				{
+					setState(eMenuState::detection_change_color_wait1);
+				}
+
+				m_masterTrackingColorType = new_color;
+			}
 		}
 		else
 		{
@@ -3890,4 +3899,94 @@ bool AppStage_ColorCalibration::is_tracker_virtual()
 	}
 
 	return false;
+}
+
+bool AppStage_ColorCalibration::get_average_color_point(float x, float y, int hue_range, int saturation_range, int value_range, PSMVector3f &color)
+{
+	if (x < 0 || y < 0)
+		return false;
+
+	ImVec2 dispSize = ImGui::GetIO().DisplaySize;
+	if (x > dispSize.x - 1 || y > dispSize.y - 1)
+		return false;
+
+	// Get center hsv first
+	int img_x = (static_cast<int>(x) * m_video_buffer_state->hsvBuffer->cols) / static_cast<int>(dispSize.x);
+	int img_y = (static_cast<int>(y) * m_video_buffer_state->hsvBuffer->rows) / static_cast<int>(dispSize.y);
+	cv::Vec< unsigned char, 3 > hsv_pixel = m_video_buffer_state->hsvBuffer->at<cv::Vec< unsigned char, 3 >>(cv::Point(img_x, img_y));
+
+	float avgHue = hsv_pixel[0];
+	float avgSaturation = hsv_pixel[1];
+	float avgValue = hsv_pixel[2];
+	int avgCount = 1;
+
+	float targetHue = avgHue;
+	float targetSaturation = avgSaturation;
+	float targetValue = avgValue;
+
+	for (int j = 0; j <= 1; ++j)
+	{
+		for (int stepX = 1;; ++stepX)
+		{
+			int __x = static_cast<int>(x) + ((j == 0) ? stepX : -stepX);
+			int __y = static_cast<int>(y);
+			if (__x < 0 || __x > dispSize.x - 1)
+				break;
+			if (__y < 0 || __y > dispSize.y - 1)
+				break;
+
+			int __img_x = (__x * m_video_buffer_state->hsvBuffer->cols) / static_cast<int>(dispSize.x);
+			int __img_y = (__y * m_video_buffer_state->hsvBuffer->rows) / static_cast<int>(dispSize.y);
+			cv::Vec< unsigned char, 3 > __hsv_pixel = m_video_buffer_state->hsvBuffer->at<cv::Vec< unsigned char, 3 >>(cv::Point(__img_x, __img_y));
+
+			float __hue = __hsv_pixel[0];
+			float __saturation = __hsv_pixel[1];
+			float __value = __hsv_pixel[2];
+			if (__hue > targetHue + hue_range || __hue < targetHue - hue_range)
+				break;
+			if (__saturation > targetSaturation + saturation_range || __saturation < targetSaturation - saturation_range)
+				break;
+			if (__value > targetValue + value_range || __value < targetValue - value_range)
+				break;
+
+			avgHue += __hsv_pixel[0];
+			avgSaturation += __hsv_pixel[1];
+			avgValue += __hsv_pixel[2];
+			avgCount++;
+		}
+
+		for (int stepY = 1;; ++stepY)
+		{
+			int __x = static_cast<int>(x);
+			int __y = static_cast<int>(y) + ((j == 0) ? stepY : -stepY);
+			if (__x < 0 || __x > dispSize.x - 1)
+				break;
+			if (__y < 0 || __y > dispSize.y - 1)
+				break;
+
+			int __img_x = (__x * m_video_buffer_state->hsvBuffer->cols) / static_cast<int>(dispSize.x);
+			int __img_y = (__y * m_video_buffer_state->hsvBuffer->rows) / static_cast<int>(dispSize.y);
+			cv::Vec< unsigned char, 3 > __hsv_pixel = m_video_buffer_state->hsvBuffer->at<cv::Vec< unsigned char, 3 >>(cv::Point(__img_x, __img_y));
+
+			float __hue = __hsv_pixel[0];
+			float __saturation = __hsv_pixel[1];
+			float __value = __hsv_pixel[2];
+			if (__hue > targetHue + hue_range || __hue < targetHue - hue_range)
+				break;
+			if (__saturation > targetSaturation + saturation_range || __saturation < targetSaturation - saturation_range)
+				break;
+			if (__value > targetValue + value_range || __value < targetValue - value_range)
+				break;
+
+			avgHue += __hsv_pixel[0];
+			avgSaturation += __hsv_pixel[1];
+			avgValue += __hsv_pixel[2];
+			avgCount++;
+		}
+	}
+
+	color.x = roundf(avgHue / avgCount);
+	color.y = roundf(avgSaturation / avgCount);
+	color.z = roundf(avgValue / avgCount);
+	return true;
 }
