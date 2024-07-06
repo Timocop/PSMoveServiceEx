@@ -126,10 +126,9 @@ protected:
 	enum eColorDetectionSensitivity
 	{
 		sensitivity_disabled,
+		sensitivity_strict,
 		sensitivity_normal,
-		sensitivity_high,
 		sensitivity_aggressive,
-		sensitivity_extreme,
 
 		sensitivity_MAX
 	};

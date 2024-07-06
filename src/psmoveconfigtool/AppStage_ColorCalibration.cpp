@@ -1458,7 +1458,7 @@ void AppStage_ColorCalibration::renderUI()
 							{
 								int colorSensitivity = m_iColorSensitivity;
 								ImGui::Text("Color detection sensitivity:");
-								if (ImGui::Combo("##SensitivityPostProcessing", &colorSensitivity, "Keep Settings\0Normal Sensitivity\0High Sensitivity\0Aggressive Sensitivity\0Extreme Sensitivity\0\0"))
+								if (ImGui::Combo("##SensitivityPostProcessing", &colorSensitivity, "Keep Settings\0Strict Sensitivity\0Normal Sensitivity\0Aggressive Sensitivity\0\0"))
 								{
 									if (colorSensitivity >= sensitivity_MAX)
 										colorSensitivity = sensitivity_MAX - 1;
@@ -3718,21 +3718,14 @@ void AppStage_ColorCalibration::auto_adjust_color_sensitivity(TrackerColorPreset
 
 	switch (m_iColorSensitivity)
 	{
-	case sensitivity_normal:
+	case sensitivity_strict:
 	{
 		preset.hue_range = 10.f * hueRangeMulti;
 		preset.saturation_range = (32.f * saturationRangeMulti);
 		preset.value_range = 32.f;
 		break;
 	}
-	case sensitivity_high:
-	{
-		preset.hue_range = 10.f * hueRangeMulti;
-		preset.saturation_range = (32.f * saturationRangeMulti) + (16.f / saturationRangeMulti);
-		preset.value_range = 32.f + 16.f;
-		break;
-	}
-	case sensitivity_aggressive:
+	case sensitivity_normal:
 	{
 		preset.hue_range = 10.f * hueRangeMulti;
 		preset.saturation_range = (32.f * saturationRangeMulti) + (32.f / saturationRangeMulti);
@@ -3740,7 +3733,7 @@ void AppStage_ColorCalibration::auto_adjust_color_sensitivity(TrackerColorPreset
 
 		break;
 	}
-	case sensitivity_extreme:
+	case sensitivity_aggressive:
 	{
 		preset.hue_range = 10.f * hueRangeMulti;
 		preset.saturation_range = (32.f * saturationRangeMulti) + (48.f / saturationRangeMulti);
