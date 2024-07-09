@@ -14,10 +14,6 @@
 #include <imgui.h>
 
 //-- constants -----
-static const char *k_psnavi_texture_filename= "./assets/textures/PSNaviDiffuse.jpg";
-static const char *k_virtual_texture_filename = "./assets/textures/VirtualDiffuse.jpg";
-static const char *k_dk2_texture_filename = "./assets/textures/DK2Diffuse.jpg";
-
 static const char *k_ps3eye_texture_filename = "./assets/models/PS3EyeDiffuse.jpg";
 static const char *k_ps3eye_model_filename = "./assets/models/PS3Eye.obj";
 
@@ -33,6 +29,9 @@ static const char *k_morpheus_bulb_model_filename = "./assets/models/PSMorpheusB
 static const char *k_dualshock_texture_filename = "./assets/models/PSDualShockDiffuse.jpg";
 static const char *k_dualshock_model_filename = "./assets/models/PSDualShock.obj";
 static const char *k_dualshock_led_model_filename = "./assets/models/PSDualShockLed.obj";
+
+static const char *k_psnavigation_texture_filename = "./assets/models/PSNavigationDiffuse.jpg";
+static const char *k_psnavigation_model_filename = "./assets/models/PSNavigation.obj";
 
 static const char *k_default_font_filename= "./assets/fonts/OpenSans-Regular.ttf";
 static const float k_default_font_pixel_height= 24.f;
@@ -56,7 +55,7 @@ AssetManager::AssetManager()
 	, m_morpheus_bulb_assets()
 	, m_dualshock_assets()
 	, m_dualshock_led_assets()
-	, m_psnaviTexture()
+	, m_psnavigation_assets()
     , m_defaultFont()
 {
 }
@@ -70,7 +69,6 @@ bool AssetManager::init()
 {
     bool failed= false;
 
-	failed |= !loadTexture(k_psnavi_texture_filename, &m_psnaviTexture);
 	failed |= !loadFont(k_default_font_filename, k_default_font_pixel_height, &m_defaultFont);
 
 	failed |= !loadOBJ(k_ps3eye_model_filename, m_ps3eye_assets.m_vert, m_ps3eye_assets.m_tex, m_ps3eye_assets.m_norm);
@@ -88,6 +86,9 @@ bool AssetManager::init()
 	failed |= !loadOBJ(k_dualshock_model_filename, m_dualshock_assets.m_vert, m_dualshock_assets.m_tex, m_dualshock_assets.m_norm);
 	failed |= !loadOBJ(k_dualshock_led_model_filename, m_dualshock_led_assets.m_vert, m_dualshock_led_assets.m_tex, m_dualshock_led_assets.m_norm);
 	failed |= !loadTexture(k_dualshock_texture_filename, &m_dualshock_assets.m_texture);
+
+	failed |= !loadOBJ(k_psnavigation_model_filename, m_psnavigation_assets.m_vert, m_psnavigation_assets.m_tex, m_psnavigation_assets.m_norm);
+	failed |= !loadTexture(k_psnavigation_texture_filename, &m_psnavigation_assets.m_texture);
 
     if (!failed)
     {
@@ -112,8 +113,8 @@ void AssetManager::destroy()
 	m_psmove_assets.m_texture.dispose();
 	m_morpheus_assets.m_texture.dispose();
 	m_dualshock_assets.m_texture.dispose();
+	m_psnavigation_assets.m_texture.dispose();
 
-    m_psnaviTexture.dispose();
     m_defaultFont.dispose();
 
     m_instance= NULL;
@@ -132,6 +133,7 @@ bool AssetManager::loadOBJ(
 	std::vector<int> vecFaceIndex;
 	std::vector<int> vecTextureIndex;
 
+	// $TODO Culture aware? Maybe switch to invarian culture to parse floating-points correctly?
 	std::ifstream in(path, std::ios::in);
 	if (!in.is_open()) {
 		Log_ERROR("AssetManager::loadOBJ", "Cannot open file (%s)", path.c_str());

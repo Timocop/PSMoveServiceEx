@@ -1235,28 +1235,41 @@ void drawPSMoveModel(const glm::mat4 &transform, const glm::vec3 &color)
 
 void drawPSNaviModel(const glm::mat4 &transform)
 {
-    assert(Renderer::getIsRenderingStage());
+	assert(Renderer::getIsRenderingStage());
 
-    int textureID= AssetManager::getInstance()->getPSNaviTextureAsset()->texture_id;
+	const AssetManager::gl_model_asset *asset = AssetManager::getInstance()->getPSNavigationAsset();
 
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    glColor3f(1.f, 1.f, 1.f);
+	int texId = asset->m_texture.texture_id;
 
-    glPushMatrix();
+	glBindTexture(GL_TEXTURE_2D, texId);
+
+	glPushMatrix();
 	{
 		glMultMatrixf(glm::value_ptr(transform));
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glVertexPointer(3, GL_FLOAT, 0, psnaviVerts);
-		glTexCoordPointer(2, GL_FLOAT, 0, psnaviTexCoords);
-		glDrawArrays(GL_TRIANGLES, 0, psnaviNumVerts);
-		glDisableClientState(GL_VERTEX_ARRAY);
-		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	}
-    glPopMatrix();
 
-    // rebind the default texture
-    glBindTexture(GL_TEXTURE_2D, 0); 
+		// Main model
+		const std::vector<float> vert = asset->m_vert;
+		const std::vector<float> tex = asset->m_tex;
+		const std::vector<float> norm = asset->m_norm;
+
+		glEnableClientState(GL_VERTEX_ARRAY);
+		if (!tex.empty()) glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		if (!norm.empty()) glEnableClientState(GL_NORMAL_ARRAY);
+
+		glColor3f(1.f, 1.f, 1.f);
+		glVertexPointer(3, GL_FLOAT, 0, vert.data());
+		if (!tex.empty()) glTexCoordPointer(2, GL_FLOAT, 0, tex.data());
+		if (!norm.empty()) 	glNormalPointer(GL_FLOAT, 0, norm.data());
+		glDrawArrays(GL_TRIANGLES, 0, vert.size() / 3);
+
+		glDisableClientState(GL_VERTEX_ARRAY);
+		if (!tex.empty()) glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		if (!norm.empty()) glDisableClientState(GL_NORMAL_ARRAY);
+	}
+	glPopMatrix();
+
+	// rebind the default texture
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void drawPSDualShock4Model(const glm::mat4 &transform, const glm::vec3 &color)

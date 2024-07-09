@@ -72,11 +72,6 @@ public:
 		return m_instance;
 	}
 
-    const TextureAsset *getPSNaviTextureAsset()
-	{
-		return &m_psnaviTexture;
-	}
-
     const FontAsset *getDefaultFont()
 	{
 		return &m_defaultFont;
@@ -123,6 +118,11 @@ public:
 		return &m_dualshock_led_assets;
 	}
 
+	const gl_model_asset *getPSNavigationAsset()
+	{
+		return &m_psnavigation_assets;
+	}
+
 private:
     bool loadTexture(const char *filename, TextureAsset *textureAsset);
     bool loadFont(const char *filename, float pixelHeight, FontAsset *fontAsset);
@@ -133,9 +133,7 @@ private:
 		std::vector<float>& outTexCoords,
 		std::vector<float>& outnormals);
 
-    // Utility Textures
-    TextureAsset m_psnaviTexture;
-
+    // Utility Assets
 	gl_model_asset m_ps3eye_assets;
 	gl_model_asset m_psmove_assets;
 	gl_model_asset m_psmove_bulb_assets;
@@ -144,6 +142,7 @@ private:
 	gl_model_asset m_morpheus_bulb_assets;
 	gl_model_asset m_dualshock_assets;
 	gl_model_asset m_dualshock_led_assets;
+	gl_model_asset m_psnavigation_assets;
 
 
     // Font Rendering
