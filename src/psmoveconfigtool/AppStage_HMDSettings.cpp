@@ -85,6 +85,10 @@ void AppStage_HMDSettings::render()
 			glm::scale(glm::mat4(1.f), glm::vec3(2.f, 2.f, 2.f)),
 			0.f, glm::vec3(1.f, 0.f, 0.f));
 
+	scale2RotateX90 = glm::translate(
+		scale2RotateX90,
+		glm::vec3(-10.f, 0.f, 0.f));
+
 	scale2RotateX90 = glm::rotate(
 		scale2RotateX90,
 		-m_drawRotation, glm::vec3(0.f, 1.f, 0.f));
@@ -169,8 +173,8 @@ void AppStage_HMDSettings::renderUI()
     {
 		static ImVec2 lastWindowVec = ImVec2(0.f, 4.f);
 
-        ImGui::SetNextWindowPosCenter();
 		ImGui::SetNextWindowSize(ImVec2(550, fminf(lastWindowVec.y + 32.f, ImGui::GetIO().DisplaySize.y - 32)));
+		ImGui::SetNextWindowCenterPosOffset(ImVec2(-200, 0));
         ImGui::Begin(k_window_title, nullptr, window_flags & ~ImGuiWindowFlags_NoScrollbar);
 		ImGui::BeginGroup();
 		{
@@ -456,7 +460,7 @@ void AppStage_HMDSettings::renderUI()
 									ImGui::SameLine();
 									ImGui::PushItemWidth(96);
 									float hmdPrediction = (hmdInfo.PredictionTime * 1000.f);
-									if (ImGui::InputFloat("Prediction Time (ms)##PredictionTime", &hmdPrediction, 5.f, 25.f, 3))
+									if (ImGui::InputFloat("Prediction Time (ms)##PredictionTime", &hmdPrediction, 5.f, 25.f, 0))
 									{
 										hmdInfo.PredictionTime = clampf(hmdPrediction / 1000.f, 0.f, k_max_hmd_prediction_time);
 										request_set_hmd_prediction(hmdInfo.HmdID, hmdInfo.PredictionTime);

@@ -76,8 +76,12 @@ void AppStage_TrackerSettings::render()
 
 	glm::mat4 scale2RotateX90 =
 		glm::rotate(
-			glm::scale(glm::mat4(1.f), glm::vec3(5.f, 5.f, 5.f)),
+			glm::scale(glm::mat4(1.f), glm::vec3(3.f, 3.f, 3.f)),
 			0.f, glm::vec3(1.f, 0.f, 0.f));
+
+	scale2RotateX90 = glm::translate(
+		scale2RotateX90,
+		glm::vec3(10.f, 0.f, 0.f));
 
 	scale2RotateX90 = glm::rotate(
 		scale2RotateX90,
@@ -212,8 +216,8 @@ void AppStage_TrackerSettings::renderUI()
     {
 		static ImVec2 lastWindowVec = ImVec2(0.f, 4.f);
 
-		ImGui::SetNextWindowPosCenter();
 		ImGui::SetNextWindowSize(ImVec2(550, fminf(lastWindowVec.y + 32.f, ImGui::GetIO().DisplaySize.y - 32)));
+		ImGui::SetNextWindowCenterPosOffset(ImVec2(-200, 0));
         ImGui::Begin(k_window_title, nullptr, window_flags & ~ImGuiWindowFlags_NoScrollbar);
 		ImGui::BeginGroup();
 		{

@@ -345,6 +345,10 @@ void AppStage_ControllerSettings::render()
             glm::scale(glm::mat4(1.f), glm::vec3(2.5f, 2.5f, 2.5f)), 
 			90.f, glm::vec3(1.f, 0.f, 0.f));
 
+	scale2RotateX90 = glm::translate(
+		scale2RotateX90,
+		glm::vec3(10.f, 0.f, 0.f));
+
 	scale2RotateX90 = glm::rotate(
 		scale2RotateX90,
 		m_drawRotation, glm::vec3(0.f, 0.f, 1.f));
@@ -441,8 +445,8 @@ void AppStage_ControllerSettings::renderUI()
         {
 			static ImVec2 lastWindowVec = ImVec2(0.f, 4.f);
 
-            ImGui::SetNextWindowPosCenter();
             ImGui::SetNextWindowSize(ImVec2(550, fminf(lastWindowVec.y + 32.f, ImGui::GetIO().DisplaySize.y - 32)));
+			ImGui::SetNextWindowCenterPosOffset(ImVec2(-200, 0));
             ImGui::Begin("Controller Settings", nullptr, window_flags & ~ImGuiWindowFlags_NoScrollbar);
 			ImGui::BeginGroup();
 			{
