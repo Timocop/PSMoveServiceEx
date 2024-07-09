@@ -393,6 +393,8 @@ void AppStage_HMDModelCalibration::enter()
 	request_hmd_list();
 
 	m_app->setCameraType(_cameraFixed);
+	m_app->getFixedCamera()->resetOrientation();
+	m_app->getFixedCamera()->setCameraOrbitLocation(45.f, 25.f, 0.f);
 }
 
 void AppStage_HMDModelCalibration::exit()
@@ -818,6 +820,8 @@ void AppStage_HMDModelCalibration::onExitState(AppStage_HMDModelCalibration::eMe
 		break;
 	case eMenuState::test:
 		m_app->setCameraType(_cameraFixed);
+		m_app->getFixedCamera()->resetOrientation();
+		m_app->getFixedCamera()->setCameraOrbitLocation(45.f, 25.f, 0.f);
 		break;
 	default:
 		assert(0 && "unreachable");
@@ -1523,7 +1527,7 @@ static void drawHMD(PSMHeadMountedDisplay *hmdView, const glm::mat4 &transform)
 	switch (hmdView->HmdType)
 	{
 	case PSMHmd_Morpheus:
-		drawMorpheusModel(transform);
+		drawMorpheusModel(transform, true, false, glm::vec3(1.f, 1.f, 1.f));
 		break;
 	}
 }

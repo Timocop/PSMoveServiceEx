@@ -166,6 +166,8 @@ private:
     std::vector<HMDInfo> m_hmdInfos;
 
     int m_selectedHmdIndex;
+
+	float m_drawRotation;
 };
 
 #endif // APP_STAGE_HMD_SETTINGS_H

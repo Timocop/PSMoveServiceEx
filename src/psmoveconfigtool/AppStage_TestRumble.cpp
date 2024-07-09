@@ -93,11 +93,11 @@ void AppStage_TestRumble::update()
 
 void AppStage_TestRumble::render()
 {
-    const float modelScale = 18.f;
-    glm::mat4 scaleAndRotateModelX90 =
-        glm::rotate(
-        glm::scale(glm::mat4(1.f), glm::vec3(modelScale, modelScale, modelScale)),
-        90.f, glm::vec3(1.f, 0.f, 0.f));
+	const float modelScale = 18.f;
+	glm::mat4 scaleAndRotateModelX90 =
+		glm::rotate(
+			glm::scale(glm::mat4(1.f), glm::vec3(modelScale, modelScale, modelScale)),
+			90.f, glm::vec3(1.f, 0.f, 0.f));
 
     switch (m_menuState)
     {

@@ -57,6 +57,7 @@ void AppStage_TestTracker::enter()
     assert(trackerInfo->tracker_id != -1);
 
     m_app->setCameraType(_cameraFixed);
+	m_app->getFixedCamera()->resetOrientation();
 
 	tracker_count = trackerSettings->get_tracker_count();
 	tracker_index = trackerSettings->get_tracker_Index();

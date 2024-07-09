@@ -14,13 +14,25 @@
 #include <imgui.h>
 
 //-- constants -----
-static const char *k_ps3eye_texture_filename= "./assets/textures/PS3EyeDiffuse.jpg";
-static const char *k_psmove_texture_filename= "./assets/textures/PSMoveDiffuse.jpg";
 static const char *k_psnavi_texture_filename= "./assets/textures/PSNaviDiffuse.jpg";
-static const char *k_psdualshock4_texture_filename = "./assets/textures/PSDS4Diffuse.jpg";
 static const char *k_virtual_texture_filename = "./assets/textures/VirtualDiffuse.jpg";
-static const char *k_morpheus_texture_filename = "./assets/textures/MorpheusDiffuse.jpg";
 static const char *k_dk2_texture_filename = "./assets/textures/DK2Diffuse.jpg";
+
+static const char *k_ps3eye_texture_filename = "./assets/models/PS3EyeDiffuse.jpg";
+static const char *k_ps3eye_model_filename = "./assets/models/PS3Eye.obj";
+
+static const char *k_psmove_texture_filename = "./assets/models/PSMoveControllerDiffuse.jpg";
+static const char *k_psmove_model_filename = "./assets/models/PSMoveController.obj";
+static const char *k_psmove_bulb_model_filename = "./assets/models/PSMoveControllerBulb.obj";
+
+static const char *k_morpheus_texture_filename = "./assets/models/PSMorpheusDiffuse.jpg";
+static const char *k_morpheus_model_filename = "./assets/models/PSMorpheus.obj";
+static const char *k_morpheus_led_model_filename = "./assets/models/PSMorpheusLed.obj";
+static const char *k_morpheus_bulb_model_filename = "./assets/models/PSMorpheusBulb.obj";
+
+static const char *k_dualshock_texture_filename = "./assets/models/PSDualShockDiffuse.jpg";
+static const char *k_dualshock_model_filename = "./assets/models/PSDualShock.obj";
+static const char *k_dualshock_led_model_filename = "./assets/models/PSDualShockLed.obj";
 
 static const char *k_default_font_filename= "./assets/fonts/OpenSans-Regular.ttf";
 static const float k_default_font_pixel_height= 24.f;
@@ -36,12 +48,15 @@ AssetManager *AssetManager::m_instance= NULL;
 
 //-- public methods -----
 AssetManager::AssetManager()
-    : m_ps3eyeTexture()
-	, m_psmoveTexture()
-    , m_psnaviTexture()
-    , m_psdualshock4Texture()
-    , m_morpheusTexture()
-    , m_dk2Texture()
+    : m_ps3eye_assets()
+	, m_psmove_assets()
+	, m_psmove_bulb_assets()
+	, m_morpheus_assets()
+	, m_morpheus_leds_assets()
+	, m_morpheus_bulb_assets()
+	, m_dualshock_assets()
+	, m_dualshock_led_assets()
+	, m_psnaviTexture()
     , m_defaultFont()
 {
 }
@@ -53,49 +68,28 @@ AssetManager::~AssetManager()
 
 bool AssetManager::init()
 {
-    bool success= true;
+    bool failed= false;
 
-	if (success)
-	{
-		success= loadTexture(k_ps3eye_texture_filename, &m_ps3eyeTexture);		
-	}
+	failed |= !loadTexture(k_psnavi_texture_filename, &m_psnaviTexture);
+	failed |= !loadFont(k_default_font_filename, k_default_font_pixel_height, &m_defaultFont);
 
-    if (success)
-    {
-        success= loadTexture(k_psmove_texture_filename, &m_psmoveTexture);
-    }
+	failed |= !loadOBJ(k_ps3eye_model_filename, m_ps3eye_assets.m_vert, m_ps3eye_assets.m_tex, m_ps3eye_assets.m_norm);
+	failed |= !loadTexture(k_ps3eye_texture_filename, &m_ps3eye_assets.m_texture);
 
-    if (success)
-    {
-        success= loadTexture(k_psnavi_texture_filename, &m_psnaviTexture);
-    }
+	failed |= !loadOBJ(k_psmove_model_filename, m_psmove_assets.m_vert, m_psmove_assets.m_tex, m_psmove_assets.m_norm);
+	failed |= !loadOBJ(k_psmove_bulb_model_filename, m_psmove_bulb_assets.m_vert, m_psmove_bulb_assets.m_tex, m_psmove_bulb_assets.m_norm);
+	failed |= !loadTexture(k_psmove_texture_filename, &m_psmove_assets.m_texture);
 
-    if (success)
-    {
-        success = loadTexture(k_psdualshock4_texture_filename, &m_psdualshock4Texture);
-    }
+	failed |= !loadOBJ(k_morpheus_model_filename, m_morpheus_assets.m_vert, m_morpheus_assets.m_tex, m_morpheus_assets.m_norm);
+	failed |= !loadOBJ(k_morpheus_led_model_filename, m_morpheus_leds_assets.m_vert, m_morpheus_leds_assets.m_tex, m_morpheus_leds_assets.m_norm);
+	failed |= !loadOBJ(k_morpheus_bulb_model_filename, m_morpheus_bulb_assets.m_vert, m_morpheus_bulb_assets.m_tex, m_morpheus_bulb_assets.m_norm);
+	failed |= !loadTexture(k_morpheus_texture_filename, &m_morpheus_assets.m_texture);
 
-    if (success)
-    {
-        success = loadTexture(k_virtual_texture_filename, &m_virtualTexture);
-    }
+	failed |= !loadOBJ(k_dualshock_model_filename, m_dualshock_assets.m_vert, m_dualshock_assets.m_tex, m_dualshock_assets.m_norm);
+	failed |= !loadOBJ(k_dualshock_led_model_filename, m_dualshock_led_assets.m_vert, m_dualshock_led_assets.m_tex, m_dualshock_led_assets.m_norm);
+	failed |= !loadTexture(k_dualshock_texture_filename, &m_dualshock_assets.m_texture);
 
-    if (success)
-    {
-        success = loadTexture(k_morpheus_texture_filename, &m_morpheusTexture);
-    }
-
-    if (success)
-    {
-        success = loadTexture(k_dk2_texture_filename, &m_dk2Texture);
-    }
-    
-    if (success)
-    {
-        success= loadFont(k_default_font_filename, k_default_font_pixel_height, &m_defaultFont);
-    }
-
-    if (success)
+    if (!failed)
     {
         // Load IMGUI Fonts
         ImGuiIO& io = ImGui::GetIO();
@@ -104,28 +98,137 @@ bool AssetManager::init()
         io.Fonts->AddFontFromFileTTF(k_default_font_filename, k_default_font_pixel_height);
     }
 
-    if (success)
+    if (!failed)
     {
         m_instance= this;
     }
 
-    return success;
+    return !failed;
 }
 
 void AssetManager::destroy()
 {
-	m_ps3eyeTexture.dispose();
-    m_psmoveTexture.dispose();
+	m_ps3eye_assets.m_texture.dispose();
+	m_psmove_assets.m_texture.dispose();
+	m_morpheus_assets.m_texture.dispose();
+	m_dualshock_assets.m_texture.dispose();
+
     m_psnaviTexture.dispose();
-    m_psdualshock4Texture.dispose();
-    m_morpheusTexture.dispose();
-    m_dk2Texture.dispose();
     m_defaultFont.dispose();
 
     m_instance= NULL;
 }
 
 //-- private methods -----
+bool AssetManager::loadOBJ(
+		const std::string& path,
+		std::vector<float>& outVertices,
+		std::vector<float>& outTexCoords,
+		std::vector<float>& outnormals) {
+	std::vector<glm::vec3> vertices;
+	std::vector<glm::vec2> texture;
+	std::vector<glm::vec3> normals;
+	std::vector<int> vecNormalIndex;
+	std::vector<int> vecFaceIndex;
+	std::vector<int> vecTextureIndex;
+
+	std::ifstream in(path, std::ios::in);
+	if (!in.is_open()) {
+		Log_ERROR("AssetManager::loadOBJ", "Cannot open file (%s)", path.c_str());
+		return false;
+	}
+
+	std::string line;
+	while (std::getline(in, line)) {
+		if (line.substr(0, 2) == "v ") {
+			std::istringstream l(line.substr(2));
+			glm::vec3 vert;
+			float x, y, z;
+			l >> x; l >> y; l >> z;
+			vert = glm::vec3(x, y, z);
+			vertices.push_back(vert);
+		}
+		else if (line.substr(0, 2) == "vt") {
+			std::istringstream l(line.substr(3));
+			glm::vec2 tex;
+			float u, v;
+			l >> u; l >> v;
+			tex = glm::vec2(u, -v); // Mirror texture. Blender seems to do this?
+			texture.push_back(tex);
+		}
+		else if (line.substr(0, 2) == "vn") {
+			std::istringstream l(line.substr(3));
+			glm::vec3 norm;
+			float x, y, z;
+			l >> x; l >> y; l >> z;
+			norm = glm::vec3(x, y, z);
+			normals.push_back(norm);
+		}
+		else if (line.substr(0, 2) == "f ") {
+			int vertexIndex[3], textureIndex[3], normalIndex[3];
+			const char* chh = line.c_str();
+
+			if (sscanf(chh, "f %i/%i/%i %i/%i/%i %i/%i/%i",
+					&vertexIndex[0], &textureIndex[0], &normalIndex[0],
+					&vertexIndex[1], &textureIndex[1], &normalIndex[1],
+					&vertexIndex[2], &textureIndex[2], &normalIndex[2]) == 9) {
+				// Vertex, UV,  Normals
+
+				for (int i = 0; i < 3; ++i) {
+					vecFaceIndex.push_back(vertexIndex[i] - 1);
+					vecTextureIndex.push_back(textureIndex[i] - 1);
+					vecNormalIndex.push_back(normalIndex[i] - 1);
+				}
+			}
+			else if (sscanf(chh, "f %i//%i %i//%i %i//%i",
+					&vertexIndex[0], &normalIndex[0],
+					&vertexIndex[1], &normalIndex[1],
+					&vertexIndex[2], &normalIndex[2]) == 6) {
+				// Vertex, Normals
+
+				for (int i = 0; i < 3; ++i) {
+					vecFaceIndex.push_back(vertexIndex[i] - 1);
+					vecNormalIndex.push_back(normalIndex[i] - 1);
+				}
+			}
+			else if (sscanf(chh, "f %i/%i %i/%i %i/%i",
+					&vertexIndex[0], &textureIndex[0],
+					&vertexIndex[1], &textureIndex[1],
+					&vertexIndex[2], &textureIndex[2]) == 6) {
+				// Vertex, UV
+
+				for (int i = 0; i < 3; ++i) {
+					vecFaceIndex.push_back(vertexIndex[i] - 1);
+					vecTextureIndex.push_back(textureIndex[i] - 1);
+				}
+			}
+			else {
+				Log_ERROR("AssetManager::loadOBJ", "Unsupported face format in line (%s)", chh);
+				continue;
+			}
+		}
+	}
+
+	for (unsigned int i = 0; i < vecFaceIndex.size(); i++) {
+		outVertices.push_back(vertices[vecFaceIndex[i]].x);
+		outVertices.push_back(vertices[vecFaceIndex[i]].y);
+		outVertices.push_back(vertices[vecFaceIndex[i]].z);
+
+		if (!vecTextureIndex.empty()) {
+			outTexCoords.push_back(texture[vecTextureIndex[i]].x);
+			outTexCoords.push_back(texture[vecTextureIndex[i]].y);
+		}
+
+		if (!vecNormalIndex.empty()) {
+			outnormals.push_back(normals[vecNormalIndex[i]].x);
+			outnormals.push_back(normals[vecNormalIndex[i]].y);
+			outnormals.push_back(normals[vecNormalIndex[i]].z);
+		}
+	}
+	return true;
+}
+
+
 bool AssetManager::loadTexture(const char *filename, TextureAsset *textureAsset)
 {
     bool success= false;

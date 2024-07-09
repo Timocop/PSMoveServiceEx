@@ -39,6 +39,7 @@ AppStage_PairController::AppStage_PairController(App *app)
 void AppStage_PairController::enter()
 {
     m_app->setCameraType(_cameraFixed);
+	m_app->getFixedCamera()->resetOrientation();
 
     // These should have been set already before we entered
     assert(m_menuState != AppStage_PairController::inactive);

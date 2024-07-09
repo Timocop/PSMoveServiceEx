@@ -1,6 +1,15 @@
 #ifndef ASSET_MANAGER_H
 #define ASSET_MANAGER_H
 
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+#include <sstream>
+//#include <GL/gl.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include "stb_truetype.h"
 
 class TextureAsset
@@ -50,45 +59,92 @@ public:
     bool init();
     void destroy();
 
+	struct gl_model_asset
+	{
+		TextureAsset m_texture;
+		std::vector<float> m_vert;
+		std::vector<float> m_tex;
+		std::vector<float> m_norm;
+	};
+
     static AssetManager *getInstance()
-    { return m_instance; }
-
-    const TextureAsset *getPS3EyeTextureAsset()
-    { return &m_ps3eyeTexture; }
-
-    const TextureAsset *getPSMoveTextureAsset()
-    { return &m_psmoveTexture; }
-
-    const TextureAsset *getPSDualShock4TextureAsset()
-    { return &m_psdualshock4Texture; }
-
-    const TextureAsset *getVirtualControllerTextureAsset()
-    { return &m_virtualTexture; }
+	{
+		return m_instance;
+	}
 
     const TextureAsset *getPSNaviTextureAsset()
-    { return &m_psnaviTexture; }
+	{
+		return &m_psnaviTexture;
+	}
 
-    const TextureAsset *getMorpheusTextureAsset()
-    { return &m_morpheusTexture; }    
-
-    const TextureAsset *getDK2TextureAsset()
-    { return &m_dk2Texture; }    
-    
     const FontAsset *getDefaultFont()
-    { return &m_defaultFont; }
+	{
+		return &m_defaultFont;
+	}
+
+	// Models
+	const gl_model_asset *getPS3EyeAsset()
+	{
+		return &m_ps3eye_assets;
+	}
+
+	const gl_model_asset *getPSMoveAsset()
+	{
+		return &m_psmove_assets;
+	}
+
+	const gl_model_asset *getPSMoveBulbAsset()
+	{
+		return &m_psmove_bulb_assets;
+	}
+
+	const gl_model_asset *getPSMorpheusAsset()
+	{
+		return &m_morpheus_assets;
+	}
+
+	const gl_model_asset *getPSMorpheusLedsAsset()
+	{
+		return &m_morpheus_leds_assets;
+	}
+
+	const gl_model_asset *getPSMorpheusBulbAsset()
+	{
+		return &m_morpheus_bulb_assets;
+	}
+
+	const gl_model_asset *getPSDualshockAsset()
+	{
+		return &m_dualshock_assets;
+	}
+
+	const gl_model_asset *getPSDualshockLedAsset()
+	{
+		return &m_dualshock_led_assets;
+	}
 
 private:
     bool loadTexture(const char *filename, TextureAsset *textureAsset);
     bool loadFont(const char *filename, float pixelHeight, FontAsset *fontAsset);
 
+	bool loadOBJ(
+		const std::string & path,
+		std::vector<float>& outVertices,
+		std::vector<float>& outTexCoords,
+		std::vector<float>& outnormals);
+
     // Utility Textures
-	TextureAsset m_ps3eyeTexture;
-    TextureAsset m_psmoveTexture;
     TextureAsset m_psnaviTexture;
-    TextureAsset m_psdualshock4Texture;
-    TextureAsset m_virtualTexture;
-    TextureAsset m_morpheusTexture;
-    TextureAsset m_dk2Texture;
+
+	gl_model_asset m_ps3eye_assets;
+	gl_model_asset m_psmove_assets;
+	gl_model_asset m_psmove_bulb_assets;
+	gl_model_asset m_morpheus_assets;
+	gl_model_asset m_morpheus_leds_assets;
+	gl_model_asset m_morpheus_bulb_assets;
+	gl_model_asset m_dualshock_assets;
+	gl_model_asset m_dualshock_led_assets;
+
 
     // Font Rendering
     FontAsset m_defaultFont;

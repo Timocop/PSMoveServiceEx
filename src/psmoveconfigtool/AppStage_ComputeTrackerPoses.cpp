@@ -146,6 +146,7 @@ void AppStage_ComputeTrackerPoses::enter()
     }
 
     m_app->setCameraType(_cameraFixed);
+	m_app->getFixedCamera()->resetOrientation();
 }
 
 void AppStage_ComputeTrackerPoses::exit()
@@ -1481,6 +1482,7 @@ void AppStage_ComputeTrackerPoses::onExitState(eMenuState newState)
 	case eMenuState::testMagnetic:
 	case eMenuState::testTracking:
         m_app->setCameraType(_cameraFixed);
+		m_app->getFixedCamera()->resetOrientation();
         break;
     case eMenuState::showTrackerVideo:
         break;
@@ -1490,6 +1492,7 @@ void AppStage_ComputeTrackerPoses::onExitState(eMenuState newState)
 		break;
 	case eMenuState::showControllerOffsets:
 		m_app->setCameraType(_cameraFixed);
+		m_app->getFixedCamera()->resetOrientation();
 		break;
     default:
         assert(0 && "unreachable");
@@ -2559,11 +2562,11 @@ static void drawHMD(
     default:
         break;
     }
-
+	
     switch(hmdView->HmdType)
     {
     case PSMHmd_Morpheus:
-        drawMorpheusModel(transform);
+        drawMorpheusModel(transform, true, false, bulb_color);
         break;
     case PSMHmd_Virtual:
         drawVirtualHMDModel(transform, bulb_color);

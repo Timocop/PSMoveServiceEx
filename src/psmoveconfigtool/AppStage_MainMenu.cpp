@@ -36,6 +36,7 @@ bool AppStage_MainMenu::init(int argc, char** argv)
 void AppStage_MainMenu::enter()
 {
     m_app->setCameraType(_cameraFixed);
+	m_app->getFixedCamera()->resetOrientation();
 
     // Only set the menu state if it hasn't been set already
     if (m_menuState == AppStage_MainMenu::inactive)

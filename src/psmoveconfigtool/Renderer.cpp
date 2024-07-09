@@ -408,27 +408,28 @@ void drawArrow(
     glColor3fv(glm::value_ptr(color));
 
     glPushMatrix();
-    glMultMatrixf(glm::value_ptr(transform));
+	{
+		glMultMatrixf(glm::value_ptr(transform));
 
-    glBegin(GL_LINES);
+		glBegin(GL_LINES);
 
-    glVertex3fv(glm::value_ptr(start)); glVertex3fv(glm::value_ptr(end));
-        
-    glVertex3fv(glm::value_ptr(headXPos)); glVertex3fv(glm::value_ptr(headYPos));
-    glVertex3fv(glm::value_ptr(headYPos)); glVertex3fv(glm::value_ptr(headXNeg));
-    glVertex3fv(glm::value_ptr(headXNeg)); glVertex3fv(glm::value_ptr(headYNeg));
-    glVertex3fv(glm::value_ptr(headYNeg)); glVertex3fv(glm::value_ptr(headXPos));
+		glVertex3fv(glm::value_ptr(start)); glVertex3fv(glm::value_ptr(end));
 
-    glVertex3fv(glm::value_ptr(headXPos)); glVertex3fv(glm::value_ptr(end));
-    glVertex3fv(glm::value_ptr(headYPos)); glVertex3fv(glm::value_ptr(end));
-    glVertex3fv(glm::value_ptr(headXNeg)); glVertex3fv(glm::value_ptr(end));
-    glVertex3fv(glm::value_ptr(headYNeg)); glVertex3fv(glm::value_ptr(end));
+		glVertex3fv(glm::value_ptr(headXPos)); glVertex3fv(glm::value_ptr(headYPos));
+		glVertex3fv(glm::value_ptr(headYPos)); glVertex3fv(glm::value_ptr(headXNeg));
+		glVertex3fv(glm::value_ptr(headXNeg)); glVertex3fv(glm::value_ptr(headYNeg));
+		glVertex3fv(glm::value_ptr(headYNeg)); glVertex3fv(glm::value_ptr(headXPos));
 
-    glVertex3fv(glm::value_ptr(headXPos)); glVertex3fv(glm::value_ptr(headXNeg));
-    glVertex3fv(glm::value_ptr(headYPos)); glVertex3fv(glm::value_ptr(headYNeg));
+		glVertex3fv(glm::value_ptr(headXPos)); glVertex3fv(glm::value_ptr(end));
+		glVertex3fv(glm::value_ptr(headYPos)); glVertex3fv(glm::value_ptr(end));
+		glVertex3fv(glm::value_ptr(headXNeg)); glVertex3fv(glm::value_ptr(end));
+		glVertex3fv(glm::value_ptr(headYNeg)); glVertex3fv(glm::value_ptr(end));
 
-    glEnd();
+		glVertex3fv(glm::value_ptr(headXPos)); glVertex3fv(glm::value_ptr(headXNeg));
+		glVertex3fv(glm::value_ptr(headYPos)); glVertex3fv(glm::value_ptr(headYNeg));
 
+		glEnd();
+	}
     glPopMatrix();
 }
 
@@ -467,64 +468,68 @@ void drawTextAtWorldPosition(
     // Where units = screen pixels, origin at top left
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
-    const glm::mat4 ortho_projection= glm::ortho(
-        0.f, (float)screenWidth, // left, right
-        (float)screenHeight, 0.f, // bottom, top
-        -1.0f, 1.0f); // zNear, zFar
-    glLoadMatrixf(glm::value_ptr(ortho_projection));
+	{
+		const glm::mat4 ortho_projection = glm::ortho(
+			0.f, (float)screenWidth, // left, right
+			(float)screenHeight, 0.f, // bottom, top
+			-1.0f, 1.0f); // zNear, zFar
+		glLoadMatrixf(glm::value_ptr(ortho_projection));
 
-    // Save a backup of the modelview matrix and replace with the identity matrix
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
+		// Save a backup of the modelview matrix and replace with the identity matrix
+		glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		{
+			glLoadIdentity();
 
-    // Bind the font texture
-    glBindTexture(GL_TEXTURE_2D, font->texture_id);
-    glColor3f(1.f, 1.f, 1.f);
+			// Bind the font texture
+			glBindTexture(GL_TEXTURE_2D, font->texture_id);
+			glColor3f(1.f, 1.f, 1.f);
 
-    // Render the text quads
-    glBegin(GL_QUADS);
-    char *next_character= text;
-    while (*next_character) 
-    {
-        char ascii_character= *next_character;
+			// Render the text quads
+			glBegin(GL_QUADS);
+			char *next_character = text;
+			while (*next_character)
+			{
+				char ascii_character = *next_character;
 
-        if (int(ascii_character) >= 32 && int(ascii_character) < 128)
-        {
-            stbtt_aligned_quad glyph_quad;
-            int char_index= (int)ascii_character - 32;
+				if (int(ascii_character) >= 32 && int(ascii_character) < 128)
+				{
+					stbtt_aligned_quad glyph_quad;
+					int char_index = (int)ascii_character - 32;
 
-            stbtt_GetBakedQuad(
-                const_cast<stbtt_bakedchar *>(font->cdata), 
-                font->texture_width, font->texture_height, 
-                char_index, 
-                &screenCoords.x, &screenCoords.y, // x position advances with character by the glyph pixel widthorbit
-                &glyph_quad,
-                1); // opengl_fillrule= true
-            glTexCoord2f(glyph_quad.s0,glyph_quad.t0); glVertex2f(glyph_quad.x0,glyph_quad.y0);
-            glTexCoord2f(glyph_quad.s1,glyph_quad.t0); glVertex2f(glyph_quad.x1,glyph_quad.y0);
-            glTexCoord2f(glyph_quad.s1,glyph_quad.t1); glVertex2f(glyph_quad.x1,glyph_quad.y1);
-            glTexCoord2f(glyph_quad.s0,glyph_quad.t1); glVertex2f(glyph_quad.x0,glyph_quad.y1);
-        }
-        else if (ascii_character == '\n')
-        {
-            screenCoords.x= initial_x;
-            screenCoords.y+= font->glyphPixelHeight;
-        }
+					stbtt_GetBakedQuad(
+						const_cast<stbtt_bakedchar *>(font->cdata),
+						font->texture_width, font->texture_height,
+						char_index,
+						&screenCoords.x, &screenCoords.y, // x position advances with character by the glyph pixel widthorbit
+						&glyph_quad,
+						1); // opengl_fillrule= true
+					glTexCoord2f(glyph_quad.s0, glyph_quad.t0); glVertex2f(glyph_quad.x0, glyph_quad.y0);
+					glTexCoord2f(glyph_quad.s1, glyph_quad.t0); glVertex2f(glyph_quad.x1, glyph_quad.y0);
+					glTexCoord2f(glyph_quad.s1, glyph_quad.t1); glVertex2f(glyph_quad.x1, glyph_quad.y1);
+					glTexCoord2f(glyph_quad.s0, glyph_quad.t1); glVertex2f(glyph_quad.x0, glyph_quad.y1);
+				}
+				else if (ascii_character == '\n')
+				{
+					screenCoords.x = initial_x;
+					screenCoords.y += font->glyphPixelHeight;
+				}
 
-        ++next_character;
-    }
-    glEnd();
+				++next_character;
+			}
+			glEnd();
 
-    // rebind the default texture
-    glBindTexture(GL_TEXTURE_2D, 0);
+			// rebind the default texture
+			glBindTexture(GL_TEXTURE_2D, 0);
 
-    // Restore the projection matrix
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
+			// Restore the projection matrix
+			glMatrixMode(GL_PROJECTION);
+		}
+		glPopMatrix();
 
-    // Restore the modelview matrix
-    glMatrixMode(GL_MODELVIEW);
+		// Restore the modelview matrix
+		glMatrixMode(GL_MODELVIEW);
+	}
     glPopMatrix();
 }
 
@@ -533,40 +538,46 @@ void drawFullscreenTexture(const unsigned int texture_id)
     // Save a backup of the projection matrix and replace with the identity matrix
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
-    glLoadIdentity();
+	{
+		glLoadIdentity();
 
-    // Save a backup of the modelview matrix and replace with the identity matrix
-    glMatrixMode(GL_MODELVIEW); 
-    glPushMatrix();
-    glLoadIdentity();
+		// Save a backup of the modelview matrix and replace with the identity matrix
+		glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		{
+			glLoadIdentity();
 
-    // Clear the screen and depth buffer
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			// Clear the screen and depth buffer
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // Bind the texture to draw
-    glBindTexture(GL_TEXTURE_2D, texture_id);
+			// Bind the texture to draw
+			glBindTexture(GL_TEXTURE_2D, texture_id);
 
-    // Fill the screen with the texture
-    glColor3f(1.f, 1.f, 1.f);
-    glBegin(GL_QUADS);
-        glTexCoord2f(0.f, 1.f); glVertex2f(-1.f, -1.f);
-        glTexCoord2f(1.f, 1.f); glVertex2f(1.f, -1.f);
-        glTexCoord2f(1.f, 0.f); glVertex2f(1.f, 1.f);
-        glTexCoord2f(0.f, 0.f); glVertex2f(-1.f, 1.f);
-    glEnd();
+			// Fill the screen with the texture
+			glColor3f(1.f, 1.f, 1.f);
+			glBegin(GL_QUADS);
+			{
+				glTexCoord2f(0.f, 1.f); glVertex2f(-1.f, -1.f);
+				glTexCoord2f(1.f, 1.f); glVertex2f(1.f, -1.f);
+				glTexCoord2f(1.f, 0.f); glVertex2f(1.f, 1.f);
+				glTexCoord2f(0.f, 0.f); glVertex2f(-1.f, 1.f);
+			}
+			glEnd();
 
-    // rebind the default texture
-    glBindTexture(GL_TEXTURE_2D, 0);
+			// rebind the default texture
+			glBindTexture(GL_TEXTURE_2D, 0);
 
-    // Clear the depth buffer to allow overdraw 
-    glClear(GL_DEPTH_BUFFER_BIT);
+			// Clear the depth buffer to allow overdraw 
+			glClear(GL_DEPTH_BUFFER_BIT);
 
-    // Restore the projection matrix
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
+			// Restore the projection matrix
+			glMatrixMode(GL_PROJECTION);
+		}
+		glPopMatrix();
 
-    // Restore the modelview matrix
-    glMatrixMode(GL_MODELVIEW);
+		// Restore the modelview matrix
+		glMatrixMode(GL_MODELVIEW);
+	}
     glPopMatrix();
 }
 
@@ -587,37 +598,41 @@ void drawPointCloudProjection(
 	// and replace with a projection that maps the tracker image coordinates over the whole screen
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
-	glLoadIdentity();
-	glOrtho(0.f, trackerWidth - 1.f, trackerHeight - 1.f, 0.f, 1.0f, -1.0f);
-
-	// Save a backup of the modelview matrix and replace with the identity matrix
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	glLoadIdentity();
-
-	// Draw a small color "+" for each point in the point count
-	glLineWidth(2.f);
-	for (int point_index = 0; point_index < point_count; ++point_index)
 	{
-		const PSMVector2f *point = &points[point_index];
+		glLoadIdentity();
+		glOrtho(0.f, trackerWidth - 1.f, trackerHeight - 1.f, 0.f, 1.0f, -1.0f);
 
-		glLineWidth(2.f);
-		glBegin(GL_LINES);
-		glColor3fv(glm::value_ptr(color));
-		glVertex3f(point->x - point_size, point->y, 0.5f);
-		glVertex3f(point->x + point_size, point->y, 0.5f);
-		glVertex3f(point->x, point->y + point_size, 0.5f);
-		glVertex3f(point->x, point->y - point_size, 0.5f);
-		glEnd();
+		// Save a backup of the modelview matrix and replace with the identity matrix
+		glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		{
+			glLoadIdentity();
+
+			// Draw a small color "+" for each point in the point count
+			glLineWidth(2.f);
+			for (int point_index = 0; point_index < point_count; ++point_index)
+			{
+				const PSMVector2f *point = &points[point_index];
+
+				glLineWidth(2.f);
+				glBegin(GL_LINES);
+				glColor3fv(glm::value_ptr(color));
+				glVertex3f(point->x - point_size, point->y, 0.5f);
+				glVertex3f(point->x + point_size, point->y, 0.5f);
+				glVertex3f(point->x, point->y + point_size, 0.5f);
+				glVertex3f(point->x, point->y - point_size, 0.5f);
+				glEnd();
+			}
+			glLineWidth(1.f);
+
+			// Restore the projection matrix
+			glMatrixMode(GL_PROJECTION);
+		}
+		glPopMatrix();
+
+		// Restore the modelview matrix
+		glMatrixMode(GL_MODELVIEW);
 	}
-	glLineWidth(1.f);
-
-	// Restore the projection matrix
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-
-	// Restore the modelview matrix
-	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
 }
 
@@ -636,19 +651,21 @@ void drawTransformedAxes(const glm::mat4 &transform, float xScale, float yScale,
 	glm::vec3 zAxis(0.f, 0.f, zScale);
 
 	glPushMatrix();
-	glMultMatrixf(glm::value_ptr(transform));
-	glBegin(GL_LINES);
+	{
+		glMultMatrixf(glm::value_ptr(transform));
+		glBegin(GL_LINES);
 
-	glColor3ub(255, 0, 0);
-	glVertex3fv(glm::value_ptr(origin)); glVertex3fv(glm::value_ptr(xAxis));
+		glColor3ub(255, 0, 0);
+		glVertex3fv(glm::value_ptr(origin)); glVertex3fv(glm::value_ptr(xAxis));
 
-	glColor3ub(0, 255, 0);
-	glVertex3fv(glm::value_ptr(origin)); glVertex3fv(glm::value_ptr(yAxis));
+		glColor3ub(0, 255, 0);
+		glVertex3fv(glm::value_ptr(origin)); glVertex3fv(glm::value_ptr(yAxis));
 
-	glColor3ub(0, 0, 255);
-	glVertex3fv(glm::value_ptr(origin)); glVertex3fv(glm::value_ptr(zAxis));
+		glColor3ub(0, 0, 255);
+		glVertex3fv(glm::value_ptr(origin)); glVertex3fv(glm::value_ptr(zAxis));
 
-	glEnd();
+		glEnd();
+	}
 	glPopMatrix();
 }
 
@@ -657,29 +674,31 @@ void drawTransformeGrid(const glm::mat4 &transform, float scale)
 	assert(Renderer::getIsRenderingStage());
 
 	glPushMatrix();
-	glMultMatrixf(glm::value_ptr(transform));
-	glBegin(GL_LINES);
-
-
-	for (float i = -scale; i <= scale; i += 25.f)
 	{
-		glm::vec3 origin(i, 0.f, -scale);
-		glm::vec3 xAxis(i, 0.f, scale);
+		glMultMatrixf(glm::value_ptr(transform));
+		glBegin(GL_LINES);
 
-		glColor3ub(125, 125, 125);
-		glVertex3fv(glm::value_ptr(origin)); glVertex3fv(glm::value_ptr(xAxis));
+
+		for (float i = -scale; i <= scale; i += 25.f)
+		{
+			glm::vec3 origin(i, 0.f, -scale);
+			glm::vec3 xAxis(i, 0.f, scale);
+
+			glColor3ub(125, 125, 125);
+			glVertex3fv(glm::value_ptr(origin)); glVertex3fv(glm::value_ptr(xAxis));
+		}
+
+		for (float i = -scale; i <= scale; i += 25.f)
+		{
+			glm::vec3 origin(-scale, 0.f, i);
+			glm::vec3 xAxis(scale, 0.f, i);
+
+			glColor3ub(125, 125, 125);
+			glVertex3fv(glm::value_ptr(origin)); glVertex3fv(glm::value_ptr(xAxis));
+		}
+
+		glEnd();
 	}
-
-	for (float i = -scale; i <= scale; i += 25.f)
-	{
-		glm::vec3 origin(-scale, 0.f, i);
-		glm::vec3 xAxis(scale, 0.f, i);
-
-		glColor3ub(125, 125, 125);
-		glVertex3fv(glm::value_ptr(origin)); glVertex3fv(glm::value_ptr(xAxis));
-	}
-
-	glEnd();
 	glPopMatrix();
 }
 
@@ -702,27 +721,29 @@ void drawTransformedBox(const glm::mat4 &transform, const glm::vec3 &box_min, co
     glm::vec3 v7(box_max.x, box_min.y, box_min.z);
 
     glPushMatrix();
-        glMultMatrixf(glm::value_ptr(transform));
-        glColor3fv(glm::value_ptr(color));
+	{
+		glMultMatrixf(glm::value_ptr(transform));
+		glColor3fv(glm::value_ptr(color));
 
-        glBegin(GL_LINES);
+		glBegin(GL_LINES);
 
-        glVertex3fv(glm::value_ptr(v0)); glVertex3fv(glm::value_ptr(v1));
-        glVertex3fv(glm::value_ptr(v1)); glVertex3fv(glm::value_ptr(v2));
-        glVertex3fv(glm::value_ptr(v2)); glVertex3fv(glm::value_ptr(v3));
-        glVertex3fv(glm::value_ptr(v3)); glVertex3fv(glm::value_ptr(v0));
+		glVertex3fv(glm::value_ptr(v0)); glVertex3fv(glm::value_ptr(v1));
+		glVertex3fv(glm::value_ptr(v1)); glVertex3fv(glm::value_ptr(v2));
+		glVertex3fv(glm::value_ptr(v2)); glVertex3fv(glm::value_ptr(v3));
+		glVertex3fv(glm::value_ptr(v3)); glVertex3fv(glm::value_ptr(v0));
 
-        glVertex3fv(glm::value_ptr(v4)); glVertex3fv(glm::value_ptr(v5));
-        glVertex3fv(glm::value_ptr(v5)); glVertex3fv(glm::value_ptr(v6));
-        glVertex3fv(glm::value_ptr(v6)); glVertex3fv(glm::value_ptr(v7));
-        glVertex3fv(glm::value_ptr(v7)); glVertex3fv(glm::value_ptr(v4));
+		glVertex3fv(glm::value_ptr(v4)); glVertex3fv(glm::value_ptr(v5));
+		glVertex3fv(glm::value_ptr(v5)); glVertex3fv(glm::value_ptr(v6));
+		glVertex3fv(glm::value_ptr(v6)); glVertex3fv(glm::value_ptr(v7));
+		glVertex3fv(glm::value_ptr(v7)); glVertex3fv(glm::value_ptr(v4));
 
-        glVertex3fv(glm::value_ptr(v0)); glVertex3fv(glm::value_ptr(v4));
-        glVertex3fv(glm::value_ptr(v1)); glVertex3fv(glm::value_ptr(v5));
-        glVertex3fv(glm::value_ptr(v2)); glVertex3fv(glm::value_ptr(v6));
-        glVertex3fv(glm::value_ptr(v3)); glVertex3fv(glm::value_ptr(v7));
+		glVertex3fv(glm::value_ptr(v0)); glVertex3fv(glm::value_ptr(v4));
+		glVertex3fv(glm::value_ptr(v1)); glVertex3fv(glm::value_ptr(v5));
+		glVertex3fv(glm::value_ptr(v2)); glVertex3fv(glm::value_ptr(v6));
+		glVertex3fv(glm::value_ptr(v3)); glVertex3fv(glm::value_ptr(v7));
 
-        glEnd();
+		glEnd();
+	}
     glPopMatrix();
 }
 
@@ -734,37 +755,39 @@ void drawTransformedTexturedCube(const glm::mat4 &transform, int textureId, floa
     glColor3f(1.f, 1.f, 1.f);
 
     glBegin(GL_QUADS);
-        glMultMatrixf(glm::value_ptr(transform));
-        // Front Face
-        glTexCoord2f(0.0f, 0.0f); glVertex3f(-scale, -scale,  scale);
-        glTexCoord2f(1.0f, 0.0f); glVertex3f( scale, -scale,  scale);
-        glTexCoord2f(1.0f, 1.0f); glVertex3f( scale,  scale,  scale);
-        glTexCoord2f(0.0f, 1.0f); glVertex3f(-scale,  scale,  scale);
-        // Back Face
-        glTexCoord2f(1.0f, 0.0f); glVertex3f(-scale, -scale, -scale);
-        glTexCoord2f(1.0f, 1.0f); glVertex3f(-scale,  scale, -scale);
-        glTexCoord2f(0.0f, 1.0f); glVertex3f( scale,  scale, -scale);
-        glTexCoord2f(0.0f, 0.0f); glVertex3f( scale, -scale, -scale);
-        // Top Face
-        glTexCoord2f(0.0f, 1.0f); glVertex3f(-scale,  scale, -scale);
-        glTexCoord2f(0.0f, 0.0f); glVertex3f(-scale,  scale,  scale);
-        glTexCoord2f(1.0f, 0.0f); glVertex3f( scale,  scale,  scale);
-        glTexCoord2f(1.0f, 1.0f); glVertex3f( scale,  scale, -scale);
-        // Bottom Face
-        glTexCoord2f(1.0f, 1.0f); glVertex3f(-scale, -scale, -scale);
-        glTexCoord2f(0.0f, 1.0f); glVertex3f( scale, -scale, -scale);
-        glTexCoord2f(0.0f, 0.0f); glVertex3f( scale, -scale,  scale);
-        glTexCoord2f(1.0f, 0.0f); glVertex3f(-scale, -scale,  scale);
-        // Right face
-        glTexCoord2f(1.0f, 0.0f); glVertex3f( scale, -scale, -scale);
-        glTexCoord2f(1.0f, 1.0f); glVertex3f( scale,  scale, -scale);
-        glTexCoord2f(0.0f, 1.0f); glVertex3f( scale,  scale,  scale);
-        glTexCoord2f(0.0f, 0.0f); glVertex3f( scale, -scale,  scale);
-        // Left Face
-        glTexCoord2f(0.0f, 0.0f); glVertex3f(-scale, -scale, -scale);
-        glTexCoord2f(1.0f, 0.0f); glVertex3f(-scale, -scale,  scale);
-        glTexCoord2f(1.0f, 1.0f); glVertex3f(-scale,  scale,  scale);
-        glTexCoord2f(0.0f, 1.0f); glVertex3f(-scale,  scale, -scale);
+	{
+		glMultMatrixf(glm::value_ptr(transform));
+		// Front Face
+		glTexCoord2f(0.0f, 0.0f); glVertex3f(-scale, -scale, scale);
+		glTexCoord2f(1.0f, 0.0f); glVertex3f(scale, -scale, scale);
+		glTexCoord2f(1.0f, 1.0f); glVertex3f(scale, scale, scale);
+		glTexCoord2f(0.0f, 1.0f); glVertex3f(-scale, scale, scale);
+		// Back Face
+		glTexCoord2f(1.0f, 0.0f); glVertex3f(-scale, -scale, -scale);
+		glTexCoord2f(1.0f, 1.0f); glVertex3f(-scale, scale, -scale);
+		glTexCoord2f(0.0f, 1.0f); glVertex3f(scale, scale, -scale);
+		glTexCoord2f(0.0f, 0.0f); glVertex3f(scale, -scale, -scale);
+		// Top Face
+		glTexCoord2f(0.0f, 1.0f); glVertex3f(-scale, scale, -scale);
+		glTexCoord2f(0.0f, 0.0f); glVertex3f(-scale, scale, scale);
+		glTexCoord2f(1.0f, 0.0f); glVertex3f(scale, scale, scale);
+		glTexCoord2f(1.0f, 1.0f); glVertex3f(scale, scale, -scale);
+		// Bottom Face
+		glTexCoord2f(1.0f, 1.0f); glVertex3f(-scale, -scale, -scale);
+		glTexCoord2f(0.0f, 1.0f); glVertex3f(scale, -scale, -scale);
+		glTexCoord2f(0.0f, 0.0f); glVertex3f(scale, -scale, scale);
+		glTexCoord2f(1.0f, 0.0f); glVertex3f(-scale, -scale, scale);
+		// Right face
+		glTexCoord2f(1.0f, 0.0f); glVertex3f(scale, -scale, -scale);
+		glTexCoord2f(1.0f, 1.0f); glVertex3f(scale, scale, -scale);
+		glTexCoord2f(0.0f, 1.0f); glVertex3f(scale, scale, scale);
+		glTexCoord2f(0.0f, 0.0f); glVertex3f(scale, -scale, scale);
+		// Left Face
+		glTexCoord2f(0.0f, 0.0f); glVertex3f(-scale, -scale, -scale);
+		glTexCoord2f(1.0f, 0.0f); glVertex3f(-scale, -scale, scale);
+		glTexCoord2f(1.0f, 1.0f); glVertex3f(-scale, scale, scale);
+		glTexCoord2f(0.0f, 1.0f); glVertex3f(-scale, scale, -scale);
+	}
     glEnd();
 
     // rebind the default texture
@@ -804,32 +827,33 @@ void drawTransformedFrustum(const glm::mat4 &transform, const PSMFrustum *frustu
     glm::vec3 far3 = origin + farX - farY + farZ;
 
     glPushMatrix();
-    glMultMatrixf(glm::value_ptr(transform));
-    glColor3fv(glm::value_ptr(color));
+	{
+		glMultMatrixf(glm::value_ptr(transform));
+		glColor3fv(glm::value_ptr(color));
 
-    glBegin(GL_LINES);
+		glBegin(GL_LINES);
+		{
+			glVertex3fv(glm::value_ptr(near0)); glVertex3fv(glm::value_ptr(near1));
+			glVertex3fv(glm::value_ptr(near1)); glVertex3fv(glm::value_ptr(near2));
+			glVertex3fv(glm::value_ptr(near2)); glVertex3fv(glm::value_ptr(near3));
+			glVertex3fv(glm::value_ptr(near3)); glVertex3fv(glm::value_ptr(near0));
 
-    glVertex3fv(glm::value_ptr(near0)); glVertex3fv(glm::value_ptr(near1));
-    glVertex3fv(glm::value_ptr(near1)); glVertex3fv(glm::value_ptr(near2));
-    glVertex3fv(glm::value_ptr(near2)); glVertex3fv(glm::value_ptr(near3));
-    glVertex3fv(glm::value_ptr(near3)); glVertex3fv(glm::value_ptr(near0));
+			glVertex3fv(glm::value_ptr(far0)); glVertex3fv(glm::value_ptr(far1));
+			glVertex3fv(glm::value_ptr(far1)); glVertex3fv(glm::value_ptr(far2));
+			glVertex3fv(glm::value_ptr(far2)); glVertex3fv(glm::value_ptr(far3));
+			glVertex3fv(glm::value_ptr(far3)); glVertex3fv(glm::value_ptr(far0));
 
-    glVertex3fv(glm::value_ptr(far0)); glVertex3fv(glm::value_ptr(far1));
-    glVertex3fv(glm::value_ptr(far1)); glVertex3fv(glm::value_ptr(far2));
-    glVertex3fv(glm::value_ptr(far2)); glVertex3fv(glm::value_ptr(far3));
-    glVertex3fv(glm::value_ptr(far3)); glVertex3fv(glm::value_ptr(far0));
+			glVertex3fv(glm::value_ptr(origin)); glVertex3fv(glm::value_ptr(far0));
+			glVertex3fv(glm::value_ptr(origin)); glVertex3fv(glm::value_ptr(far1));
+			glVertex3fv(glm::value_ptr(origin)); glVertex3fv(glm::value_ptr(far2));
+			glVertex3fv(glm::value_ptr(origin)); glVertex3fv(glm::value_ptr(far3));
 
-    glVertex3fv(glm::value_ptr(origin)); glVertex3fv(glm::value_ptr(far0));
-    glVertex3fv(glm::value_ptr(origin)); glVertex3fv(glm::value_ptr(far1));
-    glVertex3fv(glm::value_ptr(origin)); glVertex3fv(glm::value_ptr(far2));
-    glVertex3fv(glm::value_ptr(origin)); glVertex3fv(glm::value_ptr(far3));
-
-    glVertex3fv(glm::value_ptr(origin));
-    glColor3ub(0, 255, 0);
-    glVertex3fv(glm::value_ptr(nearCenter));
-
-    glEnd();
-
+			glVertex3fv(glm::value_ptr(origin));
+			glColor3ub(0, 255, 0);
+			glVertex3fv(glm::value_ptr(nearCenter));
+		}
+		glEnd();
+	}
     glPopMatrix();
 }
 
@@ -840,12 +864,14 @@ void drawPointCloud(const glm::mat4 &transform, const glm::vec3 &color, const fl
     glColor3fv(glm::value_ptr(color));
 
     glPushMatrix();
-    glMultMatrixf(glm::value_ptr(transform));
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glPointSize(5);
-    glVertexPointer(3, GL_FLOAT, 0, points);
-    glDrawArrays(GL_POINTS, 0, point_count);
-    glDisableClientState(GL_VERTEX_ARRAY);
+	{
+		glMultMatrixf(glm::value_ptr(transform));
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glPointSize(5);
+		glVertexPointer(3, GL_FLOAT, 0, points);
+		glDrawArrays(GL_POINTS, 0, point_count);
+		glDisableClientState(GL_VERTEX_ARRAY);
+	}
     glPopMatrix();
 }
 
@@ -862,52 +888,59 @@ void drawEllipsoid(
 
     glColor3fv(glm::value_ptr(color));
     glPushMatrix();
-    glMultMatrixf(glm::value_ptr(transform));
+	{
+		glMultMatrixf(glm::value_ptr(transform));
 
-    const float angleStep = k_real_two_pi / static_cast<float>(subdiv);
-    float angle;
+		const float angleStep = k_real_two_pi / static_cast<float>(subdiv);
+		float angle;
 
-    const glm::vec3 x_axis = basis[0];
-    const glm::vec3 y_axis = basis[1];
-    const glm::vec3 z_axis = basis[2];
+		const glm::vec3 x_axis = basis[0];
+		const glm::vec3 y_axis = basis[1];
+		const glm::vec3 z_axis = basis[2];
 
-    const float x_extent = extents[0];
-    const float y_extent = extents[1];
-    const float z_extent = extents[2];
+		const float x_extent = extents[0];
+		const float y_extent = extents[1];
+		const float z_extent = extents[2];
 
-    glBegin(GL_LINE_STRIP);
-    angle = 0.f;
-    for (int index = 0; index <= subdiv; ++index)
-    {
-        glm::vec3 point = x_extent*x_axis*cosf(angle) + y_extent*y_axis*sinf(angle) + center;
+		glBegin(GL_LINE_STRIP);
+		{
+			angle = 0.f;
+			for (int index = 0; index <= subdiv; ++index)
+			{
+				glm::vec3 point = x_extent*x_axis*cosf(angle) + y_extent*y_axis*sinf(angle) + center;
 
-        glVertex3fv(glm::value_ptr(point));
-        angle += angleStep;
-    }
-    glEnd();
+				glVertex3fv(glm::value_ptr(point));
+				angle += angleStep;
+			}
+		}
+		glEnd();
 
-    glBegin(GL_LINE_STRIP);
-    angle = 0.f;
-    for (int index = 0; index <= subdiv; ++index)
-    {
-        glm::vec3 point = x_extent*x_axis*cosf(angle) + z_extent*z_axis*sinf(angle) + center;
+		glBegin(GL_LINE_STRIP);
+		{
+			angle = 0.f;
+			for (int index = 0; index <= subdiv; ++index)
+			{
+				glm::vec3 point = x_extent*x_axis*cosf(angle) + z_extent*z_axis*sinf(angle) + center;
 
-        glVertex3fv(glm::value_ptr(point));
-        angle += angleStep;
-    }
-    glEnd();
+				glVertex3fv(glm::value_ptr(point));
+				angle += angleStep;
+			}
+		}
+		glEnd();
 
-    glBegin(GL_LINE_STRIP);
-    angle = 0.f;
-    for (int index = 0; index <= subdiv; ++index)
-    {
-        glm::vec3 point = y_extent*y_axis*cosf(angle) + z_extent*z_axis*sinf(angle) + center;
+		glBegin(GL_LINE_STRIP);
+		{
+			angle = 0.f;
+			for (int index = 0; index <= subdiv; ++index)
+			{
+				glm::vec3 point = y_extent*y_axis*cosf(angle) + z_extent*z_axis*sinf(angle) + center;
 
-        glVertex3fv(glm::value_ptr(point));
-        angle += angleStep;
-    }
-    glEnd();
-
+				glVertex3fv(glm::value_ptr(point));
+				angle += angleStep;
+			}
+		}
+		glEnd();
+	}
     glPopMatrix();
 }
 
@@ -917,14 +950,18 @@ void drawLineStrip(const glm::mat4 &transform, const glm::vec3 &color, const flo
 
     glColor3fv(glm::value_ptr(color));
     glPushMatrix();
-        glMultMatrixf(glm::value_ptr(transform));
+	{
+		glMultMatrixf(glm::value_ptr(transform));
 
-        glBegin(GL_LINE_STRIP);
-        for (int sampleIndex= 0; sampleIndex < point_count; ++sampleIndex)
-        {
-            glVertex3fv(&points[sampleIndex*3]);
-        }
-        glEnd();
+		glBegin(GL_LINE_STRIP);
+		{
+			for (int sampleIndex = 0; sampleIndex < point_count; ++sampleIndex)
+			{
+				glVertex3fv(&points[sampleIndex * 3]);
+			}
+		}
+		glEnd();
+	}
     glPopMatrix();
 }
 
@@ -940,39 +977,45 @@ void drawQuadList2d(const float trackerWidth, const float trackerHeight, const g
     // and replace with a projection that maps the tracker image coordinates over the whole screen
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0.f, trackerWidth, trackerHeight, 0, 1.0f, -1.0f);
+	{
+		glLoadIdentity();
+		glOrtho(0.f, trackerWidth, trackerHeight, 0, 1.0f, -1.0f);
 
-    // Save a backup of the modelview matrix and replace with the identity matrix
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
+		// Save a backup of the modelview matrix and replace with the identity matrix
+		glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		{
+			glLoadIdentity();
 
-    // Draw line strip connecting all of the points on the line strip
-    glColor3fv(glm::value_ptr(color));
-    glBegin(GL_LINES);
-    for (int sampleIndex= 0; sampleIndex < point_count; sampleIndex+=4)
-    {
-        glVertex3f(points2d[sampleIndex*2+0], points2d[sampleIndex*2+1], 0.5f);
-        glVertex3f(points2d[sampleIndex*2+2], points2d[sampleIndex*2+3], 0.5f);
+			// Draw line strip connecting all of the points on the line strip
+			glColor3fv(glm::value_ptr(color));
+			glBegin(GL_LINES);
+			{
+				for (int sampleIndex = 0; sampleIndex < point_count; sampleIndex += 4)
+				{
+					glVertex3f(points2d[sampleIndex * 2 + 0], points2d[sampleIndex * 2 + 1], 0.5f);
+					glVertex3f(points2d[sampleIndex * 2 + 2], points2d[sampleIndex * 2 + 3], 0.5f);
 
-        glVertex3f(points2d[sampleIndex*2+2], points2d[sampleIndex*2+3], 0.5f);
-        glVertex3f(points2d[sampleIndex*2+4], points2d[sampleIndex*2+5], 0.5f);
+					glVertex3f(points2d[sampleIndex * 2 + 2], points2d[sampleIndex * 2 + 3], 0.5f);
+					glVertex3f(points2d[sampleIndex * 2 + 4], points2d[sampleIndex * 2 + 5], 0.5f);
 
-        glVertex3f(points2d[sampleIndex*2+4], points2d[sampleIndex*2+5], 0.5f);
-        glVertex3f(points2d[sampleIndex*2+6], points2d[sampleIndex*2+7], 0.5f);
+					glVertex3f(points2d[sampleIndex * 2 + 4], points2d[sampleIndex * 2 + 5], 0.5f);
+					glVertex3f(points2d[sampleIndex * 2 + 6], points2d[sampleIndex * 2 + 7], 0.5f);
 
-        glVertex3f(points2d[sampleIndex*2+6], points2d[sampleIndex*2+7], 0.5f);
-        glVertex3f(points2d[sampleIndex*2+0], points2d[sampleIndex*2+1], 0.5f);
-    }
-    glEnd();
+					glVertex3f(points2d[sampleIndex * 2 + 6], points2d[sampleIndex * 2 + 7], 0.5f);
+					glVertex3f(points2d[sampleIndex * 2 + 0], points2d[sampleIndex * 2 + 1], 0.5f);
+				}
+			}
+			glEnd();
 
-    // Restore the projection matrix
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
+			// Restore the projection matrix
+			glMatrixMode(GL_PROJECTION);
+		}
+		glPopMatrix();
 
-    // Restore the modelview matrix
-    glMatrixMode(GL_MODELVIEW);
+		// Restore the modelview matrix
+		glMatrixMode(GL_MODELVIEW);
+	}
     glPopMatrix();
 }
 
@@ -987,78 +1030,86 @@ void drawOpenCVChessBoard(const float trackerWidth, const float trackerHeight, c
     // and replace with a projection that maps the tracker image coordinates over the whole screen
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0.f, trackerWidth, trackerHeight, 0, 1.0f, -1.0f);
+	{
+		glLoadIdentity();
+		glOrtho(0.f, trackerWidth, trackerHeight, 0, 1.0f, -1.0f);
 
-    // Save a backup of the modelview matrix and replace with the identity matrix
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
+		// Save a backup of the modelview matrix and replace with the identity matrix
+		glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		{
+			glLoadIdentity();
 
-    // Draw line strip connecting all of the corners on the chessboard
-    glBegin(GL_LINE_STRIP);
-    for (int sampleIndex= 0; sampleIndex < point_count; ++sampleIndex)
-    {
-        if (validPoints)
-        {
-            // Match how OpenCV colors the line strip (red -> blue i.e. hue angle 0 to 255 degrees)
-            const float hue= static_cast<float>(sampleIndex * 255 / point_count);
-            float r, g, b;
+			// Draw line strip connecting all of the corners on the chessboard
+			glBegin(GL_LINE_STRIP);
+			{
+				for (int sampleIndex = 0; sampleIndex < point_count; ++sampleIndex)
+				{
+					if (validPoints)
+					{
+						// Match how OpenCV colors the line strip (red -> blue i.e. hue angle 0 to 255 degrees)
+						const float hue = static_cast<float>(sampleIndex * 255 / point_count);
+						float r, g, b;
 
-            HSVtoRGB(hue, 1.f, 1.f, r, g, b);
-            glColor3f(r, g, b);
-        }
-        else
-        {
-            glColor3f(1.f, 0.f, 0.f);
-        }
+						HSVtoRGB(hue, 1.f, 1.f, r, g, b);
+						glColor3f(r, g, b);
+					}
+					else
+					{
+						glColor3f(1.f, 0.f, 0.f);
+					}
 
-        glVertex3f(points2d[sampleIndex*2+0], points2d[sampleIndex*2+1], 0.5f);
-    }
-    glEnd();
+					glVertex3f(points2d[sampleIndex * 2 + 0], points2d[sampleIndex * 2 + 1], 0.5f);
+				}
+			}
+			glEnd();
 
-    // Draw circles at each corner
-    for (int sampleIndex= 0; sampleIndex < point_count; ++sampleIndex)
-    {
-        const float radius= 2.f;
-        const int subdiv = 8;
-        const float angleStep = k_real_two_pi / static_cast<float>(subdiv);
-        float angle = 0.f;
+			// Draw circles at each corner
+			for (int sampleIndex = 0; sampleIndex < point_count; ++sampleIndex)
+			{
+				const float radius = 2.f;
+				const int subdiv = 8;
+				const float angleStep = k_real_two_pi / static_cast<float>(subdiv);
+				float angle = 0.f;
 
-        if (validPoints)
-        {
-            // Match how OpenCV colors the line strip (red -> blue i.e. hue angle 0 to 255 degrees)
-            const float hue= static_cast<float>(sampleIndex * 255 / point_count);
-            float r, g, b;
+				if (validPoints)
+				{
+					// Match how OpenCV colors the line strip (red -> blue i.e. hue angle 0 to 255 degrees)
+					const float hue = static_cast<float>(sampleIndex * 255 / point_count);
+					float r, g, b;
 
-            HSVtoRGB(hue, 1.f, 1.f, r, g, b);
-            glColor3f(r, g, b);
-        }
-        else
-        {
-            glColor3f(1.f, 0.f, 0.f);
-        }
+					HSVtoRGB(hue, 1.f, 1.f, r, g, b);
+					glColor3f(r, g, b);
+				}
+				else
+				{
+					glColor3f(1.f, 0.f, 0.f);
+				}
 
-        glBegin(GL_LINE_STRIP);
-        for (int index = 0; index <= subdiv; ++index)
-        {
-            glm::vec3 point(
-                radius*cosf(angle) + points2d[sampleIndex*2+0],
-                radius*sinf(angle) + points2d[sampleIndex*2+1],
-                0.5f);
+				glBegin(GL_LINE_STRIP);
+				{
+					for (int index = 0; index <= subdiv; ++index)
+					{
+						glm::vec3 point(
+							radius*cosf(angle) + points2d[sampleIndex * 2 + 0],
+							radius*sinf(angle) + points2d[sampleIndex * 2 + 1],
+							0.5f);
 
-            glVertex3fv(glm::value_ptr(point));
-            angle += angleStep;
-        }
-        glEnd();
-    }
+						glVertex3fv(glm::value_ptr(point));
+						angle += angleStep;
+					}
+				}
+				glEnd();
+			}
 
-    // Restore the projection matrix
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
+			// Restore the projection matrix
+			glMatrixMode(GL_PROJECTION);
+		}
+		glPopMatrix();
 
-    // Restore the modelview matrix
-    glMatrixMode(GL_MODELVIEW);
+		// Restore the modelview matrix
+		glMatrixMode(GL_MODELVIEW);
+	}
     glPopMatrix();
 }
 
@@ -1066,14 +1117,14 @@ void drawPoseArrayStrip(const PSMPosef *poses, const int poseCount, const glm::v
 {
     glColor3fv(glm::value_ptr(color));
     glBegin(GL_LINE_STRIP);
+	{
+		for (int sampleIndex = 0; sampleIndex < poseCount; ++sampleIndex)
+		{
+			const PSMPosef &pose = poses[sampleIndex];
 
-    for (int sampleIndex = 0; sampleIndex < poseCount; ++sampleIndex)
-    {
-        const PSMPosef &pose = poses[sampleIndex];
-
-        glVertex3f(pose.Position.x, pose.Position.y, pose.Position.z);
-    }
-
+			glVertex3f(pose.Position.x, pose.Position.y, pose.Position.z);
+		}
+	}
     glEnd();
 }
 
@@ -1081,55 +1132,102 @@ void drawPS3EyeModel(const glm::mat4 &transform)
 {
     assert(Renderer::getIsRenderingStage());
 
-    int textureID= AssetManager::getInstance()->getPS3EyeTextureAsset()->texture_id;
+	const AssetManager::gl_model_asset *asset = AssetManager::getInstance()->getPS3EyeAsset();
 
-    glBindTexture(GL_TEXTURE_2D, textureID);
+    int texId = asset->m_texture.texture_id;
+	const std::vector<float> vert = asset->m_vert;
+	const std::vector<float> tex = asset->m_tex;
+	const std::vector<float> norm = asset->m_norm;
 
+    glBindTexture(GL_TEXTURE_2D, texId);
     glColor3f(1.f, 1.f, 1.f);
 
     glPushMatrix();
-        glMultMatrixf(glm::value_ptr(transform));
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        glVertexPointer(3, GL_FLOAT, 0, ps3eyeVerts);
-        glTexCoordPointer(2, GL_FLOAT, 0, ps3eyeTexCoords);
-        glDrawArrays(GL_TRIANGLES, 0, ps3eyeNumVerts);
-        glDisableClientState(GL_VERTEX_ARRAY);
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	{
+		glMultMatrixf(glm::value_ptr(transform));
+
+		glEnableClientState(GL_VERTEX_ARRAY);
+		if (!tex.empty()) glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		if (!norm.empty()) glEnableClientState(GL_NORMAL_ARRAY);
+
+		glVertexPointer(3, GL_FLOAT, 0, vert.data());
+		if (!tex.empty()) glTexCoordPointer(2, GL_FLOAT, 0, tex.data());
+		if (!norm.empty()) 	glNormalPointer(GL_FLOAT, 0, norm.data());
+		glDrawArrays(GL_TRIANGLES, 0, vert.size() / 3);
+
+		glDisableClientState(GL_VERTEX_ARRAY);
+		if (!tex.empty()) glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		if (!norm.empty()) glDisableClientState(GL_NORMAL_ARRAY);
+	}
     glPopMatrix();
 
     // rebind the default texture
-    glBindTexture(GL_TEXTURE_2D, 0); 
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void drawPSMoveModel(const glm::mat4 &transform, const glm::vec3 &color)
 {
     assert(Renderer::getIsRenderingStage());
 
-    int textureID= AssetManager::getInstance()->getPSMoveTextureAsset()->texture_id;
+	const AssetManager::gl_model_asset *asset = AssetManager::getInstance()->getPSMoveAsset();
+	const AssetManager::gl_model_asset *asset_bulb = AssetManager::getInstance()->getPSMoveBulbAsset();
 
-    glBindTexture(GL_TEXTURE_2D, textureID);
+	int texId = asset->m_texture.texture_id;
 
-    glPushMatrix();
-        glMultMatrixf(glm::value_ptr(transform));
+    glBindTexture(GL_TEXTURE_2D, texId);
 
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        
-        glColor3f(1.f, 1.f, 1.f);
-        glVertexPointer(3, GL_FLOAT, 0, psmovebodyVerts);
-        glTexCoordPointer(2, GL_FLOAT, 0, psmovebodyTexCoords);
-        glDrawArrays(GL_TRIANGLES, 0, psmovebodyNumVerts);
+	glPushMatrix();
+	{
+		glMultMatrixf(glm::value_ptr(transform));
 
-        glColor3fv(glm::value_ptr(color));
-        glVertexPointer(3, GL_FLOAT, 0, psmovebulbVerts);
-        glTexCoordPointer(2, GL_FLOAT, 0, psmovebulbTexCoords);
-        glDrawArrays(GL_TRIANGLES, 0, psmovebulbNumVerts);
+		// Main model
+		const std::vector<float> vert = asset->m_vert;
+		const std::vector<float> tex = asset->m_tex;
+		const std::vector<float> norm = asset->m_norm;
 
-        glDisableClientState(GL_VERTEX_ARRAY);
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		glEnableClientState(GL_VERTEX_ARRAY);
+		if (!tex.empty()) glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		if (!norm.empty()) glEnableClientState(GL_NORMAL_ARRAY);
 
-    glPopMatrix();
+		glColor3f(1.f, 1.f, 1.f);
+		glVertexPointer(3, GL_FLOAT, 0, vert.data());
+		if (!tex.empty()) glTexCoordPointer(2, GL_FLOAT, 0, tex.data());
+		if (!norm.empty()) 	glNormalPointer(GL_FLOAT, 0, norm.data());
+		glDrawArrays(GL_TRIANGLES, 0, vert.size() / 3);
+
+		glDisableClientState(GL_VERTEX_ARRAY);
+		if (!tex.empty()) glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		if (!norm.empty()) glDisableClientState(GL_NORMAL_ARRAY);
+	}
+	glPopMatrix();
+
+	// rebind the default texture
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	glPushMatrix();
+	{
+		glMultMatrixf(glm::value_ptr(transform));
+
+		// Bulb model
+		const std::vector<float> vert = asset_bulb->m_vert;
+		const std::vector<float> tex = asset_bulb->m_tex;
+		const std::vector<float> norm = asset_bulb->m_norm;
+
+		glEnableClientState(GL_VERTEX_ARRAY);
+		if (!tex.empty()) glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		if (!norm.empty()) glEnableClientState(GL_NORMAL_ARRAY);
+
+		glColor3fv(glm::value_ptr(color));
+		glVertexPointer(3, GL_FLOAT, 0, vert.data());
+		if (!tex.empty()) glTexCoordPointer(2, GL_FLOAT, 0, tex.data());
+		if (!norm.empty()) 	glNormalPointer(GL_FLOAT, 0, norm.data());
+		glDrawArrays(GL_TRIANGLES, 0, vert.size() / 3);
+
+		glDisableClientState(GL_VERTEX_ARRAY);
+		if (!tex.empty()) glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		if (!norm.empty()) glDisableClientState(GL_NORMAL_ARRAY);
+	}
+	glPopMatrix();
 
     // rebind the default texture
     glBindTexture(GL_TEXTURE_2D, 0); 
@@ -1145,14 +1243,16 @@ void drawPSNaviModel(const glm::mat4 &transform)
     glColor3f(1.f, 1.f, 1.f);
 
     glPushMatrix();
-        glMultMatrixf(glm::value_ptr(transform));
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        glVertexPointer(3, GL_FLOAT, 0, psnaviVerts);
-        glTexCoordPointer(2, GL_FLOAT, 0, psnaviTexCoords);
-        glDrawArrays(GL_TRIANGLES, 0, psnaviNumVerts);
-        glDisableClientState(GL_VERTEX_ARRAY);
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	{
+		glMultMatrixf(glm::value_ptr(transform));
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glVertexPointer(3, GL_FLOAT, 0, psnaviVerts);
+		glTexCoordPointer(2, GL_FLOAT, 0, psnaviTexCoords);
+		glDrawArrays(GL_TRIANGLES, 0, psnaviNumVerts);
+		glDisableClientState(GL_VERTEX_ARRAY);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	}
     glPopMatrix();
 
     // rebind the default texture
@@ -1161,66 +1261,75 @@ void drawPSNaviModel(const glm::mat4 &transform)
 
 void drawPSDualShock4Model(const glm::mat4 &transform, const glm::vec3 &color)
 {
-    assert(Renderer::getIsRenderingStage());
+	assert(Renderer::getIsRenderingStage());
 
-    int textureID = AssetManager::getInstance()->getPSDualShock4TextureAsset()->texture_id;
+	const AssetManager::gl_model_asset *asset = AssetManager::getInstance()->getPSDualshockAsset();
+	const AssetManager::gl_model_asset *asset_bulb = AssetManager::getInstance()->getPSDualshockLedAsset();
 
-    glBindTexture(GL_TEXTURE_2D, textureID);
-    glColor3f(1.f, 1.f, 1.f);
+	int texId = asset->m_texture.texture_id;
 
-    glPushMatrix();
-        glMultMatrixf(glm::value_ptr(transform));
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        
-		glVertexPointer(3, GL_FLOAT, 0, ds4bodyVerts);
-        glTexCoordPointer(2, GL_FLOAT, 0, ds4bodyTexCoords);
-        glDrawArrays(GL_TRIANGLES, 0, ds4bodyNumVerts);
+	glBindTexture(GL_TEXTURE_2D, texId);
 
-		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glPushMatrix();
+	{
+		glMultMatrixf(glm::value_ptr(transform));
+
+		// Main model
+		const std::vector<float> vert = asset->m_vert;
+		const std::vector<float> tex = asset->m_tex;
+		const std::vector<float> norm = asset->m_norm;
+
+		glEnableClientState(GL_VERTEX_ARRAY);
+		if (!tex.empty()) glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		if (!norm.empty()) glEnableClientState(GL_NORMAL_ARRAY);
+
+		glColor3f(1.f, 1.f, 1.f);
+		glVertexPointer(3, GL_FLOAT, 0, vert.data());
+		if (!tex.empty()) glTexCoordPointer(2, GL_FLOAT, 0, tex.data());
+		if (!norm.empty()) 	glNormalPointer(GL_FLOAT, 0, norm.data());
+		glDrawArrays(GL_TRIANGLES, 0, vert.size() / 3);
+
+		glDisableClientState(GL_VERTEX_ARRAY);
+		if (!tex.empty()) glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		if (!norm.empty()) glDisableClientState(GL_NORMAL_ARRAY);
+	}
+	glPopMatrix();
+
+	// rebind the default texture
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	glPushMatrix();
+	{
+		glMultMatrixf(glm::value_ptr(transform));
+
+		// Bulb model
+		const std::vector<float> vert = asset_bulb->m_vert;
+		const std::vector<float> tex = asset_bulb->m_tex;
+		const std::vector<float> norm = asset_bulb->m_norm;
+
+		glEnableClientState(GL_VERTEX_ARRAY);
+		if (!tex.empty()) glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		if (!norm.empty()) glEnableClientState(GL_NORMAL_ARRAY);
 
 		glColor3fv(glm::value_ptr(color));
-		glVertexPointer(3, GL_FLOAT, 0, ds4lightbarVerts);
-		glDrawArrays(GL_TRIANGLES, 0, ds4lightbarNumVerts);
+		glVertexPointer(3, GL_FLOAT, 0, vert.data());
+		if (!tex.empty()) glTexCoordPointer(2, GL_FLOAT, 0, tex.data());
+		if (!norm.empty()) 	glNormalPointer(GL_FLOAT, 0, norm.data());
+		glDrawArrays(GL_TRIANGLES, 0, vert.size() / 3);
 
-        glDisableClientState(GL_VERTEX_ARRAY);
-    glPopMatrix();
+		glDisableClientState(GL_VERTEX_ARRAY);
+		if (!tex.empty()) glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		if (!norm.empty()) glDisableClientState(GL_NORMAL_ARRAY);
+	}
+	glPopMatrix();
 
-    // rebind the default texture
-    glBindTexture(GL_TEXTURE_2D, 0); 
+	// rebind the default texture
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void drawVirtualControllerModel(const glm::mat4 &transform, const glm::vec3 &color)
 {
-    assert(Renderer::getIsRenderingStage());
-
-    int textureID= AssetManager::getInstance()->getVirtualControllerTextureAsset()->texture_id;
-
-    glBindTexture(GL_TEXTURE_2D, textureID);
-
-    glPushMatrix();
-        glMultMatrixf(glm::value_ptr(transform));
-
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        
-        glColor3f(1.f, 1.f, 1.f);
-        glVertexPointer(3, GL_FLOAT, 0, psmovebodyVerts);
-        glTexCoordPointer(2, GL_FLOAT, 0, psmovebodyTexCoords);
-        glDrawArrays(GL_TRIANGLES, 0, psmovebodyNumVerts);
-
-        glColor3fv(glm::value_ptr(color));
-        glVertexPointer(3, GL_FLOAT, 0, psmovebulbVerts);
-        glTexCoordPointer(2, GL_FLOAT, 0, psmovebulbTexCoords);
-        glDrawArrays(GL_TRIANGLES, 0, psmovebulbNumVerts);
-
-        glDisableClientState(GL_VERTEX_ARRAY);
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-    glPopMatrix();
-
-    // rebind the default texture
-    glBindTexture(GL_TEXTURE_2D, 0); 
+	drawPSMoveModel(transform, color);
 }
 
 void drawTrackerList(const PSMClientTrackerInfo *trackerList, const int trackerCount)
@@ -1252,82 +1361,116 @@ void drawTrackerList(const PSMClientTrackerInfo *trackerList, const int trackerC
 	}
 }
 
-void drawMorpheusModel(const glm::mat4 &transform)
+void drawMorpheusModel(const glm::mat4 &transform, const bool use_led, const bool use_bulb, const glm::vec3 &color)
 {
-    assert(Renderer::getIsRenderingStage());
+	assert(Renderer::getIsRenderingStage());
 
-    int textureID= AssetManager::getInstance()->getMorpheusTextureAsset()->texture_id;
+	const AssetManager::gl_model_asset *asset = AssetManager::getInstance()->getPSMorpheusAsset();
+	const AssetManager::gl_model_asset *asset_led = AssetManager::getInstance()->getPSMorpheusLedsAsset();
+	const AssetManager::gl_model_asset *asset_bulb = AssetManager::getInstance()->getPSMorpheusBulbAsset();
 
-    glBindTexture(GL_TEXTURE_2D, textureID);
+	int texId = asset->m_texture.texture_id;
 
-    glPushMatrix();
-        glMultMatrixf(glm::value_ptr(transform));
+	glBindTexture(GL_TEXTURE_2D, texId);
 
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        
-        glColor3f(1.f, 1.f, 1.f);
-        glVertexPointer(3, GL_FLOAT, 0, morpheusVerts);
-        glTexCoordPointer(2, GL_FLOAT, 0, morpheusTexCoords);
-        glDrawArrays(GL_TRIANGLES, 0, morpheusNumVerts);
+	glPushMatrix();
+	{
+		glMultMatrixf(glm::value_ptr(transform));
 
-        glDisableClientState(GL_VERTEX_ARRAY);
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		// Main model
+		const std::vector<float> vert = asset->m_vert;
+		const std::vector<float> tex = asset->m_tex;
+		const std::vector<float> norm = asset->m_norm;
 
-    glPopMatrix();
+		glEnableClientState(GL_VERTEX_ARRAY);
+		if (!tex.empty()) glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		if (!norm.empty()) glEnableClientState(GL_NORMAL_ARRAY);
 
-    // rebind the default texture
-    glBindTexture(GL_TEXTURE_2D, 0); 
+		glColor3f(1.f, 1.f, 1.f);
+		glVertexPointer(3, GL_FLOAT, 0, vert.data());
+		if (!tex.empty()) glTexCoordPointer(2, GL_FLOAT, 0, tex.data());
+		if (!norm.empty()) 	glNormalPointer(GL_FLOAT, 0, norm.data());
+		glDrawArrays(GL_TRIANGLES, 0, vert.size() / 3);
+
+		glDisableClientState(GL_VERTEX_ARRAY);
+		if (!tex.empty()) glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		if (!norm.empty()) glDisableClientState(GL_NORMAL_ARRAY);
+	}
+	glPopMatrix();
+
+	// rebind the default texture
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	glPushMatrix();
+	{
+		glMultMatrixf(glm::value_ptr(transform));
+
+		// Bulb model
+		const std::vector<float> vert = asset_led->m_vert;
+		const std::vector<float> tex = asset_led->m_tex;
+		const std::vector<float> norm = asset_led->m_norm;
+
+		glEnableClientState(GL_VERTEX_ARRAY);
+		if (!tex.empty()) glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		if (!norm.empty()) glEnableClientState(GL_NORMAL_ARRAY);
+
+		if (use_led)
+		{
+			glColor3f(0.f, 0.5f, 1.f);
+		}
+		else
+		{
+			glColor3f(1.f, 1.f, 1.f);
+		}
+		glVertexPointer(3, GL_FLOAT, 0, vert.data());
+		if (!tex.empty()) glTexCoordPointer(2, GL_FLOAT, 0, tex.data());
+		if (!norm.empty()) 	glNormalPointer(GL_FLOAT, 0, norm.data());
+		glDrawArrays(GL_TRIANGLES, 0, vert.size() / 3);
+
+		glDisableClientState(GL_VERTEX_ARRAY);
+		if (!tex.empty()) glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		if (!norm.empty()) glDisableClientState(GL_NORMAL_ARRAY);
+	}
+	glPopMatrix();
+
+	// rebind the default texture
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	if (use_bulb)
+	{
+		glPushMatrix();
+		{
+			glMultMatrixf(glm::value_ptr(transform));
+
+			// Bulb model
+			const std::vector<float> vert = asset_bulb->m_vert;
+			const std::vector<float> tex = asset_bulb->m_tex;
+			const std::vector<float> norm = asset_bulb->m_norm;
+
+			glEnableClientState(GL_VERTEX_ARRAY);
+			if (!tex.empty()) glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+			if (!norm.empty()) glEnableClientState(GL_NORMAL_ARRAY);
+
+			glColor3fv(glm::value_ptr(color));
+			glVertexPointer(3, GL_FLOAT, 0, vert.data());
+			if (!tex.empty()) glTexCoordPointer(2, GL_FLOAT, 0, tex.data());
+			if (!norm.empty()) 	glNormalPointer(GL_FLOAT, 0, norm.data());
+			glDrawArrays(GL_TRIANGLES, 0, vert.size() / 3);
+
+			glDisableClientState(GL_VERTEX_ARRAY);
+			if (!tex.empty()) glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+			if (!norm.empty()) glDisableClientState(GL_NORMAL_ARRAY);
+		}
+		glPopMatrix();
+	}
+
+	// rebind the default texture
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void drawVirtualHMDModel(const glm::mat4 &transform, const glm::vec3 &color)
 {
-    //###HipsterSloth $TODO Draw virtual HMD model
-    assert(Renderer::getIsRenderingStage());
-
-    int dk2TextureID= AssetManager::getInstance()->getDK2TextureAsset()->texture_id;
-    int psMoveTextureID= AssetManager::getInstance()->getPSMoveTextureAsset()->texture_id;
-
-    glBindTexture(GL_TEXTURE_2D, dk2TextureID);
-
-    glPushMatrix();
-        glMultMatrixf(glm::value_ptr(transform));
-
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        
-        glColor3f(1.f, 1.f, 1.f);
-        glVertexPointer(3, GL_FLOAT, 0, DK2Verts);
-        glTexCoordPointer(2, GL_FLOAT, 0, DK2TexCoords);
-        glDrawArrays(GL_TRIANGLES, 0, DK2NumVerts);
-
-        glDisableClientState(GL_VERTEX_ARRAY);
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-    glPopMatrix();
-
-    glBindTexture(GL_TEXTURE_2D, psMoveTextureID);
-
-    glPushMatrix();
-        glMultMatrixf(glm::value_ptr(transform));
-
-        glEnableClientState(GL_VERTEX_ARRAY);
-        glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-        
-        glColor3fv(glm::value_ptr(color));
-        glTranslatef(0.f, -2.f, 0.f);
-        glRotatef(90.f, 1.f, 0.f, 0.f);
-        glVertexPointer(3, GL_FLOAT, 0, psmovebulbVerts);
-        glTexCoordPointer(2, GL_FLOAT, 0, psmovebulbTexCoords);
-        glDrawArrays(GL_TRIANGLES, 0, psmovebulbNumVerts);
-
-        glDisableClientState(GL_VERTEX_ARRAY);
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-    glPopMatrix();
-
-    // rebind the default texture
-    glBindTexture(GL_TEXTURE_2D, 0); 
+	drawMorpheusModel(transform, false, true, color);
 }
 
 // -- IMGUI Callbacks -----
@@ -1371,49 +1514,53 @@ static void ImGui_ImplSdl_RenderDrawLists(ImDrawData* draw_data)
     glViewport(0, 0, (GLsizei)io.DisplaySize.x, (GLsizei)io.DisplaySize.y);
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0.0f, io.DisplaySize.x, io.DisplaySize.y, 0.0f, -1.0f, +1.0f);
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
+	{
+		glLoadIdentity();
+		glOrtho(0.0f, io.DisplaySize.x, io.DisplaySize.y, 0.0f, -1.0f, +1.0f);
+		glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		{
+			glLoadIdentity();
 
-    // Render command lists
-    #define OFFSETOF(TYPE, ELEMENT) ((size_t)&(((TYPE *)0)->ELEMENT))
-    for (int n = 0; n < draw_data->CmdListsCount; n++)
-    {
-        const ImDrawList* cmd_list = draw_data->CmdLists[n];
-        const unsigned char* vtx_buffer = (const unsigned char*)&cmd_list->VtxBuffer.front();
-        const ImDrawIdx* idx_buffer = &cmd_list->IdxBuffer.front();
-        glVertexPointer(2, GL_FLOAT, sizeof(ImDrawVert), (void*)(vtx_buffer + OFFSETOF(ImDrawVert, pos)));
-        glTexCoordPointer(2, GL_FLOAT, sizeof(ImDrawVert), (void*)(vtx_buffer + OFFSETOF(ImDrawVert, uv)));
-        glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(ImDrawVert), (void*)(vtx_buffer + OFFSETOF(ImDrawVert, col)));
+			// Render command lists
+#define OFFSETOF(TYPE, ELEMENT) ((size_t)&(((TYPE *)0)->ELEMENT))
+			for (int n = 0; n < draw_data->CmdListsCount; n++)
+			{
+				const ImDrawList* cmd_list = draw_data->CmdLists[n];
+				const unsigned char* vtx_buffer = (const unsigned char*)&cmd_list->VtxBuffer.front();
+				const ImDrawIdx* idx_buffer = &cmd_list->IdxBuffer.front();
+				glVertexPointer(2, GL_FLOAT, sizeof(ImDrawVert), (void*)(vtx_buffer + OFFSETOF(ImDrawVert, pos)));
+				glTexCoordPointer(2, GL_FLOAT, sizeof(ImDrawVert), (void*)(vtx_buffer + OFFSETOF(ImDrawVert, uv)));
+				glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(ImDrawVert), (void*)(vtx_buffer + OFFSETOF(ImDrawVert, col)));
 
-        for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.size(); cmd_i++)
-        {
-            const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
-            if (pcmd->UserCallback)
-            {
-                pcmd->UserCallback(cmd_list, pcmd);
-            }
-            else
-            {
-                glBindTexture(GL_TEXTURE_2D, (GLuint)(intptr_t)pcmd->TextureId);
-                glScissor((int)pcmd->ClipRect.x, (int)(fb_height - pcmd->ClipRect.w), (int)(pcmd->ClipRect.z - pcmd->ClipRect.x), (int)(pcmd->ClipRect.w - pcmd->ClipRect.y));
-                glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, idx_buffer);
-            }
-            idx_buffer += pcmd->ElemCount;
-        }
-    }
-    #undef OFFSETOF
+				for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.size(); cmd_i++)
+				{
+					const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
+					if (pcmd->UserCallback)
+					{
+						pcmd->UserCallback(cmd_list, pcmd);
+					}
+					else
+					{
+						glBindTexture(GL_TEXTURE_2D, (GLuint)(intptr_t)pcmd->TextureId);
+						glScissor((int)pcmd->ClipRect.x, (int)(fb_height - pcmd->ClipRect.w), (int)(pcmd->ClipRect.z - pcmd->ClipRect.x), (int)(pcmd->ClipRect.w - pcmd->ClipRect.y));
+						glDrawElements(GL_TRIANGLES, (GLsizei)pcmd->ElemCount, sizeof(ImDrawIdx) == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT, idx_buffer);
+					}
+					idx_buffer += pcmd->ElemCount;
+				}
+			}
+#undef OFFSETOF
 
-    // Restore modified state
-    glDisableClientState(GL_COLOR_ARRAY);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glBindTexture(GL_TEXTURE_2D, last_texture);
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-    glMatrixMode(GL_PROJECTION);
+			// Restore modified state
+			glDisableClientState(GL_COLOR_ARRAY);
+			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+			glDisableClientState(GL_VERTEX_ARRAY);
+			glBindTexture(GL_TEXTURE_2D, last_texture);
+			glMatrixMode(GL_MODELVIEW);
+		}
+		glPopMatrix();
+		glMatrixMode(GL_PROJECTION);
+	}
     glPopMatrix();
     glPopAttrib();
     glViewport(last_viewport[0], last_viewport[1], (GLsizei)last_viewport[2], (GLsizei)last_viewport[3]);

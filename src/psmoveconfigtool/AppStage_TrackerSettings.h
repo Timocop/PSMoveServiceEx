@@ -165,6 +165,10 @@ protected:
 	float playspace_scale_x;
 	float playspace_scale_y;
 	float playspace_scale_z;
+
+private:
+
+	float m_drawRotation;
 };
 
 #endif // APP_STAGE_TRACKER_SETTINGS_H

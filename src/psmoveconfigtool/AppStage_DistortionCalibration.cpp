@@ -444,6 +444,7 @@ void AppStage_DistortionCalibration::enter()
     assert(trackerInfo->tracker_id != -1);
 
     m_app->setCameraType(_cameraFixed);
+	m_app->getFixedCamera()->resetOrientation();
 
     assert(m_tracker_view == nullptr);
 	PSM_AllocateTrackerListener(trackerInfo->tracker_id, trackerInfo);

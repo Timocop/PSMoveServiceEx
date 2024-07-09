@@ -50,11 +50,16 @@ AppStage_HMDSettings::AppStage_HMDSettings(App *app)
     : AppStage(app)
     , m_menuState(AppStage_HMDSettings::inactive)
     , m_selectedHmdIndex(-1)
+	, m_drawRotation(0.f)
 { }
 
 void AppStage_HMDSettings::enter()
 {
+	m_drawRotation = 0.f;
+
     m_app->setCameraType(_cameraFixed);
+	m_app->getFixedCamera()->resetOrientation();
+	m_app->getFixedCamera()->setCameraOrbitLocation(180.f + 45.f, 25.f, 0.f);
     m_selectedHmdIndex = -1;
 
     request_hmd_list();
@@ -71,6 +76,19 @@ void AppStage_HMDSettings::update()
     
 void AppStage_HMDSettings::render()
 {
+	m_drawRotation += 0.1;
+	while (m_drawRotation > 360.f)
+		m_drawRotation -= 360.f;
+
+	glm::mat4 scale2RotateX90 =
+		glm::rotate(
+			glm::scale(glm::mat4(1.f), glm::vec3(2.f, 2.f, 2.f)),
+			0.f, glm::vec3(1.f, 0.f, 0.f));
+
+	scale2RotateX90 = glm::rotate(
+		scale2RotateX90,
+		-m_drawRotation, glm::vec3(0.f, 1.f, 0.f));
+
     switch (m_menuState)
     {
     case eHmdMenuState::idle:
@@ -78,7 +96,7 @@ void AppStage_HMDSettings::render()
         if (m_selectedHmdIndex >= 0)
         {
             const HMDInfo &hmdInfo = m_hmdInfos[m_selectedHmdIndex];
-
+			
             // Display the tracking color being used for the controller
             glm::vec3 bulb_color = glm::vec3(1.f, 1.f, 1.f);
 
@@ -110,13 +128,14 @@ void AppStage_HMDSettings::render()
             {
             case PSMoveProtocol::Morpheus:
                 {
-                    glm::mat4 scale3 = glm::scale(glm::mat4(1.f), glm::vec3(2.f, 2.f, 2.f));
-                    drawMorpheusModel(scale3);
+					const int centerLed = (1 << 4);
+					bool useBulb = (hmdInfo.UseCustomOpticalTracking && (hmdInfo.OverrideCustomTrackingLeds != centerLed));
+
+                    drawMorpheusModel(scale2RotateX90, !useBulb, useBulb, bulb_color);
                 } break;
             case PSMoveProtocol::VirtualHMD:
                 {
-                    glm::mat4 scale3 = glm::scale(glm::mat4(1.f), glm::vec3(2.f, 2.f, 2.f));
-                    drawVirtualHMDModel(scale3, bulb_color);
+					drawVirtualHMDModel(scale2RotateX90, bulb_color);
                 } break;
             default:
                 assert(0 && "Unreachable");

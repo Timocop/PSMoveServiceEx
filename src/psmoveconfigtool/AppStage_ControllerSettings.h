@@ -250,6 +250,8 @@ private:
 
 	int m_indicatorControllerIndex;
 	std::chrono::time_point<std::chrono::high_resolution_clock> m_lastIndicatorControllerTime;
+
+	float m_drawRotation;
 };
 
 #endif // APP_STAGE_SELECT_CONTROLLER_H

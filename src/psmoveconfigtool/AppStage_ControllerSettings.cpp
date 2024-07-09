@@ -220,6 +220,7 @@ AppStage_ControllerSettings::AppStage_ControllerSettings(App *app)
 	, m_selectedControllerIndex(-1)
 	, m_gamepadCount(0)
 	, m_indicatorControllerIndex(-1)
+	, m_drawRotation(0.f)
 {
 	m_lastIndicatorControllerTime = std::chrono::high_resolution_clock::now();
 }
@@ -230,7 +231,11 @@ void AppStage_ControllerSettings::enter()
 	adminCheck.CheckProcesses();
 #endif
 
+	m_drawRotation = 0.f;
+
     m_app->setCameraType(_cameraFixed);
+	m_app->getFixedCamera()->resetOrientation();
+	m_app->getFixedCamera()->setCameraOrbitLocation(45.f, 25.f, 0.f);
 
     request_controller_list();
 }
@@ -331,10 +336,18 @@ void AppStage_ControllerSettings::update()
     
 void AppStage_ControllerSettings::render()
 {
+	m_drawRotation += 0.1;
+	while (m_drawRotation > 360.f)
+		m_drawRotation -= 360.f;
+
     glm::mat4 scale2RotateX90= 
         glm::rotate(
-            glm::scale(glm::mat4(1.f), glm::vec3(2.f, 2.f, 2.f)), 
-            90.f, glm::vec3(1.f, 0.f, 0.f));    
+            glm::scale(glm::mat4(1.f), glm::vec3(2.5f, 2.5f, 2.5f)), 
+			90.f, glm::vec3(1.f, 0.f, 0.f));
+
+	scale2RotateX90 = glm::rotate(
+		scale2RotateX90,
+		m_drawRotation, glm::vec3(0.f, 0.f, 1.f));
 
     switch (m_menuState)
     {

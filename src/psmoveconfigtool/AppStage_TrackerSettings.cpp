@@ -46,11 +46,16 @@ AppStage_TrackerSettings::AppStage_TrackerSettings(App *app)
 	, playspace_scale_x(1.f)
 	, playspace_scale_y(1.f)
 	, playspace_scale_z(1.f)
+	, m_drawRotation(0.f)
 { }
 
 void AppStage_TrackerSettings::enter()
 {
+	m_drawRotation = 0.f;
+
     m_app->setCameraType(_cameraFixed);
+	m_app->getFixedCamera()->resetOrientation();
+	m_app->getFixedCamera()->setCameraOrbitLocation(45.f, 25.f, 0.f);
 
     request_tracker_list();
 }
@@ -65,6 +70,19 @@ void AppStage_TrackerSettings::update()
     
 void AppStage_TrackerSettings::render()
 {
+	m_drawRotation += 0.1;
+	while (m_drawRotation > 360.f)
+		m_drawRotation -= 360.f;
+
+	glm::mat4 scale2RotateX90 =
+		glm::rotate(
+			glm::scale(glm::mat4(1.f), glm::vec3(5.f, 5.f, 5.f)),
+			0.f, glm::vec3(1.f, 0.f, 0.f));
+
+	scale2RotateX90 = glm::rotate(
+		scale2RotateX90,
+		-m_drawRotation, glm::vec3(0.f, 1.f, 0.f));
+
     switch (m_menuState)
     {
     case eTrackerMenuState::idle:
@@ -77,8 +95,7 @@ void AppStage_TrackerSettings::render()
             {
             case PSMoveProtocol::PS3EYE:
                 {
-                    glm::mat4 scale3 = glm::scale(glm::mat4(1.f), glm::vec3(3.f, 3.f, 3.f));
-                    drawPS3EyeModel(scale3);
+					drawPS3EyeModel(scale2RotateX90);
                 } break;
             default:
                 assert(0 && "Unreachable");

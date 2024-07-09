@@ -24,6 +24,7 @@ AppStage_ServiceSettings::AppStage_ServiceSettings(App *app)
 void AppStage_ServiceSettings::enter()
 {
     m_app->setCameraType(_cameraFixed);
+	m_app->getFixedCamera()->resetOrientation();
 }
 
 void AppStage_ServiceSettings::exit()

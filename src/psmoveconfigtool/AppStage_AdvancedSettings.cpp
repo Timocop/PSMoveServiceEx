@@ -475,6 +475,7 @@ bool AppStage_AdvancedSettings::init(int argc, char** argv)
 void AppStage_AdvancedSettings::enter()
 {
     m_app->setCameraType(_cameraFixed);
+	m_app->getFixedCamera()->resetOrientation();
 
     // Only set the menu state if it hasn't been set already
     if (m_menuState == AppStage_AdvancedSettings::inactive)
