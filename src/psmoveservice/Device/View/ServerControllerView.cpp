@@ -9,7 +9,6 @@
 #include "ServerLog.h"
 #include "ServerRequestHandler.h"
 #include "CompoundPoseFilter.h"
-#include "KalmanPoseFilter.h"
 #include "PSDualShock4Controller.h"
 #include "PSMoveController.h"
 #include "PSNaviController.h"
@@ -2457,135 +2456,111 @@ pose_filter_factory(
 {
     static IPoseFilter *filter= nullptr;
 
-    if (position_filter_type == "PoseKalman" && orientation_filter_type == "PoseKalman")
+    // Convert the position filter type string into an enum
+    PositionFilterType position_filter_enum= PositionFilterTypeNone;
+    if (position_filter_type == "")
     {
+        position_filter_enum= PositionFilterTypeNone;
+    }
+    else if (position_filter_type == "PassThru")
+    {
+        position_filter_enum= PositionFilterTypePassThru;
+    }
+    else if (position_filter_type == "LowPassOptical")
+    {
+        position_filter_enum= PositionFilterTypeLowPassOptical;
+    }
+    else if (position_filter_type == "ComplimentaryOpticalIMU")
+    {
+        position_filter_enum= PositionFilterTypeComplimentaryOpticalIMU;
+    }
+	else if (position_filter_type == "PositionKalman")
+	{
+		position_filter_enum = PositionFilterTypeKalman;
+	}
+	else if (position_filter_type == "PositionExternalAttachment")
+	{
+		position_filter_enum = PositionFilterTypeExternalAttachment;
+	}
+    else
+    {
+        SERVER_LOG_INFO("pose_filter_factory()") << 
+            "Unknown position filter type: " << position_filter_type << ". Using default.";
+
+        // fallback to a default based on controller type
         switch (deviceType)
         {
         case CommonDeviceState::PSMove:
         case CommonDeviceState::VirtualController:
-            {
-                KalmanPoseFilterPSMove *kalmanFilter = new KalmanPoseFilterPSMove();
-                kalmanFilter->init(constants);
-                filter= kalmanFilter;
-            } break;
+            position_filter_enum= PositionFilterTypeKalman;
+            break;
         case CommonDeviceState::PSDualShock4:
-            {
-                KalmanPoseFilterDS4 *kalmanFilter = new KalmanPoseFilterDS4();
-                kalmanFilter->init(constants);
-                filter= kalmanFilter;
-            } break;
+            position_filter_enum= PositionFilterTypeComplimentaryOpticalIMU;
+            break;
         default:
             assert(0 && "unreachable");
         }
     }
+        
+    // Convert the orientation filter type string into an enum
+    OrientationFilterType orientation_filter_enum= OrientationFilterTypeNone;
+    if (orientation_filter_type == "")
+    {
+        orientation_filter_enum= OrientationFilterTypeNone;
+    }
+    else if (orientation_filter_type == "PassThru")
+    {
+        orientation_filter_enum= OrientationFilterTypePassThru;
+    }
+    else if (orientation_filter_type == "MadgwickARG")
+    {
+        orientation_filter_enum= OrientationFilterTypeMadgwickARG;
+    }
+    else if (orientation_filter_type == "MadgwickMARG")
+    {
+        orientation_filter_enum= OrientationFilterTypeMadgwickMARG;
+    }
+    else if (orientation_filter_type == "ComplementaryOpticalARG")
+    {
+        orientation_filter_enum= OrientationFilterTypeComplementaryOpticalARG;
+    }
+	else if (orientation_filter_type == "ComplementaryMARG")
+	{
+		orientation_filter_enum = OrientationFilterTypeComplementaryMARG;
+	}
+	else if (orientation_filter_type == "OrientationTargetOpticalARG")
+	{
+		orientation_filter_enum = OrientationFilterTypeOrientationTargetOpticalARG;
+	}
+	else if (orientation_filter_type == "OrientationExternal")
+	{
+		orientation_filter_enum = OrientationFilterTypeExternal;
+	}
     else
     {
-        // Convert the position filter type string into an enum
-        PositionFilterType position_filter_enum= PositionFilterTypeNone;
-        if (position_filter_type == "")
-        {
-            position_filter_enum= PositionFilterTypeNone;
-        }
-        else if (position_filter_type == "PassThru")
-        {
-            position_filter_enum= PositionFilterTypePassThru;
-        }
-        else if (position_filter_type == "LowPassOptical")
-        {
-            position_filter_enum= PositionFilterTypeLowPassOptical;
-        }
-        else if (position_filter_type == "ComplimentaryOpticalIMU")
-        {
-            position_filter_enum= PositionFilterTypeComplimentaryOpticalIMU;
-        }
-		else if (position_filter_type == "PositionKalman")
-		{
-			position_filter_enum = PositionFilterTypeKalman;
-		}
-		else if (position_filter_type == "PositionExternalAttachment")
-		{
-			position_filter_enum = PositionFilterTypeExternalAttachment;
-		}
-        else
-        {
-            SERVER_LOG_INFO("pose_filter_factory()") << 
-                "Unknown position filter type: " << position_filter_type << ". Using default.";
+        SERVER_LOG_INFO("pose_filter_factory()") << 
+            "Unknown orientation filter type: " << orientation_filter_type << ". Using default.";
 
-            // fallback to a default based on controller type
-            switch (deviceType)
-            {
-            case CommonDeviceState::PSMove:
-            case CommonDeviceState::VirtualController:
-                position_filter_enum= PositionFilterTypeKalman;
-                break;
-            case CommonDeviceState::PSDualShock4:
-                position_filter_enum= PositionFilterTypeComplimentaryOpticalIMU;
-                break;
-            default:
-                assert(0 && "unreachable");
-            }
-        }
-        
-        // Convert the orientation filter type string into an enum
-        OrientationFilterType orientation_filter_enum= OrientationFilterTypeNone;
-        if (orientation_filter_type == "")
+        // fallback to a default based on controller type
+        switch (deviceType)
         {
-            orientation_filter_enum= OrientationFilterTypeNone;
-        }
-        else if (orientation_filter_type == "PassThru")
-        {
-            orientation_filter_enum= OrientationFilterTypePassThru;
-        }
-        else if (orientation_filter_type == "MadgwickARG")
-        {
-            orientation_filter_enum= OrientationFilterTypeMadgwickARG;
-        }
-        else if (orientation_filter_type == "MadgwickMARG")
-        {
+        case CommonDeviceState::PSMove:
             orientation_filter_enum= OrientationFilterTypeMadgwickMARG;
-        }
-        else if (orientation_filter_type == "ComplementaryOpticalARG")
-        {
+            break;
+        case CommonDeviceState::PSDualShock4:
             orientation_filter_enum= OrientationFilterTypeComplementaryOpticalARG;
+            break;
+        case CommonDeviceState::VirtualController:
+            orientation_filter_enum= OrientationFilterTypeExternal;
+            break;
+        default:
+            assert(0 && "unreachable");
         }
-		else if (orientation_filter_type == "ComplementaryMARG")
-		{
-			orientation_filter_enum = OrientationFilterTypeComplementaryMARG;
-		}
-		else if (orientation_filter_type == "OrientationTargetOpticalARG")
-		{
-			orientation_filter_enum = OrientationFilterTypeOrientationTargetOpticalARG;
-		}
-		else if (orientation_filter_type == "OrientationExternal")
-		{
-			orientation_filter_enum = OrientationFilterTypeExternal;
-		}
-        else
-        {
-            SERVER_LOG_INFO("pose_filter_factory()") << 
-                "Unknown orientation filter type: " << orientation_filter_type << ". Using default.";
-
-            // fallback to a default based on controller type
-            switch (deviceType)
-            {
-            case CommonDeviceState::PSMove:
-                orientation_filter_enum= OrientationFilterTypeMadgwickMARG;
-                break;
-            case CommonDeviceState::PSDualShock4:
-                orientation_filter_enum= OrientationFilterTypeComplementaryOpticalARG;
-                break;
-            case CommonDeviceState::VirtualController:
-                orientation_filter_enum= OrientationFilterTypeExternal;
-                break;
-            default:
-                assert(0 && "unreachable");
-            }
-        }
-
-        CompoundPoseFilter *compound_pose_filter = new CompoundPoseFilter();
-        compound_pose_filter->init(deviceType, orientation_filter_enum, position_filter_enum, constants);
-        filter= compound_pose_filter;
     }
+
+    CompoundPoseFilter *compound_pose_filter = new CompoundPoseFilter();
+    compound_pose_filter->init(deviceType, orientation_filter_enum, position_filter_enum, constants);
+    filter= compound_pose_filter;
 
     assert(filter != nullptr);
 
