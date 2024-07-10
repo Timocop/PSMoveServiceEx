@@ -63,36 +63,40 @@ void AppStage_MainMenu::renderUI()
     switch(m_menuState)
     {
     case connectedToService:
-        {
-            ImGuiWindowFlags window_flags = 
-                ImGuiWindowFlags_ShowBorders |
-                ImGuiWindowFlags_NoResize | 
-                ImGuiWindowFlags_NoMove |
-                ImGuiWindowFlags_NoScrollbar |
-                ImGuiWindowFlags_NoCollapse;
-            ImGui::SetNextWindowPosCenter();
+	{
+		ImGuiWindowFlags window_flags =
+			ImGuiWindowFlags_ShowBorders |
+			ImGuiWindowFlags_NoResize |
+			ImGuiWindowFlags_NoMove |
+			ImGuiWindowFlags_NoScrollbar |
+			ImGuiWindowFlags_NoCollapse;
+		ImGui::SetNextWindowPosCenter();
 
-            char szWindowTitle[255];
-            snprintf(szWindowTitle, sizeof(szWindowTitle), "PSMove Config Tool v%s", PSM_RELEASE_VERSION_STRING);
+		char szWindowTitle[255];
+		snprintf(szWindowTitle, sizeof(szWindowTitle), "PSMove Config Tool v%s", PSM_RELEASE_VERSION_STRING);
 
-            ImGui::Begin(szWindowTitle, nullptr, ImVec2(300, 400), k_background_alpha, window_flags);
-      
-            if (ImGui::Button("Controller Settings"))
-            {
-                m_app->setAppStage(AppStage_ControllerSettings::APP_STAGE_NAME);
-            }
-    
-            if (ImGui::Button("HMD Settings"))
-            {
-                m_app->setAppStage(AppStage_HMDSettings::APP_STAGE_NAME);
-            }    
+		static ImVec2 lastWindowVec = ImVec2(0.f, 4.f);
+
+		ImGui::SetNextWindowSize(ImVec2(300, fminf(lastWindowVec.y + 32.f, ImGui::GetIO().DisplaySize.y - 32)));
+		ImGui::Begin(szWindowTitle, nullptr, window_flags);
+		ImGui::BeginGroup();
+		{
+			if (ImGui::Button("Controller Settings"))
+			{
+				m_app->setAppStage(AppStage_ControllerSettings::APP_STAGE_NAME);
+			}
+
+			if (ImGui::Button("Head-mounted Display Settings"))
+			{
+				m_app->setAppStage(AppStage_HMDSettings::APP_STAGE_NAME);
+			}
 
 			if (ImGui::Button("Tracker Settings"))
 			{
 				m_app->setAppStage(AppStage_TrackerSettings::APP_STAGE_NAME);
 			}
 
-#ifdef _WIN32
+	#ifdef _WIN32
 			ImGui::Separator();
 
 			if (ImGui::Button("Advanced Settings"))
@@ -101,15 +105,19 @@ void AppStage_MainMenu::renderUI()
 			}
 
 			ImGui::Separator();
-#endif
+	#endif
 
-            if (ImGui::Button("Exit"))
-            {
-                m_app->requestShutdown();
-            }
-    
-            ImGui::End();
-        } break;
+			if (ImGui::Button("Exit"))
+			{
+				m_app->requestShutdown();
+			}
+		}
+		ImGui::EndGroup();
+		if (ImGui::IsItemVisible())
+			lastWindowVec = ImGui::GetItemRectSize();
+
+        ImGui::End();
+    } break;
     case pendingConnectToToService:
         {
             ImGuiWindowFlags window_flags = 
