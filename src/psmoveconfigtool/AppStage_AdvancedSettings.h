@@ -202,6 +202,8 @@ protected:
 	DeviceConfig cfg_device;
 private:
 	void RestartService();
+
+	int m_tabSelectedTab;
 };
 
 #endif // APP_STAGE_ADVANCED_SETTINGS_H

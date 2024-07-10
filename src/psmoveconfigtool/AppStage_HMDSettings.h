@@ -168,6 +168,9 @@ private:
     int m_selectedHmdIndex;
 
 	float m_drawRotation;
+
+	int m_tabSelectedTab;
+	int m_tabSettingsSelectedTab;
 };
 
 #endif // APP_STAGE_HMD_SETTINGS_H

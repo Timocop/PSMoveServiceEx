@@ -465,6 +465,7 @@ const char *AppStage_AdvancedSettings::APP_STAGE_NAME= "AdvancedSettings";
 AppStage_AdvancedSettings::AppStage_AdvancedSettings(App *app)
     : AppStage(app)
     , m_menuState(AppStage_AdvancedSettings::inactive)
+	, m_tabSelectedTab(0)
 { }
 
 bool AppStage_AdvancedSettings::init(int argc, char** argv)
@@ -523,664 +524,744 @@ void AppStage_AdvancedSettings::renderUI()
 			ImGui::Begin("Advanced Settings", nullptr, window_flags);
 			ImGui::BeginGroup();
 			{
-				// Tracker Manager Config
-				if (ImGui::CollapsingHeader("Tracker Manager Config", 0, true, true))
+				if (ImGui::ButtonChecked("Trackers##TabTrackers", (m_tabSelectedTab == 0), ImVec2(100.f, 0.f)) || (m_tabSelectedTab == 0))
 				{
-					{
-						ImGui::Text("Virtual Trackers:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::PushItemWidth(100.f);
-						if (ImGui::InputInt("##VirtualTrackers", &cfg_tracker.virtual_tracker_count))
-						{
-							cfg_tracker.virtual_tracker_count = static_cast<int>(std::fmax(0, std::fmin(PSMOVESERVICE_MAX_TRACKER_COUNT, cfg_tracker.virtual_tracker_count)));
-						}
-						ImGui::PopItemWidth();
+					m_tabSelectedTab = 0;
+				}
+				ImGui::SameLine(0.f, 0.f);
+				if (ImGui::ButtonChecked("Controllers##TabControllerConfig", (m_tabSelectedTab == 1), ImVec2(125.f, 0.f)) || (m_tabSelectedTab == 1))
+				{
+					m_tabSelectedTab = 1;
+				}
+				ImGui::SameLine(0.f, 0.f);
+				if (ImGui::ButtonChecked("HMDs##TabHmdConfig", (m_tabSelectedTab == 2), ImVec2(75.f, 0.f)) || (m_tabSelectedTab == 2))
+				{
+					m_tabSelectedTab = 2;
+				}
+				ImGui::SameLine(0.f, 0.f);
+				if (ImGui::ButtonChecked("Devices##TabDeviceConfig", (m_tabSelectedTab == 3), ImVec2(100.f, 0.f)) || (m_tabSelectedTab == 3))
+				{
+					m_tabSelectedTab = 3;
+				}
+				ImGui::SameLine(0.f, 0.f);
+				if (ImGui::ButtonChecked("Other##TabOthers", (m_tabSelectedTab == 4), ImVec2(75.f, 0.f)) || (m_tabSelectedTab == 4))
+				{
+					m_tabSelectedTab = 4;
+				}
 
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"The number of trackers emulated in PSMoveServiceEx.\n"
-								"Useful if you want to add your custom trackers that are not related to PlayStation Move."
-							);
-					}
+				// Tracker Manager Config
+				if (m_tabSelectedTab == 0)
+				{
+					ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5.f);
 
-					{
-						ImGui::Text("Ignore pose from one tracker:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::Checkbox("##IgnorePoseFromOneTracker", &cfg_tracker.ignore_pose_from_one_tracker);
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"Ignores poses from one tracker and enforces triangulation from at least 2 trackers.\n"
-								"This will greatly improve training quality and should always be enabled.\n"
-								"This setting will be ignored if only one tracker is available.\n"
-								"(The default value is TRUE)"
-							);
-					}
-
-					{
-						ImGui::Text("Tracker synchronization mode:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 200.f);
-						int tracker_sync_mode = cfg_tracker.tracker_sync_mode;
-						ImGui::PushItemWidth(150.f);
-						if (ImGui::Combo("##TrackerSyncMode", &tracker_sync_mode, "Wait All\0Fastest Available\0\0"))
-						{
-							cfg_tracker.tracker_sync_mode = tracker_sync_mode;
-						}
-						ImGui::PopItemWidth();
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"Wait All:\n"
-								"	Will do triangulation whenever all trackers are ready.\n"
-								"	This synchronization mode allows the smoothest tracking possible.\n"
-								"	Trackers running on different Hz are not supported in this mode\n"
-								"	and fast trackers will wait for slow trackers.\n"
-								"Fastest Available:\n"
-								"	Will do triangulation whenever the fastest two or more trackers are ready.\n"
-								"	This synchronization mode allows for fastest tracking possible but\n"
-								"	reduces tracking quality and can cause jittering.\n"
-								"	Trackers running on different Hz are supported in this mode.\n"
-								"(The default value is 'WAIT ALL')"
-							);
-					}
-
-					{
-						ImGui::Text("Optical tracking timeout:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::PushItemWidth(100.f);
-						if (ImGui::InputInt("##OpticalTrackingTimeout", &cfg_tracker.optical_tracking_timeout))
-						{
-							cfg_tracker.optical_tracking_timeout = static_cast<int>(std::fmax(0, std::fmin(99999, cfg_tracker.optical_tracking_timeout)));
-						}
-						ImGui::PopItemWidth();
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"The maximum amount of time we can wait for new tracker data for optical tracking.\n"
-								"If the time exceeds the given value then the tracker positional tracking will be ignored.\n"
-								"(The default value is 100)"
-							);
-					}
-
-					{
-						ImGui::Text("Processing thread sleep (ms):");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::PushItemWidth(100.f);
-						if (ImGui::InputInt("##ThreadSleep", &cfg_tracker.thread_sleep_ms))
-						{
-							cfg_tracker.thread_sleep_ms = static_cast<int>(std::fmax(1, std::fmin(99999, cfg_tracker.thread_sleep_ms)));
-						}
-						ImGui::PopItemWidth();
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"(The default value is 1)"
-							);
-					}
-
-					{
-						ImGui::Text("Maximum Processing Thread Framerate:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::PushItemWidth(100.f);
-						if (ImGui::InputInt("##MaximumProcessingThreadFramerate", &cfg_tracker.thread_maximum_framrate))
-						{
-							cfg_tracker.thread_maximum_framrate = static_cast<int>(std::fmax(30, std::fmin(99999, cfg_tracker.thread_maximum_framrate)));
-						}
-						ImGui::PopItemWidth();
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"(The default value is 200)"
-							);
-					}
-
-					{
-						ImGui::Text("Use BGR to HSV lookup table:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::Checkbox("##UseBgrToHsvLookupTable", &cfg_tracker.use_bgr_to_hsv_lookup_table);
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"(The default value is TRUE)"
-							);
-					}
-
-					{
-						ImGui::Text("Exclude opposed trackers:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::Checkbox("##ExcludeOpposedTrackers", &cfg_tracker.exclude_opposed_cameras);
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"Exclude triangulations from trackers that are facing each other.\n"
-								"Enabling this can help get better triangulations between trackers\n"
-								"and may result in better tracking but also increases potential tracking loss\n"
-								"due to trackers being excluded.\n"
-								"This is only good if you have 4 or more trackers.\n"
-								"(The default value is FALSE)"
-							);
-					}
-
-					{
-						ImGui::Text("Occluded area size on tracking loss:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::PushItemWidth(100.f);
-						if (ImGui::InputFloat("##OccludedAreaOnLossSize", &cfg_tracker.occluded_area_on_loss_size, 1.f, 4.f, 2))
-						{
-							cfg_tracker.occluded_area_on_loss_size = static_cast<float>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.occluded_area_on_loss_size)));
-						}
-						ImGui::PopItemWidth();
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"Occlusion areas are created when trackers lose their tracking projection.\n"
-								"The tracker will not re-gain its projection if the projection is near the tracker's occlusion area.\n"
-								"This will help avoid position jitter on continuous tracking loss.\n"
-								"(The default value is 4)"
-							);
-					}
-
-					{
-						ImGui::Text("Occluded area number of ignored trackers:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::PushItemWidth(100.f);
-						if (ImGui::InputInt("##OccludedAreaIgnoreTrackers", &cfg_tracker.occluded_area_ignore_num_trackers, 1, 5))
-						{
-							cfg_tracker.occluded_area_ignore_num_trackers = static_cast<int>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.occluded_area_ignore_num_trackers)));
-						}
-						ImGui::PopItemWidth();
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"The number of trackers that will ignore occluded areas (sorted by biggest projection).\n"
-								"(The default value is 0)"
-							);
-					}
-
-					{
-						ImGui::Text("Occluded area regain projection size:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::PushItemWidth(100.f);
-						if (ImGui::InputFloat("##OccludedAreaRegainProjectionSize", &cfg_tracker.occluded_area_regain_projection_size, 1.f, 4.f, 2))
-						{
-							cfg_tracker.occluded_area_regain_projection_size = static_cast<float>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.occluded_area_regain_projection_size)));
-						}
-						ImGui::PopItemWidth();
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"The tracker will regain the projection and remove its occlusion\n"
-								"if the projection size is bigger than the giving value.\n"
-								"(The default value is 32)"
-							);
-					}
-
-					{
-						ImGui::Text("Projection collision detection:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::PushItemWidth(100.f);
-						ImGui::Checkbox("##PorjectionCollisionDetection", &cfg_tracker.projection_collision_avoid);
-						ImGui::PopItemWidth();
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"Avoid collisions between projections.\n"
-								"Enabling this can fix some color collisions such as color bleeding on the bulb edges.\n"
-								"(The default value is TRUE)"
-							);
-					}
-
-					ImGui::Indent();
-					{
-						ImGui::Text("Projection area offset:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::PushItemWidth(100.f);
-						if (ImGui::InputFloat("##ProjectionCollisionOffset", &cfg_tracker.projection_collision_offset, 1.f, 4.f, 2))
-						{
-							cfg_tracker.projection_collision_offset = static_cast<float>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.projection_collision_offset)));
-						}
-						ImGui::PopItemWidth();
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"Adds an offset to the projection collision detection dead-zone.\n"
-								"(The default value is 5)"
-							);
-					}
-					ImGui::Unindent();
-
-					{
-						ImGui::Text("Cache average position offsets (runtime generated):");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::PushItemWidth(100.f);
-						ImGui::Checkbox("##AveragePositionCache", &cfg_tracker.average_position_cache_enabled);
-						ImGui::PopItemWidth();
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"Gives each tracker a calculated offset from previous cached average positions.\n"
-								"Makes transitions between trackers smoother and reduces jitter.\n"
-								"However, the detection of unwanted color noise could result in persistent bad tracking behavior!\n"
-								"(The default value is TRUE)"
-							);
-					}
-
-					ImGui::Indent();
-					{
-						ImGui::Text("Sample cell size:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::PushItemWidth(100.f);
-						if (ImGui::InputFloat("##AveragePositionCacheCellSize", &cfg_tracker.average_position_cache_cell_size, 1.f, 4.f, 2))
-						{
-							cfg_tracker.average_position_cache_cell_size = static_cast<float>(std::fmax(1.f, std::fmin(99999.f, cfg_tracker.average_position_cache_cell_size)));
-						}
-						ImGui::PopItemWidth();
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"If there are no nearby samples by this distance, new ones will be created.\n"
-								"The lower the value the more smoother and less jittery transitions between trackers will become.\n"
-								"Too low of a value can result in increased CPU usage.\n"
-								"(The default value is 5 (cm))"
-							);
-					}
-					ImGui::Unindent();
-
-					ImGui::Indent();
-					{
-						ImGui::Text("Sampling distance:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::PushItemWidth(100.f);
-						if (ImGui::InputFloat("##AveragePositionCacheAvgSize", &cfg_tracker.average_position_cache_avg_size, 1.f, 4.f, 2))
-						{
-							cfg_tracker.average_position_cache_avg_size = static_cast<float>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.average_position_cache_avg_size)));
-						}
-						ImGui::PopItemWidth();
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"Overall distance to gather nearby samples to apply cached position offsets to the trackers.\n"
-								"Multiple samples by this range will be averaged making transitions between trackers smoother.\n"
-								"If the value is smaller than 'Sample cell size' then only the nearest sample will be used.\n"
-								"(The default value is 30 (cm))"
-							);
-					}
-					ImGui::Unindent();
-
-					ImGui::Indent();
-					{
-						ImGui::Text("Maximum samples:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::PushItemWidth(100.f);
-						if (ImGui::InputFloat("##AveragePositionCacheLimit", &cfg_tracker.average_position_cache_limit, 5.f, 10.f, 2))
-						{
-							cfg_tracker.average_position_cache_limit = static_cast<float>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.average_position_cache_limit)));
-						}
-						ImGui::PopItemWidth();
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"Maximum count of samples per tracker pair.\n"
-								"If the number of samples exceeds the maximum count then old samples will be removed.\n"
-								"Too high of a value can result in increased CPU usage.\n"
-								"(The default value is 1000)"
-							);
-					}
-					ImGui::Unindent();
-
-					{
-						ImGui::Text("Minimum valid projection area:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::PushItemWidth(100.f);
-						if (ImGui::InputFloat("##MinimumValidProjectionArea", &cfg_tracker.min_valid_projection_area, 1.f, 4.f, 2))
-						{
-							cfg_tracker.min_valid_projection_area = static_cast<float>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.min_valid_projection_area)));
-						}
-						ImGui::PopItemWidth();
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"Projection areas smaller than this will not be valid and will not be tracked.\n"
-								"Using smaller values can help track tracking lights better on further distances\n"
-								"but can also introduce more position jitter.\n"
-								"(The legacy value is 16)\n"
-								"(The default value is 6)"
-							);
-					}
-
-					{
-						ImGui::Text("Minimum points in contour:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::PushItemWidth(100.f);
-						if (ImGui::InputInt("##MinimumPointsInContour", &cfg_tracker.min_points_in_contour))
-						{
-							cfg_tracker.min_points_in_contour = static_cast<int>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.min_points_in_contour)));
-						}
-						ImGui::PopItemWidth();
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"How many points a contour can have until it counts as a valid projection.\n"
-								"A minimum of 4 points requires the projection to be a square and more than 6 points a sphere.\n"
-								"If the minimum is 1 or lower then any pixel will count as valid.\n"
-								"(The legacy value is 6)\n"
-								"(The default value is 4)"
-							);
-					}
-
-					{
-						ImGui::Text("Maximum tracker position deviation:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::PushItemWidth(100.f);
-						if (ImGui::InputFloat("##MaximumTrackerPositionDeviation", &cfg_tracker.max_tracker_position_deviation, 1.f, 4.f, 2))
-						{
-							cfg_tracker.max_tracker_position_deviation = static_cast<float>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.max_tracker_position_deviation)));
-						}
-						ImGui::PopItemWidth();
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"Trackers that deviate their triangulation position too much from other trackers will be disregarded.\n"
-								"This will avoid trackers getting stuck on random color noise or other controllers.\n"
-								"(The default value is 15 (cm))"
-							);
-					}
-
-					{
-						ImGui::Text("Enable ROI (region of interest):");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						bool roiEnabled = !cfg_tracker.disable_roi;
-						if (ImGui::Checkbox("##EnableROI", &roiEnabled))
-						{
-							cfg_tracker.disable_roi = !roiEnabled;
-						}
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"Enables ROI (region of interest) which only analyzes parts around the target projection.\n"
-								"This reduces CPU usage when controllers and head mount devices are visible to the tracker.\n"
-								"However, you may experience tracking loss on rapid movement when running trackers on low FPS.\n"
-								"(The default value is TRUE)"
-							);
-					}
-
-					ImGui::Indent();
+					static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
+					ImGui::BeginChild("##TrackerTabChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
+					ImGui::BeginGroup();
 					{
 						{
-							ImGui::Text("Scale ROI (region of interest) by tracker resolution:");
-							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::Checkbox("##ROIAutoscale", &cfg_tracker.autoscale_roi);
-
-							if (ImGui::IsItemHovered())
-								ImGui::SetTooltip(
-									"Scales the ROI (region of interest) uniformly between trackers running with different resolutions.\n"
-									"(The default value is TRUE)"
-								);
-						}
-
-						{
-							ImGui::Text("ROI (region of interest) size:");
+							ImGui::Text("Virtual Trackers:");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(100.f);
-							if (ImGui::InputInt("##ROISize", &cfg_tracker.roi_size, 1, 4))
+							if (ImGui::InputInt("##VirtualTrackers", &cfg_tracker.virtual_tracker_count))
 							{
-								cfg_tracker.roi_size = static_cast<int>(std::fmax(4, std::fmin(99999, cfg_tracker.roi_size)));
+								cfg_tracker.virtual_tracker_count = static_cast<int>(std::fmax(0, std::fmin(PSMOVESERVICE_MAX_TRACKER_COUNT, cfg_tracker.virtual_tracker_count)));
 							}
 							ImGui::PopItemWidth();
 
 							if (ImGui::IsItemHovered())
 								ImGui::SetTooltip(
-									"Size of the ROI (region of interest).\n"
-									"Small sizes can reduce CPU usage but can result in tracking loss on quick movement.\n"
+									"The number of trackers emulated in PSMoveServiceEx.\n"
+									"Useful if you want to add your custom trackers that are not related to PlayStation Move."
+								);
+						}
+
+						{
+							ImGui::Text("Ignore pose from one tracker:");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::Checkbox("##IgnorePoseFromOneTracker", &cfg_tracker.ignore_pose_from_one_tracker);
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"Ignores poses from one tracker and enforces triangulation from at least 2 trackers.\n"
+									"This will greatly improve training quality and should always be enabled.\n"
+									"This setting will be ignored if only one tracker is available.\n"
+									"(The default value is TRUE)"
+								);
+						}
+
+						{
+							ImGui::Text("Tracker synchronization mode:");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 200.f);
+							int tracker_sync_mode = cfg_tracker.tracker_sync_mode;
+							ImGui::PushItemWidth(150.f);
+							if (ImGui::Combo("##TrackerSyncMode", &tracker_sync_mode, "Wait All\0Fastest Available\0\0"))
+							{
+								cfg_tracker.tracker_sync_mode = tracker_sync_mode;
+							}
+							ImGui::PopItemWidth();
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"Wait All:\n"
+									"	Will do triangulation whenever all trackers are ready.\n"
+									"	This synchronization mode allows the smoothest tracking possible.\n"
+									"	Trackers running on different Hz are not supported in this mode\n"
+									"	and fast trackers will wait for slow trackers.\n"
+									"Fastest Available:\n"
+									"	Will do triangulation whenever the fastest two or more trackers are ready.\n"
+									"	This synchronization mode allows for fastest tracking possible but\n"
+									"	reduces tracking quality and can cause jittering.\n"
+									"	Trackers running on different Hz are supported in this mode.\n"
+									"(The default value is 'WAIT ALL')"
+								);
+						}
+
+						{
+							ImGui::Text("Optical tracking timeout:");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(100.f);
+							if (ImGui::InputInt("##OpticalTrackingTimeout", &cfg_tracker.optical_tracking_timeout))
+							{
+								cfg_tracker.optical_tracking_timeout = static_cast<int>(std::fmax(0, std::fmin(99999, cfg_tracker.optical_tracking_timeout)));
+							}
+							ImGui::PopItemWidth();
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"The maximum amount of time we can wait for new tracker data for optical tracking.\n"
+									"If the time exceeds the given value then the tracker positional tracking will be ignored.\n"
+									"(The default value is 100)"
+								);
+						}
+
+						{
+							ImGui::Text("Processing thread sleep (ms):");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(100.f);
+							if (ImGui::InputInt("##ThreadSleep", &cfg_tracker.thread_sleep_ms))
+							{
+								cfg_tracker.thread_sleep_ms = static_cast<int>(std::fmax(1, std::fmin(99999, cfg_tracker.thread_sleep_ms)));
+							}
+							ImGui::PopItemWidth();
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"(The default value is 1)"
+								);
+						}
+
+						{
+							ImGui::Text("Maximum Processing Thread Framerate:");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(100.f);
+							if (ImGui::InputInt("##MaximumProcessingThreadFramerate", &cfg_tracker.thread_maximum_framrate))
+							{
+								cfg_tracker.thread_maximum_framrate = static_cast<int>(std::fmax(30, std::fmin(99999, cfg_tracker.thread_maximum_framrate)));
+							}
+							ImGui::PopItemWidth();
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"(The default value is 200)"
+								);
+						}
+
+						{
+							ImGui::Text("Use BGR to HSV lookup table:");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::Checkbox("##UseBgrToHsvLookupTable", &cfg_tracker.use_bgr_to_hsv_lookup_table);
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"(The default value is TRUE)"
+								);
+						}
+
+						{
+							ImGui::Text("Exclude opposed trackers:");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::Checkbox("##ExcludeOpposedTrackers", &cfg_tracker.exclude_opposed_cameras);
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"Exclude triangulations from trackers that are facing each other.\n"
+									"Enabling this can help get better triangulations between trackers\n"
+									"and may result in better tracking but also increases potential tracking loss\n"
+									"due to trackers being excluded.\n"
+									"This is only good if you have 4 or more trackers.\n"
+									"(The default value is FALSE)"
+								);
+						}
+
+						{
+							ImGui::Text("Occluded area size on tracking loss:");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(100.f);
+							if (ImGui::InputFloat("##OccludedAreaOnLossSize", &cfg_tracker.occluded_area_on_loss_size, 1.f, 4.f, 2))
+							{
+								cfg_tracker.occluded_area_on_loss_size = static_cast<float>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.occluded_area_on_loss_size)));
+							}
+							ImGui::PopItemWidth();
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"Occlusion areas are created when trackers lose their tracking projection.\n"
+									"The tracker will not re-gain its projection if the projection is near the tracker's occlusion area.\n"
+									"This will help avoid position jitter on continuous tracking loss.\n"
+									"(The default value is 4)"
+								);
+						}
+
+						{
+							ImGui::Text("Occluded area number of ignored trackers:");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(100.f);
+							if (ImGui::InputInt("##OccludedAreaIgnoreTrackers", &cfg_tracker.occluded_area_ignore_num_trackers, 1, 5))
+							{
+								cfg_tracker.occluded_area_ignore_num_trackers = static_cast<int>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.occluded_area_ignore_num_trackers)));
+							}
+							ImGui::PopItemWidth();
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"The number of trackers that will ignore occluded areas (sorted by biggest projection).\n"
+									"(The default value is 0)"
+								);
+						}
+
+						{
+							ImGui::Text("Occluded area regain projection size:");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(100.f);
+							if (ImGui::InputFloat("##OccludedAreaRegainProjectionSize", &cfg_tracker.occluded_area_regain_projection_size, 1.f, 4.f, 2))
+							{
+								cfg_tracker.occluded_area_regain_projection_size = static_cast<float>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.occluded_area_regain_projection_size)));
+							}
+							ImGui::PopItemWidth();
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"The tracker will regain the projection and remove its occlusion\n"
+									"if the projection size is bigger than the giving value.\n"
 									"(The default value is 32)"
 								);
 						}
 
 						{
-							ImGui::Text("Optimized ROI (region of interest):");
+							ImGui::Text("Projection collision detection:");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::Checkbox("##OptimizedROI", &cfg_tracker.optimized_roi);
+							ImGui::PushItemWidth(100.f);
+							ImGui::Checkbox("##PorjectionCollisionDetection", &cfg_tracker.projection_collision_avoid);
+							ImGui::PopItemWidth();
 
 							if (ImGui::IsItemHovered())
 								ImGui::SetTooltip(
-									"Optimizes ROI (region of interest) for controllers that are not visible to the tracker\n"
-									"to reduce CPU usage even more.\n"
+									"Avoid collisions between projections.\n"
+									"Enabling this can fix some color collisions such as color bleeding on the bulb edges.\n"
 									"(The default value is TRUE)"
 								);
 						}
 
 						ImGui::Indent();
 						{
-							ImGui::Text("ROI (region of interest) search size:");
+							ImGui::Text("Projection area offset:");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 							ImGui::PushItemWidth(100.f);
-							if (ImGui::InputInt("##ROISearchSize", &cfg_tracker.roi_search_size, 1, 4))
+							if (ImGui::InputFloat("##ProjectionCollisionOffset", &cfg_tracker.projection_collision_offset, 1.f, 4.f, 2))
 							{
-								cfg_tracker.roi_search_size = static_cast<int>(std::fmax(4, std::fmin(99999, cfg_tracker.roi_search_size)));
+								cfg_tracker.projection_collision_offset = static_cast<float>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.projection_collision_offset)));
 							}
 							ImGui::PopItemWidth();
 
 							if (ImGui::IsItemHovered())
 								ImGui::SetTooltip(
-									"Size of the ROI (region of interest) that searches for a new projection if it has been previously lost.\n"
-									"Small sizes can reduce CPU usage but can increase search time.\n"
-									"(The default value is 164)"
+									"Adds an offset to the projection collision detection dead-zone.\n"
+									"(The default value is 5)"
 								);
 						}
 						ImGui::Unindent();
-					}
-					ImGui::Unindent();
 
-					{
-						ImGui::Text("ROI (region of interest) tracker edge offset:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::PushItemWidth(100.f);
-						if (ImGui::InputInt("##ROIEdgeOffset", &cfg_tracker.roi_edge_offset, 1, 4))
 						{
-							cfg_tracker.roi_edge_offset = static_cast<int>(std::fmax(0, std::fmin(64, cfg_tracker.roi_edge_offset)));
+							ImGui::Text("Cache average position offsets (runtime generated):");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(100.f);
+							ImGui::Checkbox("##AveragePositionCache", &cfg_tracker.average_position_cache_enabled);
+							ImGui::PopItemWidth();
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"Gives each tracker a calculated offset from previous cached average positions.\n"
+									"Makes transitions between trackers smoother and reduces jitter.\n"
+									"However, the detection of unwanted color noise could result in persistent bad tracking behavior!\n"
+									"(The default value is TRUE)"
+								);
 						}
-						ImGui::PopItemWidth();
 
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"Adds an offset to the ROI (region of interest) on tracker edges.\n"
-								"Adding an slight offset can help avoid tracking jitter nearby tracker edges.\n"
-								"(The default value is 4)"
-							);
-					}
-
-					{
-						ImGui::Text("Position Interpolation:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::Checkbox("##PositionInterpolation", &cfg_tracker.position_interpolation);
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"Interpolation smoothes motion between previous and current position.\n"
-								"Interpolation adds a frame of delay because it has to wait for new data to become available.\n"
-								"If you want more responsive motion, disable this feature.\n"
-								"(The default value is TRUE)"
-							);
-					}
-
-					{
-						ImGui::Text("Angular Interpolation:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::Checkbox("##AngularInterpolation", &cfg_tracker.angular_interpolation);
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"Interpolation smoothes motion between previous and current orientation.\n"
-								"Interpolation adds a frame of delay because it has to wait for new data to become available.\n"
-								"If you want more responsive motion, disable this feature.\n"
-								"(The default value is TRUE)"
-							);
-					}
-
-					{
-						ImGui::Text("Global forward degrees:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::PushItemWidth(100.f);
-						if (ImGui::InputFloat("##GlobalForwardDegrees", &cfg_tracker.global_forward_degrees, 1.f, 4.f, 2))
+						ImGui::Indent();
 						{
-							cfg_tracker.global_forward_degrees = static_cast<float>(std::fmax(0.f, std::fmin(360.f, cfg_tracker.global_forward_degrees)));
-						}
-						ImGui::PopItemWidth();
+							ImGui::Text("Sample cell size:");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(100.f);
+							if (ImGui::InputFloat("##AveragePositionCacheCellSize", &cfg_tracker.average_position_cache_cell_size, 1.f, 4.f, 2))
+							{
+								cfg_tracker.average_position_cache_cell_size = static_cast<float>(std::fmax(1.f, std::fmin(99999.f, cfg_tracker.average_position_cache_cell_size)));
+							}
+							ImGui::PopItemWidth();
 
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"(The default value is 270)"
-							);
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"If there are no nearby samples by this distance, new ones will be created.\n"
+									"The lower the value the more smoother and less jittery transitions between trackers will become.\n"
+									"Too low of a value can result in increased CPU usage.\n"
+									"(The default value is 5 (cm))"
+								);
+						}
+						ImGui::Unindent();
+
+						ImGui::Indent();
+						{
+							ImGui::Text("Sampling distance:");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(100.f);
+							if (ImGui::InputFloat("##AveragePositionCacheAvgSize", &cfg_tracker.average_position_cache_avg_size, 1.f, 4.f, 2))
+							{
+								cfg_tracker.average_position_cache_avg_size = static_cast<float>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.average_position_cache_avg_size)));
+							}
+							ImGui::PopItemWidth();
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"Overall distance to gather nearby samples to apply cached position offsets to the trackers.\n"
+									"Multiple samples by this range will be averaged making transitions between trackers smoother.\n"
+									"If the value is smaller than 'Sample cell size' then only the nearest sample will be used.\n"
+									"(The default value is 30 (cm))"
+								);
+						}
+						ImGui::Unindent();
+
+						ImGui::Indent();
+						{
+							ImGui::Text("Maximum samples:");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(100.f);
+							if (ImGui::InputFloat("##AveragePositionCacheLimit", &cfg_tracker.average_position_cache_limit, 5.f, 10.f, 2))
+							{
+								cfg_tracker.average_position_cache_limit = static_cast<float>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.average_position_cache_limit)));
+							}
+							ImGui::PopItemWidth();
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"Maximum count of samples per tracker pair.\n"
+									"If the number of samples exceeds the maximum count then old samples will be removed.\n"
+									"Too high of a value can result in increased CPU usage.\n"
+									"(The default value is 1000)"
+								);
+						}
+						ImGui::Unindent();
+
+						{
+							ImGui::Text("Minimum valid projection area:");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(100.f);
+							if (ImGui::InputFloat("##MinimumValidProjectionArea", &cfg_tracker.min_valid_projection_area, 1.f, 4.f, 2))
+							{
+								cfg_tracker.min_valid_projection_area = static_cast<float>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.min_valid_projection_area)));
+							}
+							ImGui::PopItemWidth();
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"Projection areas smaller than this will not be valid and will not be tracked.\n"
+									"Using smaller values can help track tracking lights better on further distances\n"
+									"but can also introduce more position jitter.\n"
+									"(The legacy value is 16)\n"
+									"(The default value is 6)"
+								);
+						}
+
+						{
+							ImGui::Text("Minimum points in contour:");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(100.f);
+							if (ImGui::InputInt("##MinimumPointsInContour", &cfg_tracker.min_points_in_contour))
+							{
+								cfg_tracker.min_points_in_contour = static_cast<int>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.min_points_in_contour)));
+							}
+							ImGui::PopItemWidth();
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"How many points a contour can have until it counts as a valid projection.\n"
+									"A minimum of 4 points requires the projection to be a square and more than 6 points a sphere.\n"
+									"If the minimum is 1 or lower then any pixel will count as valid.\n"
+									"(The legacy value is 6)\n"
+									"(The default value is 4)"
+								);
+						}
+
+						{
+							ImGui::Text("Maximum tracker position deviation:");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(100.f);
+							if (ImGui::InputFloat("##MaximumTrackerPositionDeviation", &cfg_tracker.max_tracker_position_deviation, 1.f, 4.f, 2))
+							{
+								cfg_tracker.max_tracker_position_deviation = static_cast<float>(std::fmax(0.f, std::fmin(99999.f, cfg_tracker.max_tracker_position_deviation)));
+							}
+							ImGui::PopItemWidth();
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"Trackers that deviate their triangulation position too much from other trackers will be disregarded.\n"
+									"This will avoid trackers getting stuck on random color noise or other controllers.\n"
+									"(The default value is 15 (cm))"
+								);
+						}
+
+						{
+							ImGui::Text("Enable ROI (region of interest):");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							bool roiEnabled = !cfg_tracker.disable_roi;
+							if (ImGui::Checkbox("##EnableROI", &roiEnabled))
+							{
+								cfg_tracker.disable_roi = !roiEnabled;
+							}
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"Enables ROI (region of interest) which only analyzes parts around the target projection.\n"
+									"This reduces CPU usage when controllers and head mount devices are visible to the tracker.\n"
+									"However, you may experience tracking loss on rapid movement when running trackers on low FPS.\n"
+									"(The default value is TRUE)"
+								);
+						}
+
+						ImGui::Indent();
+						{
+							{
+								ImGui::Text("Scale ROI (region of interest) by tracker resolution:");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::Checkbox("##ROIAutoscale", &cfg_tracker.autoscale_roi);
+
+								if (ImGui::IsItemHovered())
+									ImGui::SetTooltip(
+										"Scales the ROI (region of interest) uniformly between trackers running with different resolutions.\n"
+										"(The default value is TRUE)"
+									);
+							}
+
+							{
+								ImGui::Text("ROI (region of interest) size:");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(100.f);
+								if (ImGui::InputInt("##ROISize", &cfg_tracker.roi_size, 1, 4))
+								{
+									cfg_tracker.roi_size = static_cast<int>(std::fmax(4, std::fmin(99999, cfg_tracker.roi_size)));
+								}
+								ImGui::PopItemWidth();
+
+								if (ImGui::IsItemHovered())
+									ImGui::SetTooltip(
+										"Size of the ROI (region of interest).\n"
+										"Small sizes can reduce CPU usage but can result in tracking loss on quick movement.\n"
+										"(The default value is 32)"
+									);
+							}
+
+							{
+								ImGui::Text("Optimized ROI (region of interest):");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::Checkbox("##OptimizedROI", &cfg_tracker.optimized_roi);
+
+								if (ImGui::IsItemHovered())
+									ImGui::SetTooltip(
+										"Optimizes ROI (region of interest) for controllers that are not visible to the tracker\n"
+										"to reduce CPU usage even more.\n"
+										"(The default value is TRUE)"
+									);
+							}
+
+							ImGui::Indent();
+							{
+								ImGui::Text("ROI (region of interest) search size:");
+								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+								ImGui::PushItemWidth(100.f);
+								if (ImGui::InputInt("##ROISearchSize", &cfg_tracker.roi_search_size, 1, 4))
+								{
+									cfg_tracker.roi_search_size = static_cast<int>(std::fmax(4, std::fmin(99999, cfg_tracker.roi_search_size)));
+								}
+								ImGui::PopItemWidth();
+
+								if (ImGui::IsItemHovered())
+									ImGui::SetTooltip(
+										"Size of the ROI (region of interest) that searches for a new projection if it has been previously lost.\n"
+										"Small sizes can reduce CPU usage but can increase search time.\n"
+										"(The default value is 164)"
+									);
+							}
+							ImGui::Unindent();
+						}
+						ImGui::Unindent();
+
+						{
+							ImGui::Text("ROI (region of interest) tracker edge offset:");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(100.f);
+							if (ImGui::InputInt("##ROIEdgeOffset", &cfg_tracker.roi_edge_offset, 1, 4))
+							{
+								cfg_tracker.roi_edge_offset = static_cast<int>(std::fmax(0, std::fmin(64, cfg_tracker.roi_edge_offset)));
+							}
+							ImGui::PopItemWidth();
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"Adds an offset to the ROI (region of interest) on tracker edges.\n"
+									"Adding an slight offset can help avoid tracking jitter nearby tracker edges.\n"
+									"(The default value is 4)"
+								);
+						}
+
+						{
+							ImGui::Text("Position Interpolation:");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::Checkbox("##PositionInterpolation", &cfg_tracker.position_interpolation);
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"Interpolation smoothes motion between previous and current position.\n"
+									"Interpolation adds a frame of delay because it has to wait for new data to become available.\n"
+									"If you want more responsive motion, disable this feature.\n"
+									"(The default value is TRUE)"
+								);
+						}
+
+						{
+							ImGui::Text("Angular Interpolation:");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::Checkbox("##AngularInterpolation", &cfg_tracker.angular_interpolation);
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"Interpolation smoothes motion between previous and current orientation.\n"
+									"Interpolation adds a frame of delay because it has to wait for new data to become available.\n"
+									"If you want more responsive motion, disable this feature.\n"
+									"(The default value is TRUE)"
+								);
+						}
+
+						{
+							ImGui::Text("Global forward degrees:");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(100.f);
+							if (ImGui::InputFloat("##GlobalForwardDegrees", &cfg_tracker.global_forward_degrees, 1.f, 4.f, 2))
+							{
+								cfg_tracker.global_forward_degrees = static_cast<float>(std::fmax(0.f, std::fmin(360.f, cfg_tracker.global_forward_degrees)));
+							}
+							ImGui::PopItemWidth();
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"(The default value is 270)"
+								);
+						}
 					}
+					ImGui::EndGroup();
+					if (ImGui::IsItemVisible())
+						lastChildVec = ImGui::GetItemRectSize();
+					ImGui::EndChild();
 				}
 
 				// Controller Manager Config
-				if (ImGui::CollapsingHeader("Controller Manager Config", 0, true, true))
+				if (m_tabSelectedTab == 1)
 				{
-					ImGui::Text("Virtual Controllers:");
-					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-					ImGui::PushItemWidth(100.f);
-					if (ImGui::InputInt("##VirtualControllers", &cfg_controller.virtual_controller_count))
-					{
-						cfg_controller.virtual_controller_count = static_cast<int>(std::fmax(0, std::fmin(PSMOVESERVICE_MAX_CONTROLLER_COUNT, cfg_controller.virtual_controller_count)));
-					}
-					ImGui::PopItemWidth();
+					ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5.f);
 
-					if (ImGui::IsItemHovered())
-						ImGui::SetTooltip(
-							"The number of controllers emulated in PSMoveServiceEx.\n"
-							"Useful if you want to add your custom controllers that are not related to PlayStation Move."
-						); 
+					static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
+					ImGui::BeginChild("##ControllerTabChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
+					ImGui::BeginGroup();
+					{
+						ImGui::Text("Virtual Controllers:");
+						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+						ImGui::PushItemWidth(100.f);
+						if (ImGui::InputInt("##VirtualControllers", &cfg_controller.virtual_controller_count))
+						{
+							cfg_controller.virtual_controller_count = static_cast<int>(std::fmax(0, std::fmin(PSMOVESERVICE_MAX_CONTROLLER_COUNT, cfg_controller.virtual_controller_count)));
+						}
+						ImGui::PopItemWidth();
+
+						if (ImGui::IsItemHovered())
+							ImGui::SetTooltip(
+								"The number of controllers emulated in PSMoveServiceEx.\n"
+								"Useful if you want to add your custom controllers that are not related to PlayStation Move."
+							);
+					}
+					ImGui::EndGroup();
+					if (ImGui::IsItemVisible())
+						lastChildVec = ImGui::GetItemRectSize();
+					ImGui::EndChild();
 				}
 
 				// HMD Manager Config
-				if (ImGui::CollapsingHeader("HMD Manager Config", 0, true, true))
+				if (m_tabSelectedTab == 2)
 				{
-					ImGui::Text("Virtual HMDs:");
-					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-					ImGui::PushItemWidth(100.f);
-					if (ImGui::InputInt("##VirtualHMD", &cfg_hmd.virtual_hmd_count))
+					ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5.f);
+
+					static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
+					ImGui::BeginChild("##HMDTabChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
+					ImGui::BeginGroup();
 					{
-						cfg_hmd.virtual_hmd_count = static_cast<int>(std::fmax(0, std::fmin(PSMOVESERVICE_MAX_HMD_COUNT, cfg_hmd.virtual_hmd_count)));
+						ImGui::Text("Virtual HMDs:");
+						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+						ImGui::PushItemWidth(100.f);
+						if (ImGui::InputInt("##VirtualHMD", &cfg_hmd.virtual_hmd_count))
+						{
+							cfg_hmd.virtual_hmd_count = static_cast<int>(std::fmax(0, std::fmin(PSMOVESERVICE_MAX_HMD_COUNT, cfg_hmd.virtual_hmd_count)));
+						}
+						ImGui::PopItemWidth();
+
+						if (ImGui::IsItemHovered())
+							ImGui::SetTooltip(
+								"The number of head mount devices emulated in PSMoveServiceEx.\n"
+								"Useful if you want to add your custom head mount devices that are not related to PlayStation Move."
+							);
+
+						ImGui::Text("Enable Morpheus HMD:");
+						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+						ImGui::PushItemWidth(100.f);
+						ImGui::Checkbox("##EnableMorpheusHMD", &cfg_hmd.enable_morpheus);
+						ImGui::PopItemWidth();
+
+						if (ImGui::IsItemHovered())
+							ImGui::SetTooltip(
+								"Enables the Morpheus Head-Mounted Display in PSMoveServiceEx.\n"
+								"If you use other programs that use the Head-Mounted Display disable this setting to avoid conflicts."
+							);
 					}
-					ImGui::PopItemWidth();
-
-					if (ImGui::IsItemHovered())
-						ImGui::SetTooltip(
-							"The number of head mount devices emulated in PSMoveServiceEx.\n"
-							"Useful if you want to add your custom head mount devices that are not related to PlayStation Move."
-						);
-
-					ImGui::Text("Enable Morpheus HMD:");
-					ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-					ImGui::PushItemWidth(100.f);
-					ImGui::Checkbox("##EnableMorpheusHMD", &cfg_hmd.enable_morpheus);
-					ImGui::PopItemWidth();
-
-					if (ImGui::IsItemHovered())
-						ImGui::SetTooltip(
-							"Enables the Morpheus Head-Mounted Display in PSMoveServiceEx.\n"
-							"If you use other programs that use the Head-Mounted Display disable this setting to avoid conflicts."
-						);
+					ImGui::EndGroup();
+					if (ImGui::IsItemVisible())
+						lastChildVec = ImGui::GetItemRectSize();
+					ImGui::EndChild();
 				}
 
 				// Device Manager Config
-				if (ImGui::CollapsingHeader("Device Manager Config", 0, true, false))
+				if (m_tabSelectedTab == 3)
 				{
+					ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5.f);
+
+					static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
+					ImGui::BeginChild("##DeviceTabChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
+					ImGui::BeginGroup();
 					{
-						ImGui::Text("Controller reconnect interval (ms):");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::PushItemWidth(100.f);
-						if (ImGui::InputInt("##ControllerReconnectInterval", &cfg_device.controller_reconnect_interval))
 						{
-							cfg_device.controller_reconnect_interval = static_cast<int>(std::fmax(0, std::fmin(999999, cfg_device.controller_reconnect_interval)));
+							ImGui::Text("Controller reconnect interval (ms):");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(100.f);
+							if (ImGui::InputInt("##ControllerReconnectInterval", &cfg_device.controller_reconnect_interval))
+							{
+								cfg_device.controller_reconnect_interval = static_cast<int>(std::fmax(0, std::fmin(999999, cfg_device.controller_reconnect_interval)));
+							}
+							ImGui::PopItemWidth();
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"(The default value is 1000)"
+								);
 						}
-						ImGui::PopItemWidth();
 
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"(The default value is 1000)"
-							);
-					}
-
-					{
-						ImGui::Text("Tracker reconnect interval (ms):");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::PushItemWidth(100.f);
-						if (ImGui::InputInt("##TrackerReconnectInterval", &cfg_device.tracker_reconnect_interval))
 						{
-							cfg_device.tracker_reconnect_interval = static_cast<int>(std::fmax(0, std::fmin(999999, cfg_device.tracker_reconnect_interval)));
+							ImGui::Text("Tracker reconnect interval (ms):");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(100.f);
+							if (ImGui::InputInt("##TrackerReconnectInterval", &cfg_device.tracker_reconnect_interval))
+							{
+								cfg_device.tracker_reconnect_interval = static_cast<int>(std::fmax(0, std::fmin(999999, cfg_device.tracker_reconnect_interval)));
+							}
+							ImGui::PopItemWidth();
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"(The default value is 10000)"
+								);
 						}
-						ImGui::PopItemWidth();
 
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"(The default value is 10000)"
-							);
-					}
-
-					{
-						ImGui::Text("HMD reconnect interval (ms):");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::PushItemWidth(100.f);
-						if (ImGui::InputInt("##HMDReconnectInterval", &cfg_device.hmd_reconnect_interval))
 						{
-							cfg_device.hmd_reconnect_interval = static_cast<int>(std::fmax(0, std::fmin(999999, cfg_device.hmd_reconnect_interval)));
+							ImGui::Text("HMD reconnect interval (ms):");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(100.f);
+							if (ImGui::InputInt("##HMDReconnectInterval", &cfg_device.hmd_reconnect_interval))
+							{
+								cfg_device.hmd_reconnect_interval = static_cast<int>(std::fmax(0, std::fmin(999999, cfg_device.hmd_reconnect_interval)));
+							}
+							ImGui::PopItemWidth();
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"(The default value is 10000)"
+								);
 						}
-						ImGui::PopItemWidth();
 
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"(The default value is 10000)"
-							);
+						{
+							ImGui::Text("Enable gamepad API:");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::Checkbox("##GamepadApiEnabled", &cfg_device.gamepad_api_enabled);
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"Enable to use gamepad API (e.g. PSMove or gamepad controller buttons) in PSMoveServiceEx (recommended).\n"
+									"(The default value is TRUE)"
+								);
+						}
+
+						{
+							ImGui::Indent();
+							ImGui::Text("XInput gamepads only:");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::Checkbox("##GamepadApiXInputOnly", &cfg_device.gamepad_api_xinput_only);
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"Enable to use XInput API only. (e.g. Xbox controllers)\n"
+									"(The default value is TRUE)"
+								);
+
+							ImGui::Unindent();
+						}
+
+						{
+							ImGui::Text("Enable platform API:");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::Checkbox("##PlatformApiEnabled", &cfg_device.platform_api_enabled);
+
+							if (ImGui::IsItemHovered())
+								ImGui::SetTooltip(
+									"Enable to use platform API (e.g. hotplug detection) in PSMoveServiceEx (recommended).\n"
+									"(The default value is TRUE)"
+								);
+						}
 					}
-
-					{
-						ImGui::Text("Enable gamepad API:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::Checkbox("##GamepadApiEnabled", &cfg_device.gamepad_api_enabled);
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"Enable to use gamepad API (e.g. PSMove or gamepad controller buttons) in PSMoveServiceEx (recommended).\n"
-								"(The default value is TRUE)"
-							);
-					}
-
-					{
-						ImGui::Indent();
-						ImGui::Text("XInput gamepads only:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::Checkbox("##GamepadApiXInputOnly", &cfg_device.gamepad_api_xinput_only);
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"Enable to use XInput API only. (e.g. Xbox controllers)\n"
-								"(The default value is TRUE)"
-							);
-
-						ImGui::Unindent();
-					}
-
-					{
-						ImGui::Text("Enable platform API:");
-						ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-						ImGui::Checkbox("##PlatformApiEnabled", &cfg_device.platform_api_enabled);
-
-						if (ImGui::IsItemHovered())
-							ImGui::SetTooltip(
-								"Enable to use platform API (e.g. hotplug detection) in PSMoveServiceEx (recommended).\n"
-								"(The default value is TRUE)"
-							);
-					}
+					ImGui::EndGroup();
+					if (ImGui::IsItemVisible())
+						lastChildVec = ImGui::GetItemRectSize();
+					ImGui::EndChild();
 				}
 
-				if (ImGui::CollapsingHeader("Miscellaneous", 0, true, false))
+				if (m_tabSelectedTab == 4)
 				{
-					if (ImGui::Button("Open PSMoveServiceEx Config Directory"))
+					ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5.f);
+
+					static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
+					ImGui::BeginChild("##OtherTabChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
+					ImGui::BeginGroup();
 					{
-						configExec.OpenConfigInExplorer();
+						if (ImGui::Button("Open PSMoveServiceEx Config Directory"))
+						{
+							configExec.OpenConfigInExplorer();
+						}
 					}
+					ImGui::EndGroup();
+					if (ImGui::IsItemVisible())
+						lastChildVec = ImGui::GetItemRectSize();
+					ImGui::EndChild();
 				}
 
 				ImGui::Spacing();

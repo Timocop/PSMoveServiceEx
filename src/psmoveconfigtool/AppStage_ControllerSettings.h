@@ -252,6 +252,9 @@ private:
 	std::chrono::time_point<std::chrono::high_resolution_clock> m_lastIndicatorControllerTime;
 
 	float m_drawRotation;
+
+	int m_tabSelectedTab;
+	int m_tabSettingsSelectedTab;
 };
 
 #endif // APP_STAGE_SELECT_CONTROLLER_H

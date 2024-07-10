@@ -169,6 +169,9 @@ protected:
 private:
 
 	float m_drawRotation;
+
+	int m_tabSelectedTab;
+
 };
 
 #endif // APP_STAGE_TRACKER_SETTINGS_H

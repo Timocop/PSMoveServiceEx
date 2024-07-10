@@ -221,6 +221,8 @@ AppStage_ControllerSettings::AppStage_ControllerSettings(App *app)
 	, m_gamepadCount(0)
 	, m_indicatorControllerIndex(-1)
 	, m_drawRotation(0.f)
+	, m_tabSelectedTab(0)
+	, m_tabSettingsSelectedTab(0)
 {
 	m_lastIndicatorControllerTime = std::chrono::high_resolution_clock::now();
 }
@@ -761,8 +763,27 @@ void AppStage_ControllerSettings::renderUI()
 						ImGui::EndChild();
 					}
 
-					if (ImGui::CollapsingHeader("Settings", 0, true, true))
+					ImGui::Spacing();
+
+					if (ImGui::ButtonChecked("Settings##TabSettings", (m_tabSelectedTab == 0), ImVec2(150.f, 0.f)) || (m_tabSelectedTab == 0))
 					{
+						m_tabSelectedTab = 0;
+					}
+					ImGui::SameLine(0.f, 0.f);
+					if (ImGui::ButtonChecked("Calibration##TabCalibration", (m_tabSelectedTab == 1), ImVec2(150.f, 0.f)) || (m_tabSelectedTab == 1))
+					{
+						m_tabSelectedTab = 1;
+					}
+					ImGui::SameLine(0.f, 0.f);
+					if (ImGui::ButtonChecked("Testing##TabTesting", (m_tabSelectedTab == 2), ImVec2(150.f, 0.f)) || (m_tabSelectedTab == 2))
+					{
+						m_tabSelectedTab = 2;
+					}
+
+					if (m_tabSelectedTab == 0)
+					{
+						ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5.f);
+
 						static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
 						ImGui::BeginChild("##SettingsChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
 						ImGui::BeginGroup();
@@ -819,8 +840,27 @@ void AppStage_ControllerSettings::renderUI()
 							if (!m_app->excludePositionSettings &&
 								(controllerInfo.IsBluetooth || controllerInfo.ControllerType == PSMController_Virtual))
 							{
-								if (ImGui::CollapsingHeader("Filters", 0, true, false))
+								ImGui::Spacing();
+
+								if (ImGui::ButtonChecked("Filters##TabFilters", (m_tabSettingsSelectedTab == 0), ImVec2(150.f, 0.f)) || (m_tabSettingsSelectedTab == 0))
 								{
+									m_tabSettingsSelectedTab = 0;
+								}
+								ImGui::SameLine(0.f, 0.f);
+								if (ImGui::ButtonChecked("Filter Settings##TabFilterSettings", (m_tabSettingsSelectedTab == 1), ImVec2(150.f, 0.f)) || (m_tabSettingsSelectedTab == 1))
+								{
+									m_tabSettingsSelectedTab = 1;
+								}
+								ImGui::SameLine(0.f, 0.f);
+								if (ImGui::ButtonChecked("Offsets##TabOffsets", (m_tabSettingsSelectedTab == 2), ImVec2(150.f, 0.f)) || (m_tabSettingsSelectedTab == 2))
+								{
+									m_tabSettingsSelectedTab = 2;
+								}
+
+								if (m_tabSettingsSelectedTab == 0)
+								{
+									ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5.f);
+
 									static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
 									ImGui::BeginChild("##FiltersChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
 									ImGui::BeginGroup();
@@ -973,15 +1013,17 @@ void AppStage_ControllerSettings::renderUI()
 									ImGui::EndChild();
 								}
 
-								if ((controllerInfo.ControllerType == PSMController_Move && controllerInfo.IsBluetooth) ||
-									(controllerInfo.ControllerType == PSMController_DualShock4 && controllerInfo.IsBluetooth) ||
-									controllerInfo.ControllerType == PSMController_Virtual)
+								if (m_tabSettingsSelectedTab == 1)
 								{
-									if (ImGui::CollapsingHeader("Filter Settings", 0, true, false))
+									ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5.f);
+
+									static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
+									ImGui::BeginChild("##FilterSettingsChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
+									ImGui::BeginGroup();
 									{
-										static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
-										ImGui::BeginChild("##FilterSettingsChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
-										ImGui::BeginGroup();
+										if ((controllerInfo.ControllerType == PSMController_Move && controllerInfo.IsBluetooth) ||
+											(controllerInfo.ControllerType == PSMController_DualShock4 && controllerInfo.IsBluetooth) ||
+											controllerInfo.ControllerType == PSMController_Virtual)
 										{
 											bool request_offset = false;
 											bool settings_shown = false;
@@ -1505,15 +1547,17 @@ void AppStage_ControllerSettings::renderUI()
 												request_set_controller_filter_settings(controllerInfo.ControllerID, filterSettings);
 											}
 										}
-										ImGui::EndGroup();
-										if (ImGui::IsItemVisible())
-											lastChildVec2 = ImGui::GetItemRectSize();
-										ImGui::EndChild();
 									}
+									ImGui::EndGroup();
+									if (ImGui::IsItemVisible())
+										lastChildVec2 = ImGui::GetItemRectSize();
+									ImGui::EndChild();
 								}
 
-								if (ImGui::CollapsingHeader("Offsets", 0, true, false))
+								if (m_tabSettingsSelectedTab == 2)
 								{
+									ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5.f);
+
 									static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
 									ImGui::BeginChild("##OffsetsChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
 									ImGui::BeginGroup();
@@ -1791,13 +1835,15 @@ void AppStage_ControllerSettings::renderUI()
 						ImGui::EndChild();
 					}
 
-					if (controllerInfo.ControllerType == PSMController_Move && controllerInfo.IsBluetooth)
+					if (m_tabSelectedTab == 1)
 					{
-						if (ImGui::CollapsingHeader("Calibration", 0, true, m_app->excludePositionSettings))
+						ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5.f);
+
+						static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
+						ImGui::BeginChild("##CalibrationChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
+						ImGui::BeginGroup();
 						{
-							static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
-							ImGui::BeginChild("##CalibrationChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
-							ImGui::BeginGroup();
+							if (controllerInfo.ControllerType == PSMController_Move && controllerInfo.IsBluetooth)
 							{
 								if (controllerInfo.HasMagnetometer)
 								{
@@ -1834,20 +1880,22 @@ void AppStage_ControllerSettings::renderUI()
 									m_app->setAppStage(AppStage_AccelerometerCalibration::APP_STAGE_NAME);
 								}
 							}
-							ImGui::EndGroup();
-							if (ImGui::IsItemVisible())
-								lastChildVec = ImGui::GetItemRectSize();
-							ImGui::EndChild();
 						}
+						ImGui::EndGroup();
+						if (ImGui::IsItemVisible())
+							lastChildVec = ImGui::GetItemRectSize();
+						ImGui::EndChild();
 					}
 
-					if (controllerInfo.IsBluetooth || controllerInfo.ControllerType == PSMController_Virtual)
+					if (m_tabSelectedTab == 2)
 					{
-						if (ImGui::CollapsingHeader("Tests", 0, true, m_app->excludePositionSettings))
+						ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5.f);
+
+						static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
+						ImGui::BeginChild("##TestsChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
+						ImGui::BeginGroup();
 						{
-							static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
-							ImGui::BeginChild("##TestsChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
-							ImGui::BeginGroup();
+							if (controllerInfo.IsBluetooth || controllerInfo.ControllerType == PSMController_Virtual)
 							{
 								if (controllerInfo.ControllerType == PSMController_Move)
 								{
@@ -1906,11 +1954,11 @@ void AppStage_ControllerSettings::renderUI()
 									m_app->setAppStage(AppStage_TestButtons::APP_STAGE_NAME);
 								}
 							}
-							ImGui::EndGroup();
-							if (ImGui::IsItemVisible())
-								lastChildVec = ImGui::GetItemRectSize();
-							ImGui::EndChild();
 						}
+						ImGui::EndGroup();
+						if (ImGui::IsItemVisible())
+							lastChildVec = ImGui::GetItemRectSize();
+						ImGui::EndChild();
 					}
 				}
 				else

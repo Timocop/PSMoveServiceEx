@@ -51,6 +51,8 @@ AppStage_HMDSettings::AppStage_HMDSettings(App *app)
     , m_menuState(AppStage_HMDSettings::inactive)
     , m_selectedHmdIndex(-1)
 	, m_drawRotation(0.f)
+	, m_tabSelectedTab(0)
+	, m_tabSettingsSelectedTab(0)
 { }
 
 void AppStage_HMDSettings::enter()
@@ -297,9 +299,28 @@ void AppStage_HMDSettings::renderUI()
 					ImGui::EndChild();
 				}
 
-				// Combo box selection for hmd tracking color
-				if (ImGui::CollapsingHeader("Settings", 0, true, false))
+				ImGui::Spacing();
+
+				if (ImGui::ButtonChecked("Settings##TabSettings", (m_tabSelectedTab == 0), ImVec2(150.f, 0.f)) || (m_tabSelectedTab == 0))
 				{
+					m_tabSelectedTab = 0;
+				}
+				ImGui::SameLine(0.f, 0.f);
+				if (ImGui::ButtonChecked("Calibration##TabCalibration", (m_tabSelectedTab == 1), ImVec2(150.f, 0.f)) || (m_tabSelectedTab == 1))
+				{
+					m_tabSelectedTab = 1;
+				}
+				ImGui::SameLine(0.f, 0.f);
+				if (ImGui::ButtonChecked("Testing##TabTesting", (m_tabSelectedTab == 2), ImVec2(150.f, 0.f)) || (m_tabSelectedTab == 2))
+				{
+					m_tabSelectedTab = 2;
+				}
+
+				// Combo box selection for hmd tracking color
+				if (m_tabSelectedTab == 0)
+				{
+					ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5.f);
+
 					static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
 					ImGui::BeginChild("##SettingsChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
 					ImGui::BeginGroup();
@@ -361,15 +382,34 @@ void AppStage_HMDSettings::renderUI()
 								);
 								ImGui::PopTextWrapPos();
 							}
+						}	
+						
+						ImGui::Spacing();
+
+						if (ImGui::ButtonChecked("Filters##TabFilters", (m_tabSettingsSelectedTab == 0), ImVec2(150.f, 0.f)) || (m_tabSettingsSelectedTab == 0))
+						{
+							m_tabSettingsSelectedTab = 0;
+						}
+						ImGui::SameLine(0.f, 0.f);
+						if (ImGui::ButtonChecked("Filter Settings##FilterSettings", (m_tabSettingsSelectedTab == 1), ImVec2(150.f, 0.f)) || (m_tabSettingsSelectedTab == 1))
+						{
+							m_tabSettingsSelectedTab = 1;
+						}
+						ImGui::SameLine(0.f, 0.f);
+						if (ImGui::ButtonChecked("Offsets##TabOffsets", (m_tabSettingsSelectedTab == 2), ImVec2(150.f, 0.f)) || (m_tabSettingsSelectedTab == 2))
+						{
+							m_tabSettingsSelectedTab = 2;
 						}
 
-						if (hmdInfo.HmdType == AppStage_HMDSettings::eHMDType::Morpheus)
+						if (m_tabSettingsSelectedTab == 0)
 						{
-							if (ImGui::CollapsingHeader("Filters", 0, true, false))
+							ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5.f);
+
+							static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
+							ImGui::BeginChild("##FiltersChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
+							ImGui::BeginGroup();
 							{
-								static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
-								ImGui::BeginChild("##FiltersChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
-								ImGui::BeginGroup();
+								if (hmdInfo.HmdType == AppStage_HMDSettings::eHMDType::Morpheus)
 								{
 									ImGui::PushItemWidth(195);
 									if (ImGui::Combo("Position Filter", &hmdInfo.PositionFilterIndex, k_hmd_position_filter_names, UI_ARRAYSIZE(k_hmd_position_filter_names)))
@@ -431,19 +471,7 @@ void AppStage_HMDSettings::renderUI()
 									}
 									ImGui::PopItemWidth();
 								}
-								ImGui::EndGroup();
-								if (ImGui::IsItemVisible())
-									lastChildVec2 = ImGui::GetItemRectSize();
-								ImGui::EndChild();
-							}
-						}
-						else if (hmdInfo.HmdType == AppStage_HMDSettings::eHMDType::VirtualHMD)
-						{
-							if (ImGui::CollapsingHeader("Filters", 0, true, false))
-							{
-								static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
-								ImGui::BeginChild("##FiltersChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
-								ImGui::BeginGroup();
+								else if (hmdInfo.HmdType == AppStage_HMDSettings::eHMDType::VirtualHMD)
 								{
 									ImGui::PushItemWidth(195);
 									if (ImGui::Combo("Position Filter", &hmdInfo.PositionFilterIndex, k_hmd_position_filter_names, UI_ARRAYSIZE(k_hmd_position_filter_names)))
@@ -480,18 +508,18 @@ void AppStage_HMDSettings::renderUI()
 									}
 									ImGui::PopItemWidth();
 								}
-								ImGui::EndGroup();
-								if (ImGui::IsItemVisible())
-									lastChildVec2 = ImGui::GetItemRectSize();
-								ImGui::EndChild();
 							}
+							ImGui::EndGroup();
+							if (ImGui::IsItemVisible())
+								lastChildVec2 = ImGui::GetItemRectSize();
+							ImGui::EndChild();
 						}
-
 					}
 
-
-					if (ImGui::CollapsingHeader("Filter Settings", 0, true, false))
+					if (m_tabSettingsSelectedTab == 1)
 					{
+						ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5.f);
+
 						static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
 						ImGui::BeginChild("##FilterSettingsChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
 						ImGui::BeginGroup();
@@ -827,8 +855,10 @@ void AppStage_HMDSettings::renderUI()
 						ImGui::EndChild();
 					}
 
-					if (ImGui::CollapsingHeader("Offsets", 0, true, false))
+					if (m_tabSettingsSelectedTab == 2)
 					{
+						ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5.f);
+
 						static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
 						ImGui::BeginChild("##OffsetsChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
 						ImGui::BeginGroup();
@@ -1067,13 +1097,15 @@ void AppStage_HMDSettings::renderUI()
 					ImGui::EndChild();
 				}
 
-				if (hmdInfo.HmdType == AppStage_HMDSettings::eHMDType::Morpheus)
+				if (m_tabSelectedTab == 1)
 				{
-					if (ImGui::CollapsingHeader("Calibration", 0, true, false))
+					ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5.f);
+
+					static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
+					ImGui::BeginChild("##CalibrationChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
+					ImGui::BeginGroup();
 					{
-						static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
-						ImGui::BeginChild("##CalibrationChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
-						ImGui::BeginGroup();
+						if (hmdInfo.HmdType == AppStage_HMDSettings::eHMDType::Morpheus)
 						{
 							if (ImGui::Button("Calibrate Gyroscope"))
 							{
@@ -1085,38 +1117,27 @@ void AppStage_HMDSettings::renderUI()
 								m_app->getAppStage<AppStage_HMDAccelerometerCalibration>()->setBypassCalibrationFlag(false);
 								m_app->setAppStage(AppStage_HMDAccelerometerCalibration::APP_STAGE_NAME);
 							}
-
-							/*if (m_app->getIsLocalServer())
-							{
-								if (ImGui::Button("Calibrate LED Model"))
-								{
-									AppStage_HMDModelCalibration::enterStageAndCalibrate(m_app, m_selectedHmdIndex);
-								}
-							}
-							else
-							{
-								ImGui::Button("Calibrate LED Model (Unavailable)");
-								ImGui::Bullet();
-								ImGui::SameLine();
-								ImGui::PushTextWrapPos();
-								ImGui::TextDisabled(
-									"Calibrating the LED model requires a local server connection."
-								);
-								ImGui::PopTextWrapPos();
-								ImGui::Spacing();
-							}*/
 						}
-						ImGui::EndGroup();
-						if (ImGui::IsItemVisible())
-							lastChildVec = ImGui::GetItemRectSize();
-						ImGui::EndChild();
+						else
+						{
+							ImGui::Text("This page is not available for virtual HMDs!");
+						}
 					}
+					ImGui::EndGroup();
+					if (ImGui::IsItemVisible())
+						lastChildVec = ImGui::GetItemRectSize();
+					ImGui::EndChild();
+				}
 
-					if (ImGui::CollapsingHeader("Tests", 0, true, false))
+				if (m_tabSelectedTab == 2)
+				{
+					ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5.f);
+
+					static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
+					ImGui::BeginChild("##TestsChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
+					ImGui::BeginGroup();
 					{
-						static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
-						ImGui::BeginChild("##TestsChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
-						ImGui::BeginGroup();
+						if (hmdInfo.HmdType == AppStage_HMDSettings::eHMDType::Morpheus)
 						{
 							if (ImGui::Button("Test Orientation"))
 							{
@@ -1129,11 +1150,15 @@ void AppStage_HMDSettings::renderUI()
 								m_app->setAppStage(AppStage_HMDAccelerometerCalibration::APP_STAGE_NAME);
 							}
 						}
-						ImGui::EndGroup();
-						if (ImGui::IsItemVisible())
-							lastChildVec = ImGui::GetItemRectSize();
-						ImGui::EndChild();
+						else
+						{
+							ImGui::Text("This page is not available for virtual HMDs!");
+						}
 					}
+					ImGui::EndGroup();
+					if (ImGui::IsItemVisible())
+						lastChildVec = ImGui::GetItemRectSize();
+					ImGui::EndChild();
 				}
 			}
 			else
