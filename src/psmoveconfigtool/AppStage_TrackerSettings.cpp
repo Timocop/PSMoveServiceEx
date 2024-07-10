@@ -81,7 +81,7 @@ void AppStage_TrackerSettings::render()
 
 	scale2RotateX90 = glm::translate(
 		scale2RotateX90,
-		glm::vec3(10.f, 0.f, 0.f));
+		glm::vec3(8.f, 0.f, 0.f));
 
 	scale2RotateX90 = glm::rotate(
 		scale2RotateX90,
