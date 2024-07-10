@@ -17,15 +17,6 @@
 
 #include <imgui.h>
 
-#include "psmovebody_3dmodel.h"
-#include "psmovebulb_3dmodel.h"
-#include "psnavi_3dmodel.h"
-#include "ps3eye_3dmodel.h"
-#include "ds4body_3dmodel.h"
-#include "ds4lightbar_3dmodel.h"
-#include "morpheus_3dmodel.h"
-#include "dk2_3dmodel.h"
-
 #include <algorithm>
 
 #ifdef _MSC_VER
