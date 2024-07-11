@@ -34,7 +34,7 @@ static const char *k_psnavigation_texture_filename = "./assets/models/PSNavigati
 static const char *k_psnavigation_model_filename = "./assets/models/PSNavigation.obj";
 
 static const char *k_default_font_filename= "./assets/fonts/OpenSans-Regular.ttf";
-static const float k_default_font_pixel_height= 24.f;
+static const float k_default_font_pixel_height= 18.f;
 
 static const unsigned int k_font_texture_width = 512;
 static const unsigned int k_font_texture_height = 512;
@@ -95,8 +95,8 @@ bool AssetManager::init()
         // Load IMGUI Fonts
         ImGuiIO& io = ImGui::GetIO();
 
-        io.Fonts->AddFontDefault();
         io.Fonts->AddFontFromFileTTF(k_default_font_filename, k_default_font_pixel_height);
+		io.Fonts->AddFontDefault();
     }
 
     if (!failed)
