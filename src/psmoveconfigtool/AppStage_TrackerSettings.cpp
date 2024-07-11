@@ -217,7 +217,7 @@ void AppStage_TrackerSettings::renderUI()
     {
 		static ImVec2 lastWindowVec = ImVec2(0.f, 4.f);
 
-		ImGui::SetNextWindowSize(ImVec2(550, fminf(lastWindowVec.y + 32.f, ImGui::GetIO().DisplaySize.y - 32)));
+		ImGui::SetNextWindowSize(ImVec2(550, fminf(lastWindowVec.y + 36.f, ImGui::GetIO().DisplaySize.y - 36.f)));
 		ImGui::SetNextWindowCenterPosOffset(ImVec2(-200, 0));
         ImGui::Begin(k_window_title, nullptr, window_flags & ~ImGuiWindowFlags_NoScrollbar);
 		ImGui::BeginGroup();

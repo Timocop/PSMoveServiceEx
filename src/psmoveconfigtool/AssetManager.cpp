@@ -33,7 +33,7 @@ static const char *k_dualshock_led_model_filename = "./assets/models/PSDualShock
 static const char *k_psnavigation_texture_filename = "./assets/models/PSNavigationDiffuse.jpg";
 static const char *k_psnavigation_model_filename = "./assets/models/PSNavigation.obj";
 
-static const char *k_default_font_filename= "./assets/fonts/OpenSans-Regular.ttf";
+static const char *k_default_font_filename = "./assets/fonts/OpenSans-Regular.ttf";
 static const float k_default_font_pixel_height= 18.f;
 
 static const unsigned int k_font_texture_width = 512;
@@ -95,7 +95,7 @@ bool AssetManager::init()
         // Load IMGUI Fonts
         ImGuiIO& io = ImGui::GetIO();
 
-        io.Fonts->AddFontFromFileTTF(k_default_font_filename, k_default_font_pixel_height);
+		io.Fonts->AddFontFromFileTTF(k_default_font_filename, k_default_font_pixel_height);
 		io.Fonts->AddFontDefault();
     }
 

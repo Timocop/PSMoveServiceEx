@@ -77,7 +77,7 @@ void AppStage_MainMenu::renderUI()
 
 		static ImVec2 lastWindowVec = ImVec2(0.f, 4.f);
 
-		ImGui::SetNextWindowSize(ImVec2(300, fminf(lastWindowVec.y + 32.f, ImGui::GetIO().DisplaySize.y - 32)));
+		ImGui::SetNextWindowSize(ImVec2(300, fminf(lastWindowVec.y + 36.f, ImGui::GetIO().DisplaySize.y - 36.f)));
 		ImGui::Begin(szWindowTitle, nullptr, window_flags);
 		ImGui::BeginGroup();
 		{

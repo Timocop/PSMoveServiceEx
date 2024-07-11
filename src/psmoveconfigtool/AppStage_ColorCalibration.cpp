@@ -859,7 +859,7 @@ void AppStage_ColorCalibration::renderUI()
 			static ImVec2 lastWindowVec = ImVec2(0.f, 4.f);
 
             ImGui::SetNextWindowPos(ImVec2(10.f, 10.f));
-			ImGui::SetNextWindowSize(ImVec2(k_panel_width, fminf(lastWindowVec.y + 32.f, ImGui::GetIO().DisplaySize.y - 32)));
+			ImGui::SetNextWindowSize(ImVec2(k_panel_width, fminf(lastWindowVec.y + 36.f, ImGui::GetIO().DisplaySize.y - 36.f)));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 			ImGui::BeginGroup();
 			{
@@ -1178,7 +1178,7 @@ void AppStage_ColorCalibration::renderUI()
 			static ImVec2 lastWindowVec = ImVec2(0.f, 4.f);
 
 			ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - k_panel_width - 10, 10.f));
-			ImGui::SetNextWindowSize(ImVec2(k_panel_width, fminf(lastWindowVec.y + 32.f, ImGui::GetIO().DisplaySize.y - 32)));
+			ImGui::SetNextWindowSize(ImVec2(k_panel_width, fminf(lastWindowVec.y + 36.f, ImGui::GetIO().DisplaySize.y - 36.f)));
 			ImGui::Begin("Controller Color", nullptr, window_flags);
 			ImGui::BeginGroup();
 			{
