@@ -248,7 +248,9 @@ void AppStage_ControllerSettings::exit()
 
 	if (m_indicatorControllerIndex >= 0 && m_indicatorControllerIndex < m_controllerInfos.size())
 	{
-		PSM_SetControllerLEDOverrideColor(m_indicatorControllerIndex, 0, 0, 0);
+		const ControllerInfo &controllerInfo = m_controllerInfos[m_indicatorControllerIndex];
+
+		PSM_SetControllerLEDOverrideColor(controllerInfo.ControllerID, 0, 0, 0);
 	}
 	m_indicatorControllerIndex = -1;
 
@@ -314,14 +316,14 @@ void AppStage_ControllerSettings::update()
 				if (colorScale > 0.0f)
 				{
 					PSM_SetControllerLEDOverrideColor(
-						m_indicatorControllerIndex,
+						controllerInfo.ControllerID,
 						colorScale * (bulb_color.x * 255),
 						colorScale * (bulb_color.y * 255),
 						colorScale * (bulb_color.z * 255));
 				}
 				else
 				{
-					PSM_SetControllerLEDOverrideColor(m_indicatorControllerIndex, 0, 0, 0);
+					PSM_SetControllerLEDOverrideColor(controllerInfo.ControllerID, 0, 0, 0);
 					m_indicatorControllerIndex = -1;
 				}
 				break;
@@ -558,7 +560,7 @@ void AppStage_ControllerSettings::renderUI()
 									{
 										ImGui::BulletText("Battery discharging:");
 										ImGui::SameLine();
-										ImGui::ProgressBar(0.0F);
+										ImGui::ProgressBar(0.0F, ImVec2(-1,0), " ");
 										break;
 									}
 
@@ -566,7 +568,7 @@ void AppStage_ControllerSettings::renderUI()
 									{
 										ImGui::BulletText("Battery discharging:");
 										ImGui::SameLine();
-										ImGui::ProgressBar(0.20F);
+										ImGui::ProgressBar(0.20F, ImVec2(-1, 0), " ");
 										break;
 									}
 
@@ -574,7 +576,7 @@ void AppStage_ControllerSettings::renderUI()
 									{
 										ImGui::BulletText("Battery discharging:");
 										ImGui::SameLine();
-										ImGui::ProgressBar(0.40F);
+										ImGui::ProgressBar(0.40F, ImVec2(-1, 0), " ");
 										break;
 									}
 
@@ -582,7 +584,7 @@ void AppStage_ControllerSettings::renderUI()
 									{
 										ImGui::BulletText("Battery discharging:");
 										ImGui::SameLine();
-										ImGui::ProgressBar(0.60F);
+										ImGui::ProgressBar(0.60F, ImVec2(-1, 0), " ");
 										break;
 									}
 
@@ -590,7 +592,7 @@ void AppStage_ControllerSettings::renderUI()
 									{
 										ImGui::BulletText("Battery discharging:");
 										ImGui::SameLine();
-										ImGui::ProgressBar(0.80F);
+										ImGui::ProgressBar(0.80F, ImVec2(-1, 0), " ");
 										break;
 									}
 
@@ -598,7 +600,7 @@ void AppStage_ControllerSettings::renderUI()
 									{
 										ImGui::BulletText("Battery discharging:");
 										ImGui::SameLine();
-										ImGui::ProgressBar(1.0F);
+										ImGui::ProgressBar(1.0F, ImVec2(-1, 0), " ");
 										break;
 									}
 
@@ -606,7 +608,7 @@ void AppStage_ControllerSettings::renderUI()
 									{
 										ImGui::BulletText("Battery fully charged:");
 										ImGui::SameLine();
-										ImGui::ProgressBar(1.0F);
+										ImGui::ProgressBar(1.0F, ImVec2(-1, 0), " ");
 										break;
 									}
 
@@ -629,7 +631,7 @@ void AppStage_ControllerSettings::renderUI()
 												charged_value = 0.0F;
 										}
 
-										ImGui::ProgressBar(fmin(1.0f, charged_value));
+										ImGui::ProgressBar(fmin(1.0f, charged_value), ImVec2(-1, 0), " ");
 										break;
 									}
 
@@ -750,7 +752,7 @@ void AppStage_ControllerSettings::renderUI()
 									{
 										if (m_indicatorControllerIndex < 0)
 										{
-											m_indicatorControllerIndex = controllerInfo.ControllerID;
+											m_indicatorControllerIndex = m_selectedControllerIndex;
 											m_lastIndicatorControllerTime = std::chrono::high_resolution_clock::now();
 										}
 									}
@@ -2287,7 +2289,7 @@ void AppStage_ControllerSettings::handle_controller_list_response(
 
                 AppStage_ControllerSettings::ControllerInfo ControllerInfo;
 
-                ControllerInfo.ControllerID= ControllerResponse.controller_id();
+				ControllerInfo.ControllerID = ControllerResponse.controller_id();
 
                 switch(ControllerResponse.controller_type())
                 {
