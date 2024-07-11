@@ -42,9 +42,9 @@ void AppStage_TestButtons::enter()
     const AppStage_ControllerSettings::ControllerInfo *controllerInfo =
         controllerSettings->getSelectedControllerInfo();
 
-	m_app->setCameraType(_cameraOrbit);
-	m_app->getOrbitCamera()->resetOrientation();
-	m_app->getOrbitCamera()->setCameraOrbitLocation(45.f, 25.f, 1000.f);
+	m_app->setCameraType(_cameraFixed);
+	m_app->getFixedCamera()->resetOrientation();
+	m_app->getFixedCamera()->setCameraOrbitLocation(45.f, 25.f, 0.f);
 
     assert(controllerInfo->ControllerID != -1);
     assert(m_controllerView == nullptr);
@@ -76,7 +76,7 @@ void AppStage_TestButtons::update()
 
 void AppStage_TestButtons::render()
 {
-    const float modelScale = 18.f;
+    const float modelScale = 3.f;
 	glm::mat4 scaleAndRotateModelX90 =
 		glm::rotate(
 			glm::scale(glm::mat4(1.f), glm::vec3(modelScale, modelScale, modelScale)),
