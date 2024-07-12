@@ -534,7 +534,7 @@ void AppStage_AdvancedSettings::renderUI()
 					m_tabSelectedTab = 1;
 				}
 				ImGui::SameLine(0.f, 0.f);
-				if (ImGui::ButtonChecked("HMDs##TabHmdConfig", (m_tabSelectedTab == 2), ImVec2(75.f, 0.f)) || (m_tabSelectedTab == 2))
+				if (ImGui::ButtonChecked("HMDs##TabHmdConfig", (m_tabSelectedTab == 2), ImVec2(85.f, 0.f)) || (m_tabSelectedTab == 2))
 				{
 					m_tabSelectedTab = 2;
 				}
@@ -544,7 +544,7 @@ void AppStage_AdvancedSettings::renderUI()
 					m_tabSelectedTab = 3;
 				}
 				ImGui::SameLine(0.f, 0.f);
-				if (ImGui::ButtonChecked("Other##TabOthers", (m_tabSelectedTab == 4), ImVec2(75.f, 0.f)) || (m_tabSelectedTab == 4))
+				if (ImGui::ButtonChecked("Other##TabOthers", (m_tabSelectedTab == 4), ImVec2(85.f, 0.f)) || (m_tabSelectedTab == 4))
 				{
 					m_tabSelectedTab = 4;
 				}

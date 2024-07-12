@@ -495,7 +495,7 @@ void AppStage_TrackerSettings::renderUI()
 
 			if (m_trackerInfos.size() > 0)
 			{
-				if (ImGui::ButtonChecked("Controllers##TabControllers", (m_tabSelectedTab == 0), ImVec2(150.f, 0.f)) || (m_tabSelectedTab == 0))
+				if (ImGui::ButtonChecked("Controllers##TabControllers", (m_tabSelectedTab == 0), ImVec2(125.f, 0.f)) || (m_tabSelectedTab == 0))
 				{
 					m_tabSelectedTab = 0;
 				}
