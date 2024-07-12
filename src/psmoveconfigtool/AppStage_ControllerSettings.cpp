@@ -2502,46 +2502,24 @@ void AppStage_ControllerSettings::handle_controller_list_response(
 				}
 			}
 
-			// Find the index of the first non bluetooth PSMove controller, if any
-			int first_usb_psmove_index= -1;
-			int list_index= 0;
-			for (auto it= thisPtr->m_controllerInfos.begin(); it != thisPtr->m_controllerInfos.end(); ++it)
+			if (oldSelectedControllerIndex != -1)
 			{
-				if (!it->IsBluetooth && it->ControllerType == PSMController_Move)
+				int controllerCount= static_cast<int>(thisPtr->m_controllerInfos.size());
+
+				// Maintain the same position in the list if possible
+				if (controllerCount > 0)
 				{
-					first_usb_psmove_index= list_index;
-					break;
-				}
-
-				++list_index;
-			}
-
-			// Determine which controller should be selected
-			if (first_usb_psmove_index != -1)
-			{
-				thisPtr->m_selectedControllerIndex= first_usb_psmove_index;
-			}
-			else
-			{
-				if (oldSelectedControllerIndex != -1)
-				{
-					int controllerCount= static_cast<int>(thisPtr->m_controllerInfos.size());
-
-					// Maintain the same position in the list if possible
-					if (controllerCount > 0)
-					{
-						thisPtr->m_selectedControllerIndex= 
-							(oldSelectedControllerIndex < controllerCount) ? oldSelectedControllerIndex : controllerCount-1;
-					}
-					else
-					{
-						thisPtr->m_selectedControllerIndex= -1;
-					}
+					thisPtr->m_selectedControllerIndex= 
+						(oldSelectedControllerIndex < controllerCount) ? oldSelectedControllerIndex : controllerCount-1;
 				}
 				else
 				{
-					thisPtr->m_selectedControllerIndex= (thisPtr->m_controllerInfos.size() > 0) ? 0 : -1;
+					thisPtr->m_selectedControllerIndex= -1;
 				}
+			}
+			else
+			{
+				thisPtr->m_selectedControllerIndex= (thisPtr->m_controllerInfos.size() > 0) ? 0 : -1;
 			}
 
 			for (PSMControllerID controller_id : thisPtr->m_controllersStreams)
