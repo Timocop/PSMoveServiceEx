@@ -524,30 +524,20 @@ void AppStage_AdvancedSettings::renderUI()
 			ImGui::Begin("Advanced Settings", nullptr, window_flags);
 			ImGui::BeginGroup();
 			{
-				if (ImGui::ButtonChecked("Trackers##TabTrackers", (m_tabSelectedTab == 0), ImVec2(100.f, 0.f)) || (m_tabSelectedTab == 0))
-				{
+				if (ImGui::ButtonChecked("Trackers##TabTrackers", (m_tabSelectedTab == 0), ImVec2(100.f, 0.f)))
 					m_tabSelectedTab = 0;
-				}
 				ImGui::SameLine(0.f, 0.f);
-				if (ImGui::ButtonChecked("Controllers##TabControllerConfig", (m_tabSelectedTab == 1), ImVec2(125.f, 0.f)) || (m_tabSelectedTab == 1))
-				{
+				if (ImGui::ButtonChecked("Controllers##TabControllerConfig", (m_tabSelectedTab == 1), ImVec2(125.f, 0.f)))
 					m_tabSelectedTab = 1;
-				}
 				ImGui::SameLine(0.f, 0.f);
-				if (ImGui::ButtonChecked("HMDs##TabHmdConfig", (m_tabSelectedTab == 2), ImVec2(85.f, 0.f)) || (m_tabSelectedTab == 2))
-				{
+				if (ImGui::ButtonChecked("HMDs##TabHmdConfig", (m_tabSelectedTab == 2), ImVec2(85.f, 0.f)))
 					m_tabSelectedTab = 2;
-				}
 				ImGui::SameLine(0.f, 0.f);
-				if (ImGui::ButtonChecked("Devices##TabDeviceConfig", (m_tabSelectedTab == 3), ImVec2(100.f, 0.f)) || (m_tabSelectedTab == 3))
-				{
+				if (ImGui::ButtonChecked("Devices##TabDeviceConfig", (m_tabSelectedTab == 3), ImVec2(100.f, 0.f)))
 					m_tabSelectedTab = 3;
-				}
 				ImGui::SameLine(0.f, 0.f);
-				if (ImGui::ButtonChecked("Other##TabOthers", (m_tabSelectedTab == 4), ImVec2(85.f, 0.f)) || (m_tabSelectedTab == 4))
-				{
+				if (ImGui::ButtonChecked("Other##TabOthers", (m_tabSelectedTab == 4), ImVec2(85.f, 0.f)))
 					m_tabSelectedTab = 4;
-				}
 
 				// Tracker Manager Config
 				if (m_tabSelectedTab == 0)

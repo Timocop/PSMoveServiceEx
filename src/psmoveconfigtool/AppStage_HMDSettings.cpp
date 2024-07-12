@@ -301,20 +301,14 @@ void AppStage_HMDSettings::renderUI()
 
 				ImGui::Spacing();
 
-				if (ImGui::ButtonChecked("Settings##TabSettings", (m_tabSelectedTab == 0), ImVec2(150.f, 0.f)) || (m_tabSelectedTab == 0))
-				{
+				if (ImGui::ButtonChecked("Settings##TabSettings", (m_tabSelectedTab == 0), ImVec2(150.f, 0.f)))
 					m_tabSelectedTab = 0;
-				}
 				ImGui::SameLine(0.f, 0.f);
-				if (ImGui::ButtonChecked("Calibration##TabCalibration", (m_tabSelectedTab == 1), ImVec2(150.f, 0.f)) || (m_tabSelectedTab == 1))
-				{
+				if (ImGui::ButtonChecked("Calibration##TabCalibration", (m_tabSelectedTab == 1), ImVec2(150.f, 0.f)))
 					m_tabSelectedTab = 1;
-				}
 				ImGui::SameLine(0.f, 0.f);
-				if (ImGui::ButtonChecked("Testing##TabTesting", (m_tabSelectedTab == 2), ImVec2(150.f, 0.f)) || (m_tabSelectedTab == 2))
-				{
+				if (ImGui::ButtonChecked("Testing##TabTesting", (m_tabSelectedTab == 2), ImVec2(150.f, 0.f)))
 					m_tabSelectedTab = 2;
-				}
 
 				// Combo box selection for hmd tracking color
 				if (m_tabSelectedTab == 0)
@@ -386,20 +380,14 @@ void AppStage_HMDSettings::renderUI()
 						
 						ImGui::Spacing();
 
-						if (ImGui::ButtonChecked("Filters##TabFilters", (m_tabSettingsSelectedTab == 0), ImVec2(150.f, 0.f)) || (m_tabSettingsSelectedTab == 0))
-						{
+						if (ImGui::ButtonChecked("Filters##TabFilters", (m_tabSettingsSelectedTab == 0), ImVec2(150.f, 0.f)))
 							m_tabSettingsSelectedTab = 0;
-						}
 						ImGui::SameLine(0.f, 0.f);
-						if (ImGui::ButtonChecked("Filter Settings##FilterSettings", (m_tabSettingsSelectedTab == 1), ImVec2(150.f, 0.f)) || (m_tabSettingsSelectedTab == 1))
-						{
+						if (ImGui::ButtonChecked("Filter Settings##FilterSettings", (m_tabSettingsSelectedTab == 1), ImVec2(150.f, 0.f)))
 							m_tabSettingsSelectedTab = 1;
-						}
 						ImGui::SameLine(0.f, 0.f);
-						if (ImGui::ButtonChecked("Offsets##TabOffsets", (m_tabSettingsSelectedTab == 2), ImVec2(150.f, 0.f)) || (m_tabSettingsSelectedTab == 2))
-						{
+						if (ImGui::ButtonChecked("Offsets##TabOffsets", (m_tabSettingsSelectedTab == 2), ImVec2(150.f, 0.f)))
 							m_tabSettingsSelectedTab = 2;
-						}
 
 						if (m_tabSettingsSelectedTab == 0)
 						{

@@ -767,20 +767,14 @@ void AppStage_ControllerSettings::renderUI()
 
 					ImGui::Spacing();
 
-					if (ImGui::ButtonChecked("Settings##TabSettings", (m_tabSelectedTab == 0), ImVec2(150.f, 0.f)) || (m_tabSelectedTab == 0))
-					{
+					if (ImGui::ButtonChecked("Settings##TabSettings", (m_tabSelectedTab == 0), ImVec2(150.f, 0.f)))
 						m_tabSelectedTab = 0;
-					}
 					ImGui::SameLine(0.f, 0.f);
-					if (ImGui::ButtonChecked("Calibration##TabCalibration", (m_tabSelectedTab == 1), ImVec2(150.f, 0.f)) || (m_tabSelectedTab == 1))
-					{
+					if (ImGui::ButtonChecked("Calibration##TabCalibration", (m_tabSelectedTab == 1), ImVec2(150.f, 0.f)))
 						m_tabSelectedTab = 1;
-					}
 					ImGui::SameLine(0.f, 0.f);
-					if (ImGui::ButtonChecked("Testing##TabTesting", (m_tabSelectedTab == 2), ImVec2(150.f, 0.f)) || (m_tabSelectedTab == 2))
-					{
+					if (ImGui::ButtonChecked("Testing##TabTesting", (m_tabSelectedTab == 2), ImVec2(150.f, 0.f)))
 						m_tabSelectedTab = 2;
-					}
 
 					if (m_tabSelectedTab == 0)
 					{

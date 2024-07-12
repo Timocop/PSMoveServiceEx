@@ -495,20 +495,14 @@ void AppStage_TrackerSettings::renderUI()
 
 			if (m_trackerInfos.size() > 0)
 			{
-				if (ImGui::ButtonChecked("Controllers##TabControllers", (m_tabSelectedTab == 0), ImVec2(125.f, 0.f)) || (m_tabSelectedTab == 0))
-				{
+				if (ImGui::ButtonChecked("Controllers##TabControllers", (m_tabSelectedTab == 0), ImVec2(125.f, 0.f)))
 					m_tabSelectedTab = 0;
-				}
 				ImGui::SameLine(0.f, 0.f);
-				if (ImGui::ButtonChecked("Head-mounted Displays##TabHmds", (m_tabSelectedTab == 1), ImVec2(200.f, 0.f)) || (m_tabSelectedTab == 1))
-				{
+				if (ImGui::ButtonChecked("Head-mounted Displays##TabHmds", (m_tabSelectedTab == 1), ImVec2(200.f, 0.f)))
 					m_tabSelectedTab = 1;
-				}
 				ImGui::SameLine(0.f, 0.f);
-				if (ImGui::ButtonChecked("Playspace Offsets##TabOffsets", (m_tabSelectedTab == 2), ImVec2(175.f, 0.f)) || (m_tabSelectedTab == 2))
-				{
+				if (ImGui::ButtonChecked("Playspace Offsets##TabOffsets", (m_tabSelectedTab == 2), ImVec2(175.f, 0.f)))
 					m_tabSelectedTab = 2;
-				}
 
 				if (m_tabSelectedTab == 0 ||
 					m_gotoControllerColorCalib || m_gotoTestControllerTracking || m_gotoTrackingControllerVideo || m_gotoTrackingVideoALL)
