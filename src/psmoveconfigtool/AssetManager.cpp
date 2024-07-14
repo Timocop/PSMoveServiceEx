@@ -5,7 +5,7 @@
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
 #define STB_IMAGE_IMPLEMENTATION
-#define STBI_ONLY_JPEG
+#define STBI_ONLY_PNG
 #include "stb_image.h"
 
 #include "SDL_error.h"
@@ -14,25 +14,39 @@
 #include <imgui.h>
 
 //-- constants -----
-static const char *k_ps3eye_texture_filename = "./assets/models/PS3EyeDiffuse.jpg";
+
+// Models and textures
+static const char *k_ps3eye_texture_filename = "./assets/models/PS3EyeDiffuse.png";
 static const char *k_ps3eye_model_filename = "./assets/models/PS3Eye.obj";
 
-static const char *k_psmove_texture_filename = "./assets/models/PSMoveControllerDiffuse.jpg";
+static const char *k_psmove_texture_filename = "./assets/models/PSMoveControllerDiffuse.png";
 static const char *k_psmove_model_filename = "./assets/models/PSMoveController.obj";
 static const char *k_psmove_bulb_model_filename = "./assets/models/PSMoveControllerBulb.obj";
 
-static const char *k_morpheus_texture_filename = "./assets/models/PSMorpheusDiffuse.jpg";
+static const char *k_morpheus_texture_filename = "./assets/models/PSMorpheusDiffuse.png";
 static const char *k_morpheus_model_filename = "./assets/models/PSMorpheus.obj";
 static const char *k_morpheus_led_model_filename = "./assets/models/PSMorpheusLed.obj";
 static const char *k_morpheus_bulb_model_filename = "./assets/models/PSMorpheusBulb.obj";
 
-static const char *k_dualshock_texture_filename = "./assets/models/PSDualShockDiffuse.jpg";
+static const char *k_dualshock_texture_filename = "./assets/models/PSDualShockDiffuse.png";
 static const char *k_dualshock_model_filename = "./assets/models/PSDualShock.obj";
 static const char *k_dualshock_led_model_filename = "./assets/models/PSDualShockLed.obj";
 
-static const char *k_psnavigation_texture_filename = "./assets/models/PSNavigationDiffuse.jpg";
+static const char *k_psnavigation_texture_filename = "./assets/models/PSNavigationDiffuse.png";
 static const char *k_psnavigation_model_filename = "./assets/models/PSNavigation.obj";
 
+// Icons
+static const char *k_icon_settings_filename = "./assets/icons/setting-line-icon.png";
+static const char *k_icon_controller_filename = "./assets/icons/gaming-gamepad-icon.png";
+static const char *k_icon_tracker_filename = "./assets/icons/image-icon.png";
+static const char *k_icon_hmd_filename = "./assets/icons/vr-goggles-icon.png";
+
+static const char *k_icon_wait_done_filename = "./assets/icons/sand-clock-done-line-icon.png";
+static const char *k_icon_wait_empty_filename = "./assets/icons/sand-clock-empty-line-icon.png";
+static const char *k_icon_wait_full_filename = "./assets/icons/sand-clock-full-line-icon.png";
+static const char *k_icon_wait_half_filename = "./assets/icons/sand-clock-half-line-icon.png";
+
+// Fonts
 static const char *k_default_font_filename = "./assets/fonts/OpenSans-Regular.ttf";
 static const float k_default_font_pixel_height= 18.f;
 
@@ -56,7 +70,15 @@ AssetManager::AssetManager()
 	, m_dualshock_assets()
 	, m_dualshock_led_assets()
 	, m_psnavigation_assets()
-    , m_defaultFont()
+	, m_defaultFont()
+	, m_icon_settings_asset()
+	, m_icon_controller_asset()
+	, m_icon_tracker_asset()
+	, m_icon_hmd_asset()
+	, m_icon_wait_done_asset()
+	, m_icon_wait_empty_asset()
+	, m_icon_wait_full_asset()
+	, m_icon_wait_half_asset()
 {
 }
 
@@ -89,6 +111,16 @@ bool AssetManager::init()
 
 	failed |= !loadOBJ(k_psnavigation_model_filename, m_psnavigation_assets.m_vert, m_psnavigation_assets.m_tex, m_psnavigation_assets.m_norm);
 	failed |= !loadTexture(k_psnavigation_texture_filename, &m_psnavigation_assets.m_texture);
+
+	failed |= !loadTexture(k_icon_settings_filename, &m_icon_settings_asset);
+	failed |= !loadTexture(k_icon_controller_filename, &m_icon_controller_asset);
+	failed |= !loadTexture(k_icon_tracker_filename, &m_icon_tracker_asset);
+	failed |= !loadTexture(k_icon_hmd_filename, &m_icon_hmd_asset);
+
+	failed |= !loadTexture(k_icon_wait_done_filename, &m_icon_wait_done_asset);
+	failed |= !loadTexture(k_icon_wait_empty_filename, &m_icon_wait_empty_asset);
+	failed |= !loadTexture(k_icon_wait_full_filename, &m_icon_wait_full_asset);
+	failed |= !loadTexture(k_icon_wait_half_filename, &m_icon_wait_half_asset);
 
     if (!failed)
     {
@@ -236,26 +268,27 @@ bool AssetManager::loadTexture(const char *filename, TextureAsset *textureAsset)
     bool success= false;
 
     int pixelWidth=0, pixelHeight=0, channelCount=0;
-    stbi_uc *image_buffer= stbi_load(filename, &pixelWidth, &pixelHeight, &channelCount, 3);
+	stbi_uc *image_buffer = stbi_load(filename, &pixelWidth, &pixelHeight, &channelCount, 4);
 
     if (image_buffer != NULL)
     {
-//        GLint glPixelFormat= -1;
+		// Determine the OpenGL format based on the number of channels in the image
+		GLint glPixelFormat = (channelCount == 4) ? GL_RGBA : GL_RGB;
+		GLint internalFormat = (channelCount == 4) ? GL_RGBA : GL_RGB;
 
-        if (channelCount == 3)
-        {
-            success = textureAsset->init(pixelWidth, pixelHeight, GL_RGB, GL_RGB, image_buffer);
-        }
-        else
-        {
-            Log_ERROR("AssetManager::loadTexture", "Image isn't RGB24 pixel format!");
-        }
-
+		if (channelCount == 3 || channelCount == 4)
+		{
+			success = textureAsset->init(pixelWidth, pixelHeight, glPixelFormat, internalFormat, image_buffer);
+		}
+		else
+		{
+			Log_ERROR("AssetManager::loadTexture", "Image isn't in a supported pixel format (RGB24 or RGBA32)!");
+		}
         stbi_image_free(image_buffer);
     }
     else
     {
-        Log_ERROR("AssetManager::loadTexture", "Failed to load: %s(%s)", filename, SDL_GetError());
+        Log_ERROR("AssetManager::loadTexture", "Failed to load: %s(%s)", filename, stbi_failure_reason());
     }
 
     return success;

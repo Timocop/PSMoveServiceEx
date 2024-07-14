@@ -9,6 +9,7 @@
 #include "UIConstants.h"
 #include "PSMoveProtocolInterface.h"
 #include "PSMoveProtocol.pb.h"
+#include "AssetManager.h"
 
 #include "SDL_keycode.h"
 
@@ -58,6 +59,12 @@ void AppStage_PairController::update()
     
 void AppStage_PairController::renderUI()
 {
+	const auto icoWaitFull = AssetManager::getInstance()->getIconWaitFull();
+	const auto icoWaitHalf = AssetManager::getInstance()->getIconWaitHalf();
+	const auto icoWaitEmpty = AssetManager::getInstance()->getIconWaitEmpty();
+	const auto icoWaitDone = AssetManager::getInstance()->getIconWaitDone();
+	static float waitCount;
+
     const char *k_window_title= "Controller Pairing";
     const ImGuiWindowFlags window_flags = 
         ImGuiWindowFlags_ShowBorders |
@@ -73,6 +80,28 @@ void AppStage_PairController::renderUI()
             ImGui::SetNextWindowPosCenter();
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
+			waitCount += 0.025f;
+			switch ((int)floorf(waitCount))
+			{
+			case 0:
+				ImGui::Image((void*)(intptr_t)icoWaitFull->texture_id, ImVec2(32, 32));
+				break;
+			case 1:
+				ImGui::Image((void*)(intptr_t)icoWaitHalf->texture_id, ImVec2(32, 32));
+				break;
+			case 2:
+				ImGui::Image((void*)(intptr_t)icoWaitDone->texture_id, ImVec2(32, 32));
+				break;
+			case 3:
+				ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+				break;
+			default:
+				ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+				waitCount = 0;
+				break;
+			}
+
+			ImGui::SameLine();
             ImGui::Text("Waiting for controller to unpair...");
 
             if (ImGui::Button("Cancel"))
@@ -108,6 +137,29 @@ void AppStage_PairController::renderUI()
         {
 			ImGui::SetNextWindowPosCenter();
             ImGui::Begin(k_window_title, nullptr, window_flags);
+
+			waitCount += 0.025f;
+			switch ((int)floorf(waitCount))
+			{
+			case 0:
+				ImGui::Image((void*)(intptr_t)icoWaitFull->texture_id, ImVec2(32, 32));
+				break;
+			case 1:
+				ImGui::Image((void*)(intptr_t)icoWaitHalf->texture_id, ImVec2(32, 32));
+				break;
+			case 2:
+				ImGui::Image((void*)(intptr_t)icoWaitDone->texture_id, ImVec2(32, 32));
+				break;
+			case 3:
+				ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+				break;
+			default:
+				ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+				waitCount = 0;
+				break;
+			}
+
+			ImGui::SameLine();
 
             // Show progress
             if (m_pair_steps_total > 0)
@@ -227,6 +279,28 @@ void AppStage_PairController::renderUI()
 			ImGui::SetNextWindowPosCenter();
 			ImGui::Begin(k_window_title, nullptr, window_flags);
 
+			waitCount += 0.025f;
+			switch ((int)floorf(waitCount))
+			{
+			case 0:
+				ImGui::Image((void*)(intptr_t)icoWaitFull->texture_id, ImVec2(32, 32));
+				break;
+			case 1:
+				ImGui::Image((void*)(intptr_t)icoWaitHalf->texture_id, ImVec2(32, 32));
+				break;
+			case 2:
+				ImGui::Image((void*)(intptr_t)icoWaitDone->texture_id, ImVec2(32, 32));
+				break;
+			case 3:
+				ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+				break;
+			default:
+				ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+				waitCount = 0;
+				break;
+			}
+
+			ImGui::SameLine();
             ImGui::Text("Canceling bluetooth operation...");
 
 			ImGui::SetWindowSize(ImVec2(300, 0));

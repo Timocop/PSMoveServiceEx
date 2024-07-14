@@ -574,6 +574,12 @@ void AppStage_ColorCalibration::render()
 
 void AppStage_ColorCalibration::renderUI()
 {
+	const auto icoWaitFull = AssetManager::getInstance()->getIconWaitFull();
+	const auto icoWaitHalf = AssetManager::getInstance()->getIconWaitHalf();
+	const auto icoWaitEmpty = AssetManager::getInstance()->getIconWaitEmpty();
+	const auto icoWaitDone = AssetManager::getInstance()->getIconWaitDone();
+	static float waitCount;
+
 	// Tracker Alignment Marker
 	if (m_bAlignDetectColor && m_video_buffer_state != nullptr) 
 	{
@@ -741,6 +747,28 @@ void AppStage_ColorCalibration::renderUI()
 		ImGui::SetNextWindowPosCenter();
 		ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
+		waitCount += 0.025f;
+		switch ((int)floorf(waitCount))
+		{
+		case 0:
+			ImGui::Image((void*)(intptr_t)icoWaitFull->texture_id, ImVec2(32, 32));
+			break;
+		case 1:
+			ImGui::Image((void*)(intptr_t)icoWaitHalf->texture_id, ImVec2(32, 32));
+			break;
+		case 2:
+			ImGui::Image((void*)(intptr_t)icoWaitDone->texture_id, ImVec2(32, 32));
+			break;
+		case 3:
+			ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+			break;
+		default:
+			ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+			waitCount = 0;
+			break;
+		}
+
+		ImGui::SameLine();
 		ImGui::Text(
 			"Color sampling is in progress! Please wait...\n"
 			"Do not move the controllers or obscure the controller bulb!\n"
@@ -1191,7 +1219,6 @@ void AppStage_ColorCalibration::renderUI()
 			ImGui::Begin("Controller Color", nullptr, window_flags);
 			ImGui::BeginGroup();
 			{
-
 				if (m_masterControllerView != nullptr)
 				{
 					if (ImGui::Button(" < ##Color"))
@@ -2726,6 +2753,28 @@ void AppStage_ColorCalibration::renderUI()
         ImGui::SetNextWindowPosCenter();
         ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
+		waitCount += 0.025f;
+		switch ((int)floorf(waitCount))
+		{
+		case 0:
+			ImGui::Image((void*)(intptr_t)icoWaitFull->texture_id, ImVec2(32, 32));
+			break;
+		case 1:
+			ImGui::Image((void*)(intptr_t)icoWaitHalf->texture_id, ImVec2(32, 32));
+			break;
+		case 2:
+			ImGui::Image((void*)(intptr_t)icoWaitDone->texture_id, ImVec2(32, 32));
+			break;
+		case 3:
+			ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+			break;
+		default:
+			ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+			waitCount = 0;
+			break;
+		}
+
+		ImGui::SameLine();
         ImGui::Text("Waiting for device stream to start...");
 
 		ImGui::SetWindowSize(ImVec2(k_panel_width, 0));

@@ -718,6 +718,12 @@ void AppSubStage_CalibrateWithMat::render()
 
 void AppSubStage_CalibrateWithMat::renderUI()
 {
+	const auto icoWaitFull = AssetManager::getInstance()->getIconWaitFull();
+	const auto icoWaitHalf = AssetManager::getInstance()->getIconWaitHalf();
+	const auto icoWaitEmpty = AssetManager::getInstance()->getIconWaitEmpty();
+	const auto icoWaitDone = AssetManager::getInstance()->getIconWaitDone();
+	static float waitCount;
+
     const float k_panel_width = 450.f;
     const char *k_window_title = "Compute Tracker Poses";
     const ImGuiWindowFlags window_flags =
@@ -837,6 +843,28 @@ void AppSubStage_CalibrateWithMat::renderUI()
             ImGui::Begin(k_window_title, nullptr, window_flags);
 			ImGui::BeginGroup();
 			{
+				waitCount += 0.025f;
+				switch ((int)floorf(waitCount))
+				{
+				case 0:
+					ImGui::Image((void*)(intptr_t)icoWaitFull->texture_id, ImVec2(32, 32));
+					break;
+				case 1:
+					ImGui::Image((void*)(intptr_t)icoWaitHalf->texture_id, ImVec2(32, 32));
+					break;
+				case 2:
+					ImGui::Image((void*)(intptr_t)icoWaitDone->texture_id, ImVec2(32, 32));
+					break;
+				case 3:
+					ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+					break;
+				default:
+					ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+					waitCount = 0;
+					break;
+				}
+
+				ImGui::SameLine();
 				if (m_menuState == AppSubStage_CalibrateWithMat::eMenuState::calibrationStepRecordController)
 				{
 					ImGui::Text("Recording Controller samples at location #%d (%s)",

@@ -10,6 +10,7 @@
 #include "MathGLM.h"
 #include "MathEigen.h"
 #include "MathUtility.h"
+#include "AssetManager.h"
 
 #include "PSMoveProtocolInterface.h"
 #include "PSMoveProtocol.pb.h"
@@ -523,6 +524,12 @@ void AppStage_OpticalCalibration::render()
 
 void AppStage_OpticalCalibration::renderUI()
 {
+	const auto icoWaitFull = AssetManager::getInstance()->getIconWaitFull();
+	const auto icoWaitHalf = AssetManager::getInstance()->getIconWaitHalf();
+	const auto icoWaitEmpty = AssetManager::getInstance()->getIconWaitEmpty();
+	const auto icoWaitDone = AssetManager::getInstance()->getIconWaitDone();
+	static float waitCount;
+
     const float k_panel_width = 500;
     const char *k_window_title = "Optical Noise Calibration";
     const ImGuiWindowFlags window_flags =
@@ -540,6 +547,28 @@ void AppStage_OpticalCalibration::renderUI()
             ImGui::SetNextWindowPosCenter();
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
+			waitCount += 0.025f;
+			switch ((int)floorf(waitCount))
+			{
+			case 0:
+				ImGui::Image((void*)(intptr_t)icoWaitFull->texture_id, ImVec2(32, 32));
+				break;
+			case 1:
+				ImGui::Image((void*)(intptr_t)icoWaitHalf->texture_id, ImVec2(32, 32));
+				break;
+			case 2:
+				ImGui::Image((void*)(intptr_t)icoWaitDone->texture_id, ImVec2(32, 32));
+				break;
+			case 3:
+				ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+				break;
+			default:
+				ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+				waitCount = 0;
+				break;
+			}
+
+			ImGui::SameLine();
             ImGui::Text("Waiting for server response...");
 
 			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
@@ -573,6 +602,28 @@ void AppStage_OpticalCalibration::renderUI()
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
+			waitCount += 0.025f;
+			switch ((int)floorf(waitCount))
+			{
+			case 0:
+				ImGui::Image((void*)(intptr_t)icoWaitFull->texture_id, ImVec2(32, 32));
+				break;
+			case 1:
+				ImGui::Image((void*)(intptr_t)icoWaitHalf->texture_id, ImVec2(32, 32));
+				break;
+			case 2:
+				ImGui::Image((void*)(intptr_t)icoWaitDone->texture_id, ImVec2(32, 32));
+				break;
+			case 3:
+				ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+				break;
+			default:
+				ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+				waitCount = 0;
+				break;
+			}
+
+			ImGui::SameLine();
 			ImGui::Text("Sample Location #%d / %d", m_poseNoiseSamplesSet->completedSampleLocations + 1, k_sample_location_count);
 			ImGui::ProgressBar(static_cast<float>(m_poseNoiseSamplesSet->completedSampleLocations) / static_cast<float>(k_sample_location_count), ImVec2(250, 20));
 			ImGui::Separator();
@@ -645,6 +696,28 @@ void AppStage_OpticalCalibration::renderUI()
 			int sampleCount= m_poseNoiseSamplesSet->getCurrentLocationSamples().sample_count;
             float sampleFraction = static_cast<float>(sampleCount) / static_cast<float>(k_desired_noise_sample_count);
 
+			waitCount += 0.025f;
+			switch ((int)floorf(waitCount))
+			{
+			case 0:
+				ImGui::Image((void*)(intptr_t)icoWaitFull->texture_id, ImVec2(32, 32));
+				break;
+			case 1:
+				ImGui::Image((void*)(intptr_t)icoWaitHalf->texture_id, ImVec2(32, 32));
+				break;
+			case 2:
+				ImGui::Image((void*)(intptr_t)icoWaitDone->texture_id, ImVec2(32, 32));
+				break;
+			case 3:
+				ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+				break;
+			default:
+				ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+				waitCount = 0;
+				break;
+			}
+
+			ImGui::SameLine();
 			ImGui::Text("Sample Location #%d / %d", m_poseNoiseSamplesSet->completedSampleLocations + 1, k_sample_location_count);
 			ImGui::Separator();
 

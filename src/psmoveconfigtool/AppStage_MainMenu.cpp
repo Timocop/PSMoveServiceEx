@@ -11,6 +11,7 @@
 #include "ProtocolVersion.h"
 #include "Renderer.h"
 #include "UIConstants.h"
+#include "AssetManager.h"
 
 #include "SDL_keycode.h"
 
@@ -60,6 +61,12 @@ void AppStage_MainMenu::exit()
 
 void AppStage_MainMenu::renderUI()
 {
+	const auto icoWaitFull = AssetManager::getInstance()->getIconWaitFull();
+	const auto icoWaitHalf = AssetManager::getInstance()->getIconWaitHalf();
+	const auto icoWaitEmpty = AssetManager::getInstance()->getIconWaitEmpty();
+	const auto icoWaitDone = AssetManager::getInstance()->getIconWaitDone();
+	static float waitCount;
+
     switch(m_menuState)
     {
     case connectedToService:
@@ -78,28 +85,46 @@ void AppStage_MainMenu::renderUI()
 		ImGui::Begin(szWindowTitle, nullptr, window_flags);
 		ImGui::BeginGroup();
 		{
-			if (ImGui::Button("Controller Settings"))
+			const auto icoController = AssetManager::getInstance()->getIconController();
+			const auto icoHmd = AssetManager::getInstance()->getIconHmd();
+			const auto icoTracker = AssetManager::getInstance()->getIconTracker();
+			const auto icoSettings = AssetManager::getInstance()->getIconSettings();
+
+			const ImVec2 _lastLoc = ImGui::GetCursorPos();
+			if (ImGui::Button("      Controller Settings"))
 			{
 				m_app->setAppStage(AppStage_ControllerSettings::APP_STAGE_NAME);
 			}
+			ImGui::GetWindowDrawList()->AddImage((void*)(intptr_t)icoController->texture_id,
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
-			if (ImGui::Button("Head-mounted Display Settings"))
+			if (ImGui::Button("      Head-mounted Display Settings"))
 			{
 				m_app->setAppStage(AppStage_HMDSettings::APP_STAGE_NAME);
 			}
+			ImGui::GetWindowDrawList()->AddImage((void*)(intptr_t)icoHmd->texture_id,
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
-			if (ImGui::Button("Tracker Settings"))
+			if (ImGui::Button("      Tracker Settings"))
 			{
 				m_app->setAppStage(AppStage_TrackerSettings::APP_STAGE_NAME);
 			}
+			ImGui::GetWindowDrawList()->AddImage((void*)(intptr_t)icoTracker->texture_id,
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 	#ifdef _WIN32
 			ImGui::Separator();
 
-			if (ImGui::Button("Advanced Settings"))
+			if (ImGui::Button("      Advanced Settings"))
 			{
 				m_app->setAppStage(AppStage_AdvancedSettings::APP_STAGE_NAME);
 			}
+			ImGui::GetWindowDrawList()->AddImage((void*)(intptr_t)icoSettings->texture_id,
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::Separator();
 	#endif
@@ -123,11 +148,35 @@ void AppStage_MainMenu::renderUI()
                 ImGuiWindowFlags_NoCollapse;
             ImGui::SetNextWindowPosCenter();
             ImGui::Begin("Status", nullptr, window_flags);
+
+			waitCount += 0.025f;
+			switch ((int)floorf(waitCount))
+			{
+			case 0:
+				ImGui::Image((void*)(intptr_t)icoWaitFull->texture_id, ImVec2(32, 32));
+				break;
+			case 1:
+				ImGui::Image((void*)(intptr_t)icoWaitHalf->texture_id, ImVec2(32, 32));
+				break;
+			case 2:
+				ImGui::Image((void*)(intptr_t)icoWaitDone->texture_id, ImVec2(32, 32));
+				break;
+			case 3:
+				ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+				break;
+			default:
+				ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+				waitCount = 0;
+				break;
+			}
+
+			ImGui::SameLine();
             ImGui::Text("Connecting to PSMoveServiceEx...");
             if (ImGui::Button("Exit"))
             {
                 m_app->requestShutdown();
             }
+
 			ImGui::SetWindowSize(ImVec2(300, 0));
             ImGui::End();
         } break;

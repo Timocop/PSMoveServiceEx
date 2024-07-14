@@ -1131,8 +1131,8 @@ void AppStage_AdvancedSettings::renderUI()
 
 						if (ImGui::IsItemHovered())
 							ImGui::SetTooltip(
-								"Enables the Morpheus Head-Mounted Display in PSMoveServiceEx.\n"
-								"If you use other programs that use the Head-Mounted Display disable this setting to avoid conflicts."
+								"Enables the Morpheus Head-mounted Display in PSMoveServiceEx.\n"
+								"If you use other programs that use the Head-mounted Display disable this setting to avoid conflicts."
 							);
 					}
 					ImGui::EndGroup();

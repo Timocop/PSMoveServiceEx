@@ -123,6 +123,47 @@ public:
 		return &m_psnavigation_assets;
 	}
 
+	// Icons
+	const TextureAsset *getIconSettings()
+	{
+		return &m_icon_settings_asset;
+	}
+
+	const TextureAsset *getIconController()
+	{
+		return &m_icon_controller_asset;
+	}
+
+	const TextureAsset *getIconTracker()
+	{
+		return &m_icon_tracker_asset;
+	}
+
+	const TextureAsset *getIconHmd()
+	{
+		return &m_icon_hmd_asset;
+	}
+
+	const TextureAsset *getIconWaitDone()
+	{
+		return &m_icon_wait_done_asset;
+	}
+
+	const TextureAsset *getIconWaitEmpty()
+	{
+		return &m_icon_wait_empty_asset;
+	}
+
+	const TextureAsset *getIconWaitFull()
+	{
+		return &m_icon_wait_full_asset;
+	}
+
+	const TextureAsset *getIconWaitHalf()
+	{
+		return &m_icon_wait_half_asset;
+	}
+
 private:
     bool loadTexture(const char *filename, TextureAsset *textureAsset);
     bool loadFont(const char *filename, float pixelHeight, FontAsset *fontAsset);
@@ -147,6 +188,15 @@ private:
 
     // Font Rendering
     FontAsset m_defaultFont;
+	TextureAsset m_icon_settings_asset;
+	TextureAsset m_icon_controller_asset;
+	TextureAsset m_icon_tracker_asset;
+	TextureAsset m_icon_hmd_asset;
+
+	TextureAsset m_icon_wait_done_asset;
+	TextureAsset m_icon_wait_empty_asset;
+	TextureAsset m_icon_wait_full_asset;
+	TextureAsset m_icon_wait_half_asset;
 
     static AssetManager *m_instance;
 };
