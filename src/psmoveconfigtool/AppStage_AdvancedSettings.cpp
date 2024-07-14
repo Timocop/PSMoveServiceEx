@@ -506,6 +506,8 @@ void AppStage_AdvancedSettings::exit()
 
 void AppStage_AdvancedSettings::renderUI()
 {
+	const float k_panel_width = 550.f;
+
 	const char *k_window_title = "Advanced Settings";
 	const ImGuiWindowFlags window_flags =
 		ImGuiWindowFlags_ShowBorders |
@@ -517,35 +519,41 @@ void AppStage_AdvancedSettings::renderUI()
     {
     case idle:
         {
-			static ImVec2 lastWindowVec = ImVec2(0.f, 4.f);
+			static ImVec2 lastWindowVec = ImVec2(0, 4);
 
-			ImGui::SetNextWindowPosCenter();
-			ImGui::SetNextWindowSize(ImVec2(550, fminf(lastWindowVec.y + 36.f, ImGui::GetIO().DisplaySize.y - 36.f)));
+			ImGui::SetNextWindowPos(ImVec2(
+				(ImGui::GetIO().DisplaySize.x / 2) - (k_panel_width / 2), 
+				32)
+			);
+			ImGui::SetNextWindowSize(ImVec2(
+				k_panel_width, 
+				fminf(lastWindowVec.y + 36, ImGui::GetIO().DisplaySize.y - 64))
+			);
 			ImGui::Begin("Advanced Settings", nullptr, window_flags);
 			ImGui::BeginGroup();
 			{
-				if (ImGui::ButtonChecked("Trackers##TabTrackers", (m_tabSelectedTab == 0), ImVec2(100.f, 0.f)))
+				if (ImGui::ButtonChecked("Trackers##TabTrackers", (m_tabSelectedTab == 0), ImVec2(100, 0)))
 					m_tabSelectedTab = 0;
 				ImGui::SameLine(0.f, 0.f);
-				if (ImGui::ButtonChecked("Controllers##TabControllerConfig", (m_tabSelectedTab == 1), ImVec2(125.f, 0.f)))
+				if (ImGui::ButtonChecked("Controllers##TabControllerConfig", (m_tabSelectedTab == 1), ImVec2(125, 0)))
 					m_tabSelectedTab = 1;
 				ImGui::SameLine(0.f, 0.f);
-				if (ImGui::ButtonChecked("HMDs##TabHmdConfig", (m_tabSelectedTab == 2), ImVec2(85.f, 0.f)))
+				if (ImGui::ButtonChecked("HMDs##TabHmdConfig", (m_tabSelectedTab == 2), ImVec2(85, 0)))
 					m_tabSelectedTab = 2;
 				ImGui::SameLine(0.f, 0.f);
-				if (ImGui::ButtonChecked("Devices##TabDeviceConfig", (m_tabSelectedTab == 3), ImVec2(100.f, 0.f)))
+				if (ImGui::ButtonChecked("Devices##TabDeviceConfig", (m_tabSelectedTab == 3), ImVec2(100, 0)))
 					m_tabSelectedTab = 3;
 				ImGui::SameLine(0.f, 0.f);
-				if (ImGui::ButtonChecked("Other##TabOthers", (m_tabSelectedTab == 4), ImVec2(85.f, 0.f)))
+				if (ImGui::ButtonChecked("Other##TabOthers", (m_tabSelectedTab == 4), ImVec2(85, 0)))
 					m_tabSelectedTab = 4;
 
 				// Tracker Manager Config
 				if (m_tabSelectedTab == 0)
 				{
-					ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5.f);
+					ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5);
 
-					static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
-					ImGui::BeginChild("##TrackerTabChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
+					static ImVec2 lastChildVec = ImVec2(0, 4);
+					ImGui::BeginChild("##TrackerTabChild", ImVec2(0, lastChildVec.y + 16), true);
 					ImGui::BeginGroup();
 					{
 						{

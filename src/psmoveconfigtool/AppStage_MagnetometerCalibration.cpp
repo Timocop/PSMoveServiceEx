@@ -756,27 +756,26 @@ void AppStage_MagnetometerCalibration::renderUI()
 	case eCalibrationMenuState::pendingPlayspaceRequest:
 	{
 		ImGui::SetNextWindowPosCenter();
-		ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
 		ImGui::Begin(k_window_title, nullptr, window_flags);
 
 		ImGui::Text("Waiting for server response...");
 
+		ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
 		ImGui::End();
 	} break;
 	case eCalibrationMenuState::waitingForStreamStartResponse:
 	{
 		ImGui::SetNextWindowPosCenter();
-		ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
 		ImGui::Begin(k_window_title, nullptr, window_flags);
 
 		ImGui::Text("Waiting for controller stream to start...");
 
+		ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
 		ImGui::End();
 	} break;
     case eCalibrationMenuState::failedStreamStart:
         {
             ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::Text("Failed to start controller stream!");
@@ -793,12 +792,12 @@ void AppStage_MagnetometerCalibration::renderUI()
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
     case eCalibrationMenuState::failedBadCalibration:
         {
             ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::TextWrapped(
@@ -817,13 +816,13 @@ void AppStage_MagnetometerCalibration::renderUI()
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
     case eCalibrationMenuState::measureBExtents:
         {
             {
                 ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-                ImGui::SetNextWindowSize(ImVec2(k_panel_width, 200));
                 ImGui::Begin(k_window_title, nullptr, window_flags);
 
                 if (!m_boundsStatistics->getIsComplete())
@@ -901,13 +900,13 @@ void AppStage_MagnetometerCalibration::renderUI()
                     request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
                 }
 
+				ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
                 ImGui::End();
             }
 
 			// $TODO: least squares fit method does not work with non-uniform samples. Use box fit.
             /*{
                 ImGui::SetNextWindowPos(ImVec2(10.f, 450.f));
-                ImGui::SetNextWindowSize(ImVec2(170.f, 80.f));
                 ImGui::Begin("Ellipse Fitting Mode", nullptr, window_flags);
 
                 if (ImGui::RadioButton("Least Squares Fit", &m_boundsStatistics->ellipseFitMethod, _ellipse_fit_method_least_squares))
@@ -928,13 +927,13 @@ void AppStage_MagnetometerCalibration::renderUI()
 						m_boundsStatistics->sampleFitEllipsoid);
                 }
 
+				ImGui::SetWindowSize(ImVec2(170, 0));
                 ImGui::End();
             }*/
         } break;
     case eCalibrationMenuState::waitForGravityAlignment:
         {
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x/2.f - k_panel_width/2.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 200));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::TextWrapped(
@@ -967,12 +966,12 @@ void AppStage_MagnetometerCalibration::renderUI()
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
     case eCalibrationMenuState::measureBDirection:
         {
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x/2.f - k_panel_width/2.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 200));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::TextWrapped(
@@ -991,6 +990,7 @@ void AppStage_MagnetometerCalibration::renderUI()
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
 	case eCalibrationMenuState::skipBDirection:
@@ -999,17 +999,16 @@ void AppStage_MagnetometerCalibration::renderUI()
 	case eCalibrationMenuState::waitForSetCalibrationResponse:
         {
             ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::Text("Sending final calibration to server...");
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
     case eCalibrationMenuState::failedSetCalibration:
         {
             ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::Text("Failed to set calibration!");
@@ -1026,12 +1025,12 @@ void AppStage_MagnetometerCalibration::renderUI()
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
     case eCalibrationMenuState::complete:
         {
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 120));
             ImGui::Begin("Test Orientation", nullptr, window_flags);
 
             if (m_bBypassCalibration)
@@ -1072,16 +1071,17 @@ void AppStage_MagnetometerCalibration::renderUI()
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
     case eCalibrationMenuState::pendingExit:
         {
             ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::Text("Waiting for controller stream to stop...");
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
     default:

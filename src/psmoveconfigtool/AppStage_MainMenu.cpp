@@ -70,14 +70,11 @@ void AppStage_MainMenu::renderUI()
 			ImGuiWindowFlags_NoMove |
 			ImGuiWindowFlags_NoScrollbar |
 			ImGuiWindowFlags_NoCollapse;
-		ImGui::SetNextWindowPosCenter();
 
 		char szWindowTitle[255];
 		snprintf(szWindowTitle, sizeof(szWindowTitle), "PSMove Config Tool v%s", PSM_RELEASE_VERSION_STRING);
 
-		static ImVec2 lastWindowVec = ImVec2(0.f, 4.f);
-
-		ImGui::SetNextWindowSize(ImVec2(300, fminf(lastWindowVec.y + 36.f, ImGui::GetIO().DisplaySize.y - 36.f)));
+		ImGui::SetNextWindowPosCenter();
 		ImGui::Begin(szWindowTitle, nullptr, window_flags);
 		ImGui::BeginGroup();
 		{
@@ -113,9 +110,7 @@ void AppStage_MainMenu::renderUI()
 			}
 		}
 		ImGui::EndGroup();
-		if (ImGui::IsItemVisible())
-			lastWindowVec = ImGui::GetItemRectSize();
-
+		ImGui::SetWindowSize(ImVec2(300, 0));
         ImGui::End();
     } break;
     case pendingConnectToToService:
@@ -127,12 +122,13 @@ void AppStage_MainMenu::renderUI()
                 ImGuiWindowFlags_NoScrollbar |
                 ImGuiWindowFlags_NoCollapse;
             ImGui::SetNextWindowPosCenter();
-            ImGui::Begin("Status", nullptr, ImVec2(300, 150), k_background_alpha, window_flags);
+            ImGui::Begin("Status", nullptr, window_flags);
             ImGui::Text("Connecting to PSMoveServiceEx...");
             if (ImGui::Button("Exit"))
             {
                 m_app->requestShutdown();
             }
+			ImGui::SetWindowSize(ImVec2(300, 0));
             ImGui::End();
         } break;
 	case startConnectionToService:
@@ -146,7 +142,7 @@ void AppStage_MainMenu::renderUI()
                 ImGuiWindowFlags_NoScrollbar |
                 ImGuiWindowFlags_NoCollapse;
             ImGui::SetNextWindowPosCenter();
-            ImGui::Begin("Connect", nullptr, ImVec2(300, 150), k_background_alpha, window_flags);
+            ImGui::Begin("Connect", nullptr, window_flags);
 
 			if (m_menuState == failedConnectionToService)
 			{
@@ -177,6 +173,7 @@ void AppStage_MainMenu::renderUI()
                 m_app->requestShutdown();
             }
 
+			ImGui::SetWindowSize(ImVec2(300, 0));
             ImGui::End();
         } break;
     default:

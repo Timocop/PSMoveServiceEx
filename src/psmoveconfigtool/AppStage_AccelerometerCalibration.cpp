@@ -703,27 +703,26 @@ void AppStage_AccelerometerCalibration::renderUI()
 	case eCalibrationMenuState::pendingPlayspaceRequest:
 		{
 			ImGui::SetNextWindowPosCenter();
-			ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
 			ImGui::Begin(k_window_title, nullptr, window_flags);
 
 			ImGui::Text("Waiting for server response...");
-
+			
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
 			ImGui::End();
 		} break;
 	case eCalibrationMenuState::waitingForStreamStartResponse:
         {
             ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::Text("Waiting for controller stream to start...");
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
     case eCalibrationMenuState::failedStreamStart:
         {
             ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::Text("Failed to start controller stream!");
@@ -740,6 +739,7 @@ void AppStage_AccelerometerCalibration::renderUI()
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
 	case eCalibrationMenuState::measureAxisX:
@@ -748,7 +748,6 @@ void AppStage_AccelerometerCalibration::renderUI()
 	case eCalibrationMenuState::measureAxisZ:
 	{
 		ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-		ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
 		ImGui::Begin(k_window_title, nullptr, window_flags);
 
 		std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
@@ -822,12 +821,12 @@ void AppStage_AccelerometerCalibration::renderUI()
 			m_menuState = eCalibrationMenuState::measureAxisX;
 		}
 
+		ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
 		ImGui::End();
 	} break;
     case eCalibrationMenuState::measureComplete:
         {
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::TextWrapped(
@@ -849,12 +848,12 @@ void AppStage_AccelerometerCalibration::renderUI()
                 m_menuState = eCalibrationMenuState::measureAxisX;
             }
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
     case eCalibrationMenuState::test:
         {
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
             ImGui::Begin("Test Accelerometer", nullptr, window_flags);
 
             if (m_bBypassCalibration)
@@ -893,6 +892,7 @@ void AppStage_AccelerometerCalibration::renderUI()
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
     default:

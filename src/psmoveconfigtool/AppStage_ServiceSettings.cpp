@@ -44,12 +44,13 @@ void AppStage_ServiceSettings::renderUI()
         ImGuiWindowFlags_NoScrollbar |
         ImGuiWindowFlags_NoCollapse;
     ImGui::SetNextWindowPosCenter();
-    ImGui::Begin("Service Settings", nullptr, ImVec2(300, 150), k_background_alpha, window_flags);
+    ImGui::Begin("Service Settings", nullptr, window_flags);
 
     if (ImGui::Button("Return to Main Menu"))
     {
         m_app->setAppStage(AppStage_MainMenu::APP_STAGE_NAME);
     }
 
+	ImGui::SetWindowSize(ImVec2(300, 0));
     ImGui::End();
 }

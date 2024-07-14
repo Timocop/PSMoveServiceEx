@@ -571,7 +571,6 @@ void AppStage_HMDModelCalibration::renderUI()
 	case eMenuState::pendingTrackerStartRequest:
 	{
 		ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-		ImGui::SetNextWindowSize(ImVec2(k_panel_width, 80));
 		ImGui::Begin(k_window_title, nullptr, window_flags);
 
 		ImGui::Text("Pending device initialization...");
@@ -581,6 +580,7 @@ void AppStage_HMDModelCalibration::renderUI()
 			request_exit_to_app_stage(AppStage_HMDModelCalibration::APP_STAGE_NAME);
 		}
 
+		ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
 		ImGui::End();
 	} break;
 
@@ -590,7 +590,6 @@ void AppStage_HMDModelCalibration::renderUI()
 	case eMenuState::failedTrackerStartRequest:
 	{
 		ImGui::SetNextWindowPosCenter();
-		ImGui::SetNextWindowSize(ImVec2(k_panel_width, 180));
 		ImGui::Begin(k_window_title, nullptr, window_flags);
 
 		switch (m_menuState)
@@ -623,13 +622,13 @@ void AppStage_HMDModelCalibration::renderUI()
 			request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
 		}
 
+		ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
 		ImGui::End();
 	} break;
 
 	case eMenuState::verifyTrackers:
 	{
 		ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - 500.f / 2.f, 20.f));
-		ImGui::SetNextWindowSize(ImVec2(500.f, (get_tracker_count() > 0) ? 150.f : 100.f));
 		ImGui::Begin(k_window_title, nullptr, window_flags);
 
 		ImGui::Text("Verify that your tracking cameras can see your HMD");
@@ -657,13 +656,13 @@ void AppStage_HMDModelCalibration::renderUI()
 			request_exit_to_app_stage(AppStage_HMDSettings::APP_STAGE_NAME);
 		}
 
+		ImGui::SetWindowSize(ImVec2(500, 0));
 		ImGui::End();
 	} break;
 
 	case eMenuState::calibrate:
 	{
 		ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-		ImGui::SetNextWindowSize(ImVec2(k_panel_width, 180));
 		ImGui::Begin(k_window_title, nullptr, window_flags);
 
 		ImGui::Text("Tracker #%d", m_trackerPairState->renderTrackerIndex + 1);
@@ -725,13 +724,13 @@ void AppStage_HMDModelCalibration::renderUI()
 			m_app->setAppStage(AppStage_HMDSettings::APP_STAGE_NAME);
 		}
 
+		ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
 		ImGui::End();
 	} break;
 
 	case eMenuState::test:
 	{
 		ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-		ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
 		ImGui::Begin("Test HMD Model", nullptr, window_flags);
 
 		if (!m_bBypassCalibration)
@@ -778,6 +777,7 @@ void AppStage_HMDModelCalibration::renderUI()
 		}
 		ImGui::Text("");
 
+		ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
 		ImGui::End();
 	}
 	break;

@@ -677,8 +677,6 @@ void AppStage_DistortionCalibration::renderUI()
 	{
 		const float k_wide_panel_width = 350.f;
 		ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_wide_panel_width / 2.f, 20.f));
-		ImGui::SetNextWindowSize(ImVec2(k_wide_panel_width, 130));
-
 		ImGui::Begin("WARNING", nullptr, window_flags);
 
 		ImGui::TextWrapped(
@@ -697,14 +695,13 @@ void AppStage_DistortionCalibration::renderUI()
 			request_exit();
 		}
 
+		ImGui::SetWindowSize(ImVec2(k_wide_panel_width, 0));
 		ImGui::End();
 	} break;
 	case eMenuState::showWarningResolution:
 	{
 		const float k_wide_panel_width = 350.f;
 		ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_wide_panel_width / 2.f, 20.f));
-		ImGui::SetNextWindowSize(ImVec2(k_wide_panel_width, 150));
-
 		ImGui::Begin("INCOMPATIBLE RESOLUTION", nullptr, window_flags);
 
 		ImGui::TextWrapped(
@@ -719,14 +716,13 @@ void AppStage_DistortionCalibration::renderUI()
 			request_exit();
 		}
 
+		ImGui::SetWindowSize(ImVec2(k_wide_panel_width, 0));
 		ImGui::End();
 	} break;
 	case eMenuState::enterBoardSettings:
 		{
 			const float k_wide_panel_width = 350.f;
 			ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_wide_panel_width / 2.f, 20.f));
-			ImGui::SetNextWindowSize(ImVec2(k_wide_panel_width, 150));
-
 			ImGui::Begin("Enter Calibration Settings", nullptr, window_flags);
 
 			ImGui::PushItemWidth(100.f);
@@ -778,6 +774,7 @@ void AppStage_DistortionCalibration::renderUI()
 				request_exit();
 			}
 
+			ImGui::SetWindowSize(ImVec2(k_wide_panel_width, 0));
 			ImGui::End();
 		} break;
     case eMenuState::capture:
@@ -786,7 +783,6 @@ void AppStage_DistortionCalibration::renderUI()
 
             {
                 ImGui::SetNextWindowPos(ImVec2(10.f, 10.f));
-                ImGui::SetNextWindowSize(ImVec2(275, 150));
                 ImGui::Begin("Video Controls", nullptr, window_flags);
 
 				int displayMode = m_videoDisplayMode;
@@ -822,12 +818,12 @@ void AppStage_DistortionCalibration::renderUI()
                 ImGui::SameLine();
                 ImGui::Text("Gain: %f", m_trackerGain);
 
+				ImGui::SetWindowSize(ImVec2(275, 0));
                 ImGui::End();
             }
 
             {
                 ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-                ImGui::SetNextWindowSize(ImVec2(k_panel_width, 110));
                 ImGui::Begin(k_window_title, nullptr, window_flags);
 
 				const float k_stabilize_wait_time_ms = (m_opencv_state->capturedBoardCount > 0) ? (k_stabilize_next_wait_time_ms) : (k_stabilize_init_wait_time_ms);
@@ -861,6 +857,7 @@ void AppStage_DistortionCalibration::renderUI()
                     request_exit();
                 }
 
+				ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
                 ImGui::End();
             }
         } break;
@@ -869,7 +866,6 @@ void AppStage_DistortionCalibration::renderUI()
         {
 			{
 				ImGui::SetNextWindowPos(ImVec2(10.f, 10.f));
-				ImGui::SetNextWindowSize(ImVec2(275, 150));
 				ImGui::Begin("Video Controls", nullptr, window_flags);
 
 				int displayMode = m_videoDisplayMode;
@@ -881,12 +877,12 @@ void AppStage_DistortionCalibration::renderUI()
 				}
 				ImGui::PopItemWidth();
 
+				ImGui::SetWindowSize(ImVec2(275, 0));
 				ImGui::End();
 			}
 
 			{
 				ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 10.f));
-				ImGui::SetNextWindowSize(ImVec2(k_panel_width, 110));
 				ImGui::Begin(k_window_title, nullptr, window_flags);
 
 				ImGui::Text("Calibration complete!");
@@ -905,6 +901,7 @@ void AppStage_DistortionCalibration::renderUI()
 					m_menuState = eMenuState::capture;
 				}
 
+				ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
 				ImGui::End();
 			}
         } break;
@@ -912,11 +909,11 @@ void AppStage_DistortionCalibration::renderUI()
     case eMenuState::pendingTrackerStartStreamRequest:
         {
             ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 50));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::Text("Waiting for tracker stream to start...");
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
 
@@ -924,7 +921,6 @@ void AppStage_DistortionCalibration::renderUI()
     case eMenuState::failedTrackerOpenStreamRequest:
         {
             ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             if (m_menuState == eMenuState::failedTrackerStartStreamRequest)
@@ -942,24 +938,24 @@ void AppStage_DistortionCalibration::renderUI()
                 m_app->setAppStage(AppStage_MainMenu::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
 
     case eMenuState::pendingTrackerStopStreamRequest:
         {
             ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 50));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::Text("Waiting for tracker stream to stop...");
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
 
     case eMenuState::failedTrackerStopStreamRequest:
         {
             ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::Text("Failed to stop tracker stream!");
@@ -974,6 +970,7 @@ void AppStage_DistortionCalibration::renderUI()
                 m_app->setAppStage(AppStage_MainMenu::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
 

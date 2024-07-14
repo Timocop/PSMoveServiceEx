@@ -948,8 +948,10 @@ void AppStage_ComputeTrackerPoses::renderUI()
     case eMenuState::pendingTrackerListRequest:
     case eMenuState::pendingTrackerStartRequest:
         {
-            ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 80));
+            ImGui::SetNextWindowPos(ImVec2(
+				ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 
+				20.f)
+			);
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::Text("Pending device initialization...");
@@ -959,6 +961,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
                 request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
 
@@ -973,7 +976,6 @@ void AppStage_ComputeTrackerPoses::renderUI()
 	case eMenuState::failedControllerUnsupported:
         {
             ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 180));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             switch (m_menuState)
@@ -1017,13 +1019,16 @@ void AppStage_ComputeTrackerPoses::renderUI()
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
 
     case eMenuState::verifyTrackers:
         {
-            ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - 500.f / 2.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(500.f, (m_trackerViews.size() > 0) ? 175.f : 125.f));
+            ImGui::SetNextWindowPos(ImVec2(
+				ImGui::GetIO().DisplaySize.x / 2.f - 500.f / 2.f, 
+				20.f)
+			);
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::Text("Verify that your tracking cameras can see the tracking origin.");
@@ -1075,6 +1080,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
                 request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(500, 0));
             ImGui::End();
         }
 
@@ -1082,8 +1088,10 @@ void AppStage_ComputeTrackerPoses::renderUI()
 
     case eMenuState::selectCalibrationMethod:
         {
-            ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - 500.f / 2.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(500.f, 150.f));
+            ImGui::SetNextWindowPos(ImVec2(
+				ImGui::GetIO().DisplaySize.x / 2.f - 500.f / 2.f,
+				20.f)
+			);
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::Text("Select a calibration method");
@@ -1094,6 +1102,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
                 setState(eMenuState::calibrateWithMat);
             }
 
+			ImGui::SetWindowSize(ImVec2(500, 0));
             ImGui::End();
         } break;
 
@@ -1105,7 +1114,6 @@ void AppStage_ComputeTrackerPoses::renderUI()
 	case eMenuState::testMagnetic:
 		{
 			ImGui::SetNextWindowPos(ImVec2(20.f, 20.f));
-			ImGui::SetNextWindowSize(ImVec2(250.f, 300.f));
 			ImGui::Begin("Test Magnetic Interferences", nullptr, window_flags);
 
 			ImGui::PushTextWrapPos();
@@ -1154,6 +1162,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
 				setState(eMenuState::testTracking);
 			}
 
+			ImGui::SetWindowSize(ImVec2(250, 0));
 			ImGui::End();
 
 			break;
@@ -1161,7 +1170,6 @@ void AppStage_ComputeTrackerPoses::renderUI()
 	case eMenuState::testTracking:
         {
             ImGui::SetNextWindowPos(ImVec2(20.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(250.f, 350.f));
             ImGui::Begin("Test Tracking Pose", nullptr, window_flags);
 
             // display per tracker UI
@@ -1234,6 +1242,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
 				request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(250, 0));
             ImGui::End();
         }
         break;
@@ -1241,7 +1250,6 @@ void AppStage_ComputeTrackerPoses::renderUI()
     case eMenuState::showTrackerVideo:
         {
             ImGui::SetNextWindowPos(ImVec2(20.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(250, 125));
             ImGui::Begin("Test Tracking Video", nullptr, window_flags);
 
             //ImGui::Text("Tracker ID: #%d", m_renderTrackerIter->second.trackerView->tracker_info.tracker_id);
@@ -1291,6 +1299,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
                 request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(250, 0));
             ImGui::End();
         }
         break;
@@ -1298,7 +1307,6 @@ void AppStage_ComputeTrackerPoses::renderUI()
 		case eMenuState::calibrateStepFailed:
 		{
 			ImGui::SetNextWindowPosCenter();
-			ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
 			ImGui::Begin(k_window_title, nullptr, window_flags);
 
 			ImGui::Text("Calibration Failed");
@@ -1313,6 +1321,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
 				request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
 			}
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
 			ImGui::End();
 		}
 		break;
@@ -1320,11 +1329,11 @@ void AppStage_ComputeTrackerPoses::renderUI()
 		case eMenuState::pendingControllerOffsets:
 		{
 			ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-			ImGui::SetNextWindowSize(ImVec2(k_panel_width, 80));
 			ImGui::Begin(k_window_title, nullptr, window_flags);
 
 			ImGui::Text("Reading tracker data streams...");
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
 			ImGui::End();
 		}
 		break;
@@ -1332,8 +1341,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
 		case eMenuState::showControllerOffsets:
 		{
 			ImGui::SetNextWindowPos(ImVec2(20.f, 20.f));
-			ImGui::SetNextWindowSize(ImVec2(k_panel_width, 300));
-			ImGui::Begin(k_window_title, nullptr, window_flags);
+			ImGui::Begin("Triangulation Quality", nullptr, window_flags);
 
 			if (ImGui::Button(" < ##Previous Tracker"))
 			{
@@ -1429,6 +1437,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
 				setState(eMenuState::testTracking);
 			}
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
 			ImGui::End();
 		}
 		break;

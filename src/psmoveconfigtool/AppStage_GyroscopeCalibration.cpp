@@ -417,17 +417,16 @@ void AppStage_GyroscopeCalibration::renderUI()
     case eCalibrationMenuState::waitingForStreamStartResponse:
         {
             ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::Text("Waiting for server response...");
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
     case eCalibrationMenuState::failedStreamStart:
         {
             ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::Text("Failed server request!");
@@ -444,12 +443,12 @@ void AppStage_GyroscopeCalibration::renderUI()
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
     case eCalibrationMenuState::waitForStable:
         {
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 140));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::TextWrapped(
@@ -481,12 +480,12 @@ void AppStage_GyroscopeCalibration::renderUI()
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
     case eCalibrationMenuState::measureBiasAndDrift:
         {
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             const float sampleFraction = 
@@ -503,12 +502,12 @@ void AppStage_GyroscopeCalibration::renderUI()
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
     case eCalibrationMenuState::measureComplete:
         {
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::TextWrapped(
@@ -532,12 +531,12 @@ void AppStage_GyroscopeCalibration::renderUI()
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
     case eCalibrationMenuState::test:
         {
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 140));
             ImGui::Begin("Test Orientation", nullptr, window_flags);
 
             if (m_bBypassCalibration)
@@ -591,6 +590,7 @@ void AppStage_GyroscopeCalibration::renderUI()
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
     default:

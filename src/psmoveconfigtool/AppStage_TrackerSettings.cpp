@@ -203,6 +203,8 @@ const AppStage_TrackerSettings::HMDInfo *AppStage_TrackerSettings::get_selected_
 
 void AppStage_TrackerSettings::renderUI()
 {
+	const float k_panel_width = 550.f;
+
     const char *k_window_title = "Tracker Settings";
     const ImGuiWindowFlags window_flags =
         ImGuiWindowFlags_ShowBorders |
@@ -215,10 +217,15 @@ void AppStage_TrackerSettings::renderUI()
     {
     case eTrackerMenuState::idle:
     {
-		static ImVec2 lastWindowVec = ImVec2(0.f, 4.f);
-
-		ImGui::SetNextWindowSize(ImVec2(550, fminf(lastWindowVec.y + 36.f, ImGui::GetIO().DisplaySize.y - 36.f)));
-		ImGui::SetNextWindowCenterPosOffset(ImVec2(-200, 0));
+		static ImVec2 lastWindowVec = ImVec2(0, 4);
+		ImGui::SetNextWindowSize(ImVec2(
+			k_panel_width, fminf(lastWindowVec.y + 36,
+				ImGui::GetIO().DisplaySize.y - 64))
+		);
+		ImGui::SetNextWindowPos(ImVec2(
+			fmaxf((k_panel_width / 2) - 32, (ImGui::GetIO().DisplaySize.x / 2) - (k_panel_width / 2)) - 200,
+			32)
+		);
         ImGui::Begin(k_window_title, nullptr, window_flags & ~ImGuiWindowFlags_NoScrollbar);
 		ImGui::BeginGroup();
 		{
@@ -267,8 +274,8 @@ void AppStage_TrackerSettings::renderUI()
 				ImGui::Text("Tracker: %d", m_selectedTrackerIndex);
 
 				{
-					static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
-					ImGui::BeginChild("##TrackerInfoChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
+					static ImVec2 lastChildVec = ImVec2(0, 4);
+					ImGui::BeginChild("##TrackerInfoChild", ImVec2(0, lastChildVec.y + 16), true);
 					ImGui::BeginGroup();
 					{
 						ImGui::Text("Tracker Information:");
@@ -507,10 +514,10 @@ void AppStage_TrackerSettings::renderUI()
 				if (m_tabSelectedTab == 0 ||
 					m_gotoControllerColorCalib || m_gotoTestControllerTracking || m_gotoTrackingControllerVideo || m_gotoTrackingVideoALL)
 				{
-					ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5.f);
+					ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5);
 
-					static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
-					ImGui::BeginChild("##ControllersChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
+					static ImVec2 lastChildVec = ImVec2(0, 4);
+					ImGui::BeginChild("##ControllersChild", ImVec2(0, lastChildVec.y + 16), true);
 					ImGui::BeginGroup();
 					{
 						if (m_controllerInfos.size() > 0)
@@ -584,8 +591,8 @@ void AppStage_TrackerSettings::renderUI()
 								if (ImGui::CollapsingHeader("Calibration##ControllerCalibration", 0, true, true) ||
 									m_gotoControllerColorCalib)
 								{
-									static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
-									ImGui::BeginChild("##ControllerCalibrationChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
+									static ImVec2 lastChildVec2 = ImVec2(0, 4);
+									ImGui::BeginChild("##ControllerCalibrationChild", ImVec2(0, lastChildVec2.y + 16), true);
 									ImGui::BeginGroup();
 									{
 										if (m_app->getIsLocalServer())
@@ -624,8 +631,8 @@ void AppStage_TrackerSettings::renderUI()
 								if (ImGui::CollapsingHeader("Testing##ControllerTesting", 0, true, true) ||
 									m_gotoTestControllerTracking)
 								{
-									static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
-									ImGui::BeginChild("##ControllerTestingChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
+									static ImVec2 lastChildVec2 = ImVec2(0, 4);
+									ImGui::BeginChild("##ControllerTestingChild", ImVec2(0, lastChildVec2.y + 16), true);
 									ImGui::BeginGroup();
 									{
 										if (ImGui::Button("Test Tracking Colors##Controller") || m_gotoTrackingControllerVideo)
@@ -667,10 +674,10 @@ void AppStage_TrackerSettings::renderUI()
 				if (m_tabSelectedTab == 1 ||
 					m_gotoHMDColorCalib || m_gotoTestHmdTracking || m_gotoTrackingHmdVideo || m_gotoTrackingVideoALL)
 				{
-					ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5.f);
+					ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5);
 
-					static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
-					ImGui::BeginChild("##HeadMountDevicesChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
+					static ImVec2 lastChildVec = ImVec2(0, 4);
+					ImGui::BeginChild("##HeadMountDevicesChild", ImVec2(0, lastChildVec.y + 16), true);
 					ImGui::BeginGroup();
 					{
 						if (m_hmdInfos.size() > 0)
@@ -742,8 +749,8 @@ void AppStage_TrackerSettings::renderUI()
 							if (ImGui::CollapsingHeader("Calibration##HMDCalibration", 0, true, true) ||
 								m_gotoHMDColorCalib)
 							{
-								static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
-								ImGui::BeginChild("##HMDCalibrationChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
+								static ImVec2 lastChildVec2 = ImVec2(0, 4);
+								ImGui::BeginChild("##HMDCalibrationChild", ImVec2(0, lastChildVec2.y + 16), true);
 								ImGui::BeginGroup();
 								{
 									if (m_app->getIsLocalServer())
@@ -792,8 +799,8 @@ void AppStage_TrackerSettings::renderUI()
 							if (ImGui::CollapsingHeader("Testing##HMDTesting", 0, true, true) ||
 								m_gotoTestHmdTracking || m_gotoTrackingHmdVideo)
 							{
-								static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
-								ImGui::BeginChild("##HMDTestingChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
+								static ImVec2 lastChildVec2 = ImVec2(0, 4);
+								ImGui::BeginChild("##HMDTestingChild", ImVec2(0, lastChildVec2.y + 16), true);
 								ImGui::BeginGroup();
 								{
 									if (ImGui::Button("Test Tracking Colors##HMD") ||
@@ -835,10 +842,10 @@ void AppStage_TrackerSettings::renderUI()
 
 				if (m_tabSelectedTab == 2)
 				{
-					ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5.f);
+					ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5);
 
-					static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
-					ImGui::BeginChild("##PlayspaceOffsetsChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
+					static ImVec2 lastChildVec = ImVec2(0, 4);
+					ImGui::BeginChild("##PlayspaceOffsetsChild", ImVec2(0, lastChildVec.y + 16), true);
 					ImGui::BeginGroup();
 					{
 						bool request_offset = false;
@@ -989,7 +996,6 @@ void AppStage_TrackerSettings::renderUI()
 		ImGui::EndGroup();
 		if (ImGui::IsItemVisible())
 			lastWindowVec = ImGui::GetItemRectSize();
-
         ImGui::End();
     } break;
     case eTrackerMenuState::pendingSearchForNewTrackersRequest:
@@ -1000,11 +1006,10 @@ void AppStage_TrackerSettings::renderUI()
 	case eTrackerMenuState::pendingTrackerResetPoseRequest:
     {
         ImGui::SetNextWindowPosCenter();
-        ImGui::SetNextWindowSize(ImVec2(300, 150));
         ImGui::Begin(k_window_title, nullptr, window_flags);
+		ImGui::Text("Waiting for server response...");
 
-        ImGui::Text("Waiting for server response...");
-
+		ImGui::SetWindowSize(ImVec2(300, 0));
         ImGui::End();
     } break;
     case eTrackerMenuState::failedTrackerListRequest:
@@ -1014,27 +1019,25 @@ void AppStage_TrackerSettings::renderUI()
 	case eTrackerMenuState::failedTrackerResetPoseRequest:
     {
         ImGui::SetNextWindowPosCenter();
-        ImGui::SetNextWindowSize(ImVec2(300, 150));
         ImGui::Begin(k_window_title, nullptr, window_flags);
+		ImGui::Text("Failed to get server response!");
 
-        ImGui::Text("Failed to get server response!");
+		if (ImGui::Button("Retry"))
+		{
+			request_tracker_list();
+		}
 
-        if (ImGui::Button("Retry"))
-        {
-            request_tracker_list();
-        }
+		if (ImGui::Button("Return to Main Menu"))
+		{
+			m_app->setAppStage(AppStage_MainMenu::APP_STAGE_NAME);
+		}
 
-        if (ImGui::Button("Return to Main Menu"))
-        {
-            m_app->setAppStage(AppStage_MainMenu::APP_STAGE_NAME);
-        }
-
+		ImGui::SetWindowSize(ImVec2(300, 0));
         ImGui::End();
     } break;
 	case eTrackerMenuState::trackerResetPoseWarning:
 	{
 		ImGui::SetNextWindowPosCenter();
-		ImGui::SetNextWindowSize(ImVec2(500, 150));
 		ImGui::Begin("Reset Tracker Pose", nullptr, window_flags);
 
 		ImGui::Text(
@@ -1054,6 +1057,7 @@ void AppStage_TrackerSettings::renderUI()
 			m_menuState = AppStage_TrackerSettings::idle;
 		}
 
+		ImGui::SetWindowSize(ImVec2(500, 0));
 		ImGui::End();
 	} break;
     default:

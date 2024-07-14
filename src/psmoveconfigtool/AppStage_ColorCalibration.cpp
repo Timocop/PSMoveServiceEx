@@ -646,8 +646,6 @@ void AppStage_ColorCalibration::renderUI()
 			align_pos_window.y += align_window_size;
 
 			ImGui::SetNextWindowPos(align_pos_window);
-			ImGui::SetNextWindowSize(ImVec2(350, 116));
-
 			ImGui::Begin("Alignment Window Tip", nullptr,
 				ImGuiWindowFlags_NoBringToFrontOnFocus |
 				ImGuiWindowFlags_NoFocusOnAppearing |
@@ -722,6 +720,8 @@ void AppStage_ColorCalibration::renderUI()
 				ImGui::SameLine();
 				ImGui::TextColored(textColor, k_tracking_color_names[m_masterTrackingColorType]);
 			}
+
+			ImGui::SetWindowSize(ImVec2(350, 0));
 			ImGui::End();
 
 			ImGui::GetStyle().WindowFillAlphaDefault = prevAlpha;
@@ -739,7 +739,6 @@ void AppStage_ColorCalibration::renderUI()
 	if (m_menuState > eMenuState::detection_init && m_menuState < eMenuState::detection_fail)
 	{
 		ImGui::SetNextWindowPosCenter();
-		ImGui::SetNextWindowSize(ImVec2(550, 150));
 		ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
 		ImGui::Text(
@@ -771,6 +770,7 @@ void AppStage_ColorCalibration::renderUI()
 			m_bDetectingCancel = true;
 		}
 
+		ImGui::SetWindowSize(ImVec2(550, 0));
 		ImGui::End();
 	}
 
@@ -859,7 +859,10 @@ void AppStage_ColorCalibration::renderUI()
 			static ImVec2 lastWindowVec = ImVec2(0.f, 4.f);
 
             ImGui::SetNextWindowPos(ImVec2(10.f, 10.f));
-			ImGui::SetNextWindowSize(ImVec2(k_panel_width, fminf(lastWindowVec.y + 36.f, ImGui::GetIO().DisplaySize.y - 36.f)));
+			ImGui::SetNextWindowSize(ImVec2(
+				k_panel_width,
+				fminf(lastWindowVec.y + 36, ImGui::GetIO().DisplaySize.y - 20))
+			);
             ImGui::Begin(k_window_title, nullptr, window_flags);
 			ImGui::BeginGroup();
 			{
@@ -1177,8 +1180,14 @@ void AppStage_ColorCalibration::renderUI()
 		{
 			static ImVec2 lastWindowVec = ImVec2(0.f, 4.f);
 
-			ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - k_panel_width - 10, 10.f));
-			ImGui::SetNextWindowSize(ImVec2(k_panel_width, fminf(lastWindowVec.y + 36.f, ImGui::GetIO().DisplaySize.y - 36.f)));
+			ImGui::SetNextWindowPos(ImVec2(
+				ImGui::GetIO().DisplaySize.x - k_panel_width - 10,
+				10)
+			);
+			ImGui::SetNextWindowSize(ImVec2(
+				k_panel_width,
+				fminf(lastWindowVec.y + 36, ImGui::GetIO().DisplaySize.y - 20))
+			);
 			ImGui::Begin("Controller Color", nullptr, window_flags);
 			ImGui::BeginGroup();
 			{
@@ -2000,7 +2009,6 @@ void AppStage_ColorCalibration::renderUI()
 	case eMenuState::detection_init:
 	{
 		ImGui::SetNextWindowPosCenter();
-		ImGui::SetNextWindowSize(ImVec2(600, 150));
 		ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
 		if (!m_areAllControllerStreamsActive)
@@ -2126,7 +2134,7 @@ void AppStage_ColorCalibration::renderUI()
 			setState(eMenuState::manualConfig);
 		}
 
-
+		ImGui::SetWindowSize(ImVec2(600, 0));
 		ImGui::End();
 		break;
 	}
@@ -2508,7 +2516,6 @@ void AppStage_ColorCalibration::renderUI()
 		case eDetectionFailReason::failreason_no_detection:
 		{
 			ImGui::SetNextWindowPosCenter();
-			ImGui::SetNextWindowSize(ImVec2(600, 175));
 			ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
 			ImGui::TextWrapped("Color sampling failed!");
@@ -2533,13 +2540,13 @@ void AppStage_ColorCalibration::renderUI()
 				request_change_tracker(0);
 			}
 
+			ImGui::SetWindowSize(ImVec2(600, 0));
 			ImGui::End();
 			break;
 		}
 		case eDetectionFailReason::failreason_canceled:
 		{
 			ImGui::SetNextWindowPosCenter();
-			ImGui::SetNextWindowSize(ImVec2(600, 100));
 			ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
 			ImGui::Text("Color sampling aborted!");
@@ -2553,13 +2560,13 @@ void AppStage_ColorCalibration::renderUI()
 				request_change_tracker(0);
 			}
 
+			ImGui::SetWindowSize(ImVec2(600, 0));
 			ImGui::End();
 			break;
 		}
 		case eDetectionFailReason::failreason_unsupported_controller:
 		{
 			ImGui::SetNextWindowPosCenter();
-			ImGui::SetNextWindowSize(ImVec2(600, 150));
 			ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
 			ImGui::TextWrapped("Color sampling failed!");
@@ -2575,13 +2582,13 @@ void AppStage_ColorCalibration::renderUI()
 				request_change_tracker(0);
 			}
 
+			ImGui::SetWindowSize(ImVec2(600, 0));
 			ImGui::End();
 			break;
 		}
 		case eDetectionFailReason::failreason_unsupported_tracker:
 		{
 			ImGui::SetNextWindowPosCenter();
-			ImGui::SetNextWindowSize(ImVec2(600, 200));
 			ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
 			ImGui::TextWrapped("Color sampling failed!");
@@ -2607,13 +2614,13 @@ void AppStage_ColorCalibration::renderUI()
 				request_change_tracker(0);
 			}
 
+			ImGui::SetWindowSize(ImVec2(600, 0));
 			ImGui::End();
 			break;
 		}
 		default:
 		{
 			ImGui::SetNextWindowPosCenter();
-			ImGui::SetNextWindowSize(ImVec2(600, 150));
 			ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
 			ImGui::TextWrapped("Color sampling on controller #%d and tracker #%d failed!", m_masterControllerView->ControllerID, m_trackerView->tracker_info.tracker_id);
@@ -2635,6 +2642,7 @@ void AppStage_ColorCalibration::renderUI()
 				request_change_tracker(0);
 			}
 
+			ImGui::SetWindowSize(ImVec2(600, 0));
 			ImGui::End();
 			break;
 		}
@@ -2648,7 +2656,6 @@ void AppStage_ColorCalibration::renderUI()
 		m_bDetectingColors = false;
 
 		ImGui::SetNextWindowPosCenter();
-		ImGui::SetNextWindowSize(ImVec2(600, 100));
 		ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
 		ImGui::TextWrapped("Color sampling finished.");
@@ -2663,6 +2670,7 @@ void AppStage_ColorCalibration::renderUI()
 			request_change_tracker(0);
 		}
 
+		ImGui::SetWindowSize(ImVec2(600, 0));
 		ImGui::End();
 		break;
 	}
@@ -2716,11 +2724,11 @@ void AppStage_ColorCalibration::renderUI()
     case eMenuState::waitingForStreamStartResponse:
     {
         ImGui::SetNextWindowPosCenter();
-        ImGui::SetNextWindowSize(ImVec2(k_panel_width, 50));
         ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
         ImGui::Text("Waiting for device stream to start...");
 
+		ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
         ImGui::End();
     } break;
 
@@ -2729,7 +2737,6 @@ void AppStage_ColorCalibration::renderUI()
     case eMenuState::failedControllerStartRequest:
     {
         ImGui::SetNextWindowPosCenter();
-        ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
         ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
         if (m_menuState == eMenuState::failedTrackerStartStreamRequest)
@@ -2755,6 +2762,7 @@ void AppStage_ColorCalibration::renderUI()
             request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
         }
 
+		ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
         ImGui::End();
     } break;
 

@@ -291,18 +291,17 @@ void AppStage_OpticalRecenter::renderUI()
     case eCalibrationMenuState::waitingForStreamStartResponse:
         {
             ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::Text("Waiting for server response...");
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
     case eCalibrationMenuState::failedStreamStart:
 	case eCalibrationMenuState::failedTrackerListRequest:
         {
             ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::Text("Failed server request!");
@@ -319,12 +318,12 @@ void AppStage_OpticalRecenter::renderUI()
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
 	case eCalibrationMenuState::waitForStablePosition:
 	{
 		ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-		ImGui::SetNextWindowSize(ImVec2(k_panel_width, 175));
 		ImGui::Begin(k_window_title, nullptr, window_flags);
 
 		ImGui::Text("Please place the controller on the ground to sample the new playspace center location.");
@@ -340,6 +339,7 @@ void AppStage_OpticalRecenter::renderUI()
 			request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
 		}
 
+		ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
 		ImGui::End();
 	} break;
 	case eCalibrationMenuState::measureOpticalPosition:
@@ -357,7 +357,6 @@ void AppStage_OpticalRecenter::renderUI()
 		else
 		{
 			ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-			ImGui::SetNextWindowSize(ImVec2(k_panel_width, 175));
 			ImGui::Begin(k_window_title, nullptr, window_flags);
 
 			ImGui::Text("Unalbe to find controller. Make sure the controller is visible to the trackers.");
@@ -367,6 +366,7 @@ void AppStage_OpticalRecenter::renderUI()
 				request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
 			}
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
 			ImGui::End();
 		}
 
@@ -374,7 +374,6 @@ void AppStage_OpticalRecenter::renderUI()
 	case eCalibrationMenuState::waitForStableOrientation:
 	{
 		ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-		ImGui::SetNextWindowSize(ImVec2(k_panel_width, 175));
 		ImGui::Begin(k_window_title, nullptr, window_flags);
 
 		ImGui::Text("Please place the controller on the ground away from the previous position,");
@@ -391,6 +390,7 @@ void AppStage_OpticalRecenter::renderUI()
 			request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
 		}
 
+		ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
 		ImGui::End();
 	} break;
 	case eCalibrationMenuState::measureOpticalOrientation:
@@ -409,7 +409,6 @@ void AppStage_OpticalRecenter::renderUI()
 		else
 		{
 			ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-			ImGui::SetNextWindowSize(ImVec2(k_panel_width, 175));
 			ImGui::Begin(k_window_title, nullptr, window_flags);
 
 			ImGui::Text("Unalbe to find controller. Make sure the controller is visible to the trackers.");
@@ -419,6 +418,7 @@ void AppStage_OpticalRecenter::renderUI()
 				request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
 			}
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
 			ImGui::End();
 		}
 
@@ -461,7 +461,6 @@ void AppStage_OpticalRecenter::renderUI()
     case eCalibrationMenuState::test:
         {
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 160));
             ImGui::Begin("Test Optical Playspace Recenter", nullptr, window_flags);
 
 			PSMQuatf orientation;
@@ -486,6 +485,7 @@ void AppStage_OpticalRecenter::renderUI()
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
     default:

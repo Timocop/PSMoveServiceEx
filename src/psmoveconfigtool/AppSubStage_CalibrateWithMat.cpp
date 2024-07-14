@@ -736,173 +736,197 @@ void AppSubStage_CalibrateWithMat::renderUI()
     case AppSubStage_CalibrateWithMat::eMenuState::calibrationStepPlaceController:
     case AppSubStage_CalibrateWithMat::eMenuState::calibrationStepPlaceHMD:
         {
-            ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 150));
+			static ImVec2 lastWindowVec = ImVec2(0, 4);
+
+			ImGui::SetNextWindowPos(ImVec2(
+				ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 
+				20.f)
+			);
+			ImGui::SetNextWindowSize(ImVec2(
+				k_panel_width, 
+				fminf(lastWindowVec.y + 36, ImGui::GetIO().DisplaySize.y - 64))
+			);
             ImGui::Begin(k_window_title, nullptr, window_flags);
+			ImGui::BeginGroup();
+			{
+				ImGui::Text("Calibration mat paper format: %s", k_paper_formats_names[m_iPaperFormat]);
 
-			ImGui::Text("Calibration mat paper format: %s", k_paper_formats_names[m_iPaperFormat]);
-
-            if (m_menuState == AppSubStage_CalibrateWithMat::eMenuState::calibrationStepPlaceController)
-            {
-                ImGui::Text("Stand the Controller upright on location #%d (%s)",
-                    m_sampleLocationIndex + 1, k_sample_location_names[m_sampleLocationIndex]);
-            }
-            else
-            {
-                ImGui::Text("Stand the HMD upright on location #%d (%s)",
-                    m_sampleLocationIndex + 1, k_sample_location_names[m_sampleLocationIndex]);
-            }
-
-            if (m_bIsStable)
-            {
-                std::chrono::duration<double, std::milli> stableDuration = now - m_stableStartTime;
-
-                ImGui::Text("[stable for %d/%dms]", 
-                    static_cast<int>(stableDuration.count()),
-                    static_cast<int>(k_stabilize_wait_time_ms));
-            }
-            else
-            {
-                ImGui::Text("[Not stable and upright]");
-            }
-
-            ImGui::Separator();
-
-            if (m_parentStage->get_tracker_count() > 1)
-            {
-				if (ImGui::Button(" < ##Previous Tracker"))
-                {
-                    m_parentStage->go_previous_tracker();
-                }
-                ImGui::SameLine();
-				if (ImGui::Button(" > ##Next Tracker"))
-                {
-                    m_parentStage->go_next_tracker();
-                }
-				ImGui::SameLine();
-				ImGui::Text("Tracker #%d", m_parentStage->get_render_tracker_index() + 1);
-            }
-
-			ImGui::Separator();
-
-            if (ImGui::Button("Force Continue"))
-            {
-                m_bForceStable= true;
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("Restart Calibration"))
-            {
-                setState(AppSubStage_CalibrateWithMat::eMenuState::initial);
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("Cancel"))
-            {
-				// Disable blinking if its enabled.
-				if (m_iLightFlicker > 0)
+				if (m_menuState == AppSubStage_CalibrateWithMat::eMenuState::calibrationStepPlaceController)
 				{
-					const PSMController *ControllerView = m_parentStage->get_calibration_controller_view();
-					PSM_SetControllerLEDOverrideColor(ControllerView->ControllerID, 0, 0, 0);
+					ImGui::Text("Stand the Controller upright on location #%d (%s)",
+						m_sampleLocationIndex + 1, k_sample_location_names[m_sampleLocationIndex]);
+				}
+				else
+				{
+					ImGui::Text("Stand the HMD upright on location #%d (%s)",
+						m_sampleLocationIndex + 1, k_sample_location_names[m_sampleLocationIndex]);
 				}
 
-                m_parentStage->setState(AppStage_ComputeTrackerPoses::eMenuState::verifyTrackers);
-            }
+				if (m_bIsStable)
+				{
+					std::chrono::duration<double, std::milli> stableDuration = now - m_stableStartTime;
 
-            ImGui::End();
+					ImGui::Text("[stable for %d/%dms]",
+						static_cast<int>(stableDuration.count()),
+						static_cast<int>(k_stabilize_wait_time_ms));
+				}
+				else
+				{
+					ImGui::Text("[Not stable and upright]");
+				}
+
+				ImGui::Separator();
+
+				if (m_parentStage->get_tracker_count() > 1)
+				{
+					if (ImGui::Button(" < ##Previous Tracker"))
+					{
+						m_parentStage->go_previous_tracker();
+					}
+					ImGui::SameLine();
+					if (ImGui::Button(" > ##Next Tracker"))
+					{
+						m_parentStage->go_next_tracker();
+					}
+					ImGui::SameLine();
+					ImGui::Text("Tracker #%d", m_parentStage->get_render_tracker_index() + 1);
+				}
+
+				ImGui::Separator();
+
+				if (ImGui::Button("Force Continue"))
+				{
+					m_bForceStable = true;
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Restart Calibration"))
+				{
+					setState(AppSubStage_CalibrateWithMat::eMenuState::initial);
+				}
+				ImGui::SameLine();
+				if (ImGui::Button("Cancel"))
+				{
+					// Disable blinking if its enabled.
+					if (m_iLightFlicker > 0)
+					{
+						const PSMController *ControllerView = m_parentStage->get_calibration_controller_view();
+						PSM_SetControllerLEDOverrideColor(ControllerView->ControllerID, 0, 0, 0);
+					}
+
+					m_parentStage->setState(AppStage_ComputeTrackerPoses::eMenuState::verifyTrackers);
+				}
+			}
+			ImGui::EndGroup();
+			if (ImGui::IsItemVisible())
+				lastWindowVec = ImGui::GetItemRectSize();
+			ImGui::End();
         } break;
     case AppSubStage_CalibrateWithMat::eMenuState::calibrationStepRecordController:
     case AppSubStage_CalibrateWithMat::eMenuState::calibrationStepRecordHMD:
         {
-            ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 300));
+			static ImVec2 lastWindowVec = ImVec2(0, 4);
+
+			ImGui::SetNextWindowPos(ImVec2(
+				ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 
+				20.f)
+			);
+			ImGui::SetNextWindowSize(ImVec2(
+				k_panel_width, 
+				fminf(lastWindowVec.y + 36, ImGui::GetIO().DisplaySize.y - 64))
+			);
             ImGui::Begin(k_window_title, nullptr, window_flags);
-
-            if (m_menuState == AppSubStage_CalibrateWithMat::eMenuState::calibrationStepRecordController)
-            {
-                ImGui::Text("Recording Controller samples at location #%d (%s)",
-                    m_sampleLocationIndex + 1, k_sample_location_names[m_sampleLocationIndex]);
-            }
-            else
-            {
-                ImGui::Text("Recording HMD samples at location #%d (%s)",
-                    m_sampleLocationIndex + 1, k_sample_location_names[m_sampleLocationIndex]);
-            }
-
-			int samples_count = 0;
-			int samples_total = 0;
-
-            bool bAnyTrackersSampling = false;
-            for (int tracker_index = 0; tracker_index < m_parentStage->get_tracker_count(); ++tracker_index)
-            {
-                const int sampleCount = m_deviceTrackerPoseStats[tracker_index]->sampleCount;
-
-				samples_count += sampleCount;
-				samples_total += k_mat_calibration_sample_count;
-
-                if (sampleCount < k_mat_calibration_sample_count)
-                {
-                    ImGui::Text("Tracker %d: sample %d/%d", tracker_index + 1, sampleCount, k_mat_calibration_sample_count);
-                    bAnyTrackersSampling = true;
-                }
-                else
-                {
-                    ImGui::Text("Tracker %d: COMPLETE", tracker_index + 1);
-                }
-            }
-
-            if (!bAnyTrackersSampling)
-            {
-                if (m_menuState == AppSubStage_CalibrateWithMat::eMenuState::calibrationStepRecordController)
-                {
-                    ImGui::Text("Location sampling complete. Please pick up the controller.");
-                }
-                else
-                {
-                    ImGui::Text("Location sampling complete. Please pick up the HMD.");
-                }
-            }
-			else
+			ImGui::BeginGroup();
 			{
-				if (samples_total > 0)
+				if (m_menuState == AppSubStage_CalibrateWithMat::eMenuState::calibrationStepRecordController)
 				{
-					const float fraction = clampf01(static_cast<float>(samples_count) / static_cast<float>(samples_total));
+					ImGui::Text("Recording Controller samples at location #%d (%s)",
+						m_sampleLocationIndex + 1, k_sample_location_names[m_sampleLocationIndex]);
+				}
+				else
+				{
+					ImGui::Text("Recording HMD samples at location #%d (%s)",
+						m_sampleLocationIndex + 1, k_sample_location_names[m_sampleLocationIndex]);
+				}
 
-					ImGui::Separator();
-					ImGui::Text("Sampling progress:");
-					ImGui::ProgressBar(fraction);
+				int samples_count = 0;
+				int samples_total = 0;
+
+				bool bAnyTrackersSampling = false;
+				for (int tracker_index = 0; tracker_index < m_parentStage->get_tracker_count(); ++tracker_index)
+				{
+					const int sampleCount = m_deviceTrackerPoseStats[tracker_index]->sampleCount;
+
+					samples_count += sampleCount;
+					samples_total += k_mat_calibration_sample_count;
+
+					if (sampleCount < k_mat_calibration_sample_count)
+					{
+						ImGui::Text("Tracker %d: sample %d/%d", tracker_index + 1, sampleCount, k_mat_calibration_sample_count);
+						bAnyTrackersSampling = true;
+					}
+					else
+					{
+						ImGui::Text("Tracker %d: COMPLETE", tracker_index + 1);
+					}
+				}
+
+				if (!bAnyTrackersSampling)
+				{
+					if (m_menuState == AppSubStage_CalibrateWithMat::eMenuState::calibrationStepRecordController)
+					{
+						ImGui::Text("Location sampling complete. Please pick up the controller.");
+					}
+					else
+					{
+						ImGui::Text("Location sampling complete. Please pick up the HMD.");
+					}
+				}
+				else
+				{
+					if (samples_total > 0)
+					{
+						const float fraction = clampf01(static_cast<float>(samples_count) / static_cast<float>(samples_total));
+
+						ImGui::Separator();
+						ImGui::Text("Sampling progress:");
+						ImGui::ProgressBar(fraction);
+					}
+				}
+
+				ImGui::Separator();
+
+				if (m_parentStage->get_tracker_count() > 1)
+				{
+					if (ImGui::Button(" < ##Previous Tracker"))
+					{
+						m_parentStage->go_previous_tracker();
+					}
+					ImGui::SameLine();
+					if (ImGui::Button(" > ##Next Tracker"))
+					{
+						m_parentStage->go_next_tracker();
+					}
+					ImGui::SameLine();
+					ImGui::Text("Tracker #%d", m_parentStage->get_render_tracker_index() + 1);
+				}
+
+				ImGui::Separator();
+
+				if (ImGui::Button("Cancel"))
+				{
+					// Disable blinking if its enabled.
+					if (m_iLightFlicker > 0)
+					{
+						const PSMController *ControllerView = m_parentStage->get_calibration_controller_view();
+						PSM_SetControllerLEDOverrideColor(ControllerView->ControllerID, 0, 0, 0);
+					}
+
+					m_parentStage->setState(AppStage_ComputeTrackerPoses::eMenuState::verifyTrackers);
 				}
 			}
-
-            ImGui::Separator();
-
-            if (m_parentStage->get_tracker_count() > 1)
-            {
-				if (ImGui::Button(" < ##Previous Tracker"))
-				{
-					m_parentStage->go_previous_tracker();
-				}
-				ImGui::SameLine();
-				if (ImGui::Button(" > ##Next Tracker"))
-				{
-					m_parentStage->go_next_tracker();
-				}
-				ImGui::SameLine();
-                ImGui::Text("Tracker #%d", m_parentStage->get_render_tracker_index() + 1);
-            }
-
-			ImGui::Separator();
-
-            if (ImGui::Button("Cancel"))
-            {
-				// Disable blinking if its enabled.
-				if (m_iLightFlicker > 0)
-				{
-					const PSMController *ControllerView = m_parentStage->get_calibration_controller_view();
-					PSM_SetControllerLEDOverrideColor(ControllerView->ControllerID, 0, 0, 0);
-				}
-
-                m_parentStage->setState(AppStage_ComputeTrackerPoses::eMenuState::verifyTrackers);
-            }
-
+			ImGui::EndGroup();
+			if (ImGui::IsItemVisible())
+				lastWindowVec = ImGui::GetItemRectSize();
             ImGui::End();
         } break;
     case AppSubStage_CalibrateWithMat::eMenuState::calibrationStepComputeTrackerPoses:

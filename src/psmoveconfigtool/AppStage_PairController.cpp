@@ -71,7 +71,6 @@ void AppStage_PairController::renderUI()
     case eControllerMenuState::pendingControllerUnpairRequest:
         {
             ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(300, 150));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::Text("Waiting for controller to unpair...");
@@ -82,12 +81,12 @@ void AppStage_PairController::renderUI()
                 request_cancel_bluetooth_operation(m_pendingBluetoothOpControllerIndex);
             }
 
+			ImGui::SetWindowSize(ImVec2(300, 0));
             ImGui::End();
         } break;
     case eControllerMenuState::failedControllerUnpairRequest:
         {
             ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(300, 150));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::Text("Failed to unpair controller!");
@@ -102,12 +101,12 @@ void AppStage_PairController::renderUI()
                 m_app->setAppStage(AppStage_MainMenu::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(300, 0));
             ImGui::End();
         } break;
     case eControllerMenuState::pendingControllerPairRequest:
         {
 			ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(400, 200));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             // Show progress
@@ -199,12 +198,12 @@ void AppStage_PairController::renderUI()
                 request_cancel_bluetooth_operation(m_pendingBluetoothOpControllerIndex);
             }
 
+			ImGui::SetWindowSize(ImVec2(400, 0));
             ImGui::End();
         } break;
     case eControllerMenuState::failedControllerPairRequest:
         {
 			ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(300, 150));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::Text("Failed to pair controller!");
@@ -219,22 +218,24 @@ void AppStage_PairController::renderUI()
                 m_app->setAppStage(AppStage_MainMenu::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(300, 0));
             ImGui::End();
         } break;
 
     case eControllerMenuState::pendingCancelBluetoothRequest:
         {
 			ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(300, 150));
 			ImGui::Begin(k_window_title, nullptr, window_flags);
+
             ImGui::Text("Canceling bluetooth operation...");
+
+			ImGui::SetWindowSize(ImVec2(300, 0));
             ImGui::End();
         } break;
 
     case eControllerMenuState::failedCancelBluetoothRequest:
         {
             ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(300, 150));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::Text("Failed to cancel bluetooth operation (already completed?)");
@@ -249,6 +250,7 @@ void AppStage_PairController::renderUI()
                 m_app->setAppStage(AppStage_MainMenu::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(300, 0));
             ImGui::End();
         } break;
 

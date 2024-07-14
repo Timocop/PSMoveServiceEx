@@ -149,55 +149,66 @@ void AppStage_TestTracker::renderUI()
     {
     case eTrackerMenuState::idle:
     {
-        ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-        ImGui::SetNextWindowSize(ImVec2(k_panel_width, 100));
+		static ImVec2 lastWindowVec = ImVec2(0, 4);
+        ImGui::SetNextWindowPos(ImVec2(
+			ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 
+			20.f)
+		);
+		ImGui::SetNextWindowSize(ImVec2(
+			k_panel_width,
+			fminf(lastWindowVec.y + 36, ImGui::GetIO().DisplaySize.y - 64))
+		);
         ImGui::Begin(k_window_title, nullptr, window_flags);
-
-		std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
-		std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastStreamFps;
-		if (timeSinceLast.count() > 1000.f)
+		ImGui::BeginGroup();
 		{
-			m_displayFps = m_streamFps;
-			m_streamFps = 0;
-			m_lastStreamFps = now;
+			std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+			std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastStreamFps;
+			if (timeSinceLast.count() > 1000.f)
+			{
+				m_displayFps = m_streamFps;
+				m_streamFps = 0;
+				m_lastStreamFps = now;
+			}
+
+			if (ImGui::Button(" < ##TrackerIndex"))
+			{
+				m_app->getAppStage<AppStage_TrackerSettings>()->set_selectedTrackerIndex(((tracker_index + tracker_count) - 1) % tracker_count);
+				m_app->getAppStage<AppStage_TrackerSettings>()->gotoVideoTest(true);
+
+				// Goes back to tracker settings.
+				request_tracker_reset_exposure_gain();
+			}
+			ImGui::SameLine();
+			if (ImGui::Button(" > ##TrackerIndex"))
+			{
+				m_app->getAppStage<AppStage_TrackerSettings>()->set_selectedTrackerIndex(((tracker_index + tracker_count) + 1) % tracker_count);
+				m_app->getAppStage<AppStage_TrackerSettings>()->gotoVideoTest(true);
+
+				// Goes back to tracker settings.
+				request_tracker_reset_exposure_gain();
+			}
+			ImGui::SameLine();
+			ImGui::Text("Tracker: #%d", m_tracker_view->tracker_info.tracker_id);
+
+			if (m_displayFps < m_trackerFrameRate - 7.5f)
+			{
+				ImGui::TextColored(ImColor(1.f, 0.f, 0.f), "Tracker Frame Rate: %d", m_displayFps);
+			}
+			else
+			{
+				ImGui::Text("Tracker Frame Rate: %d", m_displayFps);
+			}
+
+			ImGui::Separator();
+
+			if (ImGui::Button("Return to Tracker Settings"))
+			{
+				request_tracker_reset_exposure_gain();
+			}
 		}
-
-		if (ImGui::Button(" < ##TrackerIndex"))
-		{
-			m_app->getAppStage<AppStage_TrackerSettings>()->set_selectedTrackerIndex(((tracker_index + tracker_count) - 1) % tracker_count);
-			m_app->getAppStage<AppStage_TrackerSettings>()->gotoVideoTest(true);
-
-			// Goes back to tracker settings.
-			request_tracker_reset_exposure_gain();
-		}
-		ImGui::SameLine();
-		if (ImGui::Button(" > ##TrackerIndex"))
-		{
-			m_app->getAppStage<AppStage_TrackerSettings>()->set_selectedTrackerIndex(((tracker_index + tracker_count) + 1) % tracker_count);
-			m_app->getAppStage<AppStage_TrackerSettings>()->gotoVideoTest(true);
-
-			// Goes back to tracker settings.
-			request_tracker_reset_exposure_gain();
-		}
-		ImGui::SameLine();
-		ImGui::Text("Tracker: #%d", m_tracker_view->tracker_info.tracker_id);
-
-		if (m_displayFps < m_trackerFrameRate - 7.5f)
-		{
-			ImGui::TextColored(ImColor(1.f, 0.f, 0.f), "Tracker Frame Rate: %d", m_displayFps);
-		}
-		else
-		{
-			ImGui::Text("Tracker Frame Rate: %d", m_displayFps);
-		}
-
-		ImGui::Separator();
-
-        if (ImGui::Button("Return to Tracker Settings"))
-        {
-			request_tracker_reset_exposure_gain();
-        }              
-
+		ImGui::EndGroup();
+		if (ImGui::IsItemVisible())
+			lastWindowVec = ImGui::GetItemRectSize();
         ImGui::End();
     } break;
 
@@ -205,60 +216,60 @@ void AppStage_TestTracker::renderUI()
 	case eTrackerMenuState::pendingTrackerGetSettings:
 	case eTrackerMenuState::pendingTrackerSetExposureGain:
     {
-        ImGui::SetNextWindowPosCenter();
-        ImGui::SetNextWindowSize(ImVec2(k_panel_width, 50));
-        ImGui::Begin(k_window_title, nullptr, window_flags);
+		ImGui::SetNextWindowPosCenter();
+		ImGui::Begin(k_window_title, nullptr, window_flags);
 
-        ImGui::Text("Waiting for tracker stream to start...");
+		ImGui::Text("Waiting for tracker stream to start...");
 
-        ImGui::End();
+		ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
+		ImGui::End();
     } break;
 
 	case eTrackerMenuState::failedTrackerStartStreamRequest:
 	case eTrackerMenuState::failedTrackerGetSettings:
 	case eTrackerMenuState::failedTrackerSetExposureGain:
     {
-        ImGui::SetNextWindowPosCenter();
-        ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
-        ImGui::Begin(k_window_title, nullptr, window_flags);
+		ImGui::SetNextWindowPosCenter();
+		ImGui::Begin(k_window_title, nullptr, window_flags);
 
-        ImGui::Text("Failed to start tracker stream!");
+		ImGui::Text("Failed to start tracker stream!");
 
-        if (ImGui::Button("Return to Tracker Settings"))
-        {
+		if (ImGui::Button("Return to Tracker Settings"))
+		{
 			request_tracker_reset_exposure_gain();
-        }
+		}
 
-        ImGui::End();
+		ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
+		ImGui::End();
     } break;
 
     case eTrackerMenuState::pendingTrackerStopStreamRequest:
 	case eTrackerMenuState::pendingTrackerResetExposureGain:
     {
-        ImGui::SetNextWindowPosCenter();
-        ImGui::SetNextWindowSize(ImVec2(k_panel_width, 50));
-        ImGui::Begin(k_window_title, nullptr, window_flags);
+		ImGui::SetNextWindowPosCenter();
+		ImGui::Begin(k_window_title, nullptr, window_flags);
 
-        ImGui::Text("Waiting for tracker stream to stop...");
+		ImGui::Text("Waiting for tracker stream to stop...");
 
-        ImGui::End();
+		ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
+		ImGui::End();
     } break;
 
 	case eTrackerMenuState::failedTrackerStopStreamRequest:
 	case eTrackerMenuState::failedTrackerResetExposureGain:
     {
-        ImGui::SetNextWindowPosCenter();
-        ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
-        ImGui::Begin(k_window_title, nullptr, window_flags);
+		ImGui::SetNextWindowPosCenter();
+		ImGui::Begin(k_window_title, nullptr, window_flags);
 
-        ImGui::Text("Failed to stop tracker stream!");
+		ImGui::Text("Failed to stop tracker stream!");
 
-        if (ImGui::Button("Return to Tracker Settings"))
-        {
+		if (ImGui::Button("Return to Tracker Settings"))
+		{
 			request_tracker_reset_exposure_gain();
-        }
+		}
 
-        ImGui::End();
+		ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
+		ImGui::End();
     } break;
 
     default:

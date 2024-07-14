@@ -161,6 +161,8 @@ void AppStage_HMDSettings::render()
 
 void AppStage_HMDSettings::renderUI()
 {
+	const float k_panel_width = 550.f;
+
     const char *k_window_title = "HMD Settings";
     const ImGuiWindowFlags window_flags =
         ImGuiWindowFlags_ShowBorders |
@@ -173,10 +175,15 @@ void AppStage_HMDSettings::renderUI()
     {
     case eHmdMenuState::idle:
     {
-		static ImVec2 lastWindowVec = ImVec2(0.f, 4.f);
-
-		ImGui::SetNextWindowSize(ImVec2(550, fminf(lastWindowVec.y + 36.f, ImGui::GetIO().DisplaySize.y - 36.f)));
-		ImGui::SetNextWindowCenterPosOffset(ImVec2(-200, 0));
+		static ImVec2 lastWindowVec = ImVec2(0, 4);
+		ImGui::SetNextWindowSize(ImVec2(
+			k_panel_width, fminf(lastWindowVec.y + 36,
+				ImGui::GetIO().DisplaySize.y - 64))
+		);
+		ImGui::SetNextWindowPos(ImVec2(
+			fmaxf((k_panel_width / 2) - 32, (ImGui::GetIO().DisplaySize.x / 2) - (k_panel_width / 2)) - 200,
+			32)
+		);
         ImGui::Begin(k_window_title, nullptr, window_flags & ~ImGuiWindowFlags_NoScrollbar);
 		ImGui::BeginGroup();
 		{
@@ -212,8 +219,8 @@ void AppStage_HMDSettings::renderUI()
 				ImGui::Text("HMD: %d", m_selectedHmdIndex);
 
 				{
-					static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
-					ImGui::BeginChild("##InfoChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
+					static ImVec2 lastChildVec = ImVec2(0, 4);
+					ImGui::BeginChild("##InfoChild", ImVec2(0, lastChildVec.y + 16), true);
 					ImGui::BeginGroup();
 					{
 						ImGui::Text("HMD Information:");
@@ -313,10 +320,10 @@ void AppStage_HMDSettings::renderUI()
 				// Combo box selection for hmd tracking color
 				if (m_tabSelectedTab == 0)
 				{
-					ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5.f);
+					ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5);
 
-					static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
-					ImGui::BeginChild("##SettingsChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
+					static ImVec2 lastChildVec = ImVec2(0, 4);
+					ImGui::BeginChild("##SettingsChild", ImVec2(0, lastChildVec.y + 16), true);
 					ImGui::BeginGroup();
 					{
 						if (hmdInfo.HmdType == AppStage_HMDSettings::VirtualHMD)
@@ -391,10 +398,10 @@ void AppStage_HMDSettings::renderUI()
 
 						if (m_tabSettingsSelectedTab == 0)
 						{
-							ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5.f);
+							ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5);
 
-							static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
-							ImGui::BeginChild("##FiltersChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
+							static ImVec2 lastChildVec2 = ImVec2(0, 4);
+							ImGui::BeginChild("##FiltersChild", ImVec2(0, lastChildVec2.y + 16), true);
 							ImGui::BeginGroup();
 							{
 								if (hmdInfo.HmdType == AppStage_HMDSettings::eHMDType::Morpheus)
@@ -506,10 +513,10 @@ void AppStage_HMDSettings::renderUI()
 
 					if (m_tabSettingsSelectedTab == 1)
 					{
-						ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5.f);
+						ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5);
 
-						static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
-						ImGui::BeginChild("##FilterSettingsChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
+						static ImVec2 lastChildVec2 = ImVec2(0, 4);
+						ImGui::BeginChild("##FilterSettingsChild", ImVec2(0, lastChildVec2.y + 16), true);
 						ImGui::BeginGroup();
 						{
 							bool request_offset = false;
@@ -845,10 +852,10 @@ void AppStage_HMDSettings::renderUI()
 
 					if (m_tabSettingsSelectedTab == 2)
 					{
-						ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5.f);
+						ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5);
 
-						static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
-						ImGui::BeginChild("##OffsetsChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
+						static ImVec2 lastChildVec2 = ImVec2(0, 4);
+						ImGui::BeginChild("##OffsetsChild", ImVec2(0, lastChildVec2.y + 16), true);
 						ImGui::BeginGroup();
 						{
 							static int iOffsetView = 0;
@@ -1087,10 +1094,10 @@ void AppStage_HMDSettings::renderUI()
 
 				if (m_tabSelectedTab == 1)
 				{
-					ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5.f);
+					ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5);
 
-					static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
-					ImGui::BeginChild("##CalibrationChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
+					static ImVec2 lastChildVec = ImVec2(0, 4);
+					ImGui::BeginChild("##CalibrationChild", ImVec2(0, lastChildVec.y + 16), true);
 					ImGui::BeginGroup();
 					{
 						if (hmdInfo.HmdType == AppStage_HMDSettings::eHMDType::Morpheus)
@@ -1119,10 +1126,10 @@ void AppStage_HMDSettings::renderUI()
 
 				if (m_tabSelectedTab == 2)
 				{
-					ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5.f);
+					ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5);
 
-					static ImVec2 lastChildVec = ImVec2(0.f, 4.f);
-					ImGui::BeginChild("##TestsChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
+					static ImVec2 lastChildVec = ImVec2(0, 4);
+					ImGui::BeginChild("##TestsChild", ImVec2(0, lastChildVec.y + 16), true);
 					ImGui::BeginGroup();
 					{
 						if (hmdInfo.HmdType == AppStage_HMDSettings::eHMDType::Morpheus)
@@ -1164,7 +1171,6 @@ void AppStage_HMDSettings::renderUI()
 		ImGui::EndGroup();
 		if (ImGui::IsItemVisible())
 			lastWindowVec = ImGui::GetItemRectSize();
-
         ImGui::End();
     } break;
     case eHmdMenuState::pendingHmdListRequest:

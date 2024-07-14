@@ -154,17 +154,16 @@ void AppStage_TestButtons::renderUI()
     case eMenuState::waitingForStreamStartResponse:
         {
             ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::Text("Waiting for controller stream to start...");
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
     case eMenuState::failedStreamStart:
         {
             ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::Text("Failed to start controller stream!");
@@ -181,12 +180,12 @@ void AppStage_TestButtons::renderUI()
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
     case eMenuState::idle:
         {
             ImGui::SetNextWindowPosCenter();
-            //ImGui::SetNextWindowSize(ImVec2(350, 490));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             switch (m_controllerView->ControllerType)
@@ -330,6 +329,7 @@ void AppStage_TestButtons::renderUI()
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
 

@@ -349,27 +349,26 @@ void AppStage_HMDAccelerometerCalibration::renderUI()
 	case eCalibrationMenuState::pendingPlayspaceRequest:
 		{
 			ImGui::SetNextWindowPosCenter();
-			ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
 			ImGui::Begin(k_window_title, nullptr, window_flags);
 
 			ImGui::Text("Waiting for server response...");
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
 			ImGui::End();
 		} break;
 	case eCalibrationMenuState::waitingForStreamStartResponse:
         {
             ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::Text("Waiting for hmd stream to start...");
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
     case eCalibrationMenuState::failedStreamStart:
         {
             ImGui::SetNextWindowPosCenter();
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::Text("Failed to start hmd stream!");
@@ -386,12 +385,12 @@ void AppStage_HMDAccelerometerCalibration::renderUI()
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
     case eCalibrationMenuState::placeHMD:
         {
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
 			switch(m_hmdView->HmdType)
@@ -414,12 +413,12 @@ void AppStage_HMDAccelerometerCalibration::renderUI()
                 request_exit_to_app_stage(AppStage_HMDSettings::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
     case eCalibrationMenuState::measureNoise:
         {
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             float sampleFraction =
@@ -429,12 +428,12 @@ void AppStage_HMDAccelerometerCalibration::renderUI()
             ImGui::Text("Sampling accelerometer.");
             ImGui::ProgressBar(sampleFraction, ImVec2(250, 20));
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
     case eCalibrationMenuState::measureComplete:
         {
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 130));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
             ImGui::TextWrapped(
@@ -453,12 +452,12 @@ void AppStage_HMDAccelerometerCalibration::renderUI()
                 m_menuState = eCalibrationMenuState::placeHMD;
             }
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
     case eCalibrationMenuState::test:
         {
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
-            ImGui::SetNextWindowSize(ImVec2(k_panel_width, 80));
             ImGui::Begin("Test Accelerometer", nullptr, window_flags);
 
             if (m_bBypassCalibration)
@@ -482,6 +481,7 @@ void AppStage_HMDAccelerometerCalibration::renderUI()
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
             }
 
+			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
         } break;
     default:
