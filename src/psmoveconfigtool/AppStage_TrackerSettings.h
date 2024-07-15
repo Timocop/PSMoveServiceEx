@@ -171,6 +171,7 @@ private:
 	float m_drawRotation;
 
 	int m_tabSelectedTab;
+	int m_tabSelectedSubTab;
 
 };
 

@@ -49,6 +49,7 @@ AppStage_TrackerSettings::AppStage_TrackerSettings(App *app)
 	, playspace_scale_z(1.f)
 	, m_drawRotation(0.f)
 	, m_tabSelectedTab(0)
+	, m_tabSelectedSubTab(0)
 { }
 
 void AppStage_TrackerSettings::enter()
@@ -609,9 +610,17 @@ void AppStage_TrackerSettings::renderUI()
 							{
 								int controllerID = (m_selectedControllerIndex != -1) ? m_controllerInfos[m_selectedControllerIndex].ControllerID : -1;
 
-								if (ImGui::CollapsingHeader("Calibration##ControllerCalibration", 0, true, true) ||
+								if (ImGui::ButtonChecked("Calibration##SubTabCalibration", (m_tabSelectedSubTab == 0), ImVec2(200.f, 0.f)))
+									m_tabSelectedSubTab = 0;
+								ImGui::SameLine(0.f, 0.f);
+								if (ImGui::ButtonChecked("Testing##SubTabTesting", (m_tabSelectedSubTab == 1), ImVec2(200.f, 0.f)))
+									m_tabSelectedSubTab = 1;
+
+								if (m_tabSelectedSubTab == 0 ||
 									m_gotoControllerColorCalib)
 								{
+									ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5);
+
 									static ImVec2 lastChildVec2 = ImVec2(0, 4);
 									ImGui::BeginChild("##ControllerCalibrationChild", ImVec2(0, lastChildVec2.y + 16), true);
 									ImGui::BeginGroup();
@@ -661,9 +670,11 @@ void AppStage_TrackerSettings::renderUI()
 									ImGui::EndChild();
 								}
 
-								if (ImGui::CollapsingHeader("Testing##ControllerTesting", 0, true, true) ||
+								if (m_tabSelectedSubTab == 1 ||
 									m_gotoTestControllerTracking)
 								{
+									ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5);
+
 									static ImVec2 lastChildVec2 = ImVec2(0, 4);
 									ImGui::BeginChild("##ControllerTestingChild", ImVec2(0, lastChildVec2.y + 16), true);
 									ImGui::BeginGroup();
@@ -785,9 +796,17 @@ void AppStage_TrackerSettings::renderUI()
 								}
 							}
 
-							if (ImGui::CollapsingHeader("Calibration##HMDCalibration", 0, true, true) ||
+							if (ImGui::ButtonChecked("Calibration##SubTabCalibration", (m_tabSelectedSubTab == 0), ImVec2(200.f, 0.f)))
+								m_tabSelectedSubTab = 0;
+							ImGui::SameLine(0.f, 0.f);
+							if (ImGui::ButtonChecked("Testing##SubTabTesting", (m_tabSelectedSubTab == 1), ImVec2(200.f, 0.f)))
+								m_tabSelectedSubTab = 1;
+
+							if (m_tabSelectedSubTab == 0 ||
 								m_gotoHMDColorCalib)
 							{
+								ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5);
+
 								static ImVec2 lastChildVec2 = ImVec2(0, 4);
 								ImGui::BeginChild("##HMDCalibrationChild", ImVec2(0, lastChildVec2.y + 16), true);
 								ImGui::BeginGroup();
@@ -847,9 +866,11 @@ void AppStage_TrackerSettings::renderUI()
 								ImGui::EndChild();
 							}
 
-							if (ImGui::CollapsingHeader("Testing##HMDTesting", 0, true, true) ||
+							if (m_tabSelectedSubTab == 1 ||
 								m_gotoTestHmdTracking || m_gotoTrackingHmdVideo)
 							{
+								ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5);
+
 								static ImVec2 lastChildVec2 = ImVec2(0, 4);
 								ImGui::BeginChild("##HMDTestingChild", ImVec2(0, lastChildVec2.y + 16), true);
 								ImGui::BeginGroup();
