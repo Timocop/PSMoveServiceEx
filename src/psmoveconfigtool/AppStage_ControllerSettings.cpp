@@ -940,7 +940,7 @@ void AppStage_ControllerSettings::renderUI()
 
 											ImGui::Separator();
 
-											if (ImGui::Button("Reset Filter Defaults"))
+											if (ImGui::Button("      Reset Filter Defaults"))
 											{
 												controllerInfo.PredictionTime = 0.025f;
 												controllerInfo.AngPredictionTime = 0.025f;
@@ -957,6 +957,9 @@ void AppStage_ControllerSettings::renderUI()
 													request_set_orientation_filter(controllerInfo.ControllerID, controllerInfo.OrientationFilterName);
 												}
 											}
+											ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconClose()->getImTextureId(),
+												ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+												ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 											ImGui::PopItemWidth();
 										}
 										else if (controllerInfo.ControllerType == PSMController_DualShock4 && controllerInfo.IsBluetooth)
@@ -1012,7 +1015,7 @@ void AppStage_ControllerSettings::renderUI()
 
 											ImGui::Separator();
 
-											if (ImGui::Button("Reset Filter Defaults"))
+											if (ImGui::Button("      Reset Filter Defaults"))
 											{
 												controllerInfo.PredictionTime = 0.025f;
 												controllerInfo.AngPredictionTime = 0.025f;
@@ -1028,6 +1031,9 @@ void AppStage_ControllerSettings::renderUI()
 												request_set_orientation_filter(controllerInfo.ControllerID, controllerInfo.OrientationFilterName);
 												request_set_gyroscope_gain_setting(controllerInfo.ControllerID, controllerInfo.GyroGainSetting);
 											}
+											ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconClose()->getImTextureId(),
+												ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+												ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 											ImGui::PopItemWidth();
 										}
 									}
@@ -1483,7 +1489,7 @@ void AppStage_ControllerSettings::renderUI()
 
 											ImGui::Separator();
 
-											if (ImGui::Button("Reset Filter Settings Controller Defaults"))
+											if (ImGui::Button("      Reset Filter Settings Controller Defaults"))
 											{
 												controllerInfo.FilterLowPassOpticalDistance = 1.f;
 												controllerInfo.FilterLowPassOpticalSmoothing = 0.40f;
@@ -1511,8 +1517,11 @@ void AppStage_ControllerSettings::renderUI()
 
 												request_offset = true;
 											}
+											ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconClose()->getImTextureId(),
+												ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+												ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
-											if (ImGui::Button("Reset Filter Settings HMD Defaults"))
+											if (ImGui::Button("      Reset Filter Settings HMD Defaults"))
 											{
 												controllerInfo.FilterLowPassOpticalDistance = 1.f;
 												controllerInfo.FilterLowPassOpticalSmoothing = 0.10f; // HMD
@@ -1540,6 +1549,9 @@ void AppStage_ControllerSettings::renderUI()
 
 												request_offset = true;
 											}
+											ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconClose()->getImTextureId(),
+												ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+												ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 											if (request_offset)
 											{
@@ -1796,7 +1808,7 @@ void AppStage_ControllerSettings::renderUI()
 											ImGui::Separator();
 										}
 
-										if (ImGui::Button("Set Forward View Horizontal Left"))
+										if (ImGui::Button("      Set Forward View Horizontal Left"))
 										{
 											controllerInfo.OffsetOrientation.x = -90.f;
 											controllerInfo.OffsetOrientation.y = -90.f;
@@ -1804,8 +1816,11 @@ void AppStage_ControllerSettings::renderUI()
 
 											request_offset = true;
 										}
+										ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
+											ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+											ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
-										if (ImGui::Button("Set Forward View Horizontal Right"))
+										if (ImGui::Button("      Set Forward View Horizontal Right"))
 										{
 											controllerInfo.OffsetOrientation.x = -90.f;
 											controllerInfo.OffsetOrientation.y = 90.f;
@@ -1813,8 +1828,11 @@ void AppStage_ControllerSettings::renderUI()
 
 											request_offset = true;
 										}
+										ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconRight()->getImTextureId(),
+											ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+											ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
-										if (ImGui::Button("Reset All"))
+										if (ImGui::Button("      Reset All"))
 										{
 											controllerInfo.OffsetOrientation.x = 0.f;
 											controllerInfo.OffsetOrientation.y = 0.f;
@@ -1832,6 +1850,9 @@ void AppStage_ControllerSettings::renderUI()
 
 											request_offset = true;
 										}
+										ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconClose()->getImTextureId(),
+											ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+											ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 										if (request_offset)
 										{
@@ -1870,15 +1891,21 @@ void AppStage_ControllerSettings::renderUI()
 							{
 								if (controllerInfo.HasMagnetometer)
 								{
-									if (ImGui::Button("Calibrate Magnetometer"))
+									if (ImGui::Button("      Calibrate Magnetometer"))
 									{
 										m_app->getAppStage<AppStage_MagnetometerCalibration>()->setBypassCalibrationFlag(false);
 										m_app->setAppStage(AppStage_MagnetometerCalibration::APP_STAGE_NAME);
 									}
+									ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconTarget()->getImTextureId(),
+										ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+										ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 								}
 								else
 								{
-									ImGui::Button("Calibrate Magnetometer (Unavailable)");
+									ImGui::Button("      Calibrate Magnetometer (Unavailable)");
+									ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
+										ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+										ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 									ImGui::PushTextWrapPos();
 
 									ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, 0.f, 0.f));
@@ -1891,17 +1918,23 @@ void AppStage_ControllerSettings::renderUI()
 									ImGui::Spacing();
 								}
 
-								if (ImGui::Button("Calibrate Gyroscope"))
+								if (ImGui::Button("      Calibrate Gyroscope"))
 								{
 									m_app->getAppStage<AppStage_GyroscopeCalibration>()->setBypassCalibrationFlag(false);
 									m_app->setAppStage(AppStage_GyroscopeCalibration::APP_STAGE_NAME);
 								}
+								ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconTarget()->getImTextureId(),
+									ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+									ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
-								if (ImGui::Button("Calibrate Accelerometer"))
+								if (ImGui::Button("      Calibrate Accelerometer"))
 								{
 									m_app->getAppStage<AppStage_AccelerometerCalibration>()->setBypassCalibrationFlag(false);
 									m_app->setAppStage(AppStage_AccelerometerCalibration::APP_STAGE_NAME);
 								}
+								ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconTarget()->getImTextureId(),
+									ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+									ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 							}
 						}
 						ImGui::EndGroup();
@@ -1922,29 +1955,38 @@ void AppStage_ControllerSettings::renderUI()
 							{
 								if (controllerInfo.ControllerType == PSMController_Move)
 								{
-									if (ImGui::Button("Test Orientation"))
+									if (ImGui::Button("      Test Orientation"))
 									{
 										m_app->getAppStage<AppStage_MagnetometerCalibration>()->setBypassCalibrationFlag(true);
 										m_app->setAppStage(AppStage_MagnetometerCalibration::APP_STAGE_NAME);
 									}
+									ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconSearch()->getImTextureId(),
+										ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+										ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 								}
 
 								if (controllerInfo.ControllerType == PSMController_DualShock4)
 								{
-									if (ImGui::Button("Test Orientation"))
+									if (ImGui::Button("      Test Orientation"))
 									{
 										m_app->getAppStage<AppStage_GyroscopeCalibration>()->setBypassCalibrationFlag(true);
 										m_app->setAppStage(AppStage_GyroscopeCalibration::APP_STAGE_NAME);
 									}
+									ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconSearch()->getImTextureId(),
+										ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+										ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 								}
 
 								if (controllerInfo.ControllerType == PSMController_Virtual)
 								{
-									if (ImGui::Button("Test Orientation"))
+									if (ImGui::Button("      Test Orientation"))
 									{
 										m_app->getAppStage<AppStage_GyroscopeCalibration>()->setBypassCalibrationFlag(true);
 										m_app->setAppStage(AppStage_GyroscopeCalibration::APP_STAGE_NAME);
 									}
+									ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconSearch()->getImTextureId(),
+										ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+										ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 									ImGui::PushTextWrapPos();
 									ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(0.f, .5f, 1.f));
@@ -1959,22 +2001,31 @@ void AppStage_ControllerSettings::renderUI()
 								if (controllerInfo.ControllerType == PSMController_Move ||
 									controllerInfo.ControllerType == PSMController_DualShock4)
 								{
-									if (ImGui::Button("Test Accelerometer"))
+									if (ImGui::Button("      Test Accelerometer"))
 									{
 										m_app->getAppStage<AppStage_AccelerometerCalibration>()->setBypassCalibrationFlag(true);
 										m_app->setAppStage(AppStage_AccelerometerCalibration::APP_STAGE_NAME);
 									}
+									ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconSearch()->getImTextureId(),
+										ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+										ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
-									if (ImGui::Button("Test Rumble"))
+									if (ImGui::Button("      Test Rumble"))
 									{
 										m_app->setAppStage(AppStage_TestRumble::APP_STAGE_NAME);
 									}
+									ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconController()->getImTextureId(),
+										ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+										ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 								}
 
-								if (ImGui::Button("Test Buttons"))
+								if (ImGui::Button("      Test Buttons"))
 								{
 									m_app->setAppStage(AppStage_TestButtons::APP_STAGE_NAME);
 								}
+								ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconController()->getImTextureId(),
+									ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+									ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 							}
 						}
 						ImGui::EndGroup();
@@ -1992,17 +2043,23 @@ void AppStage_ControllerSettings::renderUI()
 
 				if (m_app->excludePositionSettings)
 				{
-					if (ImGui::Button("Exit"))
+					if (ImGui::Button("      Exit"))
 					{
 						m_app->requestShutdown();
 					}
+					ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
+						ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+						ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 				}
 				else
 				{
-					if (ImGui::Button("Return to Main Menu"))
+					if (ImGui::Button("      Return to Main Menu"))
 					{
 						m_app->setAppStage(AppStage_MainMenu::APP_STAGE_NAME);
 					}
+					ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
+						ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+						ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 				}
 			}
 			ImGui::EndGroup();
@@ -2045,15 +2102,21 @@ void AppStage_ControllerSettings::renderUI()
 			ImGui::SameLine();
             ImGui::Text("Failed to get controller list!");
 
-            if (ImGui::Button("Retry"))
+            if (ImGui::Button("      Retry"))
             {
                 request_controller_list();
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconUpdate()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
-            if (ImGui::Button("Return to Main Menu"))
+            if (ImGui::Button("      Return to Main Menu"))
             {
                 m_app->setAppStage(AppStage_MainMenu::APP_STAGE_NAME);
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(300, 0));
             ImGui::End();

@@ -211,6 +211,21 @@ public:
 		return &m_icon_close_asset;
 	}
 
+	const TextureAsset *getIconLeft()
+	{
+		return &m_icon_left_asset;
+	}
+
+	const TextureAsset *getIconRight()
+	{
+		return &m_icon_right_asset;
+	}
+
+	const TextureAsset *getIconTarget()
+	{
+		return &m_icon_target_asset;
+	}
+
 private:
     bool loadTexture(const char *filename, TextureAsset *textureAsset);
     bool loadFont(const char *filename, float pixelHeight, FontAsset *fontAsset);
@@ -251,6 +266,9 @@ private:
 	TextureAsset m_icon_search_asset;
 	TextureAsset m_icon_check_asset;
 	TextureAsset m_icon_close_asset;
+	TextureAsset m_icon_left_asset;
+	TextureAsset m_icon_right_asset;
+	TextureAsset m_icon_target_asset;
 
     static AssetManager *m_instance;
 };

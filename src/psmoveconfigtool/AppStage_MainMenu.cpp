@@ -187,6 +187,21 @@ void AppStage_MainMenu::renderUI()
             ImGui::SetNextWindowPosCenter();
             ImGui::Begin("Connect", nullptr, window_flags);
 
+			if (m_menuState == failedConnectionToService)
+			{
+				ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(32, 32));
+				ImGui::SameLine();
+				ImGui::Text("Failed to connect to PSMoveServiceEx!");
+				ImGui::Separator();
+			}
+			else if (m_menuState == disconnectedFromService)
+			{
+				ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(32, 32));
+				ImGui::SameLine();
+				ImGui::Text("Disconnected from PSMoveServiceEx!");
+				ImGui::Separator();
+			}
+
 			ImGui::PushItemWidth(125.f);
 			if (ImGui::InputText("Server Address", m_app->m_serverAddress, sizeof(m_app->m_serverAddress), ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_CharsNoBlank))
 			{
@@ -195,21 +210,6 @@ void AppStage_MainMenu::renderUI()
 
 			ImGui::InputText("Server Port", m_app->m_serverPort, sizeof(m_app->m_serverPort), ImGuiInputTextFlags_CharsDecimal);
 			ImGui::PopItemWidth();
-
-			if (m_menuState == failedConnectionToService)
-			{
-				ImGui::Separator();
-				ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(32, 32), ImVec2(0,0), ImVec2(1,1), ImColor(1.f, 0.f, 0.f));
-				ImGui::SameLine();
-				ImGui::TextDisabled("Failed to connect to PSMoveServiceEx!");
-			}
-			else if (m_menuState == disconnectedFromService)
-			{
-				ImGui::Separator();
-				ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(32, 32), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, 0.f, 0.f));
-				ImGui::SameLine();
-				ImGui::TextDisabled("Disconnected from PSMoveServiceEx!");
-			}
 
 			ImGui::Separator();
 

@@ -6,6 +6,7 @@
 #include "ProtocolVersion.h"
 #include "Renderer.h"
 #include "UIConstants.h"
+#include "AssetManager.h"
 
 #include "SDL_keycode.h"
 
@@ -1251,10 +1252,13 @@ void AppStage_AdvancedSettings::renderUI()
 					ImGui::BeginChild("##OtherTabChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
 					ImGui::BeginGroup();
 					{
-						if (ImGui::Button("Open PSMoveServiceEx Config Directory"))
+						if (ImGui::Button("      Open PSMoveServiceEx Config Directory"))
 						{
 							configExec.OpenConfigInExplorer();
 						}
+						ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconConnect()->getImTextureId(),
+							ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+							ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 					}
 					ImGui::EndGroup();
 					if (ImGui::IsItemVisible())
@@ -1270,14 +1274,17 @@ void AppStage_AdvancedSettings::renderUI()
 
 				ImGui::Spacing();
 
-				if (ImGui::Button("Return to Main Menu"))
+				if (ImGui::Button("      Return to Main Menu"))
 				{
 					m_app->setAppStage(AppStage_MainMenu::APP_STAGE_NAME);
 				}
+				ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
+					ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+					ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 				ImGui::SameLine();
 
-				if (ImGui::Button("Save Settings"))
+				if (ImGui::Button("      Save Settings"))
 				{
 					if (cfg_tracker.isLoaded)
 						cfg_tracker.save();
@@ -1291,15 +1298,21 @@ void AppStage_AdvancedSettings::renderUI()
 					if (cfg_device.isLoaded)
 						cfg_device.save();
 				}
+				ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
+					ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+					ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 #ifdef _WIN32
 				ImGui::SameLine(0.f, 16.f);
 
-				if (ImGui::Button("Restart PSMoveServiceEx"))
+				if (ImGui::Button("      Restart PSMoveServiceEx"))
 				{
 					serviceRestart.CheckProcesses();
 					serviceRestart.RestartService();
 				}
+				ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconUpdate()->getImTextureId(),
+					ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+					ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 #endif
 			}
 			ImGui::EndGroup();

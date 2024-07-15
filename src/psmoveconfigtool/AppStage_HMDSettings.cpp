@@ -453,7 +453,7 @@ void AppStage_HMDSettings::renderUI()
 
 									ImGui::Separator();
 
-									if (ImGui::Button("Reset Filter Defaults"))
+									if (ImGui::Button("      Reset Filter Defaults"))
 									{
 										hmdInfo.PredictionTime = 0.025f;
 										hmdInfo.AngPredictionTime = 0.025f;
@@ -466,6 +466,9 @@ void AppStage_HMDSettings::renderUI()
 										request_set_position_filter(hmdInfo.HmdID, hmdInfo.PositionFilterName);
 										request_set_orientation_filter(hmdInfo.HmdID, hmdInfo.OrientationFilterName);
 									}
+									ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconClose()->getImTextureId(),
+										ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+										ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 									ImGui::PopItemWidth();
 								}
 								else if (hmdInfo.HmdType == AppStage_HMDSettings::eHMDType::VirtualHMD)
@@ -492,7 +495,7 @@ void AppStage_HMDSettings::renderUI()
 									}
 									ImGui::PopItemWidth();
 
-									if (ImGui::Button("Reset Filter Defaults"))
+									if (ImGui::Button("      Reset Filter Defaults"))
 									{
 										hmdInfo.PredictionTime = 0.025f;
 										hmdInfo.AngPredictionTime = 0.025f;
@@ -503,6 +506,9 @@ void AppStage_HMDSettings::renderUI()
 										request_set_position_filter(hmdInfo.HmdID, hmdInfo.PositionFilterName);
 										request_set_orientation_filter(hmdInfo.HmdID, hmdInfo.OrientationFilterName);
 									}
+									ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconClose()->getImTextureId(),
+										ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+										ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 									ImGui::PopItemWidth();
 								}
 							}
@@ -805,7 +811,7 @@ void AppStage_HMDSettings::renderUI()
 
 							ImGui::Separator();
 
-							if (ImGui::Button("Reset Filter Settings HMD Defaults"))
+							if (ImGui::Button("      Reset Filter Settings HMD Defaults"))
 							{
 								hmdInfo.FilterLowPassOpticalDistance = 1.f;
 								hmdInfo.FilterLowPassOpticalSmoothing = 0.10f;
@@ -824,6 +830,9 @@ void AppStage_HMDSettings::renderUI()
 
 								request_offset = true;
 							}
+							ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconClose()->getImTextureId(),
+								ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+								ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 							if (request_offset)
 							{
@@ -1052,7 +1061,7 @@ void AppStage_HMDSettings::renderUI()
 								ImGui::Separator();
 							}
 
-							if (ImGui::Button("Reset All"))
+							if (ImGui::Button("      Reset All"))
 							{
 								hmdInfo.OffsetOrientation.x = 0.f;
 								hmdInfo.OffsetOrientation.y = 0.f;
@@ -1069,6 +1078,9 @@ void AppStage_HMDSettings::renderUI()
 
 								request_offset = true;
 							}
+							ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconClose()->getImTextureId(),
+								ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+								ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 							if (request_offset)
 							{
@@ -1103,16 +1115,22 @@ void AppStage_HMDSettings::renderUI()
 					{
 						if (hmdInfo.HmdType == AppStage_HMDSettings::eHMDType::Morpheus)
 						{
-							if (ImGui::Button("Calibrate Gyroscope"))
+							if (ImGui::Button("      Calibrate Gyroscope"))
 							{
 								m_app->getAppStage<AppStage_HMDGyroscopeCalibration>()->setBypassCalibrationFlag(false);
 								m_app->setAppStage(AppStage_HMDGyroscopeCalibration::APP_STAGE_NAME);
 							}
-							if (ImGui::Button("Calibrate Accelerometer"))
+							ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconTarget()->getImTextureId(),
+								ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+								ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
+							if (ImGui::Button("      Calibrate Accelerometer"))
 							{
 								m_app->getAppStage<AppStage_HMDAccelerometerCalibration>()->setBypassCalibrationFlag(false);
 								m_app->setAppStage(AppStage_HMDAccelerometerCalibration::APP_STAGE_NAME);
 							}
+							ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconTarget()->getImTextureId(),
+								ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+								ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 						}
 						else
 						{
@@ -1135,16 +1153,22 @@ void AppStage_HMDSettings::renderUI()
 					{
 						if (hmdInfo.HmdType == AppStage_HMDSettings::eHMDType::Morpheus)
 						{
-							if (ImGui::Button("Test Orientation"))
+							if (ImGui::Button("      Test Orientation"))
 							{
 								m_app->getAppStage<AppStage_HMDGyroscopeCalibration>()->setBypassCalibrationFlag(true);
 								m_app->setAppStage(AppStage_HMDGyroscopeCalibration::APP_STAGE_NAME);
 							}
-							if (ImGui::Button("Test Accelerometer"))
+							ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconSearch()->getImTextureId(),
+								ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+								ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
+							if (ImGui::Button("      Test Accelerometer"))
 							{
 								m_app->getAppStage<AppStage_HMDAccelerometerCalibration>()->setBypassCalibrationFlag(true);
 								m_app->setAppStage(AppStage_HMDAccelerometerCalibration::APP_STAGE_NAME);
 							}
+							ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconSearch()->getImTextureId(),
+								ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+								ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 						}
 						else
 						{
@@ -1164,10 +1188,13 @@ void AppStage_HMDSettings::renderUI()
 
 			ImGui::Separator();
 
-			if (ImGui::Button("Return to Main Menu"))
+			if (ImGui::Button("      Return to Main Menu"))
 			{
 				m_app->setAppStage(AppStage_MainMenu::APP_STAGE_NAME);
 			}
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 		}
 		ImGui::EndGroup();
 		if (ImGui::IsItemVisible())
@@ -1210,15 +1237,21 @@ void AppStage_HMDSettings::renderUI()
 		ImGui::SameLine();
         ImGui::Text("Failed to get tracker list!");
 
-        if (ImGui::Button("Retry"))
+        if (ImGui::Button("      Retry"))
         {
             request_hmd_list();
         }
+		ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconUpdate()->getImTextureId(),
+			ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
-        if (ImGui::Button("Return to Main Menu"))
+        if (ImGui::Button("      Return to Main Menu"))
         {
             m_app->setAppStage(AppStage_MainMenu::APP_STAGE_NAME);
         }
+		ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
+			ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
         ImGui::End();
     } break;

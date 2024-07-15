@@ -487,17 +487,23 @@ void AppStage_HMDGyroscopeCalibration::renderUI()
 			ImGui::SameLine();
             ImGui::Text("Failed to start hmd stream!");
 
-            if (ImGui::Button(" OK "))
+            if (ImGui::Button("      OK"))
             {
                 request_exit_to_app_stage(AppStage_HMDSettings::APP_STAGE_NAME);
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
             ImGui::SameLine();
 
-            if (ImGui::Button("Return to Main Menu"))
+            if (ImGui::Button("      Return to Main Menu"))
             {
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
@@ -542,10 +548,13 @@ void AppStage_HMDGyroscopeCalibration::renderUI()
                 ImGui::Text("Controller Destabilized! Waiting for stabilization..");
             }
 
-            if (ImGui::Button("Cancel"))
+            if (ImGui::Button("      Cancel"))
             {
                 request_exit_to_app_stage(AppStage_HMDSettings::APP_STAGE_NAME);
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
@@ -580,10 +589,13 @@ void AppStage_HMDGyroscopeCalibration::renderUI()
                 "Sampling Gyroscope...");
             ImGui::ProgressBar(sampleFraction, ImVec2(250, 20));
 
-            if (ImGui::Button("Cancel"))
+            if (ImGui::Button("      Cancel"))
             {
                 request_exit_to_app_stage(AppStage_HMDSettings::APP_STAGE_NAME);
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
@@ -597,21 +609,30 @@ void AppStage_HMDGyroscopeCalibration::renderUI()
                 "Sampling complete.\n" \
                 "Press OK to continue or Redo to recalibration.");
 
-            if (ImGui::Button(" OK "))
+            if (ImGui::Button("      OK"))
             {
                 m_menuState = eCalibrationMenuState::test;
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
             ImGui::SameLine();
-            if (ImGui::Button("Redo"))
+            if (ImGui::Button("      Redo"))
             {
 				m_gyroNoiseSamples->clear();
                 m_menuState = eCalibrationMenuState::waitForStable;
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconUpdate()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
             ImGui::SameLine();
-            if (ImGui::Button("Cancel"))
+            if (ImGui::Button("      Cancel"))
             {
                 request_exit_to_app_stage(AppStage_HMDSettings::APP_STAGE_NAME);
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
@@ -630,17 +651,23 @@ void AppStage_HMDGyroscopeCalibration::renderUI()
                 ImGui::Text("Calibration of HMD ID #%d complete!", m_hmdView->HmdID);
             }
 
-            if (ImGui::Button(" OK "))
+            if (ImGui::Button("      OK"))
             {
                 request_exit_to_app_stage(AppStage_HMDSettings::APP_STAGE_NAME);
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
             ImGui::SameLine();
 
-            if (ImGui::Button("Return to Main Menu"))
+            if (ImGui::Button("      Return to Main Menu"))
             {
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();

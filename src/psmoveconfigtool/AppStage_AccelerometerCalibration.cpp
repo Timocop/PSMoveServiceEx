@@ -764,17 +764,23 @@ void AppStage_AccelerometerCalibration::renderUI()
 			ImGui::SameLine();
             ImGui::Text("Failed to start controller stream!");
 
-            if (ImGui::Button(" OK "))
+            if (ImGui::Button("      OK"))
             {
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
             ImGui::SameLine();
 
-            if (ImGui::Button("Return to Main Menu"))
+            if (ImGui::Button("      Return to Main Menu"))
             {
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
@@ -861,13 +867,7 @@ void AppStage_AccelerometerCalibration::renderUI()
 			}
 		}
 
-		if (ImGui::Button("Abort"))
-		{
-			PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
-			request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("Redo"))
+		if (ImGui::Button("      Redo"))
 		{
 			// Reset the sample info for the current pose
 			m_axisSamples->clear();
@@ -875,6 +875,20 @@ void AppStage_AccelerometerCalibration::renderUI()
 			PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
 			m_menuState = eCalibrationMenuState::measureAxisX;
 		}
+		ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconUpdate()->getImTextureId(),
+			ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("      Abort"))
+		{
+			PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
+			request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
+		}
+		ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
+			ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 		ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
 		ImGui::End();
@@ -890,13 +904,18 @@ void AppStage_AccelerometerCalibration::renderUI()
                 "Sampling complete.\n" \
                 "Press OK to continue or Redo to resample.");
 
-            if (ImGui::Button(" OK "))
+            if (ImGui::Button("      OK"))
             {
 				PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
+
             ImGui::SameLine();
-            if (ImGui::Button("Redo"))
+
+            if (ImGui::Button("      Redo"))
             {
                 // Reset the sample info for the current pose
 				m_axisSamples->clear();
@@ -904,6 +923,9 @@ void AppStage_AccelerometerCalibration::renderUI()
 				PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
                 m_menuState = eCalibrationMenuState::measureAxisX;
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconUpdate()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
@@ -937,17 +959,23 @@ void AppStage_AccelerometerCalibration::renderUI()
 				}
 			}				
 
-            if (ImGui::Button(" OK "))
+            if (ImGui::Button("      OK"))
             {
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
             ImGui::SameLine();
 
-            if (ImGui::Button("Return to Main Menu"))
+            if (ImGui::Button("      Return to Main Menu"))
             {
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();

@@ -689,15 +689,21 @@ void AppStage_DistortionCalibration::renderUI()
 
 		ImGui::Spacing();
 
-		if (ImGui::Button("Continue"))
+		if (ImGui::Button("      Continue"))
 		{
 			m_menuState = eMenuState::enterBoardSettings;
 		}
+		ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
+			ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 		ImGui::SameLine();
-		if (ImGui::Button("Cancel"))
+		if (ImGui::Button("      Cancel"))
 		{
 			request_exit();
 		}
+		ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
+			ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 		ImGui::SetWindowSize(ImVec2(k_wide_panel_width, 0));
 		ImGui::End();
@@ -717,10 +723,13 @@ void AppStage_DistortionCalibration::renderUI()
 
 		ImGui::Spacing();
 
-		if (ImGui::Button(" OK "))
+		if (ImGui::Button("      OK"))
 		{
 			request_exit();
 		}
+		ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
+			ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 		ImGui::SetWindowSize(ImVec2(k_wide_panel_width, 0));
 		ImGui::End();
@@ -765,7 +774,7 @@ void AppStage_DistortionCalibration::renderUI()
 
 			ImGui::Spacing();
 
-			if (ImGui::Button(" OK "))
+			if (ImGui::Button("      OK"))
 			{
 				// Crank up the exposure and gain so that we can see the chessboard
 				// These overrides will get rolled back once tracker gets closed
@@ -774,11 +783,17 @@ void AppStage_DistortionCalibration::renderUI()
 
 				m_menuState = eMenuState::capture;
 			}
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 			ImGui::SameLine();
-			if (ImGui::Button("Cancel"))
+			if (ImGui::Button("      Cancel"))
 			{
 				request_exit();
 			}
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(k_wide_panel_width, 0));
 			ImGui::End();
@@ -852,16 +867,22 @@ void AppStage_DistortionCalibration::renderUI()
 					ImGui::Text("[capture point not valid]");
 				}
 
-                if (ImGui::Button("Restart"))
+                if (ImGui::Button("      Restart"))
                 {
                     m_opencv_state->resetCaptureState();
                     m_opencv_state->resetCalibrationState();
                 }
+				ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconUpdate()->getImTextureId(),
+					ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+					ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
                 ImGui::SameLine();
-                if (ImGui::Button("Cancel"))
+                if (ImGui::Button("      Cancel"))
                 {
                     request_exit();
                 }
+				ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
+					ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+					ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 				ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
                 ImGui::End();
@@ -894,18 +915,24 @@ void AppStage_DistortionCalibration::renderUI()
 				ImGui::Text("Calibration complete!");
 				ImGui::Text("Error: %f", m_opencv_state->reprojectionError);
 
-				if (ImGui::Button(" OK "))
+				if (ImGui::Button("      OK"))
 				{
 					request_exit();
 				}
+				ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
+					ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+					ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
-				if (ImGui::Button("Redo Calibration"))
+				if (ImGui::Button("      Redo Calibration"))
 				{
 					m_opencv_state->resetCaptureState();
 					m_opencv_state->resetCalibrationState();
 					m_videoDisplayMode = AppStage_DistortionCalibration::mode_bgr;
 					m_menuState = eMenuState::capture;
 				}
+				ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconUpdate()->getImTextureId(),
+					ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+					ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 				ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
 				ImGui::End();
@@ -952,15 +979,21 @@ void AppStage_DistortionCalibration::renderUI()
             else
                 ImGui::Text("Failed to open tracker stream!");
 
-            if (ImGui::Button(" OK "))
+            if (ImGui::Button("      OK"))
             {
                 m_app->setAppStage(AppStage_TrackerSettings::APP_STAGE_NAME);
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
-            if (ImGui::Button("Return to Main Menu"))
+            if (ImGui::Button("      Return to Main Menu"))
             {
                 m_app->setAppStage(AppStage_MainMenu::APP_STAGE_NAME);
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
@@ -1002,15 +1035,21 @@ void AppStage_DistortionCalibration::renderUI()
 			ImGui::SameLine();
             ImGui::Text("Failed to stop tracker stream!");
 
-            if (ImGui::Button(" OK "))
+            if (ImGui::Button("      OK"))
             {
                 m_app->setAppStage(AppStage_TrackerSettings::APP_STAGE_NAME);
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
-            if (ImGui::Button("Return to Main Menu"))
+            if (ImGui::Button("      Return to Main Menu"))
             {
                 m_app->setAppStage(AppStage_MainMenu::APP_STAGE_NAME);
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();

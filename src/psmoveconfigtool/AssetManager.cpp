@@ -52,6 +52,9 @@ static const char *k_icon_shield_filename = "./assets/icons/shield-sedo-line-ico
 static const char *k_icon_search_filename = "./assets/icons/search-line-icon.png";
 static const char *k_icon_check_filename = "./assets/icons/check-mark-line-icon.png";
 static const char *k_icon_close_filename = "./assets/icons/close-line-icon.png";
+static const char *k_icon_left_filename = "./assets/icons/line-angle-left-icon.png";
+static const char *k_icon_right_filename = "./assets/icons/line-angle-right-icon.png";
+static const char *k_icon_target_filename = "./assets/icons/target-focus-line-icon.png";
 
 // Fonts
 static const char *k_default_font_filename = "./assets/fonts/OpenSans-Regular.ttf";
@@ -94,6 +97,9 @@ AssetManager::AssetManager()
 	, m_icon_search_asset()
 	, m_icon_check_asset()
 	, m_icon_close_asset()
+	, m_icon_left_asset()
+	, m_icon_right_asset()
+	, m_icon_target_asset()
 {
 }
 
@@ -145,6 +151,9 @@ bool AssetManager::init()
 	failed |= !loadTexture(k_icon_search_filename, &m_icon_search_asset);
 	failed |= !loadTexture(k_icon_check_filename, &m_icon_check_asset);
 	failed |= !loadTexture(k_icon_close_filename, &m_icon_close_asset);
+	failed |= !loadTexture(k_icon_left_filename, &m_icon_left_asset);
+	failed |= !loadTexture(k_icon_right_filename, &m_icon_right_asset);
+	failed |= !loadTexture(k_icon_target_filename, &m_icon_target_asset);
 
     if (!failed)
     {
@@ -170,6 +179,25 @@ void AssetManager::destroy()
 	m_morpheus_assets.m_texture.dispose();
 	m_dualshock_assets.m_texture.dispose();
 	m_psnavigation_assets.m_texture.dispose();
+
+	m_icon_settings_asset.dispose();
+	m_icon_controller_asset.dispose();
+	m_icon_tracker_asset.dispose();
+	m_icon_hmd_asset.dispose();
+	m_icon_update_asset.dispose();
+	m_icon_update2_asset.dispose();
+	m_icon_warning_asset.dispose();
+	m_icon_exclamation_asset.dispose();
+	m_icon_usb_asset.dispose();
+	m_icon_bluetooth_asset.dispose();
+	m_icon_connect_asset.dispose();
+	m_icon_ban_asset.dispose();
+	m_icon_shield_asset.dispose();
+	m_icon_search_asset.dispose();
+	m_icon_check_asset.dispose();
+	m_icon_close_asset.dispose();
+	m_icon_left_asset.dispose();
+	m_icon_right_asset.dispose();
 
     m_defaultFont.dispose();
 

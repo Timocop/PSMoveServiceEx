@@ -817,17 +817,23 @@ void AppStage_MagnetometerCalibration::renderUI()
 			ImGui::SameLine();
             ImGui::Text("Failed to start controller stream!");
 
-            if (ImGui::Button(" OK "))
+            if (ImGui::Button("      OK"))
             {
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
             
             ImGui::SameLine();
 
-            if (ImGui::Button("Return to Main Menu"))
+            if (ImGui::Button("      Return to Main Menu"))
             {
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
@@ -843,17 +849,23 @@ void AppStage_MagnetometerCalibration::renderUI()
                 "Bad controller hardware calibration!\n" \
                 "Try un-pairing and re-pairing the controller.");
 
-            if (ImGui::Button(" OK "))
+            if (ImGui::Button("      OK"))
             {
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
             ImGui::SameLine();
 
-            if (ImGui::Button("Return to Main Menu"))
+            if (ImGui::Button("      Return to Main Menu"))
             {
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
@@ -909,11 +921,14 @@ void AppStage_MagnetometerCalibration::renderUI()
 					ImGui::Text("Quality");
 					ImGui::Spacing();
 
-                    if (ImGui::Button("Force Accept"))
+                    if (ImGui::Button("      Force Accept"))
                     {
 						PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
 						m_boundsStatistics->setCompleted();
                     }
+					ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
+						ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+						ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
                     ImGui::SameLine();
                 }
                 else
@@ -935,24 +950,33 @@ void AppStage_MagnetometerCalibration::renderUI()
 					ImGui::Separator();
 					ImGui::Spacing();
 
-					if (ImGui::Button("Calibrate Default Orientation"))
+					if (ImGui::Button("      Calibrate Default Orientation"))
 					{
 						PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
 						m_menuState = waitForGravityAlignment;
 					}
+					ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconTarget()->getImTextureId(),
+						ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+						ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 					ImGui::SameLine();
-					if (ImGui::Button("Skip"))
+					if (ImGui::Button("      Skip"))
 					{
 						PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
 						m_menuState = skipBDirection;
 					}
+					ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconRight()->getImTextureId(),
+						ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+						ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 					ImGui::SameLine();
                 }
 
-                if (ImGui::Button("Cancel"))
+                if (ImGui::Button("      Cancel"))
                 {
                     request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
                 }
+				ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
+					ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+					ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 				ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
                 ImGui::End();
@@ -1026,15 +1050,21 @@ void AppStage_MagnetometerCalibration::renderUI()
                 ImGui::Text("Move Destabilized! Waiting for stabilization..");
             }
 
-            if (ImGui::Button("Force Continue"))
+            if (ImGui::Button("      Force Continue"))
             {
                 m_bForceControllerStable= true;
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
             ImGui::SameLine();
-            if (ImGui::Button("Cancel"))
+            if (ImGui::Button("      Cancel"))
             {
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
@@ -1071,10 +1101,13 @@ void AppStage_MagnetometerCalibration::renderUI()
                 ImVec2(250, 20));
             ImGui::Spacing();
 
-            if (ImGui::Button("Cancel"))
+            if (ImGui::Button("      Cancel"))
             {
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
@@ -1117,17 +1150,23 @@ void AppStage_MagnetometerCalibration::renderUI()
 			ImGui::SameLine();
             ImGui::Text("Failed to set calibration!");
 
-            if (ImGui::Button(" OK "))
+            if (ImGui::Button("      OK"))
             {
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
             ImGui::SameLine();
 
-            if (ImGui::Button("Return to Main Menu"))
+            if (ImGui::Button("      Return to Main Menu"))
             {
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
@@ -1163,17 +1202,23 @@ void AppStage_MagnetometerCalibration::renderUI()
 				"[Hold the Select button with controller pointed forward\n" \
 				"to recenter the controller]");
 
-            if (ImGui::Button(" OK "))
+            if (ImGui::Button("      OK"))
             {
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
             ImGui::SameLine();
 
-            if (ImGui::Button("Return to Main Menu"))
+            if (ImGui::Button("      Return to Main Menu"))
             {
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
             }
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
+				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
