@@ -1429,19 +1429,25 @@ is_matching_controller_type(
 static bool
 is_device_move_motion_controller(const BLUETOOTH_DEVICE_INFO *device_info)
 {
-    return wcscmp(device_info->szName, L"Motion Controller") == 0;
+	// Check if the name exist anywhere in the device name.
+	// Some systems reported that device names can have a trailing whitespace "Motion Controller " so we have to do this instead.
+    return std::wcsstr(device_info->szName, L"Motion Controller") != nullptr;
 }
 
 static bool
 is_device_navigation_controller(const BLUETOOTH_DEVICE_INFO *device_info)
 {
-    return wcscmp(device_info->szName, L"Navigation Controller") == 0;
+	// Check if the name exist anywhere in the device name.
+	// Some systems reported that device names can have a trailing whitespace "Navigation Controller " so we have to do this instead.
+    return std::wcsstr(device_info->szName, L"Navigation Controller") != nullptr;
 }
 
 static bool
 is_device_dualshock4_controller(const BLUETOOTH_DEVICE_INFO *device_info)
 {
-    return wcscmp(device_info->szName, L"Wireless Controller") == 0;
+	// Check if the name exist anywhere in the device name.
+	// Some systems reported that device names can have a trailing whitespace "Wireless Controller " so we have to do this instead.
+    return std::wcsstr(device_info->szName, L"Wireless Controller") != nullptr;
 }
 
 static bool
