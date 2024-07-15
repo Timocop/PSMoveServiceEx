@@ -574,12 +574,6 @@ void AppStage_ColorCalibration::render()
 
 void AppStage_ColorCalibration::renderUI()
 {
-	const auto icoWaitFull = AssetManager::getInstance()->getIconWaitFull();
-	const auto icoWaitHalf = AssetManager::getInstance()->getIconWaitHalf();
-	const auto icoWaitEmpty = AssetManager::getInstance()->getIconWaitEmpty();
-	const auto icoWaitDone = AssetManager::getInstance()->getIconWaitDone();
-	const auto icoWaitWarning = AssetManager::getInstance()->getIconWarning();
-	const auto icoWaitExclamation = AssetManager::getInstance()->getIconExclamation();
 	static float waitCount;
 
 	// Tracker Alignment Marker
@@ -753,19 +747,13 @@ void AppStage_ColorCalibration::renderUI()
 		switch ((int)floorf(waitCount))
 		{
 		case 0:
-			ImGui::Image(icoWaitFull->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconUpdate()->getImTextureId(), ImVec2(32, 32));
 			break;
 		case 1:
-			ImGui::Image(icoWaitHalf->getImTextureId(), ImVec2(32, 32));
-			break;
-		case 2:
-			ImGui::Image(icoWaitDone->getImTextureId(), ImVec2(32, 32));
-			break;
-		case 3:
-			ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 			break;
 		default:
-			ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 			waitCount = 0;
 			break;
 		}
@@ -1543,7 +1531,7 @@ void AppStage_ColorCalibration::renderUI()
 					ImColor colorGreen = ImColor(0.f, 1.f, 0.f);
 					ImColor colorOrange = ImColor(1.f, .5f, 0.f);
 					ImColor colorRed = ImColor(1.f, 0.f, 0.f);
-					ImColor colorBlue = ImColor(0.f, 0.25f, 1.f);
+					ImColor colorBlue = ImColor(0.f, 0.5f, 1.f);
 
 					bool bHasIssues = false;
 
@@ -1551,8 +1539,7 @@ void AppStage_ColorCalibration::renderUI()
 						// Tell if its a virtual device.
 						if (is_tracker_virtual())
 						{
-							ImGui::ColorButton(colorBlue, true);
-							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorBlue);
 							ImGui::SameLine();
 							ImGui::TextWrapped(
 								"Tracker is virtual. "
@@ -1562,8 +1549,7 @@ void AppStage_ColorCalibration::renderUI()
 
 						if (m_masterControllerView != nullptr && m_masterControllerView->ControllerType == PSMController_Virtual)
 						{
-							ImGui::ColorButton(colorBlue, true);
-							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorBlue);
 							ImGui::SameLine();
 							ImGui::TextWrapped(
 								"Controller is virtual. "
@@ -1573,8 +1559,7 @@ void AppStage_ColorCalibration::renderUI()
 
 						if (m_hmdView != nullptr && m_hmdView->HmdType == PSMHmd_Virtual)
 						{
-							ImGui::ColorButton(colorBlue, true);
-							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorBlue);
 							ImGui::SameLine();
 							ImGui::TextWrapped(
 								"HMD is virtual. "
@@ -1587,8 +1572,7 @@ void AppStage_ColorCalibration::renderUI()
 						// Recommend exposure adjustments rather than gain adjustments
 						if (!is_tracker_virtual() && m_trackerGain > 32)
 						{
-							ImGui::ColorButton(colorBlue, true);
-							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorBlue);
 							ImGui::SameLine();
 							ImGui::TextWrapped(
 								"Tracker gain not default. "
@@ -1602,8 +1586,7 @@ void AppStage_ColorCalibration::renderUI()
 						// Recommend higher fps
 						if (!is_tracker_virtual() && m_trackerFrameRate < 30)
 						{
-							ImGui::ColorButton(colorBlue, true);
-							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorOrange);
 							ImGui::SameLine();
 							ImGui::TextWrapped(
 								"Tracker frame rate too low. "
@@ -1620,16 +1603,14 @@ void AppStage_ColorCalibration::renderUI()
 						// Saturation too low, its too bright!
 						if (preset.saturation_center < 40)
 						{
-							ImGui::ColorButton(colorRed, true);
-							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorRed);
 							ImGui::SameLine();
 							ImGui::TextWrapped("Color saturation too low! The tracking color is way too bright and will cause tracking problems! Adjust your tracker exposure/gain settings!");
 							bHasIssues = true;
 						}
 						else if (preset.saturation_center < 80)
 						{
-							ImGui::ColorButton(colorOrange, true);
-							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorOrange);
 							ImGui::SameLine();
 							ImGui::TextWrapped("Color saturation not optimal! The tracking color is too bright and could cause tracking problems! Adjust your tracker exposure/gain settings.");
 							bHasIssues = true;
@@ -1638,16 +1619,14 @@ void AppStage_ColorCalibration::renderUI()
 						// Value too low, its too dark!
 						if (preset.value_center < 40)
 						{
-							ImGui::ColorButton(colorOrange, true);
-							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorRed);
 							ImGui::SameLine();
 							ImGui::TextWrapped("Color value too low! The tracking color is way too dark and could cause tracking problems! Adjust your tracker exposure/gain settings!");
 							bHasIssues = true;
 						}
 						else if (preset.value_center < 80)
 						{
-							ImGui::ColorButton(colorOrange, true);
-							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorOrange);
 							ImGui::SameLine();
 							ImGui::TextWrapped("Color value not optimal! The tracking color is too dark and could cause tracking problems! Adjust your tracker exposure/gain settings.");
 							bHasIssues = true;
@@ -1681,8 +1660,7 @@ void AppStage_ColorCalibration::renderUI()
 
 							if (invalidHue)
 							{
-								ImGui::ColorButton(colorRed, true);
-								if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+								ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorRed);
 								ImGui::SameLine();
 								ImGui::TextWrapped(
 									"Wrong tracking color set! "
@@ -1717,8 +1695,7 @@ void AppStage_ColorCalibration::renderUI()
 
 							if (invalidHue)
 							{
-								ImGui::ColorButton(colorRed, true);
-								if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+								ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorRed);
 								ImGui::SameLine();
 								ImGui::TextWrapped(
 									"Wrong tracking color set! "
@@ -1753,8 +1730,7 @@ void AppStage_ColorCalibration::renderUI()
 
 							if (invalidHue)
 							{
-								ImGui::ColorButton(colorRed, true);
-								if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+								ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorRed);
 								ImGui::SameLine();
 								ImGui::TextWrapped(
 									"Wrong tracking color set! "
@@ -1789,8 +1765,7 @@ void AppStage_ColorCalibration::renderUI()
 
 							if (invalidHue)
 							{
-								ImGui::ColorButton(colorRed, true);
-								if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+								ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorRed);
 								ImGui::SameLine();
 								ImGui::TextWrapped(
 									"Wrong tracking color set! "
@@ -1825,8 +1800,7 @@ void AppStage_ColorCalibration::renderUI()
 
 							if (invalidHue)
 							{
-								ImGui::ColorButton(colorRed, true);
-								if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+								ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorRed);
 								ImGui::SameLine();
 								ImGui::TextWrapped(
 									"Wrong tracking color set! "
@@ -1861,8 +1835,7 @@ void AppStage_ColorCalibration::renderUI()
 
 							if (invalidHue)
 							{
-								ImGui::ColorButton(colorRed, true);
-								if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+								ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorRed);
 								ImGui::SameLine();
 								ImGui::TextWrapped(
 									"Wrong tracking color set! "
@@ -1888,8 +1861,7 @@ void AppStage_ColorCalibration::renderUI()
 						{
 							if (m_masterControllerView != nullptr && m_masterControllerView->ControllerType == PSMController_Move)
 							{
-								ImGui::ColorButton(colorBlue, true);
-								if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+								ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorBlue);
 								ImGui::SameLine();
 								ImGui::TextWrapped(
 									"Custom preset color set. PSmove bulb has been turned off."
@@ -1921,8 +1893,7 @@ void AppStage_ColorCalibration::renderUI()
 						{
 						case 0:
 						{
-							ImGui::ColorButton(colorRed, true);
-							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorRed);
 							ImGui::SameLine();
 							ImGui::TextWrapped(
 								"Could not detect tracking color! Place your device in view of the tracker. "
@@ -1939,8 +1910,7 @@ void AppStage_ColorCalibration::renderUI()
 						}
 						default:
 						{
-							ImGui::ColorButton(colorRed, true);
-							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorRed);
 							ImGui::SameLine();
 							ImGui::TextWrapped(
 								"Color noise/collisions detected! "
@@ -1956,9 +1926,7 @@ void AppStage_ColorCalibration::renderUI()
 
 					if (!bHasIssues)
 					{
-						ImGui::ColorButton(colorGreen, true);
-						if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
-
+						ImGui::Image(AssetManager::getInstance()->getIconCheck()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorGreen);
 						ImGui::SameLine();
 						ImGui::TextWrapped("No issues detected.");
 					}
@@ -2046,19 +2014,13 @@ void AppStage_ColorCalibration::renderUI()
 			switch ((int)floorf(waitCount))
 			{
 			case 0:
-				ImGui::Image(icoWaitFull->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate()->getImTextureId(), ImVec2(32, 32));
 				break;
 			case 1:
-				ImGui::Image(icoWaitHalf->getImTextureId(), ImVec2(32, 32));
-				break;
-			case 2:
-				ImGui::Image(icoWaitDone->getImTextureId(), ImVec2(32, 32));
-				break;
-			case 3:
-				ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 				break;
 			default:
-				ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 				waitCount = 0;
 				break;
 			}
@@ -2123,7 +2085,7 @@ void AppStage_ColorCalibration::renderUI()
 			}
 		}
 
-		ImGui::Image(icoWaitExclamation->getImTextureId(), ImVec2(32, 32));
+		ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(32, 32));
 		ImGui::SameLine();
 		ImGui::TextWrapped(
 			"Place all controllers in the middle of your play space so all trackers can see them. "
@@ -2571,7 +2533,7 @@ void AppStage_ColorCalibration::renderUI()
 			ImGui::SetNextWindowPosCenter();
 			ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
-			ImGui::Image(icoWaitWarning->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(32, 32));
 			ImGui::SameLine();
 			ImGui::TextWrapped("Color sampling failed!");
 			ImGui::TextWrapped("Unable to find controller #%d on tracker #%d!", m_masterControllerView->ControllerID, m_trackerView->tracker_info.tracker_id);
@@ -2604,7 +2566,7 @@ void AppStage_ColorCalibration::renderUI()
 			ImGui::SetNextWindowPosCenter();
 			ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
-			ImGui::Image(icoWaitWarning->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(32, 32));
 			ImGui::SameLine();
 			ImGui::Text("Color sampling aborted!");
 
@@ -2626,7 +2588,7 @@ void AppStage_ColorCalibration::renderUI()
 			ImGui::SetNextWindowPosCenter();
 			ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
-			ImGui::Image(icoWaitWarning->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(32, 32));
 			ImGui::SameLine();
 			ImGui::TextWrapped("Color sampling failed!");
 			ImGui::TextWrapped("Unable to change color on virtual controllers!");
@@ -2650,7 +2612,7 @@ void AppStage_ColorCalibration::renderUI()
 			ImGui::SetNextWindowPosCenter();
 			ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
-			ImGui::Image(icoWaitWarning->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(32, 32));
 			ImGui::SameLine();
 			ImGui::TextWrapped("Color sampling failed!");
 			ImGui::TextWrapped("Unable to find controller #%d on tracker #%d!", m_masterControllerView->ControllerID, m_trackerView->tracker_info.tracker_id);
@@ -2684,7 +2646,7 @@ void AppStage_ColorCalibration::renderUI()
 			ImGui::SetNextWindowPosCenter();
 			ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
-			ImGui::Image(icoWaitWarning->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(32, 32));
 			ImGui::SameLine();
 			ImGui::TextWrapped("Color sampling on controller #%d and tracker #%d failed!", m_masterControllerView->ControllerID, m_trackerView->tracker_info.tracker_id);
 
@@ -2721,7 +2683,7 @@ void AppStage_ColorCalibration::renderUI()
 		ImGui::SetNextWindowPosCenter();
 		ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
-		ImGui::Image(icoWaitExclamation->getImTextureId(), ImVec2(32, 32));
+		ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(32, 32));
 		ImGui::SameLine();
 		ImGui::TextWrapped("Color sampling finished.");
 		ImGui::TextWrapped("Controller colors and tracker exposure/gain have been automatically adjusted!");
@@ -2795,19 +2757,13 @@ void AppStage_ColorCalibration::renderUI()
 		switch ((int)floorf(waitCount))
 		{
 		case 0:
-			ImGui::Image(icoWaitFull->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconUpdate()->getImTextureId(), ImVec2(32, 32));
 			break;
 		case 1:
-			ImGui::Image(icoWaitHalf->getImTextureId(), ImVec2(32, 32));
-			break;
-		case 2:
-			ImGui::Image(icoWaitDone->getImTextureId(), ImVec2(32, 32));
-			break;
-		case 3:
-			ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 			break;
 		default:
-			ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 			waitCount = 0;
 			break;
 		}
@@ -2826,7 +2782,7 @@ void AppStage_ColorCalibration::renderUI()
         ImGui::SetNextWindowPosCenter();
         ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
-		ImGui::Image(icoWaitWarning->getImTextureId(), ImVec2(32, 32));
+		ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(32, 32));
 		ImGui::SameLine();
         if (m_menuState == eMenuState::failedTrackerStartStreamRequest)
         {

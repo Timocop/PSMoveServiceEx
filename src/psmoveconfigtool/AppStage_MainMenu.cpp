@@ -61,16 +61,6 @@ void AppStage_MainMenu::exit()
 
 void AppStage_MainMenu::renderUI()
 {
-	const auto icoWaitFull = AssetManager::getInstance()->getIconWaitFull();
-	const auto icoWaitHalf = AssetManager::getInstance()->getIconWaitHalf();
-	const auto icoWaitEmpty = AssetManager::getInstance()->getIconWaitEmpty();
-	const auto icoWaitDone = AssetManager::getInstance()->getIconWaitDone();
-	const auto icoWaitWarning = AssetManager::getInstance()->getIconWarning();
-	const auto icoWaitExclamation = AssetManager::getInstance()->getIconExclamation();
-	const auto icoWaitUsb = AssetManager::getInstance()->getIconUsb();
-	const auto icoWaitBluetooth = AssetManager::getInstance()->getIconBluetooth();
-	const auto icoWaitConnect = AssetManager::getInstance()->getIconConnect();
-	const auto icoWaitBan = AssetManager::getInstance()->getIconBan();
 	static float waitCount;
 
     switch(m_menuState)
@@ -91,17 +81,12 @@ void AppStage_MainMenu::renderUI()
 		ImGui::Begin(szWindowTitle, nullptr, window_flags);
 		ImGui::BeginGroup();
 		{
-			const auto icoController = AssetManager::getInstance()->getIconController();
-			const auto icoHmd = AssetManager::getInstance()->getIconHmd();
-			const auto icoTracker = AssetManager::getInstance()->getIconTracker();
-			const auto icoSettings = AssetManager::getInstance()->getIconSettings();
-
 			const ImVec2 _lastLoc = ImGui::GetCursorPos();
 			if (ImGui::Button("      Controller Settings"))
 			{
 				m_app->setAppStage(AppStage_ControllerSettings::APP_STAGE_NAME);
 			}
-			ImGui::GetWindowDrawList()->AddImage(icoController->getImTextureId(),
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconController()->getImTextureId(),
 				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
@@ -109,7 +94,7 @@ void AppStage_MainMenu::renderUI()
 			{
 				m_app->setAppStage(AppStage_HMDSettings::APP_STAGE_NAME);
 			}
-			ImGui::GetWindowDrawList()->AddImage(icoHmd->getImTextureId(),
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconHmd()->getImTextureId(),
 				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
@@ -117,7 +102,7 @@ void AppStage_MainMenu::renderUI()
 			{
 				m_app->setAppStage(AppStage_TrackerSettings::APP_STAGE_NAME);
 			}
-			ImGui::GetWindowDrawList()->AddImage(icoTracker->getImTextureId(),
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconTracker()->getImTextureId(),
 				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
@@ -128,7 +113,7 @@ void AppStage_MainMenu::renderUI()
 			{
 				m_app->setAppStage(AppStage_AdvancedSettings::APP_STAGE_NAME);
 			}
-			ImGui::GetWindowDrawList()->AddImage(icoSettings->getImTextureId(),
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconSettings()->getImTextureId(),
 				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
@@ -139,7 +124,7 @@ void AppStage_MainMenu::renderUI()
 			{
 				m_app->requestShutdown();
 			}
-			ImGui::GetWindowDrawList()->AddImage(icoWaitBan->getImTextureId(),
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
 				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
@@ -163,30 +148,25 @@ void AppStage_MainMenu::renderUI()
 			switch ((int)floorf(waitCount))
 			{
 			case 0:
-				ImGui::Image(icoWaitFull->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate()->getImTextureId(), ImVec2(32, 32));
 				break;
 			case 1:
-				ImGui::Image(icoWaitHalf->getImTextureId(), ImVec2(32, 32));
-				break;
-			case 2:
-				ImGui::Image(icoWaitDone->getImTextureId(), ImVec2(32, 32));
-				break;
-			case 3:
-				ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 				break;
 			default:
-				ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 				waitCount = 0;
 				break;
 			}
 
 			ImGui::SameLine();
             ImGui::Text("Connecting to PSMoveServiceEx...");
+			ImGui::Separator();
             if (ImGui::Button("      Exit"))
             {
                 m_app->requestShutdown();
             }
-			ImGui::GetWindowDrawList()->AddImage(icoWaitBan->getImTextureId(),
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
 				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
@@ -207,19 +187,6 @@ void AppStage_MainMenu::renderUI()
             ImGui::SetNextWindowPosCenter();
             ImGui::Begin("Connect", nullptr, window_flags);
 
-			if (m_menuState == failedConnectionToService)
-			{
-				ImGui::Image(icoWaitWarning->getImTextureId(), ImVec2(32, 32));
-				ImGui::SameLine();
-	            ImGui::Text("Failed to connect to PSMoveServiceEx!");
-			}
-			else if (m_menuState == disconnectedFromService)
-			{
-				ImGui::Image(icoWaitWarning->getImTextureId(), ImVec2(32, 32));
-				ImGui::SameLine();
-				ImGui::Text("Disconnected from PSMoveServiceEx!");
-			}
-            
 			ImGui::PushItemWidth(125.f);
 			if (ImGui::InputText("Server Address", m_app->m_serverAddress, sizeof(m_app->m_serverAddress), ImGuiInputTextFlags_CharsDecimal | ImGuiInputTextFlags_CharsNoBlank))
 			{
@@ -229,20 +196,39 @@ void AppStage_MainMenu::renderUI()
 			ImGui::InputText("Server Port", m_app->m_serverPort, sizeof(m_app->m_serverPort), ImGuiInputTextFlags_CharsDecimal);
 			ImGui::PopItemWidth();
 
+			if (m_menuState == failedConnectionToService)
+			{
+				ImGui::Separator();
+				ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(32, 32), ImVec2(0,0), ImVec2(1,1), ImColor(1.f, 0.f, 0.f));
+				ImGui::SameLine();
+				ImGui::TextDisabled("Failed to connect to PSMoveServiceEx!");
+			}
+			else if (m_menuState == disconnectedFromService)
+			{
+				ImGui::Separator();
+				ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(32, 32), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, 0.f, 0.f));
+				ImGui::SameLine();
+				ImGui::TextDisabled("Disconnected from PSMoveServiceEx!");
+			}
+
+			ImGui::Separator();
+
             if (ImGui::Button("      Connect"))
             {
                 m_menuState= AppStage_MainMenu::pendingConnectToToService;
                 m_app->reconnectToService();
             }
-			ImGui::GetWindowDrawList()->AddImage(icoWaitConnect->getImTextureId(),
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconConnect()->getImTextureId(),
 				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
+
+			ImGui::SameLine();
 
             if (ImGui::Button("      Exit"))
             {
                 m_app->requestShutdown();
             }
-			ImGui::GetWindowDrawList()->AddImage(icoWaitBan->getImTextureId(),
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
 				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 

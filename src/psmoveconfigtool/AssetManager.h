@@ -151,24 +151,14 @@ public:
 		return &m_icon_hmd_asset;
 	}
 
-	const TextureAsset *getIconWaitDone()
+	const TextureAsset *getIconUpdate()
 	{
-		return &m_icon_wait_done_asset;
+		return &m_icon_update_asset;
 	}
 
-	const TextureAsset *getIconWaitEmpty()
+	const TextureAsset *getIconUpdate2()
 	{
-		return &m_icon_wait_empty_asset;
-	}
-
-	const TextureAsset *getIconWaitFull()
-	{
-		return &m_icon_wait_full_asset;
-	}
-
-	const TextureAsset *getIconWaitHalf()
-	{
-		return &m_icon_wait_half_asset;
+		return &m_icon_update2_asset;
 	}
 
 	const TextureAsset *getIconWarning()
@@ -201,6 +191,26 @@ public:
 		return &m_icon_ban_asset;
 	}
 
+	const TextureAsset *getIconShield()
+	{
+		return &m_icon_shield_asset;
+	}
+
+	const TextureAsset *getIconSearch()
+	{
+		return &m_icon_search_asset;
+	}
+
+	const TextureAsset *getIconCheck()
+	{
+		return &m_icon_check_asset;
+	}
+
+	const TextureAsset *getIconClose()
+	{
+		return &m_icon_close_asset;
+	}
+
 private:
     bool loadTexture(const char *filename, TextureAsset *textureAsset);
     bool loadFont(const char *filename, float pixelHeight, FontAsset *fontAsset);
@@ -229,16 +239,18 @@ private:
 	TextureAsset m_icon_controller_asset;
 	TextureAsset m_icon_tracker_asset;
 	TextureAsset m_icon_hmd_asset;
-	TextureAsset m_icon_wait_done_asset;
-	TextureAsset m_icon_wait_empty_asset;
-	TextureAsset m_icon_wait_full_asset;
-	TextureAsset m_icon_wait_half_asset;
+	TextureAsset m_icon_update_asset;
+	TextureAsset m_icon_update2_asset;
 	TextureAsset m_icon_warning_asset;
 	TextureAsset m_icon_exclamation_asset;
 	TextureAsset m_icon_usb_asset;
 	TextureAsset m_icon_bluetooth_asset;
 	TextureAsset m_icon_connect_asset;
 	TextureAsset m_icon_ban_asset;
+	TextureAsset m_icon_shield_asset;
+	TextureAsset m_icon_search_asset;
+	TextureAsset m_icon_check_asset;
+	TextureAsset m_icon_close_asset;
 
     static AssetManager *m_instance;
 };

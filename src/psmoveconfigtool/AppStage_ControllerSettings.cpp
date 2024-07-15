@@ -436,12 +436,6 @@ void AppStage_ControllerSettings::render()
 
 void AppStage_ControllerSettings::renderUI()
 {
-	const auto icoWaitFull = AssetManager::getInstance()->getIconWaitFull();
-	const auto icoWaitHalf = AssetManager::getInstance()->getIconWaitHalf();
-	const auto icoWaitEmpty = AssetManager::getInstance()->getIconWaitEmpty();
-	const auto icoWaitDone = AssetManager::getInstance()->getIconWaitDone();
-	const auto icoWaitWarning = AssetManager::getInstance()->getIconWarning();
-	const auto icoWaitExclamation = AssetManager::getInstance()->getIconExclamation();
 	static float waitCount;
 
 	const float k_panel_width = 550.f;
@@ -477,6 +471,8 @@ void AppStage_ControllerSettings::renderUI()
 					ImGui::BeginChild("##HostInfoChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
 					ImGui::BeginGroup();
 					{
+						ImGui::Image(AssetManager::getInstance()->getIconBluetooth()->getImTextureId(), ImVec2(32, 32));
+						ImGui::SameLine();
 						ImGui::Text("Bluetooth Information:");
 						ImGui::Separator();
 
@@ -530,6 +526,8 @@ void AppStage_ControllerSettings::renderUI()
 						ImGui::BeginChild("##ControllerInfoChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
 						ImGui::BeginGroup();
 						{
+							ImGui::Image(AssetManager::getInstance()->getIconController()->getImTextureId(), ImVec2(32, 32));
+							ImGui::SameLine();
 							ImGui::Text("Controller Information:");
 							ImGui::Separator();
 
@@ -735,6 +733,9 @@ void AppStage_ControllerSettings::renderUI()
 											m_app->getAppStage<AppStage_PairController>()->request_controller_unpair(controllerInfo.ControllerID, controllerInfo.ControllerType);
 											m_app->setAppStage(AppStage_PairController::APP_STAGE_NAME);
 										}
+										ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBluetooth()->getImTextureId(),
+											ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+											ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 									}
 									else
 									{
@@ -744,20 +745,25 @@ void AppStage_ControllerSettings::renderUI()
 											m_app->getAppStage<AppStage_PairController>()->request_controller_pair(controllerInfo.ControllerID, controllerInfo.ControllerType);
 											m_app->setAppStage(AppStage_PairController::APP_STAGE_NAME);
 										}
+										ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBluetooth()->getImTextureId(),
+											ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+											ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 									}
 #ifdef _WIN32
 								}
 								else
 								{
 									ImGui::Separator();
-									if (ImGui::Button("Pair/Unpair Controller\n(restart required)"))
+									if (ImGui::Button("      Pair/Unpair Controller (restart required)"))
 									{
 										adminCheck.RestartAdminMode();
 									}
+									ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconShield()->getImTextureId(),
+										ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+										ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 									ImGui::PushTextWrapPos();
-									ImGui::ColorButton(ImColor(1.f, .5f, 0.f), true);
-									if (ImGui::IsItemHovered()) ImGui::SetTooltip("");
+									ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, .5f, 0.f));
 									ImGui::SameLine();
 									ImGui::TextDisabled("Administrator privileges are required to pair or unpair controllers.");
 									ImGui::PopTextWrapPos();
@@ -766,7 +772,7 @@ void AppStage_ControllerSettings::renderUI()
 								if (controllerInfo.IsBluetooth)
 								{
 									ImGui::Separator();
-									if (ImGui::Button("Identify Controller"))
+									if (ImGui::Button("      Identify Controller"))
 									{
 										if (m_indicatorControllerIndex < 0)
 										{
@@ -774,6 +780,10 @@ void AppStage_ControllerSettings::renderUI()
 											m_lastIndicatorControllerTime = std::chrono::high_resolution_clock::now();
 										}
 									}
+									ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconSearch()->getImTextureId(),
+										ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
+										ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
+
 								}
 							}
 						}
@@ -1775,8 +1785,7 @@ void AppStage_ControllerSettings::renderUI()
 											controllerInfo.OffsetScale.z != 1.0f)
 										{
 											ImGui::PushTextWrapPos();
-											ImGui::ColorButton(ImColor(1.f, .5f, 0.f), true);
-											if (ImGui::IsItemHovered()) ImGui::SetTooltip("");
+											ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, .5f, 0.f));
 											ImGui::SameLine();
 											ImGui::TextDisabled(
 												"Controller scale or position has been changed!\n"
@@ -1871,8 +1880,8 @@ void AppStage_ControllerSettings::renderUI()
 								{
 									ImGui::Button("Calibrate Magnetometer (Unavailable)");
 									ImGui::PushTextWrapPos();
-									ImGui::ColorButton(ImColor(1.f, 0.f, 0.f), true);
-									if (ImGui::IsItemHovered()) ImGui::SetTooltip("");
+
+									ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, 0.f, 0.f));
 									ImGui::SameLine();
 									ImGui::TextDisabled(
 										"The magnetometer for this controller has been disabled or is not available. "
@@ -1938,8 +1947,7 @@ void AppStage_ControllerSettings::renderUI()
 									}
 
 									ImGui::PushTextWrapPos();
-									ImGui::ColorButton(ImColor(0.f, 0.f, 1.f), true);
-									if (ImGui::IsItemHovered()) ImGui::SetTooltip("");
+									ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(0.f, .5f, 1.f));
 									ImGui::SameLine();
 									ImGui::TextDisabled(
 										"Requires PSmove emulation to be enabled."
@@ -2011,19 +2019,13 @@ void AppStage_ControllerSettings::renderUI()
 			switch ((int)floorf(waitCount))
 			{
 			case 0:
-				ImGui::Image(icoWaitFull->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate()->getImTextureId(), ImVec2(32, 32));
 				break;
 			case 1:
-				ImGui::Image(icoWaitHalf->getImTextureId(), ImVec2(32, 32));
-				break;
-			case 2:
-				ImGui::Image(icoWaitDone->getImTextureId(), ImVec2(32, 32));
-				break;
-			case 3:
-				ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 				break;
 			default:
-				ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 				waitCount = 0;
 				break;
 			}
@@ -2039,7 +2041,7 @@ void AppStage_ControllerSettings::renderUI()
             ImGui::SetNextWindowPosCenter();
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
-			ImGui::Image(icoWaitWarning->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(32, 32));
 			ImGui::SameLine();
             ImGui::Text("Failed to get controller list!");
 

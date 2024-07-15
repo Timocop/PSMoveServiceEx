@@ -690,12 +690,6 @@ void AppStage_AccelerometerCalibration::render()
 
 void AppStage_AccelerometerCalibration::renderUI()
 {
-	const auto icoWaitFull = AssetManager::getInstance()->getIconWaitFull();
-	const auto icoWaitHalf = AssetManager::getInstance()->getIconWaitHalf();
-	const auto icoWaitEmpty = AssetManager::getInstance()->getIconWaitEmpty();
-	const auto icoWaitDone = AssetManager::getInstance()->getIconWaitDone();
-	const auto icoWaitWarning = AssetManager::getInstance()->getIconWarning();
-	const auto icoWaitExclamation = AssetManager::getInstance()->getIconExclamation();
 	static float waitCount;
 
     const float k_panel_width = 500;
@@ -718,19 +712,13 @@ void AppStage_AccelerometerCalibration::renderUI()
 			switch ((int)floorf(waitCount))
 			{
 			case 0:
-				ImGui::Image(icoWaitFull->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate()->getImTextureId(), ImVec2(32, 32));
 				break;
 			case 1:
-				ImGui::Image(icoWaitHalf->getImTextureId(), ImVec2(32, 32));
-				break;
-			case 2:
-				ImGui::Image(icoWaitDone->getImTextureId(), ImVec2(32, 32));
-				break;
-			case 3:
-				ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 				break;
 			default:
-				ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 				waitCount = 0;
 				break;
 			}
@@ -750,19 +738,13 @@ void AppStage_AccelerometerCalibration::renderUI()
 			switch ((int)floorf(waitCount))
 			{
 			case 0:
-				ImGui::Image(icoWaitFull->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate()->getImTextureId(), ImVec2(32, 32));
 				break;
 			case 1:
-				ImGui::Image(icoWaitHalf->getImTextureId(), ImVec2(32, 32));
-				break;
-			case 2:
-				ImGui::Image(icoWaitDone->getImTextureId(), ImVec2(32, 32));
-				break;
-			case 3:
-				ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 				break;
 			default:
-				ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 				waitCount = 0;
 				break;
 			}
@@ -778,7 +760,7 @@ void AppStage_AccelerometerCalibration::renderUI()
             ImGui::SetNextWindowPosCenter();
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
-			ImGui::Image(icoWaitWarning->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(32, 32));
 			ImGui::SameLine();
             ImGui::Text("Failed to start controller stream!");
 
@@ -829,22 +811,17 @@ void AppStage_AccelerometerCalibration::renderUI()
 			switch ((int)floorf(waitCount))
 			{
 			case 0:
-				ImGui::Image(icoWaitFull->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate()->getImTextureId(), ImVec2(32, 32));
 				break;
 			case 1:
-				ImGui::Image(icoWaitHalf->getImTextureId(), ImVec2(32, 32));
-				break;
-			case 2:
-				ImGui::Image(icoWaitDone->getImTextureId(), ImVec2(32, 32));
-				break;
-			case 3:
-				ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 				break;
 			default:
-				ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 				waitCount = 0;
 				break;
 			}
+			ImGui::SameLine();
 
 			if (m_menuState == eCalibrationMenuState::measureAxisX)
 			{
@@ -907,7 +884,7 @@ void AppStage_AccelerometerCalibration::renderUI()
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
-			ImGui::Image(icoWaitExclamation->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(32, 32));
 			ImGui::SameLine();
             ImGui::TextWrapped(
                 "Sampling complete.\n" \

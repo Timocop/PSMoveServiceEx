@@ -204,16 +204,6 @@ const AppStage_TrackerSettings::HMDInfo *AppStage_TrackerSettings::get_selected_
 
 void AppStage_TrackerSettings::renderUI()
 {
-	const auto icoWaitFull = AssetManager::getInstance()->getIconWaitFull();
-	const auto icoWaitHalf = AssetManager::getInstance()->getIconWaitHalf();
-	const auto icoWaitEmpty = AssetManager::getInstance()->getIconWaitEmpty();
-	const auto icoWaitDone = AssetManager::getInstance()->getIconWaitDone();
-	const auto icoWaitWarning = AssetManager::getInstance()->getIconWarning();
-	const auto icoWaitExclamation = AssetManager::getInstance()->getIconExclamation();
-	const auto icoWaitUsb = AssetManager::getInstance()->getIconUsb();
-	const auto icoWaitBluetooth = AssetManager::getInstance()->getIconBluetooth();
-	const auto icoWaitConnect = AssetManager::getInstance()->getIconConnect();
-	const auto icoWaitBan = AssetManager::getInstance()->getIconBan();
 	static float waitCount;
 
 	const float k_panel_width = 550.f;
@@ -291,6 +281,8 @@ void AppStage_TrackerSettings::renderUI()
 					ImGui::BeginChild("##TrackerInfoChild", ImVec2(0, lastChildVec.y + 16), true);
 					ImGui::BeginGroup();
 					{
+						ImGui::Image(AssetManager::getInstance()->getIconTracker()->getImTextureId(), ImVec2(32, 32));
+						ImGui::SameLine();
 						ImGui::Text("Tracker Information:");
 						ImGui::Separator();
 						ImGui::BulletText("Tracker ID: %d", trackerInfo.tracker_id);
@@ -353,7 +345,7 @@ void AppStage_TrackerSettings::renderUI()
 						const ImColor k_colorGreen = ImColor(0.f, 1.f, 0.f);
 						const ImColor k_colorOrange = ImColor(1.f, .5f, 0.f);
 						const ImColor k_colorRed = ImColor(1.f, 0.f, 0.f);
-						const ImColor k_colorBlue = ImColor(0.f, 0.25f, 1.f);
+						const ImColor k_colorBlue = ImColor(0.f, 0.5f, 1.f);
 
 						bool bWarningAndIssuesShown = false;
 
@@ -362,13 +354,14 @@ void AppStage_TrackerSettings::renderUI()
 							if (!bWarningAndIssuesShown)
 							{
 								ImGui::Separator();
+								ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(32, 32));
+								ImGui::SameLine();
 								ImGui::Text("Warnings and Issues:");
 								ImGui::Separator();
 								bWarningAndIssuesShown = true;
 							}
 
-							ImGui::ColorButton(k_colorOrange, true);
-							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), k_colorOrange);
 							ImGui::SameLine();
 							ImGui::PushTextWrapPos();
 							ImGui::TextDisabled(
@@ -383,13 +376,14 @@ void AppStage_TrackerSettings::renderUI()
 							if (!bWarningAndIssuesShown)
 							{
 								ImGui::Separator();
+								ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(32, 32));
+								ImGui::SameLine();
 								ImGui::Text("Warnings and Issues:");
 								ImGui::Separator();
 								bWarningAndIssuesShown = true;
 							}
 
-							ImGui::ColorButton(k_colorBlue, true);
-							if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), k_colorBlue);
 							ImGui::SameLine();
 							ImGui::PushTextWrapPos();
 							ImGui::TextDisabled(
@@ -417,7 +411,7 @@ void AppStage_TrackerSettings::renderUI()
 							if (sameDevices.size() > 1)
 							{
 								ImGui::Separator();
-								ImGui::Image(icoWaitUsb->getImTextureId(), ImVec2(32, 32));
+								ImGui::Image(AssetManager::getInstance()->getIconUsb()->getImTextureId(), ImVec2(32, 32));
 								ImGui::SameLine();
 								ImGui::Text("Sharing USB Controller with Trackers:", sameDevices.size());
 								ImGui::Separator();
@@ -432,8 +426,7 @@ void AppStage_TrackerSettings::renderUI()
 								// Warn if theres too many PSeyes on one USB controller causing possible bandwidth issues.
 								if (sameDevices.size() >= 4)
 								{
-									ImGui::ColorButton(k_colorBlue, true);
-									if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+									ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), k_colorBlue);
 									ImGui::SameLine();
 									ImGui::PushTextWrapPos();
 									ImGui::TextDisabled(
@@ -445,8 +438,7 @@ void AppStage_TrackerSettings::renderUI()
 								}
 								else if (sameDevices.size() >= 3)
 								{
-									ImGui::ColorButton(k_colorBlue, true);
-									if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+									ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), k_colorBlue);
 									ImGui::SameLine();
 									ImGui::PushTextWrapPos();
 									ImGui::TextDisabled(
@@ -458,8 +450,7 @@ void AppStage_TrackerSettings::renderUI()
 								}
 								else if (sameDevices.size() >= 2)
 								{
-									ImGui::ColorButton(k_colorBlue, true);
-									if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
+									ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0,0), ImVec2(1,1), k_colorBlue);
 									ImGui::SameLine();
 									ImGui::PushTextWrapPos();
 									ImGui::TextDisabled(
@@ -956,8 +947,7 @@ void AppStage_TrackerSettings::renderUI()
 							playspace_scale_z != 1.0f)
 						{
 							ImGui::PushTextWrapPos();
-							ImGui::ColorButton(ImColor(1.f, .5f, 0.f), true);
-							if (ImGui::IsItemHovered()) ImGui::SetTooltip("");
+							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, .5f, 0.f));
 							ImGui::SameLine();
 							ImGui::TextDisabled(
 								"Playspace scale has been changed!\n"
@@ -1027,19 +1017,13 @@ void AppStage_TrackerSettings::renderUI()
 		switch ((int)floorf(waitCount))
 		{
 		case 0:
-			ImGui::Image(icoWaitFull->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconUpdate()->getImTextureId(), ImVec2(32, 32));
 			break;
 		case 1:
-			ImGui::Image(icoWaitHalf->getImTextureId(), ImVec2(32, 32));
-			break;
-		case 2:
-			ImGui::Image(icoWaitDone->getImTextureId(), ImVec2(32, 32));
-			break;
-		case 3:
-			ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 			break;
 		default:
-			ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 			waitCount = 0;
 			break;
 		}
@@ -1059,7 +1043,7 @@ void AppStage_TrackerSettings::renderUI()
         ImGui::SetNextWindowPosCenter();
         ImGui::Begin(k_window_title, nullptr, window_flags);
 
-		ImGui::Image(icoWaitWarning->getImTextureId(), ImVec2(32, 32));
+		ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(32, 32));
 		ImGui::SameLine();
 		ImGui::Text("Failed to get server response!");
 
@@ -1081,7 +1065,7 @@ void AppStage_TrackerSettings::renderUI()
 		ImGui::SetNextWindowPosCenter();
 		ImGui::Begin("Reset Tracker Pose", nullptr, window_flags);
 
-		ImGui::Image(icoWaitWarning->getImTextureId(), ImVec2(32, 32));
+		ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(32, 32));
 		ImGui::SameLine();
 		ImGui::Text(
 			"You are about to reset the calibrated pose for this tracker!\n"

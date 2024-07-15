@@ -162,12 +162,6 @@ void AppStage_HMDSettings::render()
 
 void AppStage_HMDSettings::renderUI()
 {
-	const auto icoWaitFull = AssetManager::getInstance()->getIconWaitFull();
-	const auto icoWaitHalf = AssetManager::getInstance()->getIconWaitHalf();
-	const auto icoWaitEmpty = AssetManager::getInstance()->getIconWaitEmpty();
-	const auto icoWaitDone = AssetManager::getInstance()->getIconWaitDone();
-	const auto icoWaitWarning = AssetManager::getInstance()->getIconWarning();
-	const auto icoWaitExclamation = AssetManager::getInstance()->getIconExclamation();
 	static float waitCount;
 
 	const float k_panel_width = 550.f;
@@ -383,10 +377,9 @@ void AppStage_HMDSettings::renderUI()
 							}
 							else
 							{
-								ImGui::ColorButton(ImColor(1.f, 0.f, 0.f), true);
-								if (ImGui::IsItemHovered()) ImGui::SetTooltip(""); // Disable color tooltip
-								ImGui::SameLine();
 								ImGui::PushTextWrapPos();
+								ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, 0.f, 0.f));
+								ImGui::SameLine();
 								ImGui::TextDisabled(
 									"This tracking method is currently unavailable!"
 								);
@@ -1048,8 +1041,7 @@ void AppStage_HMDSettings::renderUI()
 								hmdInfo.OffsetScale.z != 1.0f)
 							{
 								ImGui::PushTextWrapPos();
-								ImGui::ColorButton(ImColor(1.f, .5f, 0.f), true);
-								if (ImGui::IsItemHovered()) ImGui::SetTooltip("");
+								ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, .5f, 0.f));
 								ImGui::SameLine();
 								ImGui::TextDisabled(
 									"HMD scale or position has been changed!\n"
@@ -1192,19 +1184,13 @@ void AppStage_HMDSettings::renderUI()
 		switch ((int)floorf(waitCount))
 		{
 		case 0:
-			ImGui::Image(icoWaitFull->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconUpdate()->getImTextureId(), ImVec2(32, 32));
 			break;
 		case 1:
-			ImGui::Image(icoWaitHalf->getImTextureId(), ImVec2(32, 32));
-			break;
-		case 2:
-			ImGui::Image(icoWaitDone->getImTextureId(), ImVec2(32, 32));
-			break;
-		case 3:
-			ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 			break;
 		default:
-			ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 			waitCount = 0;
 			break;
 		}
@@ -1220,7 +1206,7 @@ void AppStage_HMDSettings::renderUI()
         ImGui::SetNextWindowSize(ImVec2(300, 150));
         ImGui::Begin(k_window_title, nullptr, window_flags);
 
-		ImGui::Image(icoWaitWarning->getImTextureId(), ImVec2(32, 32));
+		ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(32, 32));
 		ImGui::SameLine();
         ImGui::Text("Failed to get tracker list!");
 

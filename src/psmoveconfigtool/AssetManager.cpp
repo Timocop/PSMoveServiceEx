@@ -39,17 +39,19 @@ static const char *k_icon_controller_filename = "./assets/icons/gaming-gamepad-i
 static const char *k_icon_tracker_filename = "./assets/icons/image-icon.png";
 static const char *k_icon_hmd_filename = "./assets/icons/vr-goggles-icon.png";
 
-static const char *k_icon_wait_done_filename = "./assets/icons/sand-clock-done-line-icon.png";
-static const char *k_icon_wait_empty_filename = "./assets/icons/sand-clock-empty-line-icon.png";
-static const char *k_icon_wait_full_filename = "./assets/icons/sand-clock-full-line-icon.png";
-static const char *k_icon_wait_half_filename = "./assets/icons/sand-clock-half-line-icon.png";
+static const char *k_icon_update_filename = "./assets/icons/update-icon.png";
+static const char *k_icon_update2_filename = "./assets/icons/update2-icon.png";
 
-static const char *k_icon_warning_filename = "./assets/icons/exclamation-triangle-line-icon.png";
-static const char *k_icon_exclamation_filename = "./assets/icons/exclamation-round-line-icon.png";
+static const char *k_icon_warning_filename = "./assets/icons/exclamation-warning-triangle-icon.png";
+static const char *k_icon_exclamation_filename = "./assets/icons/exclamation-warning-round-icon.png";
 static const char *k_icon_usb_filename = "./assets/icons/usb-icon.png";
 static const char *k_icon_bluetooth_filename = "./assets/icons/bluetooth-icon.png";
 static const char *k_icon_connect_filename = "./assets/icons/link-line-icon.png";
 static const char *k_icon_ban_filename = "./assets/icons/ban-sign-line-icon.png";
+static const char *k_icon_shield_filename = "./assets/icons/shield-sedo-line-icon.png";
+static const char *k_icon_search_filename = "./assets/icons/search-line-icon.png";
+static const char *k_icon_check_filename = "./assets/icons/check-mark-line-icon.png";
+static const char *k_icon_close_filename = "./assets/icons/close-line-icon.png";
 
 // Fonts
 static const char *k_default_font_filename = "./assets/fonts/OpenSans-Regular.ttf";
@@ -80,14 +82,18 @@ AssetManager::AssetManager()
 	, m_icon_controller_asset()
 	, m_icon_tracker_asset()
 	, m_icon_hmd_asset()
-	, m_icon_wait_done_asset()
-	, m_icon_wait_empty_asset()
-	, m_icon_wait_full_asset()
-	, m_icon_wait_half_asset()
+	, m_icon_update_asset()
+	, m_icon_update2_asset()
 	, m_icon_warning_asset()
 	, m_icon_exclamation_asset()
 	, m_icon_usb_asset()
 	, m_icon_bluetooth_asset()
+	, m_icon_connect_asset()
+	, m_icon_ban_asset()
+	, m_icon_shield_asset()
+	, m_icon_search_asset()
+	, m_icon_check_asset()
+	, m_icon_close_asset()
 {
 }
 
@@ -126,10 +132,8 @@ bool AssetManager::init()
 	failed |= !loadTexture(k_icon_tracker_filename, &m_icon_tracker_asset);
 	failed |= !loadTexture(k_icon_hmd_filename, &m_icon_hmd_asset);
 
-	failed |= !loadTexture(k_icon_wait_done_filename, &m_icon_wait_done_asset);
-	failed |= !loadTexture(k_icon_wait_empty_filename, &m_icon_wait_empty_asset);
-	failed |= !loadTexture(k_icon_wait_full_filename, &m_icon_wait_full_asset);
-	failed |= !loadTexture(k_icon_wait_half_filename, &m_icon_wait_half_asset);
+	failed |= !loadTexture(k_icon_update_filename, &m_icon_update_asset);
+	failed |= !loadTexture(k_icon_update2_filename, &m_icon_update2_asset);
 
 	failed |= !loadTexture(k_icon_warning_filename, &m_icon_warning_asset);
 	failed |= !loadTexture(k_icon_exclamation_filename, &m_icon_exclamation_asset);
@@ -137,6 +141,10 @@ bool AssetManager::init()
 	failed |= !loadTexture(k_icon_bluetooth_filename, &m_icon_bluetooth_asset);
 	failed |= !loadTexture(k_icon_connect_filename, &m_icon_connect_asset);
 	failed |= !loadTexture(k_icon_ban_filename, &m_icon_ban_asset);
+	failed |= !loadTexture(k_icon_shield_filename, &m_icon_shield_asset);
+	failed |= !loadTexture(k_icon_search_filename, &m_icon_search_asset);
+	failed |= !loadTexture(k_icon_check_filename, &m_icon_check_asset);
+	failed |= !loadTexture(k_icon_close_filename, &m_icon_close_asset);
 
     if (!failed)
     {

@@ -743,12 +743,6 @@ void AppStage_MagnetometerCalibration::render()
 
 void AppStage_MagnetometerCalibration::renderUI()
 {
-	const auto icoWaitFull = AssetManager::getInstance()->getIconWaitFull();
-	const auto icoWaitHalf = AssetManager::getInstance()->getIconWaitHalf();
-	const auto icoWaitEmpty = AssetManager::getInstance()->getIconWaitEmpty();
-	const auto icoWaitDone = AssetManager::getInstance()->getIconWaitDone();
-	const auto icoWaitWarning = AssetManager::getInstance()->getIconWarning();
-	const auto icoWaitExclamation = AssetManager::getInstance()->getIconExclamation();
 	static float waitCount;
 
     const float k_panel_width= 500;
@@ -771,19 +765,13 @@ void AppStage_MagnetometerCalibration::renderUI()
 		switch ((int)floorf(waitCount))
 		{
 		case 0:
-			ImGui::Image(icoWaitFull->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconUpdate()->getImTextureId(), ImVec2(32, 32));
 			break;
 		case 1:
-			ImGui::Image(icoWaitHalf->getImTextureId(), ImVec2(32, 32));
-			break;
-		case 2:
-			ImGui::Image(icoWaitDone->getImTextureId(), ImVec2(32, 32));
-			break;
-		case 3:
-			ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 			break;
 		default:
-			ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 			waitCount = 0;
 			break;
 		}
@@ -803,19 +791,13 @@ void AppStage_MagnetometerCalibration::renderUI()
 		switch ((int)floorf(waitCount))
 		{
 		case 0:
-			ImGui::Image(icoWaitFull->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconUpdate()->getImTextureId(), ImVec2(32, 32));
 			break;
 		case 1:
-			ImGui::Image(icoWaitHalf->getImTextureId(), ImVec2(32, 32));
-			break;
-		case 2:
-			ImGui::Image(icoWaitDone->getImTextureId(), ImVec2(32, 32));
-			break;
-		case 3:
-			ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 			break;
 		default:
-			ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 			waitCount = 0;
 			break;
 		}
@@ -831,7 +813,7 @@ void AppStage_MagnetometerCalibration::renderUI()
             ImGui::SetNextWindowPosCenter();
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
-			ImGui::Image(icoWaitWarning->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(32, 32));
 			ImGui::SameLine();
             ImGui::Text("Failed to start controller stream!");
 
@@ -855,7 +837,7 @@ void AppStage_MagnetometerCalibration::renderUI()
             ImGui::SetNextWindowPosCenter();
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
-			ImGui::Image(icoWaitWarning->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(32, 32));
 			ImGui::SameLine();
             ImGui::TextWrapped(
                 "Bad controller hardware calibration!\n" \
@@ -888,19 +870,13 @@ void AppStage_MagnetometerCalibration::renderUI()
 					switch ((int)floorf(waitCount))
 					{
 					case 0:
-						ImGui::Image(icoWaitFull->getImTextureId(), ImVec2(32, 32));
+						ImGui::Image(AssetManager::getInstance()->getIconUpdate()->getImTextureId(), ImVec2(32, 32));
 						break;
 					case 1:
-						ImGui::Image(icoWaitHalf->getImTextureId(), ImVec2(32, 32));
-						break;
-					case 2:
-						ImGui::Image(icoWaitDone->getImTextureId(), ImVec2(32, 32));
-						break;
-					case 3:
-						ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+						ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 						break;
 					default:
-						ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+						ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 						waitCount = 0;
 						break;
 					}
@@ -947,8 +923,7 @@ void AppStage_MagnetometerCalibration::renderUI()
 					ImGui::Spacing();
 
 					ImGui::PushTextWrapPos();
-					ImGui::ColorButton(ImColor(1.f, 0.5f, 0.f), true);
-					if (ImGui::IsItemHovered()) ImGui::SetTooltip("");
+					ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, .5f, 0.f));
 					ImGui::SameLine();
 					ImGui::TextDisabled(
 						"Calibrating the default orientation needs to be done at least once otherwise the magnetometer can not be used.\n"
@@ -1019,19 +994,13 @@ void AppStage_MagnetometerCalibration::renderUI()
 			switch ((int)floorf(waitCount))
 			{
 			case 0:
-				ImGui::Image(icoWaitFull->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate()->getImTextureId(), ImVec2(32, 32));
 				break;
 			case 1:
-				ImGui::Image(icoWaitHalf->getImTextureId(), ImVec2(32, 32));
-				break;
-			case 2:
-				ImGui::Image(icoWaitDone->getImTextureId(), ImVec2(32, 32));
-				break;
-			case 3:
-				ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 				break;
 			default:
-				ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 				waitCount = 0;
 				break;
 			}
@@ -1079,19 +1048,13 @@ void AppStage_MagnetometerCalibration::renderUI()
 			switch ((int)floorf(waitCount))
 			{
 			case 0:
-				ImGui::Image(icoWaitFull->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate()->getImTextureId(), ImVec2(32, 32));
 				break;
 			case 1:
-				ImGui::Image(icoWaitHalf->getImTextureId(), ImVec2(32, 32));
-				break;
-			case 2:
-				ImGui::Image(icoWaitDone->getImTextureId(), ImVec2(32, 32));
-				break;
-			case 3:
-				ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 				break;
 			default:
-				ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 				waitCount = 0;
 				break;
 			}
@@ -1128,19 +1091,13 @@ void AppStage_MagnetometerCalibration::renderUI()
 			switch ((int)floorf(waitCount))
 			{
 			case 0:
-				ImGui::Image(icoWaitFull->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate()->getImTextureId(), ImVec2(32, 32));
 				break;
 			case 1:
-				ImGui::Image(icoWaitHalf->getImTextureId(), ImVec2(32, 32));
-				break;
-			case 2:
-				ImGui::Image(icoWaitDone->getImTextureId(), ImVec2(32, 32));
-				break;
-			case 3:
-				ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 				break;
 			default:
-				ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 				waitCount = 0;
 				break;
 			}
@@ -1156,7 +1113,7 @@ void AppStage_MagnetometerCalibration::renderUI()
             ImGui::SetNextWindowPosCenter();
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
-			ImGui::Image(icoWaitWarning->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(32, 32));
 			ImGui::SameLine();
             ImGui::Text("Failed to set calibration!");
 
@@ -1230,19 +1187,13 @@ void AppStage_MagnetometerCalibration::renderUI()
 			switch ((int)floorf(waitCount))
 			{
 			case 0:
-				ImGui::Image(icoWaitFull->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate()->getImTextureId(), ImVec2(32, 32));
 				break;
 			case 1:
-				ImGui::Image(icoWaitHalf->getImTextureId(), ImVec2(32, 32));
-				break;
-			case 2:
-				ImGui::Image(icoWaitDone->getImTextureId(), ImVec2(32, 32));
-				break;
-			case 3:
-				ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 				break;
 			default:
-				ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+				ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
 				waitCount = 0;
 				break;
 			}
