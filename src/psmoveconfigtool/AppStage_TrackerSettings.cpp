@@ -208,6 +208,12 @@ void AppStage_TrackerSettings::renderUI()
 	const auto icoWaitHalf = AssetManager::getInstance()->getIconWaitHalf();
 	const auto icoWaitEmpty = AssetManager::getInstance()->getIconWaitEmpty();
 	const auto icoWaitDone = AssetManager::getInstance()->getIconWaitDone();
+	const auto icoWaitWarning = AssetManager::getInstance()->getIconWarning();
+	const auto icoWaitExclamation = AssetManager::getInstance()->getIconExclamation();
+	const auto icoWaitUsb = AssetManager::getInstance()->getIconUsb();
+	const auto icoWaitBluetooth = AssetManager::getInstance()->getIconBluetooth();
+	const auto icoWaitConnect = AssetManager::getInstance()->getIconConnect();
+	const auto icoWaitBan = AssetManager::getInstance()->getIconBan();
 	static float waitCount;
 
 	const float k_panel_width = 550.f;
@@ -411,6 +417,8 @@ void AppStage_TrackerSettings::renderUI()
 							if (sameDevices.size() > 1)
 							{
 								ImGui::Separator();
+								ImGui::Image(icoWaitUsb->getImTextureId(), ImVec2(32, 32));
+								ImGui::SameLine();
 								ImGui::Text("Sharing USB Controller with Trackers:", sameDevices.size());
 								ImGui::Separator();
 
@@ -1019,19 +1027,19 @@ void AppStage_TrackerSettings::renderUI()
 		switch ((int)floorf(waitCount))
 		{
 		case 0:
-			ImGui::Image((void*)(intptr_t)icoWaitFull->texture_id, ImVec2(32, 32));
+			ImGui::Image(icoWaitFull->getImTextureId(), ImVec2(32, 32));
 			break;
 		case 1:
-			ImGui::Image((void*)(intptr_t)icoWaitHalf->texture_id, ImVec2(32, 32));
+			ImGui::Image(icoWaitHalf->getImTextureId(), ImVec2(32, 32));
 			break;
 		case 2:
-			ImGui::Image((void*)(intptr_t)icoWaitDone->texture_id, ImVec2(32, 32));
+			ImGui::Image(icoWaitDone->getImTextureId(), ImVec2(32, 32));
 			break;
 		case 3:
-			ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+			ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
 			break;
 		default:
-			ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+			ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
 			waitCount = 0;
 			break;
 		}
@@ -1050,6 +1058,9 @@ void AppStage_TrackerSettings::renderUI()
     {
         ImGui::SetNextWindowPosCenter();
         ImGui::Begin(k_window_title, nullptr, window_flags);
+
+		ImGui::Image(icoWaitWarning->getImTextureId(), ImVec2(32, 32));
+		ImGui::SameLine();
 		ImGui::Text("Failed to get server response!");
 
 		if (ImGui::Button("Retry"))
@@ -1070,6 +1081,8 @@ void AppStage_TrackerSettings::renderUI()
 		ImGui::SetNextWindowPosCenter();
 		ImGui::Begin("Reset Tracker Pose", nullptr, window_flags);
 
+		ImGui::Image(icoWaitWarning->getImTextureId(), ImVec2(32, 32));
+		ImGui::SameLine();
 		ImGui::Text(
 			"You are about to reset the calibrated pose for this tracker!\n"
 			"Do you want to continue?"

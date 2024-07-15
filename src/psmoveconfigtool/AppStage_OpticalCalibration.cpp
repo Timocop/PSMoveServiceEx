@@ -528,6 +528,8 @@ void AppStage_OpticalCalibration::renderUI()
 	const auto icoWaitHalf = AssetManager::getInstance()->getIconWaitHalf();
 	const auto icoWaitEmpty = AssetManager::getInstance()->getIconWaitEmpty();
 	const auto icoWaitDone = AssetManager::getInstance()->getIconWaitDone();
+	const auto icoWaitWarning = AssetManager::getInstance()->getIconWarning();
+	const auto icoWaitExclamation = AssetManager::getInstance()->getIconExclamation();
 	static float waitCount;
 
     const float k_panel_width = 500;
@@ -551,19 +553,19 @@ void AppStage_OpticalCalibration::renderUI()
 			switch ((int)floorf(waitCount))
 			{
 			case 0:
-				ImGui::Image((void*)(intptr_t)icoWaitFull->texture_id, ImVec2(32, 32));
+				ImGui::Image(icoWaitFull->getImTextureId(), ImVec2(32, 32));
 				break;
 			case 1:
-				ImGui::Image((void*)(intptr_t)icoWaitHalf->texture_id, ImVec2(32, 32));
+				ImGui::Image(icoWaitHalf->getImTextureId(), ImVec2(32, 32));
 				break;
 			case 2:
-				ImGui::Image((void*)(intptr_t)icoWaitDone->texture_id, ImVec2(32, 32));
+				ImGui::Image(icoWaitDone->getImTextureId(), ImVec2(32, 32));
 				break;
 			case 3:
-				ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+				ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
 				break;
 			default:
-				ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+				ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
 				waitCount = 0;
 				break;
 			}
@@ -580,6 +582,8 @@ void AppStage_OpticalCalibration::renderUI()
             ImGui::SetNextWindowPosCenter();
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
+			ImGui::Image(icoWaitWarning->getImTextureId(), ImVec2(32, 32));
+			ImGui::SameLine();
             ImGui::Text("Failed server request!");
 
             if (ImGui::Button(" OK "))
@@ -606,19 +610,19 @@ void AppStage_OpticalCalibration::renderUI()
 			switch ((int)floorf(waitCount))
 			{
 			case 0:
-				ImGui::Image((void*)(intptr_t)icoWaitFull->texture_id, ImVec2(32, 32));
+				ImGui::Image(icoWaitFull->getImTextureId(), ImVec2(32, 32));
 				break;
 			case 1:
-				ImGui::Image((void*)(intptr_t)icoWaitHalf->texture_id, ImVec2(32, 32));
+				ImGui::Image(icoWaitHalf->getImTextureId(), ImVec2(32, 32));
 				break;
 			case 2:
-				ImGui::Image((void*)(intptr_t)icoWaitDone->texture_id, ImVec2(32, 32));
+				ImGui::Image(icoWaitDone->getImTextureId(), ImVec2(32, 32));
 				break;
 			case 3:
-				ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+				ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
 				break;
 			default:
-				ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+				ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
 				waitCount = 0;
 				break;
 			}
@@ -700,19 +704,19 @@ void AppStage_OpticalCalibration::renderUI()
 			switch ((int)floorf(waitCount))
 			{
 			case 0:
-				ImGui::Image((void*)(intptr_t)icoWaitFull->texture_id, ImVec2(32, 32));
+				ImGui::Image(icoWaitFull->getImTextureId(), ImVec2(32, 32));
 				break;
 			case 1:
-				ImGui::Image((void*)(intptr_t)icoWaitHalf->texture_id, ImVec2(32, 32));
+				ImGui::Image(icoWaitHalf->getImTextureId(), ImVec2(32, 32));
 				break;
 			case 2:
-				ImGui::Image((void*)(intptr_t)icoWaitDone->texture_id, ImVec2(32, 32));
+				ImGui::Image(icoWaitDone->getImTextureId(), ImVec2(32, 32));
 				break;
 			case 3:
-				ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+				ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
 				break;
 			default:
-				ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+				ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
 				waitCount = 0;
 				break;
 			}

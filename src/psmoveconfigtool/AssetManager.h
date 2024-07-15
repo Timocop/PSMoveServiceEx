@@ -12,6 +12,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "stb_truetype.h"
 
+#include <imgui.h>
+
 class TextureAsset
 {
 public:
@@ -30,6 +32,11 @@ public:
     {}
     ~TextureAsset()
     { dispose(); }
+
+	ImTextureID getImTextureId() const 
+	{
+		return reinterpret_cast<ImTextureID>(static_cast<intptr_t>(texture_id));
+	}
 
     bool init(unsigned int width, unsigned int height, unsigned int texture_format, unsigned int buffer_format, unsigned char *buffer);
     void copyBufferIntoTexture(const unsigned char *pixels);
@@ -164,6 +171,36 @@ public:
 		return &m_icon_wait_half_asset;
 	}
 
+	const TextureAsset *getIconWarning()
+	{
+		return &m_icon_warning_asset;
+	}
+
+	const TextureAsset *getIconExclamation()
+	{
+		return &m_icon_exclamation_asset;
+	}
+
+	const TextureAsset *getIconUsb()
+	{
+		return &m_icon_usb_asset;
+	}
+
+	const TextureAsset *getIconBluetooth()
+	{
+		return &m_icon_bluetooth_asset;
+	}
+
+	const TextureAsset *getIconConnect()
+	{
+		return &m_icon_connect_asset;
+	}
+
+	const TextureAsset *getIconBan()
+	{
+		return &m_icon_ban_asset;
+	}
+
 private:
     bool loadTexture(const char *filename, TextureAsset *textureAsset);
     bool loadFont(const char *filename, float pixelHeight, FontAsset *fontAsset);
@@ -192,11 +229,16 @@ private:
 	TextureAsset m_icon_controller_asset;
 	TextureAsset m_icon_tracker_asset;
 	TextureAsset m_icon_hmd_asset;
-
 	TextureAsset m_icon_wait_done_asset;
 	TextureAsset m_icon_wait_empty_asset;
 	TextureAsset m_icon_wait_full_asset;
 	TextureAsset m_icon_wait_half_asset;
+	TextureAsset m_icon_warning_asset;
+	TextureAsset m_icon_exclamation_asset;
+	TextureAsset m_icon_usb_asset;
+	TextureAsset m_icon_bluetooth_asset;
+	TextureAsset m_icon_connect_asset;
+	TextureAsset m_icon_ban_asset;
 
     static AssetManager *m_instance;
 };

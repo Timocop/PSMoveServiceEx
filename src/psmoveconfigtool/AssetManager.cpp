@@ -11,8 +11,6 @@
 #include "SDL_error.h"
 #include "SDL_opengl.h"
 
-#include <imgui.h>
-
 //-- constants -----
 
 // Models and textures
@@ -45,6 +43,13 @@ static const char *k_icon_wait_done_filename = "./assets/icons/sand-clock-done-l
 static const char *k_icon_wait_empty_filename = "./assets/icons/sand-clock-empty-line-icon.png";
 static const char *k_icon_wait_full_filename = "./assets/icons/sand-clock-full-line-icon.png";
 static const char *k_icon_wait_half_filename = "./assets/icons/sand-clock-half-line-icon.png";
+
+static const char *k_icon_warning_filename = "./assets/icons/exclamation-triangle-line-icon.png";
+static const char *k_icon_exclamation_filename = "./assets/icons/exclamation-round-line-icon.png";
+static const char *k_icon_usb_filename = "./assets/icons/usb-icon.png";
+static const char *k_icon_bluetooth_filename = "./assets/icons/bluetooth-icon.png";
+static const char *k_icon_connect_filename = "./assets/icons/link-line-icon.png";
+static const char *k_icon_ban_filename = "./assets/icons/ban-sign-line-icon.png";
 
 // Fonts
 static const char *k_default_font_filename = "./assets/fonts/OpenSans-Regular.ttf";
@@ -79,6 +84,10 @@ AssetManager::AssetManager()
 	, m_icon_wait_empty_asset()
 	, m_icon_wait_full_asset()
 	, m_icon_wait_half_asset()
+	, m_icon_warning_asset()
+	, m_icon_exclamation_asset()
+	, m_icon_usb_asset()
+	, m_icon_bluetooth_asset()
 {
 }
 
@@ -121,6 +130,13 @@ bool AssetManager::init()
 	failed |= !loadTexture(k_icon_wait_empty_filename, &m_icon_wait_empty_asset);
 	failed |= !loadTexture(k_icon_wait_full_filename, &m_icon_wait_full_asset);
 	failed |= !loadTexture(k_icon_wait_half_filename, &m_icon_wait_half_asset);
+
+	failed |= !loadTexture(k_icon_warning_filename, &m_icon_warning_asset);
+	failed |= !loadTexture(k_icon_exclamation_filename, &m_icon_exclamation_asset);
+	failed |= !loadTexture(k_icon_usb_filename, &m_icon_usb_asset);
+	failed |= !loadTexture(k_icon_bluetooth_filename, &m_icon_bluetooth_asset);
+	failed |= !loadTexture(k_icon_connect_filename, &m_icon_connect_asset);
+	failed |= !loadTexture(k_icon_ban_filename, &m_icon_ban_asset);
 
     if (!failed)
     {

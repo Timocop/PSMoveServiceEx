@@ -847,19 +847,19 @@ void AppSubStage_CalibrateWithMat::renderUI()
 				switch ((int)floorf(waitCount))
 				{
 				case 0:
-					ImGui::Image((void*)(intptr_t)icoWaitFull->texture_id, ImVec2(32, 32));
+					ImGui::Image(icoWaitFull->getImTextureId(), ImVec2(32, 32));
 					break;
 				case 1:
-					ImGui::Image((void*)(intptr_t)icoWaitHalf->texture_id, ImVec2(32, 32));
+					ImGui::Image(icoWaitHalf->getImTextureId(), ImVec2(32, 32));
 					break;
 				case 2:
-					ImGui::Image((void*)(intptr_t)icoWaitDone->texture_id, ImVec2(32, 32));
+					ImGui::Image(icoWaitDone->getImTextureId(), ImVec2(32, 32));
 					break;
 				case 3:
-					ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+					ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
 					break;
 				default:
-					ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+					ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
 					waitCount = 0;
 					break;
 				}

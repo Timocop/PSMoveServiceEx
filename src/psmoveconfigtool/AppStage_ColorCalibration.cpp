@@ -578,6 +578,8 @@ void AppStage_ColorCalibration::renderUI()
 	const auto icoWaitHalf = AssetManager::getInstance()->getIconWaitHalf();
 	const auto icoWaitEmpty = AssetManager::getInstance()->getIconWaitEmpty();
 	const auto icoWaitDone = AssetManager::getInstance()->getIconWaitDone();
+	const auto icoWaitWarning = AssetManager::getInstance()->getIconWarning();
+	const auto icoWaitExclamation = AssetManager::getInstance()->getIconExclamation();
 	static float waitCount;
 
 	// Tracker Alignment Marker
@@ -751,19 +753,19 @@ void AppStage_ColorCalibration::renderUI()
 		switch ((int)floorf(waitCount))
 		{
 		case 0:
-			ImGui::Image((void*)(intptr_t)icoWaitFull->texture_id, ImVec2(32, 32));
+			ImGui::Image(icoWaitFull->getImTextureId(), ImVec2(32, 32));
 			break;
 		case 1:
-			ImGui::Image((void*)(intptr_t)icoWaitHalf->texture_id, ImVec2(32, 32));
+			ImGui::Image(icoWaitHalf->getImTextureId(), ImVec2(32, 32));
 			break;
 		case 2:
-			ImGui::Image((void*)(intptr_t)icoWaitDone->texture_id, ImVec2(32, 32));
+			ImGui::Image(icoWaitDone->getImTextureId(), ImVec2(32, 32));
 			break;
 		case 3:
-			ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+			ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
 			break;
 		default:
-			ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+			ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
 			waitCount = 0;
 			break;
 		}
@@ -2040,6 +2042,28 @@ void AppStage_ColorCalibration::renderUI()
 
 		if (!m_areAllControllerStreamsActive)
 		{
+			waitCount += 0.025f;
+			switch ((int)floorf(waitCount))
+			{
+			case 0:
+				ImGui::Image(icoWaitFull->getImTextureId(), ImVec2(32, 32));
+				break;
+			case 1:
+				ImGui::Image(icoWaitHalf->getImTextureId(), ImVec2(32, 32));
+				break;
+			case 2:
+				ImGui::Image(icoWaitDone->getImTextureId(), ImVec2(32, 32));
+				break;
+			case 3:
+				ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+				break;
+			default:
+				ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
+				waitCount = 0;
+				break;
+			}
+
+			ImGui::SameLine();
 			ImGui::Text("Wait for controller streams to be active...");
 			break;
 		}
@@ -2099,6 +2123,8 @@ void AppStage_ColorCalibration::renderUI()
 			}
 		}
 
+		ImGui::Image(icoWaitExclamation->getImTextureId(), ImVec2(32, 32));
+		ImGui::SameLine();
 		ImGui::TextWrapped(
 			"Place all controllers in the middle of your play space so all trackers can see them. "
 			"Do not obscure the controller bulb while the sampling process is running otherwise the "
@@ -2545,6 +2571,8 @@ void AppStage_ColorCalibration::renderUI()
 			ImGui::SetNextWindowPosCenter();
 			ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
+			ImGui::Image(icoWaitWarning->getImTextureId(), ImVec2(32, 32));
+			ImGui::SameLine();
 			ImGui::TextWrapped("Color sampling failed!");
 			ImGui::TextWrapped("Unable to find controller #%d on tracker #%d!", m_masterControllerView->ControllerID, m_trackerView->tracker_info.tracker_id);
 		 	ImGui::TextWrapped("Make sure the controller bulb is not being obscured during the sampling process.");
@@ -2576,6 +2604,8 @@ void AppStage_ColorCalibration::renderUI()
 			ImGui::SetNextWindowPosCenter();
 			ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
+			ImGui::Image(icoWaitWarning->getImTextureId(), ImVec2(32, 32));
+			ImGui::SameLine();
 			ImGui::Text("Color sampling aborted!");
 
 			if (ImGui::Button("Go Back"))
@@ -2596,6 +2626,8 @@ void AppStage_ColorCalibration::renderUI()
 			ImGui::SetNextWindowPosCenter();
 			ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
+			ImGui::Image(icoWaitWarning->getImTextureId(), ImVec2(32, 32));
+			ImGui::SameLine();
 			ImGui::TextWrapped("Color sampling failed!");
 			ImGui::TextWrapped("Unable to change color on virtual controllers!");
 			ImGui::TextWrapped("Please use the manual color detection instead.");
@@ -2618,6 +2650,8 @@ void AppStage_ColorCalibration::renderUI()
 			ImGui::SetNextWindowPosCenter();
 			ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
+			ImGui::Image(icoWaitWarning->getImTextureId(), ImVec2(32, 32));
+			ImGui::SameLine();
 			ImGui::TextWrapped("Color sampling failed!");
 			ImGui::TextWrapped("Unable to find controller #%d on tracker #%d!", m_masterControllerView->ControllerID, m_trackerView->tracker_info.tracker_id);
 			ImGui::TextWrapped("Could not automatically adjust exposure/gain on virtual trackers!");
@@ -2650,6 +2684,8 @@ void AppStage_ColorCalibration::renderUI()
 			ImGui::SetNextWindowPosCenter();
 			ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
+			ImGui::Image(icoWaitWarning->getImTextureId(), ImVec2(32, 32));
+			ImGui::SameLine();
 			ImGui::TextWrapped("Color sampling on controller #%d and tracker #%d failed!", m_masterControllerView->ControllerID, m_trackerView->tracker_info.tracker_id);
 
 			if (ImGui::Button("Try Again"))
@@ -2685,6 +2721,8 @@ void AppStage_ColorCalibration::renderUI()
 		ImGui::SetNextWindowPosCenter();
 		ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
+		ImGui::Image(icoWaitExclamation->getImTextureId(), ImVec2(32, 32));
+		ImGui::SameLine();
 		ImGui::TextWrapped("Color sampling finished.");
 		ImGui::TextWrapped("Controller colors and tracker exposure/gain have been automatically adjusted!");
 
@@ -2757,19 +2795,19 @@ void AppStage_ColorCalibration::renderUI()
 		switch ((int)floorf(waitCount))
 		{
 		case 0:
-			ImGui::Image((void*)(intptr_t)icoWaitFull->texture_id, ImVec2(32, 32));
+			ImGui::Image(icoWaitFull->getImTextureId(), ImVec2(32, 32));
 			break;
 		case 1:
-			ImGui::Image((void*)(intptr_t)icoWaitHalf->texture_id, ImVec2(32, 32));
+			ImGui::Image(icoWaitHalf->getImTextureId(), ImVec2(32, 32));
 			break;
 		case 2:
-			ImGui::Image((void*)(intptr_t)icoWaitDone->texture_id, ImVec2(32, 32));
+			ImGui::Image(icoWaitDone->getImTextureId(), ImVec2(32, 32));
 			break;
 		case 3:
-			ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+			ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
 			break;
 		default:
-			ImGui::Image((void*)(intptr_t)icoWaitEmpty->texture_id, ImVec2(32, 32));
+			ImGui::Image(icoWaitEmpty->getImTextureId(), ImVec2(32, 32));
 			waitCount = 0;
 			break;
 		}
@@ -2788,6 +2826,8 @@ void AppStage_ColorCalibration::renderUI()
         ImGui::SetNextWindowPosCenter();
         ImGui::Begin(k_window_title, nullptr, window_flags | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse);
 
+		ImGui::Image(icoWaitWarning->getImTextureId(), ImVec2(32, 32));
+		ImGui::SameLine();
         if (m_menuState == eMenuState::failedTrackerStartStreamRequest)
         {
             ImGui::Text("Failed to start tracker stream!");
