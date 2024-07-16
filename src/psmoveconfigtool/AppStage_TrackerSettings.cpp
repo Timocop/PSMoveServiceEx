@@ -658,6 +658,7 @@ void AppStage_TrackerSettings::renderUI()
 											ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconClose()->getImTextureId(),
 												ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 												ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
+
 											ImGui::Button("      Calibrate Tracker Poses (Unavailable)");
 											ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconClose()->getImTextureId(),
 												ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
@@ -671,7 +672,7 @@ void AppStage_TrackerSettings::renderUI()
 								}
 
 								if (m_tabSelectedSubTab == 1 ||
-									m_gotoTestControllerTracking)
+									m_gotoTrackingControllerVideo || m_gotoTestControllerTracking || m_gotoTrackingVideoALL)
 								{
 									ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5);
 
@@ -688,6 +689,7 @@ void AppStage_TrackerSettings::renderUI()
 										ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconSearch()->getImTextureId(),
 											ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 											ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
+
 										if (ImGui::Button("      Test Tracking Pose##Controller") ||
 											m_gotoTestControllerTracking)
 										{
@@ -854,6 +856,7 @@ void AppStage_TrackerSettings::renderUI()
 										ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconClose()->getImTextureId(),
 											ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 											ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
+
 										ImGui::Button("      Calibrate Tracker Poses (Unavailable)");
 										ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconClose()->getImTextureId(),
 											ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
@@ -867,7 +870,7 @@ void AppStage_TrackerSettings::renderUI()
 							}
 
 							if (m_tabSelectedSubTab == 1 ||
-								m_gotoTestHmdTracking || m_gotoTrackingHmdVideo)
+								m_gotoTestHmdTracking || m_gotoTrackingHmdVideo || m_gotoTrackingVideoALL)
 							{
 								ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5);
 
@@ -886,6 +889,7 @@ void AppStage_TrackerSettings::renderUI()
 									ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconSearch()->getImTextureId(),
 										ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 										ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
+									
 									if (ImGui::Button("      Test Tracking Pose##HMD") ||
 										m_gotoTestHmdTracking)
 									{
