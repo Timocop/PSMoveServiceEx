@@ -365,7 +365,7 @@ void AppStage_TrackerSettings::renderUI()
 							ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), k_colorOrange);
 							ImGui::SameLine();
 							ImGui::PushTextWrapPos();
-							ImGui::TextDisabled(
+							ImGui::TextColored(k_colorOrange,
 								"Only one tracker detected!\n"
 								"Tracking quality and range will be very limited due to triangulations being unavailable!\n"
 								"A minimum of 2 trackers are required for decent tracking quality and range."
@@ -387,7 +387,7 @@ void AppStage_TrackerSettings::renderUI()
 							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), k_colorBlue);
 							ImGui::SameLine();
 							ImGui::PushTextWrapPos();
-							ImGui::TextDisabled(
+							ImGui::TextColored(k_colorBlue,
 								"Limited 180 degree front facing setup.\n"
 								"A minimum of 4 trackers are required for a full 360 degree tracking setup."
 							);
@@ -430,7 +430,7 @@ void AppStage_TrackerSettings::renderUI()
 									ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), k_colorBlue);
 									ImGui::SameLine();
 									ImGui::PushTextWrapPos();
-									ImGui::TextDisabled(
+									ImGui::TextColored(k_colorBlue,
 										"USB 3.2 (20 Gbit) controller or higher is required."
 										"This amount of trackers connected to a USB 3.1 (10 Gbit) controller may not work due to bandwidth limitations.\n"
 										"(Assuming the trackers run at 480p@30Hz)"
@@ -442,7 +442,7 @@ void AppStage_TrackerSettings::renderUI()
 									ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), k_colorBlue);
 									ImGui::SameLine();
 									ImGui::PushTextWrapPos();
-									ImGui::TextDisabled(
+									ImGui::TextColored(k_colorBlue,
 										"USB 3.1 (10 Gbit) controller or higher is required.\n"
 										"This amount of trackers connected to a USB 3.0 (5 Gbit) controller may not work due to bandwidth limitations.\n"
 										"(Assuming the trackers run at 480p@30Hz)"
@@ -454,7 +454,7 @@ void AppStage_TrackerSettings::renderUI()
 									ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0,0), ImVec2(1,1), k_colorBlue);
 									ImGui::SameLine();
 									ImGui::PushTextWrapPos();
-									ImGui::TextDisabled(
+									ImGui::TextColored(k_colorBlue,
 										"USB 3.0 (5 Gbit) controller or higher is required.\n"
 										"This amount of trackers connected to a USB 2.0 (500 Mbit) controller may not work due to bandwidth limitations.\n"
 										"(Assuming the trackers run at 480p@30Hz)"

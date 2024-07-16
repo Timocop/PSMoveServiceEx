@@ -380,7 +380,7 @@ void AppStage_HMDSettings::renderUI()
 								ImGui::PushTextWrapPos();
 								ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, 0.f, 0.f));
 								ImGui::SameLine();
-								ImGui::TextDisabled(
+								ImGui::TextColored(ImColor(1.f, 0.f, 0.f),
 									"This tracking method is currently unavailable!"
 								);
 								ImGui::PopTextWrapPos();
@@ -1052,7 +1052,7 @@ void AppStage_HMDSettings::renderUI()
 								ImGui::PushTextWrapPos();
 								ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, .5f, 0.f));
 								ImGui::SameLine();
-								ImGui::TextDisabled(
+								ImGui::TextColored(ImColor(1.f, .5f, 0.f),
 									"HMD scale or position has been changed!\n"
 									"Changing the scale or position can cause abnormal artifacts in pose previews!"
 								);

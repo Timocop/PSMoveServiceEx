@@ -765,7 +765,7 @@ void AppStage_ControllerSettings::renderUI()
 									ImGui::PushTextWrapPos();
 									ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, .5f, 0.f));
 									ImGui::SameLine();
-									ImGui::TextDisabled("Administrator privileges are required to pair or unpair controllers.");
+									ImGui::TextColored(ImColor(1.f, .5f, 0.f), "Administrator privileges are required to pair or unpair controllers.");
 									ImGui::PopTextWrapPos();
 								}
 #endif
@@ -1799,7 +1799,7 @@ void AppStage_ControllerSettings::renderUI()
 											ImGui::PushTextWrapPos();
 											ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, .5f, 0.f));
 											ImGui::SameLine();
-											ImGui::TextDisabled(
+											ImGui::TextColored(ImColor(1.f, .5f, 0.f), 
 												"Controller scale or position has been changed!\n"
 												"Changing the scale or position can cause abnormal artifacts in pose previews!"
 											);
@@ -1910,7 +1910,7 @@ void AppStage_ControllerSettings::renderUI()
 
 									ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, 0.f, 0.f));
 									ImGui::SameLine();
-									ImGui::TextDisabled(
+									ImGui::TextColored(ImColor(1.f, 0.f, 0.f), 
 										"The magnetometer for this controller has been disabled or is not available. "
 										"Magnetometers are only available for first generation PS3 PSmove controllers."
 									);
@@ -1991,7 +1991,7 @@ void AppStage_ControllerSettings::renderUI()
 									ImGui::PushTextWrapPos();
 									ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(0.f, .5f, 1.f));
 									ImGui::SameLine();
-									ImGui::TextDisabled(
+									ImGui::TextColored(ImColor(0.f, .5f, 1.f),
 										"Requires PSmove emulation to be enabled."
 									);
 									ImGui::PopTextWrapPos();

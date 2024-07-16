@@ -940,7 +940,7 @@ void AppStage_MagnetometerCalibration::renderUI()
 					ImGui::PushTextWrapPos();
 					ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, .5f, 0.f));
 					ImGui::SameLine();
-					ImGui::TextDisabled(
+					ImGui::TextColored(ImColor(1.f, .5f, 0.f),
 						"Calibrating the default orientation needs to be done at least once otherwise the magnetometer can not be used.\n"
 						"If you already done this before, click 'Skip' instead."
 					);

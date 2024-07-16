@@ -1160,7 +1160,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
 			ImGui::PushTextWrapPos();
 			ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(0.f, .5f, 1.f));
 			ImGui::SameLine();
-			ImGui::TextDisabled(
+			ImGui::TextColored(ImColor(0.f, .5f, 1.f),
 				"This preview uses the device's magnetometer. Ensure that the magnetometer of this device is properly calibrated!");
 			ImGui::PopTextWrapPos();
 			ImGui::Separator();
@@ -1508,7 +1508,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
 						ImGui::PushTextWrapPos();
 						ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, 0.f, 0.f));
 						ImGui::SameLine();
-						ImGui::TextDisabled("Point too close to playspace center.");
+						ImGui::TextColored(ImColor(1.f, 0.f, 0.f), "Point too close to playspace center.");
 						ImGui::PopTextWrapPos();
 					}
 				}
@@ -1519,7 +1519,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
 					ImGui::PushTextWrapPos();
 					ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, 0.f, 0.f));
 					ImGui::SameLine();
-					ImGui::TextDisabled("More than 2 triangulation points are required.");
+					ImGui::TextColored(ImColor(1.f, 0.f, 0.f), "More than 2 triangulation points are required.");
 					ImGui::PopTextWrapPos();
 				}
 			}
