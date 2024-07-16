@@ -781,7 +781,9 @@ void AppStage_HMDModelCalibration::renderUI()
 
 		if (!m_bBypassCalibration)
 		{
-			ImGui::Text("Calibration Complete");
+			ImGui::Image(AssetManager::getInstance()->getIconCheck()->getImTextureId(), ImVec2(32, 32));
+			ImGui::SameLine();
+			ImGui::Text("Calibration complete!");
 
 			ImGui::Separator();
 			if (ImGui::Button("Redo Calibration"))

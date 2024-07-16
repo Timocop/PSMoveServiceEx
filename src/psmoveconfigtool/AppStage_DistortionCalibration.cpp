@@ -913,6 +913,8 @@ void AppStage_DistortionCalibration::renderUI()
 				ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 10.f));
 				ImGui::Begin(k_window_title, nullptr, window_flags);
 
+				ImGui::Image(AssetManager::getInstance()->getIconCheck()->getImTextureId(), ImVec2(32, 32));
+				ImGui::SameLine();
 				ImGui::Text("Calibration complete!");
 				ImGui::Text("Error: %f", m_opencv_state->reprojectionError);
 

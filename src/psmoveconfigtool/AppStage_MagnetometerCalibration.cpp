@@ -901,6 +901,8 @@ void AppStage_MagnetometerCalibration::renderUI()
                 }
                 else
                 {
+					ImGui::Image(AssetManager::getInstance()->getIconCheck()->getImTextureId(), ImVec2(32, 32));
+					ImGui::SameLine();
                     ImGui::TextWrapped(
                         "Calibrating Controller ID #%d\n" \
                         "[Step 1 of 2: Measuring extents of the magnetometer - Complete!]", m_controllerView->ControllerID);
@@ -1168,6 +1170,8 @@ void AppStage_MagnetometerCalibration::renderUI()
             }
             else
             {
+				ImGui::Image(AssetManager::getInstance()->getIconCheck()->getImTextureId(), ImVec2(32, 32));
+				ImGui::SameLine();
                 ImGui::Text("Calibration of Controller ID #%d complete!", m_controllerView->ControllerID);
             }
 

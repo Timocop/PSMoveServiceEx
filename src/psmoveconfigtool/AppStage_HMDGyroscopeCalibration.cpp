@@ -606,8 +606,10 @@ void AppStage_HMDGyroscopeCalibration::renderUI()
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
+			ImGui::Image(AssetManager::getInstance()->getIconCheck()->getImTextureId(), ImVec2(32, 32));
+			ImGui::SameLine();
             ImGui::TextWrapped(
-                "Sampling complete.\n" \
+                "Sampling complete!\n" \
                 "Press OK to continue or Redo to recalibration.");
 
 			ImGui::Separator();
@@ -652,6 +654,8 @@ void AppStage_HMDGyroscopeCalibration::renderUI()
             }
             else
             {
+				ImGui::Image(AssetManager::getInstance()->getIconCheck()->getImTextureId(), ImVec2(32, 32));
+				ImGui::SameLine();
                 ImGui::Text("Calibration of HMD ID #%d complete!", m_hmdView->HmdID);
             }
 

@@ -847,21 +847,7 @@ void AppSubStage_CalibrateWithMat::renderUI()
             ImGui::Begin(k_window_title, nullptr, window_flags);
 			ImGui::BeginGroup();
 			{
-				waitCount += 0.025f;
-				switch ((int)floorf(waitCount))
-				{
-				case 0:
-					ImGui::Image(AssetManager::getInstance()->getIconUpdate()->getImTextureId(), ImVec2(32, 32));
-					break;
-				case 1:
-					ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
-					break;
-				default:
-					ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
-					waitCount = 0;
-					break;
-				}
-
+				ImGui::Image(AssetManager::getInstance()->getIconTarget()->getImTextureId(), ImVec2(32, 32));
 				ImGui::SameLine();
 				if (m_menuState == AppSubStage_CalibrateWithMat::eMenuState::calibrationStepRecordController)
 				{
@@ -900,10 +886,14 @@ void AppSubStage_CalibrateWithMat::renderUI()
 				{
 					if (m_menuState == AppSubStage_CalibrateWithMat::eMenuState::calibrationStepRecordController)
 					{
+						ImGui::Image(AssetManager::getInstance()->getIconCheck()->getImTextureId(), ImVec2(32, 32));
+						ImGui::SameLine();
 						ImGui::Text("Location sampling complete. Please pick up the controller.");
 					}
 					else
 					{
+						ImGui::Image(AssetManager::getInstance()->getIconCheck()->getImTextureId(), ImVec2(32, 32));
+						ImGui::SameLine();
 						ImGui::Text("Location sampling complete. Please pick up the HMD.");
 					}
 				}
@@ -914,6 +904,23 @@ void AppSubStage_CalibrateWithMat::renderUI()
 						const float fraction = clampf01(static_cast<float>(samples_count) / static_cast<float>(samples_total));
 
 						ImGui::Separator();
+
+						waitCount += 0.025f;
+						switch ((int)floorf(waitCount))
+						{
+						case 0:
+							ImGui::Image(AssetManager::getInstance()->getIconUpdate()->getImTextureId(), ImVec2(32, 32));
+							break;
+						case 1:
+							ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
+							break;
+						default:
+							ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
+							waitCount = 0;
+							break;
+						}
+
+						ImGui::SameLine();
 						ImGui::Text("Sampling progress:");
 						ImGui::ProgressBar(fraction);
 					}

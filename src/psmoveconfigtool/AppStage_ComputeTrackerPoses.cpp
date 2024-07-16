@@ -1112,7 +1112,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
             {
                 request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
             }
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
+			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
 				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
@@ -1199,7 +1199,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
 				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
-			ImGui::SameLine();
+			//ImGui::SameLine(); not enough space
 			if (ImGui::Button("      Return to Test Tracking Pose"))
 			{
 				setState(eMenuState::testTracking);
@@ -1288,7 +1288,9 @@ void AppStage_ComputeTrackerPoses::renderUI()
 
             if (!m_bSkipCalibration)
             {
-                ImGui::Text("Calibration Complete");
+				ImGui::Image(AssetManager::getInstance()->getIconCheck()->getImTextureId(), ImVec2(32, 32));
+				ImGui::SameLine();
+                ImGui::Text("Calibration complete!");
 
 				ImGui::Separator();
                 if (ImGui::Button("      Redo Calibration"))
@@ -1299,7 +1301,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
 					ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 					ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
-				ImGui::SameLine();
+				//ImGui::SameLine(); not enough space
             }
 
             if (ImGui::Button("      Return to Tracker Settings"))

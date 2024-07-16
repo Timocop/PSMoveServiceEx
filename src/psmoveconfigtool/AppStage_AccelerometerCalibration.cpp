@@ -898,7 +898,7 @@ void AppStage_AccelerometerCalibration::renderUI()
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
-			ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(32, 32));
+			ImGui::Image(AssetManager::getInstance()->getIconCheck()->getImTextureId(), ImVec2(32, 32));
 			ImGui::SameLine();
             ImGui::TextWrapped(
                 "Sampling complete.\n" \
@@ -941,6 +941,8 @@ void AppStage_AccelerometerCalibration::renderUI()
             }
             else
             {
+				ImGui::Image(AssetManager::getInstance()->getIconCheck()->getImTextureId(), ImVec2(32, 32));
+				ImGui::SameLine();
                 ImGui::Text("Calibration of Controller ID #%d complete!", m_controllerView->ControllerID);
             }
 

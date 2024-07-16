@@ -1183,6 +1183,8 @@ void AppStage_HMDSettings::renderUI()
 			}
 			else
 			{
+				ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24));
+				ImGui::SameLine();
 				ImGui::Text("No connected HMDs found!");
 			}
 

@@ -716,6 +716,12 @@ void AppStage_TrackerSettings::renderUI()
 								}
 							}
 						}
+						else
+						{
+							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24));
+							ImGui::SameLine();
+							ImGui::Text("No connected controllers found!");
+						}
 					}
 					ImGui::EndGroup();
 					if (ImGui::IsItemVisible())
@@ -914,6 +920,12 @@ void AppStage_TrackerSettings::renderUI()
 								m_app->getAppStage<AppStage_ComputeTrackerPoses>()->set_tracker_id(m_selectedTrackerIndex);
 								AppStage_ComputeTrackerPoses::enterStageAndTestTrackers(m_app, -1, -1);
 							}
+						}
+						else
+						{
+							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24));
+							ImGui::SameLine();
+							ImGui::Text("No connected HMDs found!");
 						}
 					}
 					ImGui::EndGroup();

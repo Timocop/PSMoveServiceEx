@@ -452,8 +452,6 @@ void AppStage_ControllerSettings::renderUI()
     {
     case eControllerMenuState::idle:
         {
-			const auto icoController = AssetManager::getInstance()->getIconController();
-
 			static ImVec2 lastWindowVec = ImVec2(0, 4);
 			ImGui::SetNextWindowSize(ImVec2(
 				k_panel_width, fminf(lastWindowVec.y + 36, 
@@ -2036,6 +2034,8 @@ void AppStage_ControllerSettings::renderUI()
 				}
 				else
 				{
+					ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24));
+					ImGui::SameLine();
 					ImGui::Text("No connected controllers found!");
 				}
 

@@ -628,6 +628,8 @@ void AppStage_GyroscopeCalibration::renderUI()
             }
             else
             {
+				ImGui::Image(AssetManager::getInstance()->getIconCheck()->getImTextureId(), ImVec2(32, 32));
+				ImGui::SameLine();
                 ImGui::Text("Calibration of Controller ID #%d complete!", m_controllerView->ControllerID);
             }
 
