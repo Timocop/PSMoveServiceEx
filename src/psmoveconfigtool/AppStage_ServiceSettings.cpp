@@ -46,6 +46,7 @@ void AppStage_ServiceSettings::renderUI()
     ImGui::SetNextWindowPosCenter();
     ImGui::Begin("Service Settings", nullptr, window_flags);
 
+	ImGui::Separator();
     if (ImGui::Button("Return to Main Menu"))
     {
         m_app->setAppStage(AppStage_MainMenu::APP_STAGE_NAME);

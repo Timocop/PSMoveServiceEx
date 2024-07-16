@@ -1042,6 +1042,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
 				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
+			ImGui::SameLine();
             if (ImGui::Button("      Return to Main Menu"))
             {
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
@@ -1107,7 +1108,6 @@ void AppStage_ComputeTrackerPoses::renderUI()
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SameLine();
-
             if (ImGui::Button("      Return to Tracker Settings"))
             {
                 request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
@@ -1133,8 +1133,8 @@ void AppStage_ComputeTrackerPoses::renderUI()
 			ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(32, 32));
 			ImGui::SameLine();
             ImGui::Text("Select a calibration method");
-            ImGui::Separator();
 
+            ImGui::Separator();
             if (ImGui::Button("      Calibration Mat"))
             {
                 setState(eMenuState::calibrateWithMat);
@@ -1190,6 +1190,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
 			ImGui::Checkbox("Show Interferences Only", &m_hideGoodSamples);
 			ImGui::Checkbox("Show Tracker Frustum", &m_showTrackerFrustum);
 
+			ImGui::Separator();
 			if (ImGui::Button("      Reset Samples"))
 			{
 				m_magneticSamples.clear();
@@ -1198,8 +1199,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
 				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
-			ImGui::Separator();
-
+			ImGui::SameLine();
 			if (ImGui::Button("      Return to Test Tracking Pose"))
 			{
 				setState(eMenuState::testTracking);
@@ -1290,6 +1290,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
             {
                 ImGui::Text("Calibration Complete");
 
+				ImGui::Separator();
                 if (ImGui::Button("      Redo Calibration"))
                 {
                     setState(eMenuState::verifyTrackers);
@@ -1297,6 +1298,8 @@ void AppStage_ComputeTrackerPoses::renderUI()
 				ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconUpdate()->getImTextureId(),
 					ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 					ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
+
+				ImGui::SameLine();
             }
 
             if (ImGui::Button("      Return to Tracker Settings"))
@@ -1364,7 +1367,6 @@ void AppStage_ComputeTrackerPoses::renderUI()
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::Separator();
-
             if (ImGui::Button("      Return to Tracker Settings"))
             {
                 request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
@@ -1385,6 +1387,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
 
 			ImGui::Text("Calibration Failed");
 
+			ImGui::Separator();
 			if (ImGui::Button("      Restart Calibration"))
 			{
 				setState(eMenuState::verifyTrackers);
@@ -1393,6 +1396,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
 				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
+			ImGui::SameLine();
 			if (ImGui::Button("      Cancel"))
 			{
 				request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
@@ -1525,7 +1529,6 @@ void AppStage_ComputeTrackerPoses::renderUI()
 			}
 
 			ImGui::Separator();
-
 			if (ImGui::Button("      Return to Test Tracking Pose"))
 			{
 				setState(eMenuState::testTracking);

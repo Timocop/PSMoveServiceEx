@@ -202,7 +202,6 @@ void AppStage_TestTracker::renderUI()
 			}
 
 			ImGui::Separator();
-
 			if (ImGui::Button("      Return to Tracker Settings"))
 			{
 				request_tracker_reset_exposure_gain();
@@ -257,6 +256,7 @@ void AppStage_TestTracker::renderUI()
 		ImGui::SameLine();
 		ImGui::Text("Failed to start tracker stream!");
 
+		ImGui::Separator();
 		if (ImGui::Button("      Return to Tracker Settings"))
 		{
 			request_tracker_reset_exposure_gain();
@@ -307,6 +307,7 @@ void AppStage_TestTracker::renderUI()
 		ImGui::SameLine();
 		ImGui::Text("Failed to stop tracker stream!");
 
+		ImGui::Separator();
 		if (ImGui::Button("      Return to Tracker Settings"))
 		{
 			request_tracker_reset_exposure_gain();

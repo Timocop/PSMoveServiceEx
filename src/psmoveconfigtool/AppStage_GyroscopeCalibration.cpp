@@ -452,6 +452,7 @@ void AppStage_GyroscopeCalibration::renderUI()
 			ImGui::SameLine();
             ImGui::Text("Failed server request!");
 
+			ImGui::Separator();
             if (ImGui::Button("      OK"))
             {
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
@@ -461,7 +462,6 @@ void AppStage_GyroscopeCalibration::renderUI()
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
             ImGui::SameLine();
-
             if (ImGui::Button("      Return to Main Menu"))
             {
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
@@ -513,6 +513,7 @@ void AppStage_GyroscopeCalibration::renderUI()
                 ImGui::Text("Controller Destabilized! Waiting for stabilization..");
             }
 
+			ImGui::Separator();
             if (ImGui::Button("      Force Continue"))
             {
                 m_bForceControllerStable= true;
@@ -520,7 +521,8 @@ void AppStage_GyroscopeCalibration::renderUI()
 			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
 				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
-            ImGui::SameLine();
+            
+			ImGui::SameLine();
             if (ImGui::Button("      Cancel"))
             {
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
@@ -562,6 +564,7 @@ void AppStage_GyroscopeCalibration::renderUI()
                 "Sampling Gyroscope...");
             ImGui::ProgressBar(sampleFraction, ImVec2(250, 20));
 
+			ImGui::Separator();
             if (ImGui::Button("      Cancel"))
             {
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
@@ -582,6 +585,7 @@ void AppStage_GyroscopeCalibration::renderUI()
                 "Sampling complete.\n" \
                 "Press OK to continue or Redo to recalibration.");
 
+			ImGui::Separator();
             if (ImGui::Button("      OK"))
             {
 				PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
@@ -590,7 +594,8 @@ void AppStage_GyroscopeCalibration::renderUI()
 			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
 				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
-            ImGui::SameLine();
+            
+			ImGui::SameLine();
             if (ImGui::Button("      Redo"))
             {
                 m_gyroNoiseSamples->clear();
@@ -599,7 +604,8 @@ void AppStage_GyroscopeCalibration::renderUI()
 			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconUpdate()->getImTextureId(),
 				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
-            ImGui::SameLine();
+           
+			ImGui::SameLine();
             if (ImGui::Button("      Cancel"))
             {
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
@@ -655,6 +661,7 @@ void AppStage_GyroscopeCalibration::renderUI()
 					"to recenter the controller]");
 			}
 
+			ImGui::Separator();
             if (ImGui::Button("      OK"))
             {
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
@@ -664,7 +671,6 @@ void AppStage_GyroscopeCalibration::renderUI()
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
             ImGui::SameLine();
-
             if (ImGui::Button("      Return to Main Menu"))
             {
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);

@@ -327,6 +327,7 @@ void AppStage_OpticalRecenter::renderUI()
 			ImGui::SameLine();
             ImGui::Text("Failed server request!");
 
+			ImGui::Separator();
             if (ImGui::Button("      OK"))
             {
                 request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
@@ -336,7 +337,6 @@ void AppStage_OpticalRecenter::renderUI()
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
             ImGui::SameLine();
-
             if (ImGui::Button("      Return to Main Menu"))
             {
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
@@ -356,6 +356,7 @@ void AppStage_OpticalRecenter::renderUI()
 		ImGui::Text("Please place the controller on the ground to sample the new playspace center location.");
 		ImGui::Text("Click continue to begin the next step.");
 
+		ImGui::Separator();
 		if (ImGui::Button("      Continue"))
 		{
 			setState(eCalibrationMenuState::measureOpticalPosition);
@@ -363,6 +364,7 @@ void AppStage_OpticalRecenter::renderUI()
 		ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
 			ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
+		
 		ImGui::SameLine();
 		if (ImGui::Button("      Cancel"))
 		{
@@ -396,6 +398,7 @@ void AppStage_OpticalRecenter::renderUI()
 			ImGui::SameLine();
 			ImGui::Text("Unalbe to find controller. Make sure the controller is visible to the trackers.");
 
+			ImGui::Separator();
 			if (ImGui::Button("      Cancel"))
 			{
 				request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
@@ -459,6 +462,7 @@ void AppStage_OpticalRecenter::renderUI()
 			ImGui::SameLine();
 			ImGui::Text("Unalbe to find controller. Make sure the controller is visible to the trackers.");
 
+			ImGui::Separator();
 			if (ImGui::Button("      Cancel"))
 			{
 				request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
@@ -522,6 +526,7 @@ void AppStage_OpticalRecenter::renderUI()
 					euler_angles.get_attitude_degrees(), euler_angles.get_heading_degrees(), euler_angles.get_bank_degrees());
 			}
 
+			ImGui::Separator();
             if (ImGui::Button("      OK"))
             {
                 request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
@@ -531,7 +536,6 @@ void AppStage_OpticalRecenter::renderUI()
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
             ImGui::SameLine();
-
             if (ImGui::Button("      Return to Main Menu"))
             {
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);

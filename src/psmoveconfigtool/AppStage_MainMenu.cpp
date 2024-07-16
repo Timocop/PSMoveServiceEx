@@ -116,10 +116,9 @@ void AppStage_MainMenu::renderUI()
 			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconSettings()->getImTextureId(),
 				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
-
-			ImGui::Separator();
 	#endif
 
+			ImGui::Separator();
 			if (ImGui::Button("      Exit"))
 			{
 				m_app->requestShutdown();
@@ -212,7 +211,6 @@ void AppStage_MainMenu::renderUI()
 			ImGui::PopItemWidth();
 
 			ImGui::Separator();
-
             if (ImGui::Button("      Connect"))
             {
                 m_menuState= AppStage_MainMenu::pendingConnectToToService;
@@ -223,7 +221,6 @@ void AppStage_MainMenu::renderUI()
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SameLine();
-
             if (ImGui::Button("      Exit"))
             {
                 m_app->requestShutdown();

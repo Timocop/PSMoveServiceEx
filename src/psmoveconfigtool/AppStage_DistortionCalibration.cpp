@@ -687,8 +687,7 @@ void AppStage_DistortionCalibration::renderUI()
 			"The tracker you want to calibrate already has pre-computed distortion and focal lengths." \
 			"If you proceed you will be overriding these defaults.");
 
-		ImGui::Spacing();
-
+		ImGui::Separator();
 		if (ImGui::Button("      Continue"))
 		{
 			m_menuState = eMenuState::enterBoardSettings;
@@ -696,6 +695,7 @@ void AppStage_DistortionCalibration::renderUI()
 		ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
 			ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
+		
 		ImGui::SameLine();
 		if (ImGui::Button("      Cancel"))
 		{
@@ -721,8 +721,7 @@ void AppStage_DistortionCalibration::renderUI()
 			"Please change the resolution to 640x480 for this tracker and try again."
 		);
 
-		ImGui::Spacing();
-
+		ImGui::Separator();
 		if (ImGui::Button("      OK"))
 		{
 			request_exit();
@@ -772,8 +771,7 @@ void AppStage_DistortionCalibration::renderUI()
 					);
 			}
 
-			ImGui::Spacing();
-
+			ImGui::Separator();
 			if (ImGui::Button("      OK"))
 			{
 				// Crank up the exposure and gain so that we can see the chessboard
@@ -786,6 +784,7 @@ void AppStage_DistortionCalibration::renderUI()
 			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
 				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
+			
 			ImGui::SameLine();
 			if (ImGui::Button("      Cancel"))
 			{
@@ -867,6 +866,7 @@ void AppStage_DistortionCalibration::renderUI()
 					ImGui::Text("[capture point not valid]");
 				}
 
+				ImGui::Separator();
                 if (ImGui::Button("      Restart"))
                 {
                     m_opencv_state->resetCaptureState();
@@ -875,7 +875,8 @@ void AppStage_DistortionCalibration::renderUI()
 				ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconUpdate()->getImTextureId(),
 					ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 					ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
-                ImGui::SameLine();
+                
+				ImGui::SameLine();
                 if (ImGui::Button("      Cancel"))
                 {
                     request_exit();
@@ -915,6 +916,7 @@ void AppStage_DistortionCalibration::renderUI()
 				ImGui::Text("Calibration complete!");
 				ImGui::Text("Error: %f", m_opencv_state->reprojectionError);
 
+				ImGui::Separator();
 				if (ImGui::Button("      OK"))
 				{
 					request_exit();
@@ -923,6 +925,7 @@ void AppStage_DistortionCalibration::renderUI()
 					ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 					ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
+				ImGui::SameLine();
 				if (ImGui::Button("      Redo Calibration"))
 				{
 					m_opencv_state->resetCaptureState();
@@ -979,6 +982,7 @@ void AppStage_DistortionCalibration::renderUI()
             else
                 ImGui::Text("Failed to open tracker stream!");
 
+			ImGui::Separator();
             if (ImGui::Button("      OK"))
             {
                 m_app->setAppStage(AppStage_TrackerSettings::APP_STAGE_NAME);
@@ -987,6 +991,7 @@ void AppStage_DistortionCalibration::renderUI()
 				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
+			ImGui::SameLine();
             if (ImGui::Button("      Return to Main Menu"))
             {
                 m_app->setAppStage(AppStage_MainMenu::APP_STAGE_NAME);
@@ -1035,6 +1040,7 @@ void AppStage_DistortionCalibration::renderUI()
 			ImGui::SameLine();
             ImGui::Text("Failed to stop tracker stream!");
 
+			ImGui::Separator();
             if (ImGui::Button("      OK"))
             {
                 m_app->setAppStage(AppStage_TrackerSettings::APP_STAGE_NAME);
@@ -1043,6 +1049,7 @@ void AppStage_DistortionCalibration::renderUI()
 				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
+			ImGui::SameLine();
             if (ImGui::Button("      Return to Main Menu"))
             {
                 m_app->setAppStage(AppStage_MainMenu::APP_STAGE_NAME);

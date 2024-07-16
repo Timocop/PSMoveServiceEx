@@ -189,6 +189,7 @@ void AppStage_TestButtons::renderUI()
 			ImGui::SameLine();
             ImGui::Text("Failed to start controller stream!");
 
+			ImGui::Separator();
             if (ImGui::Button("      OK"))
             {
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
@@ -198,7 +199,6 @@ void AppStage_TestButtons::renderUI()
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
             ImGui::SameLine();
-
             if (ImGui::Button("      Return to Main Menu"))
             {
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
@@ -346,6 +346,7 @@ void AppStage_TestButtons::renderUI()
                 break;
             }
 
+			ImGui::Separator();
             if (ImGui::Button("      Return to Controller Settings"))
             {
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);

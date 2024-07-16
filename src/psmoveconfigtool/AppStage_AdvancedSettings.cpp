@@ -1266,14 +1266,12 @@ void AppStage_AdvancedSettings::renderUI()
 					ImGui::EndChild();
 				}
 
-				ImGui::Spacing();
 				ImGui::Separator();
+				ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0,0), ImVec2(1,1), ImColor(1.f, .5f, 0.f));
+				ImGui::SameLine();
+				ImGui::TextColored(ImColor(1.f, .5f, 0.f), "Restart PSMoveServiceEx to apply changes.");
+
 				ImGui::Spacing();
-
-				ImGui::TextDisabled("Note: Restart PSMoveServiceEx to apply changes.");
-
-				ImGui::Spacing();
-
 				if (ImGui::Button("      Return to Main Menu"))
 				{
 					m_app->setAppStage(AppStage_MainMenu::APP_STAGE_NAME);
@@ -1283,7 +1281,6 @@ void AppStage_AdvancedSettings::renderUI()
 					ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 				ImGui::SameLine();
-
 				if (ImGui::Button("      Save Settings"))
 				{
 					if (cfg_tracker.isLoaded)
@@ -1304,7 +1301,6 @@ void AppStage_AdvancedSettings::renderUI()
 
 #ifdef _WIN32
 				ImGui::SameLine(0.f, 16.f);
-
 				if (ImGui::Button("      Restart PSMoveServiceEx"))
 				{
 					serviceRestart.CheckProcesses();

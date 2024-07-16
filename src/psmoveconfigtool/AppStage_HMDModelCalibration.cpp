@@ -593,6 +593,7 @@ void AppStage_HMDModelCalibration::renderUI()
 		ImGui::SameLine();
 		ImGui::Text("Pending device initialization...");
 
+		ImGui::Separator();
 		if (ImGui::Button("      Return to HMD Settings"))
 		{
 			request_exit_to_app_stage(AppStage_HMDModelCalibration::APP_STAGE_NAME);
@@ -635,6 +636,7 @@ void AppStage_HMDModelCalibration::renderUI()
 			break;
 		}
 
+		ImGui::Separator();
 		if (ImGui::Button("      OK"))
 		{
 			request_exit_to_app_stage(AppStage_HMDSettings::APP_STAGE_NAME);
@@ -643,6 +645,7 @@ void AppStage_HMDModelCalibration::renderUI()
 			ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
+		ImGui::SameLine();
 		if (ImGui::Button("      Return to Main Menu"))
 		{
 			request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
@@ -675,6 +678,7 @@ void AppStage_HMDModelCalibration::renderUI()
 			go_next_tracker();
 		}
 
+		ImGui::Separator();
 		if (ImGui::Button("      Start Calibration"))
 		{
 			setState(eMenuState::calibrate);
@@ -683,6 +687,7 @@ void AppStage_HMDModelCalibration::renderUI()
 			ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
+		ImGui::SameLine();
 		if (ImGui::Button("      Return to HMD Settings"))
 		{
 			request_exit_to_app_stage(AppStage_HMDSettings::APP_STAGE_NAME);
@@ -748,7 +753,6 @@ void AppStage_HMDModelCalibration::renderUI()
 		ImGui::SliderFloat("Tolerance", &m_trackerPairState->tolerance, 0.f, 1.f);
 
 		ImGui::Separator();
-
 		if (ImGui::Button("      Restart Calibration"))
 		{
 			setState(eMenuState::verifyTrackers);
@@ -756,6 +760,7 @@ void AppStage_HMDModelCalibration::renderUI()
 		ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconUpdate()->getImTextureId(),
 			ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
+		
 		ImGui::SameLine();
 		if (ImGui::Button("      Exit"))
 		{
@@ -778,10 +783,13 @@ void AppStage_HMDModelCalibration::renderUI()
 		{
 			ImGui::Text("Calibration Complete");
 
+			ImGui::Separator();
 			if (ImGui::Button("Redo Calibration"))
 			{
 				setState(eMenuState::verifyTrackers);
 			}
+
+			ImGui::SameLine();
 		}
 
 		if (ImGui::Button("      Exit"))

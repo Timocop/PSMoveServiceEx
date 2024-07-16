@@ -780,9 +780,11 @@ void AppStage_ColorCalibration::renderUI()
 		{
 			total_progress = 1.0f;
 		}
-		
+
+		ImGui::Separator();
 		ImGui::ProgressBar(fmax(1.0f - (static_cast<float>(m_iDetectingControllersLeft) / total_progress), 0.0f));
 
+		ImGui::Separator();
 		if (ImGui::Button("      Cancel"))
 		{
 			m_bDetectingCancel = true;
@@ -2162,6 +2164,7 @@ void AppStage_ColorCalibration::renderUI()
 
 		if (stable_controllers == stable_total_controllers)
 		{
+			ImGui::Separator();
 			if (ImGui::Button("      Start Sampling Colors"))
 			{
 				if (m_bAutoChangeTracker)
@@ -2187,6 +2190,7 @@ void AppStage_ColorCalibration::renderUI()
 		}
 		else
 		{
+			ImGui::Separator();
 			if (ImGui::Button("      Force Start Sampling Colors"))
 			{
 				if (m_bAutoChangeTracker)
@@ -2212,7 +2216,6 @@ void AppStage_ColorCalibration::renderUI()
 		}
 
 		ImGui::SameLine();
-
 		if (ImGui::Button("      Cancel"))
 		{
 			setState(eMenuState::manualConfig);
@@ -2612,6 +2615,7 @@ void AppStage_ColorCalibration::renderUI()
 		 	ImGui::TextWrapped("Make sure the controller bulb is not being obscured during the sampling process.");
 			ImGui::TextWrapped("Otherwise use the manual color detection method instead.");
 
+			ImGui::Separator();
 			if (ImGui::Button("      Try Again"))
 			{
 				m_iDetectingExposure = k_color_autodetect_probe_step;
@@ -2622,7 +2626,6 @@ void AppStage_ColorCalibration::renderUI()
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SameLine();
-
 			if (ImGui::Button("      Back"))
 			{
 				setState(eMenuState::manualConfig);
@@ -2648,6 +2651,7 @@ void AppStage_ColorCalibration::renderUI()
 			ImGui::SameLine();
 			ImGui::Text("Color sampling aborted!");
 
+			ImGui::Separator();
 			if (ImGui::Button("      Back"))
 			{
 				setState(eMenuState::manualConfig);
@@ -2675,6 +2679,7 @@ void AppStage_ColorCalibration::renderUI()
 			ImGui::TextWrapped("Unable to change color on virtual controllers!");
 			ImGui::TextWrapped("Please use the manual color detection instead.");
 
+			ImGui::Separator();
 			if (ImGui::Button("      Back"))
 			{
 				setState(eMenuState::manualConfig);
@@ -2703,7 +2708,8 @@ void AppStage_ColorCalibration::renderUI()
 			ImGui::TextWrapped("Could not automatically adjust exposure/gain on virtual trackers!");
 			ImGui::TextWrapped("Please adjust exposure/gain on this tracker manually and try again.");
 			ImGui::TextWrapped("Otherwise use the manual color detection method instead.");
-		
+
+			ImGui::Separator();
 			if (ImGui::Button("      Try Again"))
 			{
 				m_iDetectingExposure = k_color_autodetect_probe_step;
@@ -2714,7 +2720,6 @@ void AppStage_ColorCalibration::renderUI()
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SameLine();
-
 			if (ImGui::Button("      Back"))
 			{
 				setState(eMenuState::manualConfig);
@@ -2740,6 +2745,7 @@ void AppStage_ColorCalibration::renderUI()
 			ImGui::SameLine();
 			ImGui::TextWrapped("Color sampling on controller #%d and tracker #%d failed!", m_masterControllerView->ControllerID, m_trackerView->tracker_info.tracker_id);
 
+			ImGui::Separator();
 			if (ImGui::Button("      Try Again"))
 			{
 				m_iDetectingExposure = k_color_autodetect_probe_step;
@@ -2750,7 +2756,6 @@ void AppStage_ColorCalibration::renderUI()
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SameLine();
-
 			if (ImGui::Button("      Back"))
 			{
 				setState(eMenuState::manualConfig);
@@ -2784,6 +2789,7 @@ void AppStage_ColorCalibration::renderUI()
 		ImGui::TextWrapped("Color sampling finished.");
 		ImGui::TextWrapped("Controller colors and tracker exposure/gain have been automatically adjusted!");
 
+		ImGui::Separator();
 		if (ImGui::Button("      OK"))
 		{
 			setState(eMenuState::manualConfig);
@@ -2896,6 +2902,7 @@ void AppStage_ColorCalibration::renderUI()
             ImGui::Text("Failed to start controller stream!");
         }
 
+		ImGui::Separator();
         if (ImGui::Button("      OK"))
         {
             request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
@@ -2904,6 +2911,7 @@ void AppStage_ColorCalibration::renderUI()
 			ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
+		ImGui::SameLine();
         if (ImGui::Button("      Return to Main Menu"))
         {
             request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);

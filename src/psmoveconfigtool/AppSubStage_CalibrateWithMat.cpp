@@ -795,7 +795,6 @@ void AppSubStage_CalibrateWithMat::renderUI()
 				}
 
 				ImGui::Separator();
-
 				if (ImGui::Button("      Force Continue"))
 				{
 					m_bForceStable = true;
@@ -938,7 +937,6 @@ void AppSubStage_CalibrateWithMat::renderUI()
 				}
 
 				ImGui::Separator();
-
 				if (ImGui::Button("      Cancel"))
 				{
 					// Disable blinking if its enabled.

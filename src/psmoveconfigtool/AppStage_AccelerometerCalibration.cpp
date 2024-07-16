@@ -764,6 +764,7 @@ void AppStage_AccelerometerCalibration::renderUI()
 			ImGui::SameLine();
             ImGui::Text("Failed to start controller stream!");
 
+			ImGui::Separator();
             if (ImGui::Button("      OK"))
             {
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
@@ -773,7 +774,6 @@ void AppStage_AccelerometerCalibration::renderUI()
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
             ImGui::SameLine();
-
             if (ImGui::Button("      Return to Main Menu"))
             {
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
@@ -867,6 +867,7 @@ void AppStage_AccelerometerCalibration::renderUI()
 			}
 		}
 
+		ImGui::Separator();
 		if (ImGui::Button("      Redo"))
 		{
 			// Reset the sample info for the current pose
@@ -880,7 +881,6 @@ void AppStage_AccelerometerCalibration::renderUI()
 			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 		ImGui::SameLine();
-
 		if (ImGui::Button("      Abort"))
 		{
 			PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
@@ -904,6 +904,7 @@ void AppStage_AccelerometerCalibration::renderUI()
                 "Sampling complete.\n" \
                 "Press OK to continue or Redo to resample.");
 
+			ImGui::Separator();
             if (ImGui::Button("      OK"))
             {
 				PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
@@ -914,7 +915,6 @@ void AppStage_AccelerometerCalibration::renderUI()
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
             ImGui::SameLine();
-
             if (ImGui::Button("      Redo"))
             {
                 // Reset the sample info for the current pose
@@ -959,6 +959,7 @@ void AppStage_AccelerometerCalibration::renderUI()
 				}
 			}				
 
+			ImGui::Separator();
             if (ImGui::Button("      OK"))
             {
                 request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
@@ -968,7 +969,6 @@ void AppStage_AccelerometerCalibration::renderUI()
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
             ImGui::SameLine();
-
             if (ImGui::Button("      Return to Main Menu"))
             {
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);

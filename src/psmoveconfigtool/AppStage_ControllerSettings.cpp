@@ -2039,10 +2039,9 @@ void AppStage_ControllerSettings::renderUI()
 					ImGui::Text("No connected controllers found!");
 				}
 
-				ImGui::Separator();
-
 				if (m_app->excludePositionSettings)
 				{
+					ImGui::Separator();
 					if (ImGui::Button("      Exit"))
 					{
 						m_app->requestShutdown();
@@ -2053,6 +2052,7 @@ void AppStage_ControllerSettings::renderUI()
 				}
 				else
 				{
+					ImGui::Separator();
 					if (ImGui::Button("      Return to Main Menu"))
 					{
 						m_app->setAppStage(AppStage_MainMenu::APP_STAGE_NAME);
@@ -2102,6 +2102,7 @@ void AppStage_ControllerSettings::renderUI()
 			ImGui::SameLine();
             ImGui::Text("Failed to get controller list!");
 
+			ImGui::Separator();
             if (ImGui::Button("      Retry"))
             {
                 request_controller_list();
@@ -2110,6 +2111,7 @@ void AppStage_ControllerSettings::renderUI()
 				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
+			ImGui::SameLine();
             if (ImGui::Button("      Return to Main Menu"))
             {
                 m_app->setAppStage(AppStage_MainMenu::APP_STAGE_NAME);

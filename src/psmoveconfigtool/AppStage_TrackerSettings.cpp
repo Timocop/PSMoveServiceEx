@@ -610,10 +610,10 @@ void AppStage_TrackerSettings::renderUI()
 							{
 								int controllerID = (m_selectedControllerIndex != -1) ? m_controllerInfos[m_selectedControllerIndex].ControllerID : -1;
 
-								if (ImGui::ButtonChecked("Calibration##SubTabCalibration", (m_tabSelectedSubTab == 0), ImVec2(200.f, 0.f)))
+								if (ImGui::ButtonChecked("Calibration##SubTabCalibration", (m_tabSelectedSubTab == 0), ImVec2(150.0, 0.f)))
 									m_tabSelectedSubTab = 0;
 								ImGui::SameLine(0.f, 0.f);
-								if (ImGui::ButtonChecked("Testing##SubTabTesting", (m_tabSelectedSubTab == 1), ImVec2(200.f, 0.f)))
+								if (ImGui::ButtonChecked("Testing##SubTabTesting", (m_tabSelectedSubTab == 1), ImVec2(150.0, 0.f)))
 									m_tabSelectedSubTab = 1;
 
 								if (m_tabSelectedSubTab == 0 ||
@@ -796,10 +796,10 @@ void AppStage_TrackerSettings::renderUI()
 								}
 							}
 
-							if (ImGui::ButtonChecked("Calibration##SubTabCalibration", (m_tabSelectedSubTab == 0), ImVec2(200.f, 0.f)))
+							if (ImGui::ButtonChecked("Calibration##SubTabCalibration", (m_tabSelectedSubTab == 0), ImVec2(150.0, 0.f)))
 								m_tabSelectedSubTab = 0;
 							ImGui::SameLine(0.f, 0.f);
-							if (ImGui::ButtonChecked("Testing##SubTabTesting", (m_tabSelectedSubTab == 1), ImVec2(200.f, 0.f)))
+							if (ImGui::ButtonChecked("Testing##SubTabTesting", (m_tabSelectedSubTab == 1), ImVec2(150.0, 0.f)))
 								m_tabSelectedSubTab = 1;
 
 							if (m_tabSelectedSubTab == 0 ||
@@ -1125,6 +1125,7 @@ void AppStage_TrackerSettings::renderUI()
 		ImGui::SameLine();
 		ImGui::Text("Failed to get server response!");
 
+		ImGui::Separator();
 		if (ImGui::Button("      Retry"))
 		{
 			request_tracker_list();
@@ -1133,6 +1134,7 @@ void AppStage_TrackerSettings::renderUI()
 			ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
+		ImGui::SameLine();
 		if (ImGui::Button("      Return to Main Menu"))
 		{
 			m_app->setAppStage(AppStage_MainMenu::APP_STAGE_NAME);
@@ -1156,6 +1158,7 @@ void AppStage_TrackerSettings::renderUI()
 			"Do you want to continue?"
 		);
 
+		ImGui::Separator();
 		if (ImGui::Button("      Reset Pose"))
 		{
 			request_tracker_reset_pose();
@@ -1165,7 +1168,6 @@ void AppStage_TrackerSettings::renderUI()
 			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 		ImGui::SameLine();
-
 		if (ImGui::Button("      Cancel"))
 		{
 			m_menuState = AppStage_TrackerSettings::idle;
