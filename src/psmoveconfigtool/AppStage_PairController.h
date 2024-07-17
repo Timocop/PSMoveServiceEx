@@ -52,6 +52,7 @@ private:
 	{
 		start,
 		setupBluetoothRadio,
+		removeDevice,
 		deviceScan,
 		authenticateDevice,
 		attemptConnection,

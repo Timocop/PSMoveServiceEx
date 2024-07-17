@@ -235,7 +235,8 @@ public:
     enum eStatus
     {
         start,
-        setupBluetoothRadio,
+		setupBluetoothRadio,
+		removeDevice,
         deviceScan,
 		authenticateDevice,
         attemptConnection,
@@ -309,6 +310,7 @@ static bool AsyncBluetoothPairDeviceRequest__findBluetoothRadio(BluetoothPairDev
 static bool AsyncBluetoothPairDeviceRequest__registerHostAddress(ServerControllerViewPtr &controllerView, BluetoothPairDeviceState *state);
 static BluetoothPairDeviceState::eStatus AsyncBluetoothPairDeviceRequest__setupBluetoothRadio(BluetoothPairDeviceState *state);
 static BluetoothPairDeviceState::eStatus AsyncBluetoothPairDeviceRequest__deviceScan(BluetoothPairDeviceState *state);
+static BluetoothPairDeviceState::eStatus AsyncBluetoothPairDeviceRequest__removeDevice(BluetoothPairDeviceState * state);
 static BluetoothPairDeviceState::eStatus AsyncBluetoothPairDeviceRequest__authenticateDevice(BluetoothPairDeviceState *state);
 static BluetoothPairDeviceState::eStatus AsyncBluetoothPairDeviceRequest__attemptConnection(BluetoothPairDeviceState *state);
 static BluetoothPairDeviceState::eStatus AsyncBluetoothPairDeviceRequest__patchRegistry(BluetoothPairDeviceState *state);
@@ -640,10 +642,15 @@ AsyncBluetoothPairDeviceThreadFunction(LPVOID lpParam)
 					nextSubStatus= AsyncBluetoothPairDeviceRequest__setupBluetoothRadio(state);
 				} break;
 
+			case BluetoothPairDeviceState::removeDevice:
+			{
+				nextSubStatus = AsyncBluetoothPairDeviceRequest__removeDevice(state);
+			} break;
+
 			case BluetoothPairDeviceState::deviceScan:
-				{
-					nextSubStatus= AsyncBluetoothPairDeviceRequest__deviceScan(state);
-				} break;
+			{
+				nextSubStatus = AsyncBluetoothPairDeviceRequest__deviceScan(state);
+			} break;
 
 			case BluetoothPairDeviceState::authenticateDevice:
 				{
@@ -855,7 +862,7 @@ AsyncBluetoothPairDeviceRequest__setupBluetoothRadio(
 
     if (BluetoothIsConnectable(state->hRadio) != FALSE && BluetoothIsDiscoverable(state->hRadio) != FALSE)
     {
-        nextSubStatus= BluetoothPairDeviceState::deviceScan;
+        nextSubStatus= BluetoothPairDeviceState::removeDevice;
     }
     else
     {
@@ -1008,71 +1015,108 @@ AsyncBluetoothPairDeviceRequest__authenticateDevice(
 
 static BluetoothPairDeviceState::eStatus
 AsyncBluetoothPairDeviceRequest__deviceScan(
-    BluetoothPairDeviceState *state)
+	BluetoothPairDeviceState *state)
 {
-    assert(state->isWorkerThread());
-    BluetoothPairDeviceState::eStatus nextSubStatus= 
-        state->getSubStatus_WorkerThread<BluetoothPairDeviceState::eStatus>();
-   
-    std::string bt_address_string= state->controller_serial_string;
-    BLUETOOTH_ADDRESS bt_address;
-    bool success= string_to_bluetooth_address(bt_address_string, &bt_address);
+	assert(state->isWorkerThread());
+	BluetoothPairDeviceState::eStatus nextSubStatus =
+		state->getSubStatus_WorkerThread<BluetoothPairDeviceState::eStatus>();
 
-    if (success) 
-    {
-        const bool inquire= (state->scanCount % 5) == 0;
+	std::string bt_address_string = state->controller_serial_string;
+	BLUETOOTH_ADDRESS bt_address;
+	bool success = string_to_bluetooth_address(bt_address_string, &bt_address);
 
-        if (get_bluetooth_device_info(state->hRadio, &bt_address, &state->deviceInfo, inquire))
-        {
-            SERVER_MT_LOG_INFO("AsyncBluetoothPairDeviceRequest") 
-                << "Bluetooth device found matching the given address: " << bt_address_string;
-        }
-        else
-        {
-            SERVER_MT_LOG_ERROR("AsyncBluetoothPairDeviceRequest") 
-                << "No Bluetooth device found matching the given address: " << bt_address_string;
-            success= false;
-        }
-    }
+	if (success)
+	{
+		const bool inquire = (state->scanCount % 5) == 0;
 
-    if (success)
-    {
-        if (is_matching_controller_type(&state->deviceInfo, state->controller_device_type))
-        {
-            SERVER_MT_LOG_INFO("AsyncBluetoothPairDeviceRequest") 
-                << "Bluetooth device matching the given address is the expected controller type";
-        }
-        else
-        {
-            char szDeviceName[256];
-            ServerUtility::convert_wcs_to_mbs(state->deviceInfo.szName, szDeviceName, sizeof(szDeviceName));
+		if (get_bluetooth_device_info(state->hRadio, &bt_address, &state->deviceInfo, inquire))
+		{
+			SERVER_MT_LOG_INFO("AsyncBluetoothPairDeviceRequest")
+				<< "Bluetooth device found matching the given address: " << bt_address_string;
+		}
+		else
+		{
+			SERVER_MT_LOG_ERROR("AsyncBluetoothPairDeviceRequest")
+				<< "No Bluetooth device found matching the given address: " << bt_address_string;
+			success = false;
+		}
+	}
 
-            SERVER_MT_LOG_ERROR("AsyncBluetoothPairDeviceRequest") 
-                << "Bluetooth device matching the given address is not an expected controller type: " << szDeviceName;
-            success= false;
-        }
-    }
+	if (success)
+	{
+		if (is_matching_controller_type(&state->deviceInfo, state->controller_device_type))
+		{
+			SERVER_MT_LOG_INFO("AsyncBluetoothPairDeviceRequest")
+				<< "Bluetooth device matching the given address is the expected controller type";
+		}
+		else
+		{
+			char szDeviceName[256];
+			ServerUtility::convert_wcs_to_mbs(state->deviceInfo.szName, szDeviceName, sizeof(szDeviceName));
 
-    // Keep track of the scan count attempts we have made
-    ++state->scanCount;
+			SERVER_MT_LOG_ERROR("AsyncBluetoothPairDeviceRequest")
+				<< "Bluetooth device matching the given address is not an expected controller type: " << szDeviceName;
+			success = false;
+		}
+	}
 
-    if (success)
-    {
-        // Reset the connection attempt count before starting the connection attempts
-        state->connectionAttemptCount= 0;
+	// Keep track of the scan count attempts we have made
+	++state->scanCount;
 
-        // Move onto pairing the device
-        nextSubStatus= 
+	if (success)
+	{
+		// Reset the connection attempt count before starting the connection attempts
+		state->connectionAttemptCount = 0;
+
+		// Move onto pairing the device
+		nextSubStatus =
 			state->bUsesAuthentication
 			? BluetoothPairDeviceState::authenticateDevice
 			: BluetoothPairDeviceState::attemptConnection;
-    }
-    else
-    {
-        Sleep(SLEEP_BETWEEN_SCANS);
-    }
+	}
+	else
+	{
+		Sleep(SLEEP_BETWEEN_SCANS);
+	}
 
-    return nextSubStatus;
+	return nextSubStatus;
+}
+
+static BluetoothPairDeviceState::eStatus
+AsyncBluetoothPairDeviceRequest__removeDevice(
+	BluetoothPairDeviceState *state)
+{
+	assert(state->isWorkerThread());
+	BluetoothPairDeviceState::eStatus nextSubStatus =
+		state->getSubStatus_WorkerThread<BluetoothPairDeviceState::eStatus>();
+
+	std::string bt_address_string = state->controller_serial_string;
+	BLUETOOTH_ADDRESS bt_address;
+	bool success = string_to_bluetooth_address(bt_address_string, &bt_address);
+
+	if (success)
+	{
+		SERVER_MT_LOG_INFO("AsyncBluetoothPairDeviceRequest")
+			<< "Attempt to remove device: " << bt_address_string;
+
+		// Tell windows to remove the device
+		if (BluetoothRemoveDevice(&bt_address) != ERROR_SUCCESS)
+		{
+			SERVER_MT_LOG_ERROR("AsyncBluetoothPairDeviceRequest")
+				<< "Controller " << state->getControllerID()
+				<< " could not be removed. Already removed?";
+		}
+		else
+		{
+			SERVER_MT_LOG_INFO("AsyncBluetoothPairDeviceRequest")
+				<< "Existing Controller " << state->getControllerID()
+				<< " has been removed";
+		}
+
+		nextSubStatus = BluetoothPairDeviceState::deviceScan;
+	}
+
+	return nextSubStatus;
 }
 
 static BluetoothPairDeviceState::eStatus

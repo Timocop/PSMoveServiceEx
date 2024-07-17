@@ -189,6 +189,11 @@ void AppStage_PairController::renderUI()
 					ImGui::Text("Setting up bluetooth radio...");
 					break;
 				}
+				case ePairingStatus::removeDevice:
+				{
+					ImGui::Text("Removing existing device...");
+					break;
+				}
 				case ePairingStatus::deviceScan:
 				{
 					ImGui::Text("Searching for device...");
