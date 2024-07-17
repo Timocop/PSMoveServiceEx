@@ -155,28 +155,6 @@ void AppStage_PairController::renderUI()
             {
                 const float fraction= clampf01(static_cast<float>(m_pair_steps_completed) / static_cast<float>(m_pair_steps_total));
 
-				if (m_controllerType == PSMController_DualShock4)
-				{
-					ImGui::TextWrapped(
-						"Unplug the DualShock4 form USB.\n" \
-						"\n"
-						"Then press and HOLD the DualShock4's PS and SHARE buttons.\n" \
-						"After a moment, the lightbar will start flashing rapidly.\n" \
-						"Repeat this until the controller completes pairing");
-				}
-				else
-				{
-					ImGui::TextWrapped(
-						"Unplug the PSMove from USB.\n" \
-						"\n"
-						"Then press the PSMove's PS button.\n" \
-						"The red status LED will start blinking.\n" \
-						"Whenever it goes off, press the PS button again.\n" \
-						"Repeat this until the status LED finally remains lit.");
-				}
-
-				ImGui::Separator();
-
 				switch (m_pair_steps_completed)
 				{
 				case ePairingStatus::start:
@@ -232,6 +210,31 @@ void AppStage_PairController::renderUI()
 				}
 
                 ImGui::ProgressBar(fraction, ImVec2(-1, 0), " ");
+
+				ImGui::Separator();
+
+				ImGui::PushTextWrapPos();
+				ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0,0), ImVec2(1,1), AssetManager::getInstance()->k_imcolor_orange());
+				ImGui::SameLine();
+
+				if (m_controllerType == PSMController_DualShock4)
+				{
+					ImGui::TextColored(AssetManager::getInstance()->k_imcolor_orange(),
+						"Unplug the DualShock4 form USB.\n"
+						"Then press and HOLD the DualShock4's PS and SHARE buttons.\n"
+						"After a moment, the lightbar will start flashing rapidly.\n"
+						"Repeat this until the controller completes pairing");
+				}
+				else
+				{
+					ImGui::TextColored(AssetManager::getInstance()->k_imcolor_orange(),
+						"Unplug the PSMove from USB.\n"
+						"Then press the PSMove's PS button.\n"
+						"The red status LED will start blinking.\n"
+						"Whenever it goes fully off, press the PS button again.\n"
+						"Repeat this until the status LED finally remains lit.");
+				}
+				ImGui::PopTextWrapPos();
             }
             else
             {
