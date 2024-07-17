@@ -922,14 +922,6 @@ void AppStage_MagnetometerCalibration::renderUI()
 					ImGui::Text("Quality");
 
 					ImGui::Separator();
-                    if (ImGui::Button("      Force Accept"))
-                    {
-						PSM_SetControllerLEDOverrideColor(m_controllerView->ControllerID, 0, 0, 0);
-						m_boundsStatistics->setCompleted();
-                    }
-					ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
-						ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-						ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
                 }
                 else
                 {
@@ -968,9 +960,10 @@ void AppStage_MagnetometerCalibration::renderUI()
 					ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconRight()->getImTextureId(),
 						ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
 						ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
+
+					ImGui::SameLine();
                 }
 
-				ImGui::SameLine();
                 if (ImGui::Button("      Cancel"))
                 {
                     request_exit_to_app_stage(AppStage_ControllerSettings::APP_STAGE_NAME);
