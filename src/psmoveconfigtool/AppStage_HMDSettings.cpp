@@ -216,8 +216,12 @@ void AppStage_HMDSettings::renderUI()
 					ImGui::BeginChild("##InfoChild", ImVec2(0, lastChildVec.y + 16), true);
 					ImGui::BeginGroup();
 					{
-						ImGui::Text("HMD Information:");
+						ImGui::PushFont(AssetManager::getInstance()->getDefaultImFontBold());
+						ImGui::Image(AssetManager::getInstance()->getIconHmd()->getImTextureId(), ImVec2(32, 32));
+						ImGui::SameLine();
+						ImGui::Text("HMD Information");
 						ImGui::Separator();
+						ImGui::PopFont();
 
 						ImGui::BulletText("HMD ID: %d", hmdInfo.HmdID);
 

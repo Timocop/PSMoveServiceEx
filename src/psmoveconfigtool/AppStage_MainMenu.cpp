@@ -81,7 +81,6 @@ void AppStage_MainMenu::renderUI()
 		ImGui::Begin(szWindowTitle, nullptr, window_flags);
 		ImGui::BeginGroup();
 		{
-			const ImVec2 _lastLoc = ImGui::GetCursorPos();
 			if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconController(), "Controller Settings"))
 			{
 				m_app->setAppStage(AppStage_ControllerSettings::APP_STAGE_NAME);

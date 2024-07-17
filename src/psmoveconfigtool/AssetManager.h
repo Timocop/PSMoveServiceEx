@@ -101,9 +101,24 @@ public:
 		return m_instance;
 	}
 
-    const FontAsset *getDefaultFont()
+	const FontAsset *getDefaultFont()
 	{
 		return &m_defaultFont;
+	}
+
+	const FontAsset *getDefaultFontBold()
+	{
+		return &m_defaultFontBold;
+	}
+
+	ImFont *getDefaultImFont()
+	{
+		return ImGui::GetIO().Fonts->Fonts[0];
+	}
+
+	ImFont *getDefaultImFontBold()
+	{
+		return ImGui::GetIO().Fonts->Fonts[1];
 	}
 
 	// Models
@@ -271,7 +286,8 @@ private:
 
 
     // Font Rendering
-    FontAsset m_defaultFont;
+	FontAsset m_defaultFont;
+	FontAsset m_defaultFontBold;
 	TextureAsset m_icon_settings_asset;
 	TextureAsset m_icon_controller_asset;
 	TextureAsset m_icon_tracker_asset;

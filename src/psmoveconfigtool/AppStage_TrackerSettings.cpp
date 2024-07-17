@@ -269,11 +269,12 @@ void AppStage_TrackerSettings::renderUI()
 					ImGui::BeginChild("##TrackerInfoChild", ImVec2(0, lastChildVec.y + 16), true);
 					ImGui::BeginGroup();
 					{
+						ImGui::PushFont(AssetManager::getInstance()->getDefaultImFontBold());
 						ImGui::Image(AssetManager::getInstance()->getIconTracker()->getImTextureId(), ImVec2(32, 32));
 						ImGui::SameLine();
-						ImGui::Text("Tracker Information:");
+						ImGui::Text("Tracker Information");
 						ImGui::Separator();
-						ImGui::BulletText("Tracker ID: %d", trackerInfo.tracker_id);
+						ImGui::PopFont();
 
 						// Virtual trackers have a common device path "VirtualTracker_#"
 						// ###Externet $TODO: Add better virtual tracker check. Probably should do that after changing protocols.
@@ -336,11 +337,13 @@ void AppStage_TrackerSettings::renderUI()
 						{
 							if (!bWarningAndIssuesShown)
 							{
+								ImGui::PushFont(AssetManager::getInstance()->getDefaultImFontBold());
 								ImGui::Separator();
 								ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(32, 32));
 								ImGui::SameLine();
-								ImGui::Text("Warnings and Issues:");
+								ImGui::Text("Warnings and Issues");
 								ImGui::Separator();
+								ImGui::PopFont();
 								bWarningAndIssuesShown = true;
 							}
 
@@ -358,11 +361,13 @@ void AppStage_TrackerSettings::renderUI()
 						{
 							if (!bWarningAndIssuesShown)
 							{
+								ImGui::PushFont(AssetManager::getInstance()->getDefaultImFontBold());
 								ImGui::Separator();
 								ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(32, 32));
 								ImGui::SameLine();
-								ImGui::Text("Warnings and Issues:");
+								ImGui::Text("Warnings and Issues");
 								ImGui::Separator();
+								ImGui::PopFont();
 								bWarningAndIssuesShown = true;
 							}
 
@@ -393,11 +398,13 @@ void AppStage_TrackerSettings::renderUI()
 
 							if (sameDevices.size() > 1)
 							{
+								ImGui::PushFont(AssetManager::getInstance()->getDefaultImFontBold());
 								ImGui::Separator();
 								ImGui::Image(AssetManager::getInstance()->getIconUsb()->getImTextureId(), ImVec2(32, 32));
 								ImGui::SameLine();
-								ImGui::Text("Sharing USB Controller with Trackers:", sameDevices.size());
+								ImGui::Text("Sharing USB Controller with Trackers");
 								ImGui::Separator();
+								ImGui::PopFont();
 
 								for (int j = sameDevices.size() - 1; j >= 0; --j)
 								{

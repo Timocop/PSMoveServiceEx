@@ -58,6 +58,7 @@ static const char *k_icon_target_filename = "./assets/icons/target-focus-line-ic
 
 // Fonts
 static const char *k_default_font_filename = "./assets/fonts/OpenSans-Regular.ttf";
+static const char *k_default_fontbold_filename = "./assets/fonts/OpenSans-Bold.ttf";
 static const float k_default_font_pixel_height= 18.f;
 
 static const unsigned int k_font_texture_width = 512;
@@ -81,6 +82,7 @@ AssetManager::AssetManager()
 	, m_dualshock_led_assets()
 	, m_psnavigation_assets()
 	, m_defaultFont()
+	, m_defaultFontBold()
 	, m_icon_settings_asset()
 	, m_icon_controller_asset()
 	, m_icon_tracker_asset()
@@ -113,6 +115,7 @@ bool AssetManager::init()
     bool failed= false;
 
 	failed |= !loadFont(k_default_font_filename, k_default_font_pixel_height, &m_defaultFont);
+	failed |= !loadFont(k_default_fontbold_filename, k_default_font_pixel_height, &m_defaultFontBold);
 
 	failed |= !loadOBJ(k_ps3eye_model_filename, m_ps3eye_assets.m_vert, m_ps3eye_assets.m_tex, m_ps3eye_assets.m_norm);
 	failed |= !loadTexture(k_ps3eye_texture_filename, &m_ps3eye_assets.m_texture);
@@ -161,6 +164,7 @@ bool AssetManager::init()
         ImGuiIO& io = ImGui::GetIO();
 
 		io.Fonts->AddFontFromFileTTF(k_default_font_filename, k_default_font_pixel_height);
+		io.Fonts->AddFontFromFileTTF(k_default_fontbold_filename, k_default_font_pixel_height);
 		io.Fonts->AddFontDefault();
     }
 
@@ -199,7 +203,8 @@ void AssetManager::destroy()
 	m_icon_left_asset.dispose();
 	m_icon_right_asset.dispose();
 
-    m_defaultFont.dispose();
+	m_defaultFont.dispose();
+	m_defaultFontBold.dispose();
 
     m_instance= NULL;
 }

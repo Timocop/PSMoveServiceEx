@@ -469,10 +469,12 @@ void AppStage_ControllerSettings::renderUI()
 					ImGui::BeginChild("##HostInfoChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
 					ImGui::BeginGroup();
 					{
+						ImGui::PushFont(AssetManager::getInstance()->getDefaultImFontBold());
 						ImGui::Image(AssetManager::getInstance()->getIconBluetooth()->getImTextureId(), ImVec2(32, 32));
 						ImGui::SameLine();
-						ImGui::Text("Bluetooth Information:");
+						ImGui::Text("Bluetooth Information");
 						ImGui::Separator();
+						ImGui::PopFont();
 
 						if (m_hostSerial.length() > 1 && m_hostSerial != "00:00:00:00:00:00")
 						{
@@ -515,10 +517,12 @@ void AppStage_ControllerSettings::renderUI()
 						ImGui::BeginChild("##ControllerInfoChild", ImVec2(0.f, lastChildVec.y + 16.f), true);
 						ImGui::BeginGroup();
 						{
+							ImGui::PushFont(AssetManager::getInstance()->getDefaultImFontBold());
 							ImGui::Image(AssetManager::getInstance()->getIconController()->getImTextureId(), ImVec2(32, 32));
 							ImGui::SameLine();
-							ImGui::Text("Controller Information:");
+							ImGui::Text("Controller Information");
 							ImGui::Separator();
+							ImGui::PopFont();
 
 							ImGui::BulletText("Controller ID: %d", controllerInfo.ControllerID);
 
