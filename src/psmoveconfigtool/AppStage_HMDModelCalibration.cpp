@@ -720,7 +720,7 @@ void AppStage_HMDModelCalibration::renderUI()
 		ImGui::Separator();
 
 		// TODO: Show calibration progress
-		ImGui::ProgressBar(m_hmdModelState->getProgressFraction(), ImVec2(250, 20));
+		ImGui::ProgressBar(m_hmdModelState->getProgressFraction(), ImVec2(-1, 0));
 
 		// display tracking quality
 		for (int tracker_index = 0; tracker_index < get_tracker_count(); ++tracker_index)

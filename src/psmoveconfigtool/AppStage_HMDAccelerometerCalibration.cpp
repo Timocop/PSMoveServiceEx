@@ -492,8 +492,9 @@ void AppStage_HMDAccelerometerCalibration::renderUI()
 			}
 
 			ImGui::SameLine();
-            ImGui::Text("Sampling accelerometer.");
-            ImGui::ProgressBar(sampleFraction, ImVec2(250, 20));
+            ImGui::Text("Sampling accelerometer...");
+			ImGui::Separator();
+            ImGui::ProgressBar(sampleFraction, ImVec2(-1, 0));
 
 			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();

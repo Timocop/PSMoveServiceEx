@@ -914,10 +914,11 @@ void AppStage_MagnetometerCalibration::renderUI()
 
 				if (!m_boundsStatistics->getIsComplete())
                 {
-					ImGui::ProgressBar(static_cast<float>(m_boundsStatistics->samplePercentage) / 100.f, ImVec2(250, 20));
+					ImGui::Separator();
+					ImGui::ProgressBar(static_cast<float>(m_boundsStatistics->samplePercentage) / 100.f, ImVec2(-1, 0));
 					ImGui::SameLine();
 					ImGui::Text("Progress");
-					ImGui::ProgressBar(static_cast<float>(m_boundsStatistics->sampleQuality) / 100.f, ImVec2(250, 20), " ");
+					ImGui::ProgressBar(static_cast<float>(m_boundsStatistics->sampleQuality) / 100.f, ImVec2(-1, 0), " ");
 					ImGui::SameLine();
 					ImGui::Text("Quality");
 
@@ -925,9 +926,7 @@ void AppStage_MagnetometerCalibration::renderUI()
                 }
                 else
                 {
-					ImGui::Spacing();
 					ImGui::Separator();
-					ImGui::Spacing();
 
 					ImGui::PushTextWrapPos();
 					ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, .5f, 0.f));
@@ -1021,12 +1020,15 @@ void AppStage_MagnetometerCalibration::renderUI()
                 std::chrono::duration<double, std::milli> stableDuration = now - m_stableStartTime;
                 float fraction = static_cast<float>(stableDuration.count() / k_stabilize_wait_time_ms);
 
-                ImGui::ProgressBar(fraction, ImVec2(250, 20));
-                ImGui::Spacing();
+				ImGui::Separator();
+                ImGui::ProgressBar(fraction, ImVec2(-1, 0), " ");
             }
             else
             {
-                ImGui::Text("Move Destabilized! Waiting for stabilization..");
+				ImGui::Separator();
+				ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, 0.5f, 0.f));
+				ImGui::SameLine();
+				ImGui::TextColored(ImColor(1.f, 0.5f, 0.f), "Controller destabilized! Waiting for stabilization..");
             }
 
 			ImGui::Separator();
@@ -1077,9 +1079,8 @@ void AppStage_MagnetometerCalibration::renderUI()
                 "This will be the default orientation of the move controller.\n"
                 "Measurement will start once the controller is aligned with gravity and stable.");
 
-            ImGui::ProgressBar(
-                static_cast<float>(m_identityStatistics->sampleCount) / static_cast<float>(k_max_identity_magnetometer_samples), 
-                ImVec2(250, 20));
+			ImGui::Separator();
+            ImGui::ProgressBar(static_cast<float>(m_identityStatistics->sampleCount) / static_cast<float>(k_max_identity_magnetometer_samples), ImVec2(-1, 0));
 
 			ImGui::Separator();
             if (ImGui::Button("      Cancel"))

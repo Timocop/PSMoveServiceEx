@@ -617,7 +617,8 @@ void AppStage_OpticalCalibration::renderUI()
 
 			ImGui::SameLine();
 			ImGui::Text("Sample Location #%d / %d", m_poseNoiseSamplesSet->completedSampleLocations + 1, k_sample_location_count);
-			ImGui::ProgressBar(static_cast<float>(m_poseNoiseSamplesSet->completedSampleLocations) / static_cast<float>(k_sample_location_count), ImVec2(250, 20));
+			ImGui::Separator();
+			ImGui::ProgressBar(static_cast<float>(m_poseNoiseSamplesSet->completedSampleLocations) / static_cast<float>(k_sample_location_count), ImVec2(-1, 0), " ");
 			ImGui::Separator();
 			
 			if (m_bLastProjectionAreaValid)
@@ -717,7 +718,7 @@ void AppStage_OpticalCalibration::renderUI()
 
 			ImGui::Text("Tracker Projection Area %.1f pixels^2", m_lastProjectionArea);
             ImGui::Text("[Sampling...]");
-            ImGui::ProgressBar(sampleFraction, ImVec2(250, 20));
+            ImGui::ProgressBar(sampleFraction);
 
 			ImGui::Separator();
             if (ImGui::Button("      Cancel"))

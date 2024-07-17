@@ -850,20 +850,22 @@ void AppStage_DistortionCalibration::renderUI()
 
                 const float samplePercentage= 
                     static_cast<float>(m_opencv_state->capturedBoardCount) / static_cast<float>(DESIRED_CAPTURE_BOARD_COUNT);
-                ImGui::ProgressBar(samplePercentage, ImVec2(k_panel_width - 20, 20));
+                ImGui::ProgressBar(samplePercentage, ImVec2(-1, 0));
 
 				if (m_opencv_state->bCurrentImagePointsValid)
 				{
 					std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
 					std::chrono::duration<double, std::milli> stableDuration = now - m_opencv_state->timeStableValidPoints;
 
-					ImGui::Text("[stable for %d/%dms]",
-						static_cast<int>(stableDuration.count()),
-						static_cast<int>(k_stabilize_wait_time_ms));
+					ImGui::Separator();
+					ImGui::ProgressBar(static_cast<float>(stableDuration.count()) / static_cast<float>(k_stabilize_wait_time_ms), ImVec2(-1, 0), " ");
 				}
 				else
 				{
-					ImGui::Text("[capture point not valid]");
+					ImGui::Separator();
+					ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, 0.5f, 0.f));
+					ImGui::SameLine();
+					ImGui::TextColored(ImColor(1.f, 0.5f, 0.f), "Capture point not valid!");
 				}
 
 				ImGui::Separator();

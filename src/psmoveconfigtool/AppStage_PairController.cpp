@@ -184,7 +184,7 @@ void AppStage_PairController::renderUI()
 						"Repeat this until the status LED finally remains lit.");
 				}
 
-				ImGui::Spacing();
+				ImGui::Separator();
 
 				switch (m_pair_steps_completed)
 				{

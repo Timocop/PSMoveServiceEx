@@ -505,12 +505,15 @@ void AppStage_GyroscopeCalibration::renderUI()
                 std::chrono::duration<double, std::milli> stableDuration = now - m_stableStartTime;
                 float fraction = static_cast<float>(stableDuration.count() / k_stabilize_wait_time_ms);
 
-                ImGui::ProgressBar(fraction, ImVec2(250, 20));
-                ImGui::Spacing();
+				ImGui::Separator();
+                ImGui::ProgressBar(fraction, ImVec2(-1, 0), " ");
             }
             else
             {
-                ImGui::Text("Controller Destabilized! Waiting for stabilization..");
+				ImGui::Separator();
+				ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, 0.5f, 0.f));
+				ImGui::SameLine();
+				ImGui::TextColored(ImColor(1.f, 0.5f, 0.f), "Controller destabilized! Waiting for stabilization..");
             }
 
 			ImGui::Separator();
@@ -562,7 +565,8 @@ void AppStage_GyroscopeCalibration::renderUI()
             ImGui::TextWrapped(
                 "[Step 1 of 2: Measuring gyroscope drift and bias]\n" \
                 "Sampling Gyroscope...");
-            ImGui::ProgressBar(sampleFraction, ImVec2(250, 20));
+			ImGui::Separator();
+            ImGui::ProgressBar(sampleFraction, ImVec2(-1, 0));
 
 			ImGui::Separator();
             if (ImGui::Button("      Cancel"))
