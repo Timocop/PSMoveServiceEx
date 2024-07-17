@@ -378,9 +378,9 @@ void AppStage_HMDSettings::renderUI()
 							else
 							{
 								ImGui::PushTextWrapPos();
-								ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, 0.f, 0.f));
+								ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_red());
 								ImGui::SameLine();
-								ImGui::TextColored(ImColor(1.f, 0.f, 0.f),
+								ImGui::TextColored(AssetManager::k_imcolor_red(),
 									"This tracking method is currently unavailable!"
 								);
 								ImGui::PopTextWrapPos();
@@ -1041,9 +1041,9 @@ void AppStage_HMDSettings::renderUI()
 								hmdInfo.OffsetScale.z != 1.0f)
 							{
 								ImGui::PushTextWrapPos();
-								ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, .5f, 0.f));
+								ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_orange());
 								ImGui::SameLine();
-								ImGui::TextColored(ImColor(1.f, .5f, 0.f),
+								ImGui::TextColored(AssetManager::k_imcolor_orange(),
 									"HMD scale or position has been changed!\n"
 									"Changing the scale or position can cause abnormal artifacts in pose previews!"
 								);

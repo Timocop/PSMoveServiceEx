@@ -848,9 +848,9 @@ void AppStage_DistortionCalibration::renderUI()
 				else
 				{
 					ImGui::Separator();
-					ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, 0.5f, 0.f));
+					ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_red());
 					ImGui::SameLine();
-					ImGui::TextColored(ImColor(1.f, 0.5f, 0.f), "Capture point not valid!");
+					ImGui::TextColored(AssetManager::k_imcolor_red(), "Capture point not valid!");
 				}
 
 				ImGui::Separator();

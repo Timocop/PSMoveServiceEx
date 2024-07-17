@@ -66,6 +66,26 @@ public:
     bool init();
     void destroy();
 
+	static inline ImColor k_imcolor_blue()
+	{
+		return ImColor(0.5f, 0.75f, 1.0f);
+	}
+
+	static inline ImColor k_imcolor_red()
+	{
+		return ImColor(1.0f, 0.5f, 0.5f);
+	}
+
+	static inline ImColor k_imcolor_orange()
+	{
+		return ImColor(1.0f, 0.75f, 0.5f);
+	}
+
+	static inline ImColor k_imcolor_green()
+	{
+		return ImColor(0.5f, 1.0f, 0.5f);
+	}
+
 	static bool ImGuiButtonIcon(const TextureAsset * asset, const char * label, const ImVec2 & size_arg = ImVec2(0,0));
 
 	struct gl_model_asset

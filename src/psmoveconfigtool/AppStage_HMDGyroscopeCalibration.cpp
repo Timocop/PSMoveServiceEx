@@ -507,26 +507,10 @@ void AppStage_HMDGyroscopeCalibration::renderUI()
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
-			waitCount += 0.025f;
-			switch ((int)floorf(waitCount))
-			{
-			case 0:
-				ImGui::Image(AssetManager::getInstance()->getIconUpdate()->getImTextureId(), ImVec2(32, 32));
-				break;
-			case 1:
-				ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
-				break;
-			default:
-				ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
-				waitCount = 0;
-				break;
-			}
-
+			ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(32, 32));
 			ImGui::SameLine();
             ImGui::TextWrapped(
-                "[Step 1 of 2: Measuring gyroscope drift and bias]\n" \
-                "Set the HMD down on a level surface.\n" \
-                "Measurement will start once the hmd is aligned with gravity and stable.");
+                "Place the HMD on a level surface. Measurement will begin once the HMD is aligned with gravity and stable.");
 
             if (m_bIsStable)
             {
@@ -541,9 +525,9 @@ void AppStage_HMDGyroscopeCalibration::renderUI()
             else
             {
 				ImGui::Separator();
-				ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, 0.5f, 0.f));
+				ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_orange());
 				ImGui::SameLine();
-				ImGui::TextColored(ImColor(1.f, 0.5f, 0.f), "HMD destabilized! Waiting for stabilization..");
+				ImGui::TextColored(AssetManager::k_imcolor_orange(), "HMD destabilized! Waiting for stabilization...");
             }
 
 			ImGui::Separator();
@@ -581,8 +565,8 @@ void AppStage_HMDGyroscopeCalibration::renderUI()
 
 			ImGui::SameLine();
             ImGui::TextWrapped(
-                "[Step 1 of 2: Measuring gyroscope drift and bias]\n" \
-                "Sampling Gyroscope...");
+				"Sampling Gyroscope...\n"
+				"Please do not touch the HMD and keep it steady!");
 			ImGui::Separator();
             ImGui::ProgressBar(sampleFraction, ImVec2(-1, 0));
 			ImGui::Separator();
@@ -603,7 +587,7 @@ void AppStage_HMDGyroscopeCalibration::renderUI()
 			ImGui::Image(AssetManager::getInstance()->getIconCheck()->getImTextureId(), ImVec2(32, 32));
 			ImGui::SameLine();
             ImGui::TextWrapped(
-                "Sampling complete!\n" \
+                "Sampling complete!\n"
                 "Press OK to continue or Redo to recalibration.");
 
 			ImGui::Separator();

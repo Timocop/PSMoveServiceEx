@@ -434,9 +434,10 @@ void AppStage_HMDAccelerometerCalibration::renderUI()
 			{
 			case PSMHmd_Morpheus:
             case PSMHmd_Virtual:
-				ImGui::Text(
-					"Set the HMD on a flat, level surface.\n"
-					"Do not move the HMD while sampling is in progress!");
+				ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(32, 32));
+				ImGui::SameLine();
+				ImGui::TextWrapped(
+					"Place the HMD on a flat, level surface. Do not disturb the HMD while sampling is in progress!");
 				break;
 			}
 
@@ -480,7 +481,10 @@ void AppStage_HMDAccelerometerCalibration::renderUI()
 			}
 
 			ImGui::SameLine();
-            ImGui::Text("Sampling accelerometer...");
+            ImGui::Text(
+				"Sampling accelerometer...\n"
+				"Please do not touch the HMD and keep it steady!"
+			);
 			ImGui::Separator();
             ImGui::ProgressBar(sampleFraction, ImVec2(-1, 0));
 
@@ -495,7 +499,7 @@ void AppStage_HMDAccelerometerCalibration::renderUI()
 			ImGui::Image(AssetManager::getInstance()->getIconCheck()->getImTextureId(), ImVec2(32, 32));
 			ImGui::SameLine();
             ImGui::TextWrapped(
-                "Sampling complete!\n" \
+                "Sampling complete!\n"
                 "Press OK to continue or Redo to resample.");
 
 			ImGui::Separator();

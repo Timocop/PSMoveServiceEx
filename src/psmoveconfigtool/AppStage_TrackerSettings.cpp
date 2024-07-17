@@ -343,11 +343,6 @@ void AppStage_TrackerSettings::renderUI()
 						ImGui::SameLine();
 						ImGui::TextWrapped("%s", trackerInfo.device_path);
 
-						const ImColor k_colorGreen = ImColor(0.f, 1.f, 0.f);
-						const ImColor k_colorOrange = ImColor(1.f, .5f, 0.f);
-						const ImColor k_colorRed = ImColor(1.f, 0.f, 0.f);
-						const ImColor k_colorBlue = ImColor(0.f, 0.5f, 1.f);
-
 						bool bWarningAndIssuesShown = false;
 
 						if (m_trackerInfos.size() == 1)
@@ -362,10 +357,10 @@ void AppStage_TrackerSettings::renderUI()
 								bWarningAndIssuesShown = true;
 							}
 
-							ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), k_colorOrange);
+							ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_orange());
 							ImGui::SameLine();
 							ImGui::PushTextWrapPos();
-							ImGui::TextColored(k_colorOrange,
+							ImGui::TextColored(AssetManager::k_imcolor_orange(),
 								"Only one tracker detected!\n"
 								"Tracking quality and range will be very limited due to triangulations being unavailable!\n"
 								"A minimum of 2 trackers are required for decent tracking quality and range."
@@ -384,10 +379,10 @@ void AppStage_TrackerSettings::renderUI()
 								bWarningAndIssuesShown = true;
 							}
 
-							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), k_colorBlue);
+							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_blue());
 							ImGui::SameLine();
 							ImGui::PushTextWrapPos();
-							ImGui::TextColored(k_colorBlue,
+							ImGui::TextColored(AssetManager::k_imcolor_blue(),
 								"Limited 180 degree front facing setup.\n"
 								"A minimum of 4 trackers are required for a full 360 degree tracking setup."
 							);
@@ -427,10 +422,10 @@ void AppStage_TrackerSettings::renderUI()
 								// Warn if theres too many PSeyes on one USB controller causing possible bandwidth issues.
 								if (sameDevices.size() >= 4)
 								{
-									ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), k_colorBlue);
+									ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_blue());
 									ImGui::SameLine();
 									ImGui::PushTextWrapPos();
-									ImGui::TextColored(k_colorBlue,
+									ImGui::TextColored(AssetManager::k_imcolor_blue(),
 										"USB 3.2 (20 Gbit) controller or higher is required."
 										"This amount of trackers connected to a USB 3.1 (10 Gbit) controller may not work due to bandwidth limitations.\n"
 										"(Assuming the trackers run at 480p@30Hz)"
@@ -439,10 +434,10 @@ void AppStage_TrackerSettings::renderUI()
 								}
 								else if (sameDevices.size() >= 3)
 								{
-									ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), k_colorBlue);
+									ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_blue());
 									ImGui::SameLine();
 									ImGui::PushTextWrapPos();
-									ImGui::TextColored(k_colorBlue,
+									ImGui::TextColored(AssetManager::k_imcolor_blue(),
 										"USB 3.1 (10 Gbit) controller or higher is required.\n"
 										"This amount of trackers connected to a USB 3.0 (5 Gbit) controller may not work due to bandwidth limitations.\n"
 										"(Assuming the trackers run at 480p@30Hz)"
@@ -451,10 +446,10 @@ void AppStage_TrackerSettings::renderUI()
 								}
 								else if (sameDevices.size() >= 2)
 								{
-									ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0,0), ImVec2(1,1), k_colorBlue);
+									ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0,0), ImVec2(1,1), AssetManager::k_imcolor_blue());
 									ImGui::SameLine();
 									ImGui::PushTextWrapPos();
-									ImGui::TextColored(k_colorBlue,
+									ImGui::TextColored(AssetManager::k_imcolor_blue(),
 										"USB 3.0 (5 Gbit) controller or higher is required.\n"
 										"This amount of trackers connected to a USB 2.0 (500 Mbit) controller may not work due to bandwidth limitations.\n"
 										"(Assuming the trackers run at 480p@30Hz)"
@@ -982,9 +977,9 @@ void AppStage_TrackerSettings::renderUI()
 							playspace_scale_z != 1.0f)
 						{
 							ImGui::PushTextWrapPos();
-							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, .5f, 0.f));
+							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_orange());
 							ImGui::SameLine();
-							ImGui::TextDisabled(
+							ImGui::TextColored(AssetManager::k_imcolor_orange(),
 								"Playspace scale has been changed!\n"
 								"Scaling will not be applied to trackers.\n"
 								"Changing the playspace scale can cause abnormal artifacts in pose previews!"

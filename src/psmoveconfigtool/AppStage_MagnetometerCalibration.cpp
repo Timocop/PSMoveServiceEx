@@ -839,8 +839,7 @@ void AppStage_MagnetometerCalibration::renderUI()
 			ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(32, 32));
 			ImGui::SameLine();
             ImGui::TextWrapped(
-                "Bad controller hardware calibration!\n" \
-                "Try un-pairing and re-pairing the controller.");
+                "Controller hardware calibration error detected! Please try unpairing and repairing the controller.");
 
 			ImGui::Separator();
             if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconCheck(), "OK"))
@@ -882,22 +881,15 @@ void AppStage_MagnetometerCalibration::renderUI()
 
 					ImGui::SameLine();
                     ImGui::TextWrapped(
-                        "Calibrating Controller ID #%d\n" \
-                        "[Step 1 of 2: Measuring extents of the magnetometer]\n" \
-                        "Rotate the controller in all directions.", m_controllerView->ControllerID);
+                        "Rotate the controller in all directions to calibrate the magnetometer.", m_controllerView->ControllerID);
                 }
                 else
                 {
 					ImGui::Image(AssetManager::getInstance()->getIconCheck()->getImTextureId(), ImVec2(32, 32));
 					ImGui::SameLine();
                     ImGui::TextWrapped(
-                        "Calibrating Controller ID #%d\n" \
-                        "[Step 1 of 2: Measuring extents of the magnetometer - Complete!]", m_controllerView->ControllerID);
+                        "Magnetometer sampling completed!", m_controllerView->ControllerID);
                 }
-
-				ImGui::Text("Magnetometer: Seq(%d) Raw Sensor(%d,%d,%d)",
-					m_lastControllerSeqNum,
-					m_lastRawMagnetometer.x, m_lastRawMagnetometer.y, m_lastRawMagnetometer.z);
 
 				if (!m_boundsStatistics->getIsComplete())
                 {
@@ -916,11 +908,10 @@ void AppStage_MagnetometerCalibration::renderUI()
 					ImGui::Separator();
 
 					ImGui::PushTextWrapPos();
-					ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, .5f, 0.f));
+					ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_orange());
 					ImGui::SameLine();
-					ImGui::TextColored(ImColor(1.f, .5f, 0.f),
-						"Calibrating the default orientation needs to be done at least once otherwise the magnetometer can not be used.\n"
-						"If you already done this before, click 'Skip' instead."
+					ImGui::TextColored(AssetManager::k_imcolor_orange(),
+						"The default orientation must be calibrated at least once for the magnetometer to function. If you have already done this, click 'Skip'."
 					);
 					ImGui::PopTextWrapPos();
 
@@ -985,12 +976,12 @@ void AppStage_MagnetometerCalibration::renderUI()
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x/2.f - k_panel_width/2.f, 20.f));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
+			ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(32, 32));
 			ImGui::SameLine();
             ImGui::TextWrapped(
-                "[Step 2 of 2: Measuring reference magnetic field direction]\n" \
-                "Stand the controller on a level surface with the Move button facing you.\n" \
-                "This will be the default orientation of the move controller.\n" \
-                "Measurement will start once the controller is aligned with gravity and stable.");
+                "Place the controller on a level surface.\n"
+				"This will set the default orientation of the controller.\n"
+				"Measurement will begin once the controller is aligned with gravity and remains stable.");
 
             if (m_bIsStable || m_bForceControllerStable)
             {
@@ -1004,9 +995,9 @@ void AppStage_MagnetometerCalibration::renderUI()
             else
             {
 				ImGui::Separator();
-				ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, 0.5f, 0.f));
+				ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_orange());
 				ImGui::SameLine();
-				ImGui::TextColored(ImColor(1.f, 0.5f, 0.f), "Controller destabilized! Waiting for stabilization..");
+				ImGui::TextColored(AssetManager::k_imcolor_orange(), "Controller destabilized! Waiting for stabilization...");
             }
 
 			ImGui::Separator();
@@ -1046,10 +1037,9 @@ void AppStage_MagnetometerCalibration::renderUI()
 
 			ImGui::SameLine();
             ImGui::TextWrapped(
-                "[Step 2 of 2: Measuring reference magnetic field direction]\n" \
-                "Stand the controller on a level surface with the Move button facing you.\n"
-                "This will be the default orientation of the move controller.\n"
-                "Measurement will start once the controller is aligned with gravity and stable.");
+				"Place the controller on a level surface.\n"
+				"This will set the default orientation of the controller.\n"
+				"Measurement will begin once the controller is aligned with gravity and remains stable.");
 
 			ImGui::Separator();
             ImGui::ProgressBar(static_cast<float>(m_identityStatistics->sampleCount) / static_cast<float>(k_max_identity_magnetometer_samples), ImVec2(-1, 0));
@@ -1144,10 +1134,14 @@ void AppStage_MagnetometerCalibration::renderUI()
 				ImGui::Text("Attitude: %.2f, Heading: %.2f, Bank: %.2f",
 					euler_angles.get_attitude_degrees(), euler_angles.get_heading_degrees(), euler_angles.get_bank_degrees());
 			}
-
-			ImGui::TextWrapped(
-				"[Hold the Select button with controller pointed forward\n" \
-				"to recenter the controller]");
+			
+			ImGui::Separator();
+			ImGui::PushTextWrapPos();
+			ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(32, 32), ImVec2(0,0), ImVec2(1,1), AssetManager::k_imcolor_blue());
+			ImGui::SameLine();
+			ImGui::TextColored(AssetManager::k_imcolor_blue(),
+				"Hold the SELECT button with controller pointed forward to recenter the controller");
+			ImGui::PopTextWrapPos();
 
 			ImGui::Separator();
             if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconCheck(), "OK"))

@@ -798,9 +798,8 @@ void AppStage_AccelerometerCalibration::renderUI()
 		{
 			ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(32, 32));
 			ImGui::SameLine();
-			ImGui::Text(
-				"Please align the accelerometer with the X/Y/Z axis and\n"
-				"then hold the controller still!"
+			ImGui::TextWrapped(
+				"Please align your controller's accelerometer with the colored X/Y/Z axes and hold the controller steady."
 			);
 			ImGui::Separator();
 			ImGui::ProgressBar(fraction, ImVec2(-1, 0), " ");
@@ -829,7 +828,9 @@ void AppStage_AccelerometerCalibration::renderUI()
 					static_cast<float>(m_axisSamples->sample_count[AppStage_AccelerometerCalibration::axisX])
 					/ static_cast<float>(k_max_accelerometer_samples);
 
-				ImGui::Text("Sampling accelerometer axis scale X. Please hold still!");
+				ImGui::Text(
+					"Please keep the controller steady!\n"
+					"Sampling accelerometer axis scale X...");
 				ImGui::Separator();
 				ImGui::ProgressBar(sampleFraction, ImVec2(-1, 0));
 			}
@@ -839,7 +840,9 @@ void AppStage_AccelerometerCalibration::renderUI()
 					static_cast<float>(m_axisSamples->sample_count[AppStage_AccelerometerCalibration::axisY])
 					/ static_cast<float>(k_max_accelerometer_samples);
 
-				ImGui::Text("Sampling accelerometer axis scale Y. Please hold still!");
+				ImGui::Text(
+					"Please keep the controller steady!\n"
+					"Sampling accelerometer axis scale Y...");
 				ImGui::Separator();
 				ImGui::ProgressBar(sampleFraction, ImVec2(-1, 0));
 			}
@@ -849,7 +852,9 @@ void AppStage_AccelerometerCalibration::renderUI()
 					static_cast<float>(m_axisSamples->sample_count[AppStage_AccelerometerCalibration::axisYNeg])
 					/ static_cast<float>(k_max_accelerometer_samples);
 
-				ImGui::Text("Sampling accelerometer axis scale negative Y. Please hold still!");
+				ImGui::Text(
+					"Please keep the controller steady!\n"
+					"Sampling accelerometer negative axis scale Y...");
 				ImGui::Separator();
 				ImGui::ProgressBar(sampleFraction, ImVec2(-1, 0));
 			}
@@ -859,7 +864,9 @@ void AppStage_AccelerometerCalibration::renderUI()
 					static_cast<float>(m_axisSamples->sample_count[AppStage_AccelerometerCalibration::axisZ])
 					/ static_cast<float>(k_max_accelerometer_samples);
 
-				ImGui::Text("Sampling accelerometer axis scale Z. Please hold still!");
+				ImGui::Text(
+					"Please keep the controller steady!\n"
+					"Sampling accelerometer axis scale Z...");
 				ImGui::Separator();
 				ImGui::ProgressBar(sampleFraction, ImVec2(-1, 0));
 			}
@@ -893,7 +900,7 @@ void AppStage_AccelerometerCalibration::renderUI()
 			ImGui::Image(AssetManager::getInstance()->getIconCheck()->getImTextureId(), ImVec2(32, 32));
 			ImGui::SameLine();
             ImGui::TextWrapped(
-                "Sampling complete.\n" \
+                "Sampling complete!\n" 
                 "Press OK to continue or Redo to resample.");
 
 			ImGui::Separator();

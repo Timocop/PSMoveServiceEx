@@ -752,9 +752,9 @@ void AppStage_ControllerSettings::renderUI()
 									}
 
 									ImGui::PushTextWrapPos();
-									ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, .5f, 0.f));
+									ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_orange());
 									ImGui::SameLine();
-									ImGui::TextColored(ImColor(1.f, .5f, 0.f), "Administrator privileges are required to pair or unpair controllers.");
+									ImGui::TextColored(AssetManager::k_imcolor_orange(), "Administrator privileges are required to pair or unpair controllers.");
 									ImGui::PopTextWrapPos();
 								}
 #endif
@@ -1771,9 +1771,9 @@ void AppStage_ControllerSettings::renderUI()
 											controllerInfo.OffsetScale.z != 1.0f)
 										{
 											ImGui::PushTextWrapPos();
-											ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, .5f, 0.f));
+											ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_orange());
 											ImGui::SameLine();
-											ImGui::TextColored(ImColor(1.f, .5f, 0.f), 
+											ImGui::TextColored(AssetManager::k_imcolor_orange(),
 												"Controller scale or position has been changed!\n"
 												"Changing the scale or position can cause abnormal artifacts in pose previews!"
 											);
@@ -1867,9 +1867,9 @@ void AppStage_ControllerSettings::renderUI()
 									AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconBan(), "Calibrate Magnetometer (Unavailable)");
 									ImGui::PushTextWrapPos();
 
-									ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, 0.f, 0.f));
+									ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_red());
 									ImGui::SameLine();
-									ImGui::TextColored(ImColor(1.f, 0.f, 0.f), 
+									ImGui::TextColored(AssetManager::k_imcolor_red(),
 										"The magnetometer for this controller has been disabled or is not available. "
 										"Magnetometers are only available for first generation PS3 PSmove controllers."
 									);
@@ -1933,9 +1933,9 @@ void AppStage_ControllerSettings::renderUI()
 									}
 
 									ImGui::PushTextWrapPos();
-									ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(0.f, .5f, 1.f));
+									ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_blue());
 									ImGui::SameLine();
-									ImGui::TextColored(ImColor(0.f, .5f, 1.f),
+									ImGui::TextColored(AssetManager::k_imcolor_blue(),
 										"Requires PSmove emulation to be enabled."
 									);
 									ImGui::PopTextWrapPos();

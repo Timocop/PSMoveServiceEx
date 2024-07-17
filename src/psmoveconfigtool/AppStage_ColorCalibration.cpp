@@ -625,7 +625,7 @@ void AppStage_ColorCalibration::renderUI()
 				ImGuiWindowFlags_NoScrollbar |
 				ImGuiWindowFlags_NoCollapse);
 			{
-				ImU32 line_colour = ImColor(0xFF, 0xFF, 0xFF, 175);
+				ImU32 line_colour = ImColor(255, 255, 255, 175);
 				float line_thickness = 1.f;
 
 				ImGui::GetWindowDrawList()->AddLine(
@@ -762,7 +762,6 @@ void AppStage_ColorCalibration::renderUI()
 		ImGui::Text(
 			"Color sampling is in progress! Please wait...\n"
 			"Do not move the controllers or obscure the controller bulb!\n"
-			"[sampling colors...]"
 		);
 		
 
@@ -1163,7 +1162,7 @@ void AppStage_ColorCalibration::renderUI()
 						m_streamFps = 0;
 						m_lastStreamFps = now;
 					}
-					if (m_displayFps < m_trackerFrameRate - 7.5f)
+					if (m_displayFps < m_trackerFrameRate - 5.f)
 					{
 						ImGui::TextColored(ImColor(1.f, 0.f, 0.f), "Tracker Frame Rate: %d", m_displayFps);
 					}
@@ -1534,11 +1533,6 @@ void AppStage_ColorCalibration::renderUI()
 
 				if (ImGui::CollapsingHeader("Warnings and Issues", 0, true, true))
 				{
-					ImColor colorGreen = ImColor(0.f, 1.f, 0.f);
-					ImColor colorOrange = ImColor(1.f, .5f, 0.f);
-					ImColor colorRed = ImColor(1.f, 0.f, 0.f);
-					ImColor colorBlue = ImColor(0.f, 0.5f, 1.f);
-
 					bool bHasIssues = false;
 
 					{
@@ -1546,9 +1540,9 @@ void AppStage_ColorCalibration::renderUI()
 						if (is_tracker_virtual())
 						{
 							ImGui::PushTextWrapPos();
-							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorBlue);
+							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_blue());
 							ImGui::SameLine();
-							ImGui::TextColored(colorBlue,
+							ImGui::TextColored(AssetManager::k_imcolor_blue(),
 								"Tracker is virtual. "
 								"Some settings on this page might not be available or have to be set manually."
 							);
@@ -1558,9 +1552,9 @@ void AppStage_ColorCalibration::renderUI()
 						if (m_masterControllerView != nullptr && m_masterControllerView->ControllerType == PSMController_Virtual)
 						{
 							ImGui::PushTextWrapPos();
-							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorBlue);
+							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_blue());
 							ImGui::SameLine();
-							ImGui::TextColored(colorBlue,
+							ImGui::TextColored(AssetManager::k_imcolor_blue(),
 								"Controller is virtual. "
 								"Some settings on this page might not be available or have to be set manually."
 							);
@@ -1570,9 +1564,9 @@ void AppStage_ColorCalibration::renderUI()
 						if (m_hmdView != nullptr && m_hmdView->HmdType == PSMHmd_Virtual)
 						{
 							ImGui::PushTextWrapPos();
-							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorBlue);
+							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_blue());
 							ImGui::SameLine();
-							ImGui::TextColored(colorBlue,
+							ImGui::TextColored(AssetManager::k_imcolor_blue(),
 								"HMD is virtual. "
 								"Some settings on this page might not be available or have to be set manually."
 							);
@@ -1585,9 +1579,9 @@ void AppStage_ColorCalibration::renderUI()
 						if (!is_tracker_virtual() && m_trackerGain > 32)
 						{
 							ImGui::PushTextWrapPos();
-							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorBlue);
+							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_blue());
 							ImGui::SameLine();
-							ImGui::TextColored(colorBlue,
+							ImGui::TextColored(AssetManager::k_imcolor_blue(),
 								"Tracker gain not default. "
 								"It's recommended to adjust exposure instead of gain. "
 								"Increasing gain will increase random color noise which can negatively affect tracking quality."
@@ -1601,9 +1595,9 @@ void AppStage_ColorCalibration::renderUI()
 						if (!is_tracker_virtual() && m_trackerFrameRate < 30)
 						{
 							ImGui::PushTextWrapPos();
-							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorOrange);
+							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_orange());
 							ImGui::SameLine();
-							ImGui::TextColored(colorOrange,
+							ImGui::TextColored(AssetManager::k_imcolor_orange(),
 								"Tracker frame rate too low. "
 								"It's recommended to run trackers at least at 30 fps or higher. "
 								"Lowering the frame rate of the tracker below 30 fps can lead to less responsive tracking, input lag and tracking loss on fast movements."
@@ -1620,18 +1614,18 @@ void AppStage_ColorCalibration::renderUI()
 						if (preset.saturation_center < 40)
 						{
 							ImGui::PushTextWrapPos();
-							ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorRed);
+							ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_red());
 							ImGui::SameLine();
-							ImGui::TextColored(colorRed, "Color saturation too low! The tracking color is way too bright and will cause tracking problems! Adjust your tracker exposure/gain settings!");
+							ImGui::TextColored(AssetManager::k_imcolor_red(), "Color saturation too low! The tracking color is way too bright and will cause tracking problems! Adjust your tracker exposure/gain settings!");
 							bHasIssues = true;
 							ImGui::PopTextWrapPos();
 						}
 						else if (preset.saturation_center < 80)
 						{
 							ImGui::PushTextWrapPos();
-							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorOrange);
+							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_orange());
 							ImGui::SameLine();
-							ImGui::TextColored(colorOrange, "Color saturation not optimal! The tracking color is too bright and could cause tracking problems! Adjust your tracker exposure/gain settings.");
+							ImGui::TextColored(AssetManager::k_imcolor_orange(), "Color saturation not optimal! The tracking color is too bright and could cause tracking problems! Adjust your tracker exposure/gain settings.");
 							bHasIssues = true;
 							ImGui::PopTextWrapPos();
 						}
@@ -1640,18 +1634,18 @@ void AppStage_ColorCalibration::renderUI()
 						if (preset.value_center < 40)
 						{
 							ImGui::PushTextWrapPos();
-							ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorRed);
+							ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_red());
 							ImGui::SameLine();
-							ImGui::TextColored(colorRed, "Color value too low! The tracking color is way too dark and could cause tracking problems! Adjust your tracker exposure/gain settings!");
+							ImGui::TextColored(AssetManager::k_imcolor_red(), "Color value too low! The tracking color is way too dark and could cause tracking problems! Adjust your tracker exposure/gain settings!");
 							bHasIssues = true;
 							ImGui::PopTextWrapPos();
 						}
 						else if (preset.value_center < 80)
 						{
 							ImGui::PushTextWrapPos();
-							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorOrange);
+							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_orange());
 							ImGui::SameLine();
-							ImGui::TextColored(colorOrange, "Color value not optimal! The tracking color is too dark and could cause tracking problems! Adjust your tracker exposure/gain settings.");
+							ImGui::TextColored(AssetManager::k_imcolor_orange(), "Color value not optimal! The tracking color is too dark and could cause tracking problems! Adjust your tracker exposure/gain settings.");
 							bHasIssues = true;
 							ImGui::PopTextWrapPos();
 						}
@@ -1685,9 +1679,9 @@ void AppStage_ColorCalibration::renderUI()
 							if (invalidHue)
 							{
 								ImGui::PushTextWrapPos();
-								ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorRed);
+								ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_red());
 								ImGui::SameLine();
-								ImGui::TextColored(colorRed,
+								ImGui::TextColored(AssetManager::k_imcolor_red(),
 									"Wrong tracking color set! "
 									"The target tracking color is set to RED but the target hue center is not RED. "
 									"This can cause collisions with other colors! "
@@ -1722,9 +1716,9 @@ void AppStage_ColorCalibration::renderUI()
 							if (invalidHue)
 							{
 								ImGui::PushTextWrapPos();
-								ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorRed);
+								ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_red());
 								ImGui::SameLine();
-								ImGui::TextColored(colorRed,
+								ImGui::TextColored(AssetManager::k_imcolor_red(),
 									"Wrong tracking color set! "
 									"The target tracking color is set to GREEN but the target hue center is not GREEN. "
 									"This can cause collisions with other colors! "
@@ -1759,9 +1753,9 @@ void AppStage_ColorCalibration::renderUI()
 							if (invalidHue)
 							{
 								ImGui::PushTextWrapPos();
-								ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorRed);
+								ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_red());
 								ImGui::SameLine();
-								ImGui::TextColored(colorRed,
+								ImGui::TextColored(AssetManager::k_imcolor_red(),
 									"Wrong tracking color set! "
 									"The target tracking color is set to BLUE but the target hue center is not BLUE. "
 									"This can cause collisions with other colors! "
@@ -1796,9 +1790,9 @@ void AppStage_ColorCalibration::renderUI()
 							if (invalidHue)
 							{
 								ImGui::PushTextWrapPos();
-								ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorRed);
+								ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_red());
 								ImGui::SameLine();
-								ImGui::TextColored(colorRed,
+								ImGui::TextColored(AssetManager::k_imcolor_red(),
 									"Wrong tracking color set! "
 									"The target tracking color is set to MAGENTA but the target hue center is not MAGENTA. "
 									"This can cause collisions with other colors! "
@@ -1833,9 +1827,9 @@ void AppStage_ColorCalibration::renderUI()
 							if (invalidHue)
 							{
 								ImGui::PushTextWrapPos();
-								ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorRed);
+								ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_red());
 								ImGui::SameLine();
-								ImGui::TextColored(colorRed,
+								ImGui::TextColored(AssetManager::k_imcolor_red(),
 									"Wrong tracking color set! "
 									"The target tracking color is set to CYAN but the target hue center is not CYAN. "
 									"This can cause collisions with other colors! "
@@ -1870,9 +1864,9 @@ void AppStage_ColorCalibration::renderUI()
 							if (invalidHue)
 							{
 								ImGui::PushTextWrapPos();
-								ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorRed);
+								ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_red());
 								ImGui::SameLine();
-								ImGui::TextColored(colorRed,
+								ImGui::TextColored(AssetManager::k_imcolor_red(),
 									"Wrong tracking color set! "
 									"The target tracking color is set to YELLOW but the target hue center is not YELLOW. "
 									"This can cause collisions with other colors! "
@@ -1898,9 +1892,9 @@ void AppStage_ColorCalibration::renderUI()
 							if (m_masterControllerView != nullptr && m_masterControllerView->ControllerType == PSMController_Move)
 							{
 								ImGui::PushTextWrapPos();
-								ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorBlue);
+								ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_red());
 								ImGui::SameLine();
-								ImGui::TextColored(colorBlue,
+								ImGui::TextColored(AssetManager::k_imcolor_red(),
 									"Custom preset color set. PSmove bulb has been turned off."
 								);
 								ImGui::PopTextWrapPos();
@@ -1932,9 +1926,9 @@ void AppStage_ColorCalibration::renderUI()
 						case 0:
 						{
 							ImGui::PushTextWrapPos();
-							ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorRed);
+							ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_red());
 							ImGui::SameLine();
-							ImGui::TextColored(colorRed,
+							ImGui::TextColored(AssetManager::k_imcolor_red(),
 								"Could not detect tracking color! Place your device in view of the tracker. "
 								"If it already is, then your color settings are not correctly set up."
 							);
@@ -1951,9 +1945,9 @@ void AppStage_ColorCalibration::renderUI()
 						default:
 						{
 							ImGui::PushTextWrapPos();
-							ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorRed);
+							ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_red());
 							ImGui::SameLine();
-							ImGui::TextColored(colorRed,
+							ImGui::TextColored(AssetManager::k_imcolor_red(),
 								"Color noise/collisions detected! "
 								"The tracker could track different objects instead of the device you want to track! "
 								"Enable 'Show color collisions' to show color collisions on screen. "
@@ -1969,9 +1963,9 @@ void AppStage_ColorCalibration::renderUI()
 					if (!bHasIssues)
 					{
 						ImGui::PushTextWrapPos();
-						ImGui::Image(AssetManager::getInstance()->getIconCheck()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), colorGreen);
+						ImGui::Image(AssetManager::getInstance()->getIconCheck()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_green());
 						ImGui::SameLine();
-						ImGui::TextColored(colorGreen, "No issues detected.");
+						ImGui::TextColored(AssetManager::k_imcolor_green(), "No issues detected.");
 						ImGui::PopTextWrapPos();
 					}
 				}

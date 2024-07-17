@@ -194,7 +194,7 @@ void AppStage_TestTracker::renderUI()
 
 			if (m_displayFps < m_trackerFrameRate - 7.5f)
 			{
-				ImGui::TextColored(ImColor(1.f, 0.f, 0.f), "Tracker Frame Rate: %d", m_displayFps);
+				ImGui::TextColored(AssetManager::k_imcolor_red(), "Tracker Frame Rate: %d", m_displayFps);
 			}
 			else
 			{

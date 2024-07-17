@@ -472,26 +472,11 @@ void AppStage_GyroscopeCalibration::renderUI()
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
-			waitCount += 0.025f;
-			switch ((int)floorf(waitCount))
-			{
-			case 0:
-				ImGui::Image(AssetManager::getInstance()->getIconUpdate()->getImTextureId(), ImVec2(32, 32));
-				break;
-			case 1:
-				ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
-				break;
-			default:
-				ImGui::Image(AssetManager::getInstance()->getIconUpdate2()->getImTextureId(), ImVec2(32, 32));
-				waitCount = 0;
-				break;
-			}
-
+			ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(32, 32));
 			ImGui::SameLine();
             ImGui::TextWrapped(
-                "[Step 1 of 2: Measuring gyroscope drift and bias]\n" \
-                "Set the controller down on a level surface.\n" \
-                "Measurement will start once the controller is aligned with gravity and stable.");
+                "Place the controller on a level surface.\n"
+				"Measurement will begin once the controller is aligned with gravity and stable.");
 
             if (m_bIsStable || m_bForceControllerStable)
             {
@@ -505,9 +490,9 @@ void AppStage_GyroscopeCalibration::renderUI()
             else
             {
 				ImGui::Separator();
-				ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), ImColor(1.f, 0.5f, 0.f));
+				ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_orange());
 				ImGui::SameLine();
-				ImGui::TextColored(ImColor(1.f, 0.5f, 0.f), "Controller destabilized! Waiting for stabilization..");
+				ImGui::TextColored(AssetManager::k_imcolor_orange(), "Controller destabilized! Waiting for stabilization...");
             }
 
 			ImGui::Separator();
@@ -551,8 +536,9 @@ void AppStage_GyroscopeCalibration::renderUI()
 
 			ImGui::SameLine();
             ImGui::TextWrapped(
-                "[Step 1 of 2: Measuring gyroscope drift and bias]\n" \
-                "Sampling Gyroscope...");
+				"Sampling Gyroscope...\n"
+				"Please do not touch the controller and keep it steady!"
+			);
 			ImGui::Separator();
             ImGui::ProgressBar(sampleFraction, ImVec2(-1, 0));
 
@@ -570,8 +556,10 @@ void AppStage_GyroscopeCalibration::renderUI()
             ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x / 2.f - k_panel_width / 2.f, 20.f));
             ImGui::Begin(k_window_title, nullptr, window_flags);
 
+			ImGui::Image(AssetManager::getInstance()->getIconCheck()->getImTextureId(), ImVec2(32, 32));
+			ImGui::SameLine();
             ImGui::TextWrapped(
-                "Sampling complete.\n" \
+                "Sampling complete!\n"
                 "Press OK to continue or Redo to recalibration.");
 
 			ImGui::Separator();
@@ -632,15 +620,19 @@ void AppStage_GyroscopeCalibration::renderUI()
 
 			if (m_controllerView->ControllerType == PSMController_DualShock4)
 			{
-				ImGui::TextWrapped(
-					"[Press the Options button with controller pointed straight forward\n" \
-					 "to recenter the controller]");
+				ImGui::Separator();
+				ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0,0), ImVec2(1,1), AssetManager::k_imcolor_blue());
+				ImGui::SameLine();
+				ImGui::TextColored(AssetManager::k_imcolor_blue(),
+					"Press the OPTIONS button with the controller pointed straight forward to recenter it.");
 			}
 			else if (m_controllerView->ControllerType == PSMController_Move)
 			{
-				ImGui::TextWrapped(
-					"[Hold the Select button with controller pointed forward\n" \
-					"to recenter the controller]");
+				ImGui::Separator();
+				ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_blue());
+				ImGui::SameLine();
+				ImGui::TextColored(AssetManager::k_imcolor_blue(),
+					"Hold the SELECT button with the controller pointed forward to recenter it.");
 			}
 
 			ImGui::Separator();
