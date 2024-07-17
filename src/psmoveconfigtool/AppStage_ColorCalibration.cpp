@@ -3706,35 +3706,65 @@ void AppStage_ColorCalibration::request_change_controller(int step)
 {
     assert(m_controllerViews.size() == m_controllerTrackingColorTypes.size());
 
-    {
-        PSMController *controllerView = m_controllerViews[m_overrideControllerId];
+	if (m_masterControllerView != nullptr)
+		PSM_SetControllerLEDOverrideColor(m_masterControllerView->ControllerID, 0, 0, 0);
 
-        if (controllerView == m_masterControllerView) {
-            PSM_SetControllerLEDOverrideColor(m_masterControllerView->ControllerID, 0, 0, 0);
-            if (m_overrideControllerId + step < static_cast<int>(m_controllerViews.size()) && m_overrideControllerId + step >= 0) {
-                m_overrideControllerId = m_overrideControllerId + step;
-                m_masterControllerView = m_controllerViews[m_overrideControllerId];
-                m_masterTrackingColorType = m_controllerTrackingColorTypes[m_overrideControllerId];
-                request_set_controller_tracking_color(m_masterControllerView, m_masterTrackingColorType);
-            }
-            else if (step > 0) {
-                m_overrideControllerId = 0;
-                m_masterControllerView = m_controllerViews[0];
-                m_masterTrackingColorType = m_controllerTrackingColorTypes[m_overrideControllerId];
-                request_set_controller_tracking_color(m_masterControllerView, m_masterTrackingColorType);
+	int controllerIndex = -1;
+	bool notFound = false;
 
-                if (m_bAutoChangeTracker)
-					setState(eMenuState::changeTracker);
-            }
-            else {
-                m_overrideControllerId = static_cast<int>(m_controllerViews.size()) -1;
-                m_masterControllerView = m_controllerViews[m_overrideControllerId];
-                m_masterTrackingColorType = m_controllerTrackingColorTypes[m_overrideControllerId];
-                request_set_controller_tracking_color(m_masterControllerView, m_masterTrackingColorType);
-            }
-        }
-    }
-    m_app->getAppStage<AppStage_TrackerSettings>()->set_selectedControllerIndex(m_overrideControllerId);
+	if (abs(step) > 0)
+	{
+		for (int i = 0; i < m_controllerViews.size(); ++i)
+		{
+			if (step > 0)
+			{
+				if (i > 0)
+				{
+					if (m_controllerViews[i - 1]->ControllerID == m_overrideControllerId)
+					{
+						controllerIndex = i;
+						break;
+					}
+				}
+
+			}
+			else
+			{
+				if (m_controllerViews[i ]->ControllerID == m_overrideControllerId)
+				{
+					controllerIndex = i - 1;
+					break;
+				}
+			}
+		}
+
+		if (controllerIndex == -1)
+		{
+			notFound = true;
+
+			if (m_controllerViews.size() > 0)
+			{
+				if (step > 0)
+					controllerIndex = 0;
+				else
+					controllerIndex = m_controllerViews.size() - 1;
+			}
+		}
+
+		if (controllerIndex != -1)
+		{
+			m_overrideControllerId = m_controllerViews[controllerIndex]->ControllerID;
+			m_masterControllerView = m_controllerViews[controllerIndex];
+			m_masterTrackingColorType = m_controllerTrackingColorTypes[controllerIndex];
+
+			request_set_controller_tracking_color(m_masterControllerView, m_masterTrackingColorType);
+
+			if (notFound && m_bAutoChangeTracker)
+				setState(eMenuState::changeTracker);
+		}
+	}
+
+	m_app->getAppStage<AppStage_TrackerSettings>()->set_selectedControllerIndex(m_overrideControllerId);
 }
 
 void AppStage_ColorCalibration::request_change_tracker(int step)
