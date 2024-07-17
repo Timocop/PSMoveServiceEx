@@ -493,31 +493,22 @@ void AppStage_ControllerSettings::renderUI()
 				{
 					ControllerInfo &controllerInfo = m_controllerInfos[m_selectedControllerIndex];
 
-					if (m_selectedControllerIndex > 0)
+					for (int t = 0; t < m_controllerInfos.size(); t++)
 					{
-						if (ImGui::Button(" < ##ControllerIndex"))
-						{
-							--m_selectedControllerIndex;
-						}
+						if (t > 0)
+							ImGui::SameLine(0.f, 0.f);
+
+						ImGui::PushID(t);
+
+						std::string tabName = std::string("    ") + std::to_string(t) + std::string("##TabSettings");
+
+						if (ImGui::ButtonChecked(tabName.c_str(), (m_selectedControllerIndex == t), ImVec2(50.f, 0.f)))
+							m_selectedControllerIndex = t;
+
+						ImGui::PopID();
 					}
-					else
-					{
-						ImGui::Button(" < ##ControllerIndex");
-					}
-					ImGui::SameLine();
-					if (m_selectedControllerIndex + 1 < static_cast<int>(m_controllerInfos.size()))
-					{
-						if (ImGui::Button(" > ##ControllerIndex"))
-						{
-							++m_selectedControllerIndex;
-						}
-					}
-					else
-					{
-						ImGui::Button(" > ##ControllerIndex");
-					}
-					ImGui::SameLine();
-					ImGui::Text("Controller: %d", m_selectedControllerIndex);
+
+					ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5);
 
 					{
 						static ImVec2 lastChildVec = ImVec2(0.f, 4.f);

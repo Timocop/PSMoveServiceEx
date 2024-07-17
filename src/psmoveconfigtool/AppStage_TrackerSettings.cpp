@@ -247,35 +247,22 @@ void AppStage_TrackerSettings::renderUI()
 			{
 				const PSMClientTrackerInfo &trackerInfo = m_trackerInfos[m_selectedTrackerIndex];
 
-				if (m_selectedTrackerIndex > 0)
+				for (int t = 0; t < m_trackerInfos.size(); t++)
 				{
-					if (ImGui::Button(" < ##TrackerIndex"))
-					{
-						--m_selectedTrackerIndex;
-					}
+					if (t > 0)
+						ImGui::SameLine(0.f, 0.f);
+
+					ImGui::PushID(t);
+
+					std::string tabName = std::string("    ") + std::to_string(t) + std::string("##TabSettings");
+
+					if (ImGui::ButtonChecked(tabName.c_str(), (m_selectedTrackerIndex == t), ImVec2(50.f, 0.f)))
+						m_selectedTrackerIndex = t;
+
+					ImGui::PopID();
 				}
-				else {
-					if (ImGui::Button(" < ##TrackerIndex"))
-					{
-						m_selectedTrackerIndex = static_cast<int>(m_trackerInfos.size()) - 1;
-					}
-				}
-				ImGui::SameLine();
-				if (m_selectedTrackerIndex + 1 < static_cast<int>(m_trackerInfos.size()))
-				{
-					if (ImGui::Button(" > ##TrackerIndex"))
-					{
-						++m_selectedTrackerIndex;
-					}
-				}
-				else {
-					if (ImGui::Button(" > ##TrackerIndex"))
-					{
-						m_selectedTrackerIndex = 0;
-					}
-				}
-				ImGui::SameLine();
-				ImGui::Text("Tracker: %d", m_selectedTrackerIndex);
+
+				ImGui::SetCursorPosY(ImGui::GetCursorPosY() - 5);
 
 				{
 					static ImVec2 lastChildVec = ImVec2(0, 4);
