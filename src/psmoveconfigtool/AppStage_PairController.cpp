@@ -95,14 +95,11 @@ void AppStage_PairController::renderUI()
             ImGui::Text("Waiting for controller to unpair...");
 
 			ImGui::Separator();
-            if (ImGui::Button("      Cancel"))
+            if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconBan(), "Cancel"))
             {
                 assert(m_pendingBluetoothOpControllerIndex != -1);
                 request_cancel_bluetooth_operation(m_pendingBluetoothOpControllerIndex);
             }
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(300, 0));
             ImGui::End();
@@ -117,22 +114,16 @@ void AppStage_PairController::renderUI()
             ImGui::Text("Failed to unpair controller!");
 
 			ImGui::Separator();
-            if (ImGui::Button("      OK"))
+            if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconCheck(), "OK"))
             {
                 m_app->setAppStage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SameLine();
-            if (ImGui::Button("      Return to Main Menu"))
+            if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconLeft(), "Return to Main Menu"))
             {
                 m_app->setAppStage(AppStage_MainMenu::APP_STAGE_NAME);
             }
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(300, 0));
             ImGui::End();
@@ -243,14 +234,11 @@ void AppStage_PairController::renderUI()
             }
 
 			ImGui::Separator();
-            if (ImGui::Button("      Cancel"))
+            if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconBan(), "Cancel"))
             {
                 assert(m_pendingBluetoothOpControllerIndex != -1);
                 request_cancel_bluetooth_operation(m_pendingBluetoothOpControllerIndex);
             }
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(400, 0));
             ImGui::End();
@@ -265,22 +253,16 @@ void AppStage_PairController::renderUI()
             ImGui::Text("Failed to pair controller!");
 
 			ImGui::Separator();
-            if (ImGui::Button("      OK"))
+            if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconCheck(), "OK"))
             {
                 m_app->setAppStage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SameLine();
-            if (ImGui::Button("      Return to Main Menu"))
+            if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconLeft(), "Return to Main Menu"))
             {
                 m_app->setAppStage(AppStage_MainMenu::APP_STAGE_NAME);
             }
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(300, 0));
             ImGui::End();
@@ -323,22 +305,16 @@ void AppStage_PairController::renderUI()
             ImGui::Text("Failed to cancel bluetooth operation (already completed?)");
 
 			ImGui::Separator();
-            if (ImGui::Button("      OK"))
+            if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconCheck(), "OK"))
             {
                 m_app->setAppStage(AppStage_ControllerSettings::APP_STAGE_NAME);
             }
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SameLine();
-            if (ImGui::Button("      Return to Main Menu"))
+            if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconLeft(), "Return to Main Menu"))
             {
                 m_app->setAppStage(AppStage_MainMenu::APP_STAGE_NAME);
             }
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(300, 0));
             ImGui::End();

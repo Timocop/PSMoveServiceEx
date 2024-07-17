@@ -82,50 +82,35 @@ void AppStage_MainMenu::renderUI()
 		ImGui::BeginGroup();
 		{
 			const ImVec2 _lastLoc = ImGui::GetCursorPos();
-			if (ImGui::Button("      Controller Settings"))
+			if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconController(), "Controller Settings"))
 			{
 				m_app->setAppStage(AppStage_ControllerSettings::APP_STAGE_NAME);
 			}
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconController()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
-			if (ImGui::Button("      Head-mounted Display Settings"))
+			if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconHmd(), "Head-mounted Display Settings"))
 			{
 				m_app->setAppStage(AppStage_HMDSettings::APP_STAGE_NAME);
 			}
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconHmd()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
-			if (ImGui::Button("      Tracker Settings"))
+			if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconTracker(), "Tracker Settings"))
 			{
 				m_app->setAppStage(AppStage_TrackerSettings::APP_STAGE_NAME);
 			}
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconTracker()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 	#ifdef _WIN32
 			ImGui::Separator();
 
-			if (ImGui::Button("      Advanced Settings"))
+			if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconSettings(), "Advanced Settings"))
 			{
 				m_app->setAppStage(AppStage_AdvancedSettings::APP_STAGE_NAME);
 			}
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconSettings()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 	#endif
 
 			ImGui::Separator();
-			if (ImGui::Button("      Exit"))
+			if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconBan(), "Exit"))
 			{
 				m_app->requestShutdown();
 			}
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 		}
 		ImGui::EndGroup();
@@ -161,13 +146,10 @@ void AppStage_MainMenu::renderUI()
 			ImGui::SameLine();
             ImGui::Text("Connecting to PSMoveServiceEx...");
 			ImGui::Separator();
-            if (ImGui::Button("      Exit"))
+            if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconBan(), "Exit"))
             {
                 m_app->requestShutdown();
             }
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 
 			ImGui::SetWindowSize(ImVec2(300, 0));
@@ -211,23 +193,17 @@ void AppStage_MainMenu::renderUI()
 			ImGui::PopItemWidth();
 
 			ImGui::Separator();
-            if (ImGui::Button("      Connect"))
+            if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconConnect(), "Connect"))
             {
                 m_menuState= AppStage_MainMenu::pendingConnectToToService;
                 m_app->reconnectToService();
             }
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconConnect()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SameLine();
-            if (ImGui::Button("      Exit"))
+            if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconBan(), "Exit"))
             {
                 m_app->requestShutdown();
             }
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 
 			ImGui::SetWindowSize(ImVec2(300, 0));

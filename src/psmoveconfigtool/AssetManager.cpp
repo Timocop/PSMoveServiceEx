@@ -204,6 +204,20 @@ void AssetManager::destroy()
     m_instance= NULL;
 }
 
+bool AssetManager::ImGuiButtonIcon(const TextureAsset *asset, const char* label, const ImVec2& size_arg)
+{
+	std::string str = std::string(6, ' ') + std::string(label);
+	bool clicked = ImGui::Button(str.c_str());
+
+	const int offset = 4;
+
+	ImGui::GetWindowDrawList()->AddImage(asset->getImTextureId(),
+		ImVec2(ImGui::GetItemRectMin().x + offset, ImGui::GetItemRectMin().y + offset),
+		ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - offset, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - offset));
+
+	return clicked;
+}
+
 //-- private methods -----
 bool AssetManager::loadOBJ(
 		const std::string& path,
@@ -216,7 +230,7 @@ bool AssetManager::loadOBJ(
 	std::vector<int> vecNormalIndex;
 	std::vector<int> vecFaceIndex;
 	std::vector<int> vecTextureIndex;
-
+	
 	// $TODO Culture aware? Maybe switch to invarian culture to parse floating-points correctly?
 	std::ifstream in(path, std::ios::in);
 	if (!in.is_open()) {

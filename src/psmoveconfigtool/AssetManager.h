@@ -66,6 +66,8 @@ public:
     bool init();
     void destroy();
 
+	static bool ImGuiButtonIcon(const TextureAsset * asset, const char * label, const ImVec2 & size_arg = ImVec2(0,0));
+
 	struct gl_model_asset
 	{
 		TextureAsset m_texture;

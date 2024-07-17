@@ -797,23 +797,17 @@ void AppSubStage_CalibrateWithMat::renderUI()
 				}
 
 				ImGui::Separator();
-				if (ImGui::Button("      Force Continue"))
+				if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconCheck(), "Force Continue"))
 				{
 					m_bForceStable = true;
 				}
-				ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
-					ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-					ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 				ImGui::SameLine();
-				if (ImGui::Button("      Restart Calibration"))
+				if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconBan(), "Restart Calibration"))
 				{
 					setState(AppSubStage_CalibrateWithMat::eMenuState::initial);
 				}
-				ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconUpdate()->getImTextureId(),
-					ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-					ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 				ImGui::SameLine();
-				if (ImGui::Button("      Cancel"))
+				if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconBan(), "Cancel"))
 				{
 					// Disable blinking if its enabled.
 					if (m_iLightFlicker > 0)
@@ -824,9 +818,6 @@ void AppSubStage_CalibrateWithMat::renderUI()
 
 					m_parentStage->setState(AppStage_ComputeTrackerPoses::eMenuState::verifyTrackers);
 				}
-				ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
-					ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-					ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 			}
 			ImGui::EndGroup();
 			if (ImGui::IsItemVisible())
@@ -946,7 +937,7 @@ void AppSubStage_CalibrateWithMat::renderUI()
 				}
 
 				ImGui::Separator();
-				if (ImGui::Button("      Cancel"))
+				if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconBan(), "Cancel"))
 				{
 					// Disable blinking if its enabled.
 					if (m_iLightFlicker > 0)
@@ -957,9 +948,6 @@ void AppSubStage_CalibrateWithMat::renderUI()
 
 					m_parentStage->setState(AppStage_ComputeTrackerPoses::eMenuState::verifyTrackers);
 				}
-				ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
-					ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-					ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 			}
 			ImGui::EndGroup();
 			if (ImGui::IsItemVisible())

@@ -785,13 +785,10 @@ void AppStage_ColorCalibration::renderUI()
 		ImGui::ProgressBar(fmax(1.0f - (static_cast<float>(m_iDetectingControllersLeft) / total_progress), 0.0f));
 
 		ImGui::Separator();
-		if (ImGui::Button("      Cancel"))
+		if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconBan(), "Cancel"))
 		{
 			m_bDetectingCancel = true;
 		}
-		ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
-			ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 		ImGui::SetWindowSize(ImVec2(550, 0));
 		ImGui::End();
@@ -889,13 +886,10 @@ void AppStage_ColorCalibration::renderUI()
             ImGui::Begin(k_window_title, nullptr, window_flags);
 			ImGui::BeginGroup();
 			{
-				if (ImGui::Button("      Return to Tracker Settings"))
+				if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconLeft(), "Return to Tracker Settings"))
 				{
 					request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
 				}
-				ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
-					ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-					ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 				ImGui::Separator();
 
@@ -1123,7 +1117,7 @@ void AppStage_ColorCalibration::renderUI()
 									}
 									ImGui::PopItemWidth();
 
-									if (ImGui::Button("      Reset"))
+									if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconUpdate(), "Reset"))
 									{
 										m_blacklisted_projection[i].x = 0.f;
 										m_blacklisted_projection[i].y = 0.f;
@@ -1131,9 +1125,6 @@ void AppStage_ColorCalibration::renderUI()
 										m_blacklisted_projection[i].h = 0.f;
 										request_tracker_set_projectionblacklist(m_blacklisted_projection);
 									}
-									ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconUpdate()->getImTextureId(),
-										ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-										ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 								}
 								ImGui::PopID();
 							}
@@ -1388,14 +1379,11 @@ void AppStage_ColorCalibration::renderUI()
 
 				if (m_masterControllerView != nullptr)
 				{
-					if (ImGui::Button("      Test Tracking Pose"))
+					if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconTarget(), "Test Tracking Pose"))
 					{
 						m_app->getAppStage<AppStage_TrackerSettings>()->gotoTestControllerTracking(true);
 						request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
 					}
-					ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconTarget()->getImTextureId(),
-						ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-						ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 					ImGui::SameLine();
 
@@ -1413,14 +1401,11 @@ void AppStage_ColorCalibration::renderUI()
 				}
 				else if (m_hmdView != nullptr)
 				{
-					if (ImGui::Button("      Test Tracking Pose"))
+					if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconSearch(), "Test Tracking Pose"))
 					{
 						m_app->getAppStage<AppStage_TrackerSettings>()->gotoTestHMDTracking(true);
 						request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
 					}
-					ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconSearch()->getImTextureId(),
-						ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-						ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 					ImGui::SameLine();
 
@@ -1446,22 +1431,16 @@ void AppStage_ColorCalibration::renderUI()
 					{
 						if (m_masterControllerView != nullptr)
 						{
-							if (ImGui::Button("      Automatically Detect Colors"))
+							if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconSearch(), "Automatically Detect Colors"))
 							{
 								setState(eMenuState::detection_init);
 							}
-							ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconSearch()->getImTextureId(),
-								ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-								ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 						}
 
-						if (ImGui::Button("      Manually Detect Colors"))
+						if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconSearch(), "Manually Detect Colors"))
 						{
 							m_bAlignDetectColor = true;
 						}
-						ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconSearch()->getImTextureId(),
-							ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-							ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 						if (m_masterControllerView != nullptr)
 						{
@@ -2165,7 +2144,7 @@ void AppStage_ColorCalibration::renderUI()
 		if (stable_controllers == stable_total_controllers)
 		{
 			ImGui::Separator();
-			if (ImGui::Button("      Start Sampling Colors"))
+			if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconCheck(), "Start Sampling Colors"))
 			{
 				if (m_bAutoChangeTracker)
 				{
@@ -2184,14 +2163,11 @@ void AppStage_ColorCalibration::renderUI()
 				m_bDetectingExposureGood = false;
 				setState(eMenuState::detection_exposure_adjust);
 			}
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 		}
 		else
 		{
 			ImGui::Separator();
-			if (ImGui::Button("      Force Start Sampling Colors"))
+			if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconCheck(), "Force Start Sampling Colors"))
 			{
 				if (m_bAutoChangeTracker)
 				{
@@ -2210,19 +2186,13 @@ void AppStage_ColorCalibration::renderUI()
 				m_bDetectingExposureGood = false;
 				setState(eMenuState::detection_exposure_adjust);
 			}
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 		}
 
 		ImGui::SameLine();
-		if (ImGui::Button("      Cancel"))
+		if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconBan(), "Cancel"))
 		{
 			setState(eMenuState::manualConfig);
 		}
-		ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
-			ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 		ImGui::SetWindowSize(ImVec2(600, 0));
 		ImGui::End();
@@ -2616,17 +2586,14 @@ void AppStage_ColorCalibration::renderUI()
 			ImGui::TextWrapped("Otherwise use the manual color detection method instead.");
 
 			ImGui::Separator();
-			if (ImGui::Button("      Try Again"))
+			if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconUpdate(), "Try Again"))
 			{
 				m_iDetectingExposure = k_color_autodetect_probe_step;
 				setState(eMenuState::detection_exposure_adjust);
 			}
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconUpdate()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SameLine();
-			if (ImGui::Button("      Back"))
+			if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconBan(), "Back"))
 			{
 				setState(eMenuState::manualConfig);
 
@@ -2634,9 +2601,6 @@ void AppStage_ColorCalibration::renderUI()
 				request_change_controller(0);
 				request_change_tracker(0);
 			}
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(600, 0));
 			ImGui::End();
@@ -2652,7 +2616,7 @@ void AppStage_ColorCalibration::renderUI()
 			ImGui::Text("Color sampling aborted!");
 
 			ImGui::Separator();
-			if (ImGui::Button("      Back"))
+			if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconBan(), "Back"))
 			{
 				setState(eMenuState::manualConfig);
 
@@ -2660,9 +2624,6 @@ void AppStage_ColorCalibration::renderUI()
 				request_change_controller(0);
 				request_change_tracker(0);
 			}
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(600, 0));
 			ImGui::End();
@@ -2680,7 +2641,7 @@ void AppStage_ColorCalibration::renderUI()
 			ImGui::TextWrapped("Please use the manual color detection instead.");
 
 			ImGui::Separator();
-			if (ImGui::Button("      Back"))
+			if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconBan(), "Back"))
 			{
 				setState(eMenuState::manualConfig);
 
@@ -2688,9 +2649,6 @@ void AppStage_ColorCalibration::renderUI()
 				request_change_controller(0);
 				request_change_tracker(0);
 			}
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(600, 0));
 			ImGui::End();
@@ -2710,17 +2668,14 @@ void AppStage_ColorCalibration::renderUI()
 			ImGui::TextWrapped("Otherwise use the manual color detection method instead.");
 
 			ImGui::Separator();
-			if (ImGui::Button("      Try Again"))
+			if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconUpdate(), "Try Again"))
 			{
 				m_iDetectingExposure = k_color_autodetect_probe_step;
 				setState(eMenuState::detection_exposure_adjust);
 			}
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconUpdate()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SameLine();
-			if (ImGui::Button("      Back"))
+			if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconBan(), "Back"))
 			{
 				setState(eMenuState::manualConfig);
 
@@ -2728,9 +2683,6 @@ void AppStage_ColorCalibration::renderUI()
 				request_change_controller(0);
 				request_change_tracker(0);
 			}
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(600, 0));
 			ImGui::End();
@@ -2746,17 +2698,14 @@ void AppStage_ColorCalibration::renderUI()
 			ImGui::TextWrapped("Color sampling on controller #%d and tracker #%d failed!", m_masterControllerView->ControllerID, m_trackerView->tracker_info.tracker_id);
 
 			ImGui::Separator();
-			if (ImGui::Button("      Try Again"))
+			if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconUpdate(), "Try Again"))
 			{
 				m_iDetectingExposure = k_color_autodetect_probe_step;
 				setState(eMenuState::detection_exposure_adjust);
 			}
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconUpdate()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SameLine();
-			if (ImGui::Button("      Back"))
+			if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconBan(), "Back"))
 			{
 				setState(eMenuState::manualConfig);
 
@@ -2764,9 +2713,6 @@ void AppStage_ColorCalibration::renderUI()
 				request_change_controller(0);
 				request_change_tracker(0);
 			}
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(600, 0));
 			ImGui::End();
@@ -2790,7 +2736,7 @@ void AppStage_ColorCalibration::renderUI()
 		ImGui::TextWrapped("Controller colors and tracker exposure/gain have been automatically adjusted!");
 
 		ImGui::Separator();
-		if (ImGui::Button("      OK"))
+		if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconCheck(), "OK"))
 		{
 			setState(eMenuState::manualConfig);
 
@@ -2798,9 +2744,6 @@ void AppStage_ColorCalibration::renderUI()
 			request_change_controller(0);
 			request_change_tracker(0);
 		}
-		ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
-			ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 		ImGui::SetWindowSize(ImVec2(600, 0));
 		ImGui::End();
@@ -2903,22 +2846,16 @@ void AppStage_ColorCalibration::renderUI()
         }
 
 		ImGui::Separator();
-        if (ImGui::Button("      OK"))
+        if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconCheck(), "OK"))
         {
             request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
         }
-		ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
-			ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 		ImGui::SameLine();
-        if (ImGui::Button("      Return to Main Menu"))
+        if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconLeft(), "Return to Main Menu"))
         {
             request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
         }
-		ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
-			ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 		ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
         ImGui::End();

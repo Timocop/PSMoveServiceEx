@@ -594,13 +594,10 @@ void AppStage_HMDModelCalibration::renderUI()
 		ImGui::Text("Pending device initialization...");
 
 		ImGui::Separator();
-		if (ImGui::Button("      Return to HMD Settings"))
+		if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconLeft(), "Return to HMD Settings"))
 		{
 			request_exit_to_app_stage(AppStage_HMDModelCalibration::APP_STAGE_NAME);
 		}
-		ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
-			ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 		ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
 		ImGui::End();
@@ -637,22 +634,16 @@ void AppStage_HMDModelCalibration::renderUI()
 		}
 
 		ImGui::Separator();
-		if (ImGui::Button("      OK"))
+		if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconCheck(), "OK"))
 		{
 			request_exit_to_app_stage(AppStage_HMDSettings::APP_STAGE_NAME);
 		}
-		ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
-			ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 		ImGui::SameLine();
-		if (ImGui::Button("      Return to Main Menu"))
+		if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconLeft(), "Return to Main Menu"))
 		{
 			request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
 		}
-		ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
-			ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 		ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
 		ImGui::End();
@@ -679,22 +670,16 @@ void AppStage_HMDModelCalibration::renderUI()
 		}
 
 		ImGui::Separator();
-		if (ImGui::Button("      Start Calibration"))
+		if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconCheck(), "Start Calibration"))
 		{
 			setState(eMenuState::calibrate);
 		}
-		ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
-			ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 		ImGui::SameLine();
-		if (ImGui::Button("      Return to HMD Settings"))
+		if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconLeft(), "Return to HMD Settings"))
 		{
 			request_exit_to_app_stage(AppStage_HMDSettings::APP_STAGE_NAME);
 		}
-		ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
-			ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 		ImGui::SetWindowSize(ImVec2(500, 0));
 		ImGui::End();
@@ -753,22 +738,16 @@ void AppStage_HMDModelCalibration::renderUI()
 		ImGui::SliderFloat("Tolerance", &m_trackerPairState->tolerance, 0.f, 1.f);
 
 		ImGui::Separator();
-		if (ImGui::Button("      Restart Calibration"))
+		if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconUpdate(), "Restart Calibration"))
 		{
 			setState(eMenuState::verifyTrackers);
 		}
-		ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconUpdate()->getImTextureId(),
-			ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 		
 		ImGui::SameLine();
-		if (ImGui::Button("      Exit"))
+		if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconBan(), "Exit"))
 		{
 			m_app->setAppStage(AppStage_HMDSettings::APP_STAGE_NAME);
 		}
-		ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
-			ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 		ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
 		ImGui::End();
@@ -794,13 +773,10 @@ void AppStage_HMDModelCalibration::renderUI()
 			ImGui::SameLine();
 		}
 
-		if (ImGui::Button("      Exit"))
+		if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconBan(), "Exit"))
 		{
 			m_app->setAppStage(AppStage_HMDModelCalibration::APP_STAGE_NAME);
 		}
-		ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
-			ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-			ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 		// display tracking quality
 		for (int tracker_index = 0; tracker_index < get_tracker_count(); ++tracker_index)

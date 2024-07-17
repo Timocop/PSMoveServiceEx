@@ -975,13 +975,10 @@ void AppStage_ComputeTrackerPoses::renderUI()
             ImGui::Text("Pending device initialization...");
 
 			ImGui::Separator();
-            if (ImGui::Button("      Return to Tracker Settings"))
+            if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconLeft(), "Return to Tracker Settings"))
             {
                 request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
             }
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
@@ -1034,22 +1031,16 @@ void AppStage_ComputeTrackerPoses::renderUI()
             }
 
 			ImGui::Separator();
-            if (ImGui::Button("      OK"))
+            if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconCheck(), "OK"))
             {
                 request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
             }
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SameLine();
-            if (ImGui::Button("      Return to Main Menu"))
+            if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconLeft(), "Return to Main Menu"))
             {
                 request_exit_to_app_stage(AppStage_MainMenu::APP_STAGE_NAME);
             }
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
             ImGui::End();
@@ -1099,22 +1090,16 @@ void AppStage_ComputeTrackerPoses::renderUI()
             }
 
 			ImGui::Separator();
-            if (ImGui::Button("      Start Calibration"))
+            if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconCheck(), "Start Calibration"))
             {
                 setState(eMenuState::calibrateWithMat);
             }
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconCheck()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SameLine();
-            if (ImGui::Button("      Return to Tracker Settings"))
+            if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconLeft(), "Return to Tracker Settings"))
             {
                 request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
             }
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(500, 0));
             ImGui::End();
@@ -1135,13 +1120,10 @@ void AppStage_ComputeTrackerPoses::renderUI()
             ImGui::Text("Select a calibration method");
 
             ImGui::Separator();
-            if (ImGui::Button("      Calibration Mat"))
+            if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconTarget(), "Calibration Mat"))
             {
                 setState(eMenuState::calibrateWithMat);
             }
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconTarget()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(500, 0));
             ImGui::End();
@@ -1191,22 +1173,16 @@ void AppStage_ComputeTrackerPoses::renderUI()
 			ImGui::Checkbox("Show Tracker Frustum", &m_showTrackerFrustum);
 
 			ImGui::Separator();
-			if (ImGui::Button("      Reset Samples"))
+			if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconUpdate(), "Reset Samples"))
 			{
 				m_magneticSamples.clear();
 			}
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconUpdate()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			//ImGui::SameLine(); not enough space
-			if (ImGui::Button("      Return to Test Tracking Pose"))
+			if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconLeft(), "Return to Test Tracking Pose"))
 			{
 				setState(eMenuState::testTracking);
 			}
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(250, 0));
 			ImGui::End();
@@ -1240,22 +1216,16 @@ void AppStage_ComputeTrackerPoses::renderUI()
                 ImGui::PushID(trackerView->tracker_info.tracker_id);
                 if (m_app->getIsLocalServer())
                 {
-                    if (ImGui::Button("      Tracker Video") || trackerView->tracker_info.tracker_id == m_ShowTrackerVideoId)
+                    if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconTracker(), "Tracker Video") || trackerView->tracker_info.tracker_id == m_ShowTrackerVideoId)
                     {
                         m_ShowTrackerVideoId = -1;
                         m_renderTrackerIter = iter;
                         setState(eMenuState::showTrackerVideo);
                     }
-					ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconTracker()->getImTextureId(),
-						ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-						ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
                 }
                 else
                 {
-                    ImGui::Button("      Tracker Video (Unavailable)");
-					ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
-						ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-						ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
+                    AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconBan(), "Tracker Video (Unavailable)");
                 }
                 ImGui::PopID();
                 ImGui::PopItemWidth();
@@ -1266,22 +1236,16 @@ void AppStage_ComputeTrackerPoses::renderUI()
 			if (m_controllerViews.size() > 0 && m_overrideControllerId != -1)
 			{
 				ImGui::Text("Controller ID: #%d", m_overrideControllerId);
-				if (ImGui::Button("      Show Tracker Triangulations"))
+				if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconTarget(), "Show Tracker Triangulations"))
 				{
 					setState(eMenuState::pendingControllerOffsets);
 				}
-				ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconTarget()->getImTextureId(),
-					ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-					ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 				
-				if (ImGui::Button("      Show Magnetic Interferences"))
+				if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconSearch(), "Show Magnetic Interferences"))
 				{
 					m_magneticSamples.clear();
 					setState(eMenuState::testMagnetic);
 				}
-				ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconSearch()->getImTextureId(),
-					ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-					ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 				ImGui::Separator();
 			}
@@ -1293,24 +1257,18 @@ void AppStage_ComputeTrackerPoses::renderUI()
                 ImGui::Text("Calibration complete!");
 
 				ImGui::Separator();
-                if (ImGui::Button("      Redo Calibration"))
+                if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconUpdate(), "Redo Calibration"))
                 {
                     setState(eMenuState::verifyTrackers);
                 }
-				ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconUpdate()->getImTextureId(),
-					ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-					ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 				//ImGui::SameLine(); not enough space
             }
 
-            if (ImGui::Button("      Return to Tracker Settings"))
+            if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconLeft(), "Return to Tracker Settings"))
             {
 				request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
             }
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(250, 0));
             ImGui::End();
@@ -1344,7 +1302,7 @@ void AppStage_ComputeTrackerPoses::renderUI()
                 ImGui::Text("Tracker ID: 0");
             }
             
-            if (ImGui::Button("      Calibrate Tracking Colors"))
+            if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconTracker(), "Calibrate Tracking Colors"))
             {
                 if (m_overrideHmdId != -1)
                 {
@@ -1356,26 +1314,17 @@ void AppStage_ComputeTrackerPoses::renderUI()
                 }
                 request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
             }
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconTracker()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
-            if (ImGui::Button("      Test Tracking Pose"))
+            if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconTarget(), "Test Tracking Pose"))
             {
                 setState(eMenuState::testTracking);
             }
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconTarget()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::Separator();
-            if (ImGui::Button("      Return to Tracker Settings"))
+            if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconLeft(), "Return to Tracker Settings"))
             {
                 request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
             }
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(250, 0));
             ImGui::End();
@@ -1390,22 +1339,16 @@ void AppStage_ComputeTrackerPoses::renderUI()
 			ImGui::Text("Calibration Failed");
 
 			ImGui::Separator();
-			if (ImGui::Button("      Restart Calibration"))
+			if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconUpdate(), "Restart Calibration"))
 			{
 				setState(eMenuState::verifyTrackers);
 			}
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconUpdate()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SameLine();
-			if (ImGui::Button("      Cancel"))
+			if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconBan(), "Cancel"))
 			{
 				request_exit_to_app_stage(AppStage_TrackerSettings::APP_STAGE_NAME);
 			}
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconBan()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
 			ImGui::End();
@@ -1531,13 +1474,10 @@ void AppStage_ComputeTrackerPoses::renderUI()
 			}
 
 			ImGui::Separator();
-			if (ImGui::Button("      Return to Test Tracking Pose"))
+			if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconLeft(), "Return to Test Tracking Pose"))
 			{
 				setState(eMenuState::testTracking);
 			}
-			ImGui::GetWindowDrawList()->AddImage(AssetManager::getInstance()->getIconLeft()->getImTextureId(),
-				ImVec2(ImGui::GetItemRectMin().x + 2, ImGui::GetItemRectMin().y + 2),
-				ImVec2(ImGui::GetItemRectMin().x + ImGui::GetItemRectSize().y - 2, ImGui::GetItemRectMin().y + ImGui::GetItemRectSize().y - 2));
 
 			ImGui::SetWindowSize(ImVec2(k_panel_width, 0));
 			ImGui::End();
