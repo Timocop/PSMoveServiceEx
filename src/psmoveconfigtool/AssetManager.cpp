@@ -235,11 +235,15 @@ bool AssetManager::loadOBJ(
 	std::vector<int> vecNormalIndex;
 	std::vector<int> vecFaceIndex;
 	std::vector<int> vecTextureIndex;
-	
+
+	// Just in case floating-points may be parsed incorrectly.
+	std::locale originalLocale = std::locale::global(std::locale::classic());
+
 	// $TODO Culture aware? Maybe switch to invarian culture to parse floating-points correctly?
 	std::ifstream in(path, std::ios::in);
 	if (!in.is_open()) {
 		Log_ERROR("AssetManager::loadOBJ", "Cannot open file (%s)", path.c_str());
+		std::locale::global(originalLocale);
 		return false;
 	}
 
@@ -330,6 +334,8 @@ bool AssetManager::loadOBJ(
 			outnormals.push_back(normals[vecNormalIndex[i]].z);
 		}
 	}
+
+	std::locale::global(originalLocale);
 	return true;
 }
 
