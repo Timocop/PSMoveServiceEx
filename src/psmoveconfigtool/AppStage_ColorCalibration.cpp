@@ -31,7 +31,7 @@
 
 const int k_color_autodetect_probe_max = 64;
 const int k_color_autodetect_probe_step = 8;
-const int k_color_autodetect_probe_step_good = 16;
+const int k_color_autodetect_probe_step_good = 8;
 
 const int k_auto_calib_sleep = 350;
 
@@ -185,7 +185,7 @@ AppStage_ColorCalibration::AppStage_ColorCalibration(App *app)
 	, m_bShowWindows(true)
 	, m_bAlignDetectColor(false)
 	, m_bAlignPinned(false)
-	, m_iColorSensitivity(sensitivity_normal)
+	, m_iColorSensitivity(sensitivity_strict)
 	, m_bColorCollisionPrevent(false)
 	, m_bColorCollsionShow(false)
     , m_masterTrackingColorType(PSMTrackingColorType_Magenta)
