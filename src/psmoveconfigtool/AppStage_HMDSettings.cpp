@@ -1172,7 +1172,6 @@ void AppStage_HMDSettings::renderUI()
     case eHmdMenuState::pendingHmdListRequest:
     {
         ImGui::SetNextWindowPosCenter();
-        ImGui::SetNextWindowSize(ImVec2(300, 150));
         ImGui::Begin(k_window_title, nullptr, window_flags);
 
 		waitCount += 0.025f;
@@ -1193,12 +1192,12 @@ void AppStage_HMDSettings::renderUI()
 		ImGui::SameLine();
         ImGui::Text("Waiting for HMD list response...");
 
+		ImGui::SetWindowSize(ImVec2(300, 0));
         ImGui::End();
     } break;
     case eHmdMenuState::failedHmdListRequest:
     {
         ImGui::SetNextWindowPosCenter();
-        ImGui::SetNextWindowSize(ImVec2(300, 150));
         ImGui::Begin(k_window_title, nullptr, window_flags);
 
 		ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(32, 32));
@@ -1217,6 +1216,7 @@ void AppStage_HMDSettings::renderUI()
             m_app->setAppStage(AppStage_MainMenu::APP_STAGE_NAME);
         }
 
+		ImGui::SetWindowSize(ImVec2(300, 0));
         ImGui::End();
     } break;
 
