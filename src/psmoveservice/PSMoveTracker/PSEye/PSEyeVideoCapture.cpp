@@ -700,6 +700,8 @@ public:
 		{
 			return grabFrameHD();
 		}
+
+		return false;
 	}
 
 	bool grabFrameSD()
