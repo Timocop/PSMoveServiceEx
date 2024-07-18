@@ -1072,10 +1072,22 @@ void AppStage_ComputeTrackerPoses::renderUI()
 				m_pCalibrateWithMat->m_iPaperFormat = static_cast<AppSubStage_CalibrateWithMat::ePaperFormat>(paperFormat);
 			}
 
-            ImGui::Separator();
+			if (m_pCalibrateWithMat->m_iPaperFormat >= AppSubStage_CalibrateWithMat::ePaperFormat::formatLetter &&
+				m_pCalibrateWithMat->m_iPaperFormat <= AppSubStage_CalibrateWithMat::ePaperFormat::formatA3)
+			{
+				ImGui::Separator();
+				ImGui::PushTextWrapPos();
+				ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0,0), ImVec2(1,1), AssetManager::getInstance()->k_imcolor_blue());
+				ImGui::SameLine();
+				ImGui::TextColored(AssetManager::getInstance()->k_imcolor_blue(),
+					"For larger playspaces, use bigger calibration mats to improve tracking quality and precision.\n"
+					"Small calibration mats are suitable for limited spaces only.");
+				ImGui::PopTextWrapPos();
+			}
 
             if (m_trackerViews.size() > 1)
             {
+				ImGui::Separator();
 				if (ImGui::Button(" < ##Previous Tracker"))
                 {
                     go_previous_tracker();
