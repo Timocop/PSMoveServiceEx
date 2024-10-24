@@ -13,6 +13,10 @@ public:
         std::string log_level;
         std::string admin_password;
 		std::string working_directory;
+		bool disable_morpheus;
+		int minimum_virtual_hmd_count;
+		int minimum_virtual_controller_count;
+		int minimum_virtual_tracker_count;
     };
 
     PSMoveService();

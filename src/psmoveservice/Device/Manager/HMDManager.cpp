@@ -1,4 +1,5 @@
 //-- includes -----
+#include "PSMoveService.h"
 #include "HMDManager.h"
 #include "HMDDeviceEnumerator.h"
 #if !defined(IS_TESTING)
@@ -61,6 +62,16 @@ HMDManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
             "Config version " << version << " does not match expected version " <<
             HMDManagerConfig::CONFIG_VERSION << ", Using defaults.";
     }
+
+	if (PSMoveService::getInstance()->getProgramSettings()->disable_morpheus)
+	{
+		enable_morpheus = false;
+	}
+
+	if (virtual_hmd_count < PSMoveService::getInstance()->getProgramSettings()->minimum_virtual_hmd_count)
+	{
+		virtual_hmd_count = PSMoveService::getInstance()->getProgramSettings()->minimum_virtual_hmd_count;
+	}
 }
 
 //-- HMD Manager -----

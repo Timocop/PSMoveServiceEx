@@ -1,4 +1,5 @@
 //-- includes -----
+#include "PSMoveService.h"
 #include "TrackerManager.h"
 #include "TrackerDeviceEnumerator.h"
 #include "VirtualTrackerEnumerator.h"
@@ -204,6 +205,11 @@ TrackerManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
             "Config version " << version << " does not match expected version " <<
             TrackerManagerConfig::CONFIG_VERSION << ", Using defaults.";
     }
+
+	if (virtual_tracker_count < PSMoveService::getInstance()->getProgramSettings()->minimum_virtual_tracker_count)
+	{
+		virtual_tracker_count = PSMoveService::getInstance()->getProgramSettings()->minimum_virtual_tracker_count;
+	}
 }
 
 CommonDeviceVector 

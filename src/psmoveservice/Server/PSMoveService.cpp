@@ -447,6 +447,38 @@ static void parse_program_settings(
 	{
 		settings.working_directory.clear();
 	}
+
+	settings.disable_morpheus = (options_map.count("disable_morpheus") > 0);
+
+	if (options_map.count("min_virtual_hmd"))
+	{
+		std::string count = options_map["min_virtual_hmd"].as<std::string>();
+		settings.minimum_virtual_hmd_count = (int)atof(count.c_str());
+	}
+	else
+	{
+		settings.minimum_virtual_hmd_count = 0;
+	}
+
+	if (options_map.count("min_virtual_controller"))
+	{
+		std::string count = options_map["min_virtual_controller"].as<std::string>();
+		settings.minimum_virtual_controller_count = (int)atof(count.c_str());
+	}
+	else
+	{
+		settings.minimum_virtual_controller_count = 0;
+	}
+
+	if (options_map.count("min_virtual_tracker"))
+	{
+		std::string count = options_map["min_virtual_tracker"].as<std::string>();
+		settings.minimum_virtual_tracker_count = (int)atof(count.c_str());
+	}
+	else
+	{
+		settings.minimum_virtual_tracker_count = 0;
+	}
 }
 
 #if defined(BOOST_WINDOWS_API) 
@@ -659,6 +691,10 @@ int PSMoveService::exec(int argc, char *argv[])
         ("log_level,l", boost::program_options::value<std::string>(), "The level of logging to use: trace, debug, info, warning, error, fatal")
         ("admin_password,p", boost::program_options::value<std::string>(), "Remember the admin password for this machine (optional)")
 		("working_directory", boost::program_options::value<std::string>(), "service working directory (optional)")
+		("disable_morpheus", "Disables morpheus head-mounted display detection.")
+		("min_virtual_hmd", boost::program_options::value<std::string>(), "Minimum virtual head-moutned display count.")
+		("min_virtual_controller", boost::program_options::value<std::string>(), "Minimum virtual controller count.")
+		("min_virtual_tracker", boost::program_options::value<std::string>(), "Minimum virtual tracker count.")
 #if defined(BOOST_WINDOWS_API)
         (",i", "install service")
         (",u", "uninstall service")

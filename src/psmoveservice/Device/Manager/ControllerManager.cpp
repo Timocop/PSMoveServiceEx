@@ -1,4 +1,5 @@
 //-- includes -----
+#include "PSMoveService.h"
 #include "ControllerManager.h"
 #include "BluetoothQueries.h"
 #include "ControllerDeviceEnumerator.h"
@@ -55,6 +56,11 @@ ControllerManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
             "Config version " << version << " does not match expected version " <<
             ControllerManagerConfig::CONFIG_VERSION << ", Using defaults.";
     }
+
+	if (virtual_controller_count < PSMoveService::getInstance()->getProgramSettings()->minimum_virtual_controller_count)
+	{
+		virtual_controller_count = PSMoveService::getInstance()->getProgramSettings()->minimum_virtual_controller_count;
+	}
 }
 
 //-- Controller Manager ----
