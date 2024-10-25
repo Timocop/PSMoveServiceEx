@@ -3070,6 +3070,8 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 {
 	int available_trackers = 0;
 
+	int controller_id = controllerView->getDeviceID();
+
 	for (int tracker_id = 0; tracker_id < tracker_manager->getMaxDevices(); ++tracker_id)
 	{
 		ServerTrackerViewPtr tracker = tracker_manager->getTrackerViewPtr(tracker_id);
@@ -3103,7 +3105,6 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 	
 	// Compute triangulations amongst all pairs of projections
 	int pair_count = 0;
-
 
 	struct projectionInfo
 	{
@@ -3417,9 +3418,28 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 
 		// What happend to that trackers projection? Its probably stuck somewhere on some color noise.
 		// Enforce new ROI on this tracker to make it unstuck.
+		static bool tracker_bad_deviation[PSMOVESERVICE_MAX_CONTROLLER_COUNT][PSMOVESERVICE_MAX_TRACKER_COUNT];
 		if (bad_deviations >= projections_found - 1)
 		{
 			tracker_pose_estimations[tracker_id].bEnforceNewROI = true;
+			
+			if (controller_id > -1 && !tracker_bad_deviation[controller_id][tracker_id])
+			{
+				SERVER_LOG_INFO("ServerControllerView()") <<
+					"Controller id " << controller_id << " and tracker id " << tracker_id << " deviated too much from other trackers and stopped tracking...";
+
+				tracker_bad_deviation[controller_id][tracker_id] = true;
+			}
+		}
+		else
+		{
+			if (controller_id > -1 && tracker_bad_deviation[controller_id][tracker_id])
+			{
+				SERVER_LOG_INFO("ServerControllerView()") <<
+					"Controller id " << controller_id << " and tracker id " << tracker_id << " tracking restored!";
+
+				tracker_bad_deviation[controller_id][tracker_id] = false;
+			}
 		}
 	}
 

@@ -1834,6 +1834,7 @@ static void computeSpherePoseForHmdFromMultipleTrackers(
     HMDOpticalPoseEstimation *multicam_pose_estimation)
 {
 	int available_trackers = 0;
+	int hmd_id = hmdView->getDeviceID();
 
 	for (int tracker_id = 0; tracker_id < tracker_manager->getMaxDevices(); ++tracker_id)
 	{
@@ -2181,9 +2182,28 @@ static void computeSpherePoseForHmdFromMultipleTrackers(
 
 		// What happend to that trackers projection? Its probably stuck somewhere on some color noise.
 		// Enforce new ROI on this tracker to make it unstuck.
+		static bool tracker_bad_deviation[PSMOVESERVICE_MAX_HMD_COUNT][PSMOVESERVICE_MAX_TRACKER_COUNT];
 		if (bad_deviations >= projections_found - 1)
 		{
 			tracker_pose_estimations[tracker_id].bEnforceNewROI = true;
+
+			if (hmd_id > -1 && !tracker_bad_deviation[hmd_id][tracker_id])
+			{
+				SERVER_LOG_INFO("ServerHMDView()") <<
+					"Hmd id " << hmd_id << " and tracker id " << tracker_id << " deviated too much from other trackers and stopped tracking...";
+
+				tracker_bad_deviation[hmd_id][tracker_id] = true;
+			}
+		}
+		else
+		{
+			if (hmd_id > -1 && tracker_bad_deviation[hmd_id][tracker_id])
+			{
+				SERVER_LOG_INFO("ServerHMDView()") <<
+					"Hmd id " << hmd_id << " and tracker id " << tracker_id << " tracking restored!";
+
+				tracker_bad_deviation[hmd_id][tracker_id] = false;
+			}
 		}
     }
 
@@ -2264,6 +2284,7 @@ static void computePointCloudPoseForHmdFromMultipleTrackers(
     HMDOpticalPoseEstimation *multicam_pose_estimation)
 {
 	int available_trackers = 0;
+	int hmd_id = hmdView->getDeviceID();
 
 	for (int tracker_id = 0; tracker_id < tracker_manager->getMaxDevices(); ++tracker_id)
 	{
@@ -2613,9 +2634,28 @@ static void computePointCloudPoseForHmdFromMultipleTrackers(
 
 		// What happend to that trackers projection? Its probably stuck somewhere on some color noise.
 		// Enforce new ROI on this tracker to make it unstuck.
+		static bool tracker_bad_deviation[PSMOVESERVICE_MAX_HMD_COUNT][PSMOVESERVICE_MAX_TRACKER_COUNT];
 		if (bad_deviations >= projections_found - 1)
 		{
 			tracker_pose_estimations[tracker_id].bEnforceNewROI = true;
+
+			if (hmd_id > -1 && !tracker_bad_deviation[hmd_id][tracker_id])
+			{
+				SERVER_LOG_INFO("ServerHMDView()") <<
+					"Hmd id " << hmd_id << " and tracker id " << tracker_id << " deviated too much from other trackers and stopped tracking...";
+
+				tracker_bad_deviation[hmd_id][tracker_id] = true;
+			}
+		}
+		else
+		{
+			if (hmd_id > -1 && tracker_bad_deviation[hmd_id][tracker_id])
+			{
+				SERVER_LOG_INFO("ServerHMDView()") <<
+					"Hmd id " << hmd_id << " and tracker id " << tracker_id << " tracking restored!";
+
+				tracker_bad_deviation[hmd_id][tracker_id] = false;
+			}
 		}
     }
 
