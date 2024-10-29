@@ -56,11 +56,6 @@ ControllerManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
             "Config version " << version << " does not match expected version " <<
             ControllerManagerConfig::CONFIG_VERSION << ", Using defaults.";
     }
-
-	if (virtual_controller_count < PSMoveService::getInstance()->getProgramSettings()->minimum_virtual_controller_count)
-	{
-		virtual_controller_count = PSMoveService::getInstance()->getProgramSettings()->minimum_virtual_controller_count;
-	}
 }
 
 //-- Controller Manager ----
@@ -83,6 +78,11 @@ ControllerManager::startup()
     {
 		// Load any config from disk
 		cfg.load();
+
+		if (cfg.virtual_controller_count < PSMoveService::getInstance()->getProgramSettings()->minimum_virtual_controller_count)
+		{
+			cfg.virtual_controller_count = PSMoveService::getInstance()->getProgramSettings()->minimum_virtual_controller_count;
+		}
 
         // Save back out the config in case there were updated defaults
         cfg.save();

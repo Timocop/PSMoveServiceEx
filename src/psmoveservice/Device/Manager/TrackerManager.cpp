@@ -205,11 +205,6 @@ TrackerManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
             "Config version " << version << " does not match expected version " <<
             TrackerManagerConfig::CONFIG_VERSION << ", Using defaults.";
     }
-
-	if (virtual_tracker_count < PSMoveService::getInstance()->getProgramSettings()->minimum_virtual_tracker_count)
-	{
-		virtual_tracker_count = PSMoveService::getInstance()->getProgramSettings()->minimum_virtual_tracker_count;
-	}
 }
 
 CommonDeviceVector 
@@ -264,6 +259,11 @@ TrackerManager::startup()
     {
 		// Load any config from disk
 		cfg.load();
+
+		if (cfg.virtual_tracker_count < PSMoveService::getInstance()->getProgramSettings()->minimum_virtual_tracker_count)
+		{
+			cfg.virtual_tracker_count = PSMoveService::getInstance()->getProgramSettings()->minimum_virtual_tracker_count;
+		}
 
         // Save back out the config in case there were updated defaults
         cfg.save();

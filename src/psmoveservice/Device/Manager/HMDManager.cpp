@@ -62,16 +62,6 @@ HMDManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
             "Config version " << version << " does not match expected version " <<
             HMDManagerConfig::CONFIG_VERSION << ", Using defaults.";
     }
-
-	if (PSMoveService::getInstance()->getProgramSettings()->disable_morpheus)
-	{
-		enable_morpheus = false;
-	}
-
-	if (virtual_hmd_count < PSMoveService::getInstance()->getProgramSettings()->minimum_virtual_hmd_count)
-	{
-		virtual_hmd_count = PSMoveService::getInstance()->getProgramSettings()->minimum_virtual_hmd_count;
-	}
 }
 
 //-- HMD Manager -----
@@ -89,6 +79,16 @@ HMDManager::startup()
     {
 		// Load any config from disk
 		cfg.load();
+
+		if (PSMoveService::getInstance()->getProgramSettings()->disable_morpheus)
+		{
+			cfg.enable_morpheus = false;
+		}
+
+		if (cfg.virtual_hmd_count < PSMoveService::getInstance()->getProgramSettings()->minimum_virtual_hmd_count)
+		{
+			cfg.virtual_hmd_count = PSMoveService::getInstance()->getProgramSettings()->minimum_virtual_hmd_count;
+		}
 
         // Save back out the config in case there were updated defaults
         cfg.save();
