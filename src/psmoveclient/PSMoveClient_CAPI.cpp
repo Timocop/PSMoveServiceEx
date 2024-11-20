@@ -1720,7 +1720,7 @@ PSMResult PSM_GetTrackerEx(PSMTrackerID tracker_id, PSMTracker *tracker_out)
 		PSMTracker *state = g_psm_client->get_tracker_view(tracker_id);
 
 		PSMTracker out = {};
-		 
+
 		COPY_PROP(listener_count);
 		COPY_PROP(is_connected);
 		COPY_PROP(sequence_num);
@@ -1728,14 +1728,69 @@ PSMResult PSM_GetTrackerEx(PSMTrackerID tracker_id, PSMTracker *tracker_out)
 		COPY_PROP(data_frame_last_received_time);
 		COPY_PROP(data_frame_average_fps);
 
+		COPY_PROP(tracker_exposure);
+		COPY_PROP(tracker_gain);
+		COPY_PROP(tracker_width);
+
 		out.tracker_info = state->tracker_info;
 
 		*tracker_out = out;
 
 		result = PSMResult_Success;
-	} 
-	
-		
+	}
+
+
+	return result;
+}
+
+PSMResult PSM_GetTrackerExposure(PSMTrackerID tracker_id, int *exposure)
+{
+	PSMResult result = PSMResult_Error;
+
+	if (g_psm_client != nullptr)
+	{
+		PSMTracker *state = g_psm_client->get_tracker_view(tracker_id);
+
+		*exposure = state->tracker_exposure;
+
+		result = PSMResult_Success;
+	}
+
+
+	return result;
+}
+
+PSMResult PSM_GetTrackerGain(PSMTrackerID tracker_id, int *gain)
+{
+	PSMResult result = PSMResult_Error;
+
+	if (g_psm_client != nullptr)
+	{
+		PSMTracker *state = g_psm_client->get_tracker_view(tracker_id);
+
+		*gain = state->tracker_gain;
+
+		result = PSMResult_Success;
+	}
+
+
+	return result;
+}
+
+PSMResult PSM_GetTrackerWidth(PSMTrackerID tracker_id, int *width)
+{
+	PSMResult result = PSMResult_Error;
+
+	if (g_psm_client != nullptr)
+	{
+		PSMTracker *state = g_psm_client->get_tracker_view(tracker_id);
+
+		*width = state->tracker_width;
+
+		result = PSMResult_Success;
+	}
+
+
 	return result;
 }
 

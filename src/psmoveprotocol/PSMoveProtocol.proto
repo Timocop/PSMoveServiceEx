@@ -1318,6 +1318,12 @@ message DeviceOutputDataFrame
 
         // Common Controller status flags
         bool IsConnected= 4;
+		
+		// PSMoveServiceEx
+		
+		int32 tracker_exposure = 5;
+		int32 tracker_gain = 6;
+		int32 tracker_width = 7;
     }
     TrackerDataPacket tracker_data_packet = 3;
 

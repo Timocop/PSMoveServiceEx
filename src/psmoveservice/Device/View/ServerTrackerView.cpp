@@ -1063,6 +1063,19 @@ void ServerTrackerView::generate_tracker_data_frame_for_stream(
     tracker_data_frame->set_sequence_num(tracker_view->m_sequence_number);
     tracker_data_frame->set_isconnected(tracker_view->getIsOpen());
 
+	if (tracker_view->getIsOpen()) 
+	{
+		tracker_data_frame->set_tracker_exposure(tracker_view->getExposure());
+		tracker_data_frame->set_tracker_gain(tracker_view->getGain());
+		tracker_data_frame->set_tracker_width(tracker_view->getFrameWidth());
+	}
+	else
+	{
+		tracker_data_frame->set_tracker_exposure(0);
+		tracker_data_frame->set_tracker_gain(0);
+		tracker_data_frame->set_tracker_width(0);
+	}
+
     switch (tracker_view->getTrackerDeviceType())
     {
 	case CommonDeviceState::PS3EYE:

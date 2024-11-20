@@ -1897,7 +1897,11 @@ static void applyTrackerDataFrame(
     if (tracker_packet.sequence_num() > tracker->sequence_num)
     {
         tracker->sequence_num = tracker_packet.sequence_num();
-        tracker->is_connected = tracker_packet.isconnected();
+		tracker->is_connected = tracker_packet.isconnected();
+
+		tracker->tracker_exposure = tracker_packet.tracker_exposure();
+		tracker->tracker_gain = tracker_packet.tracker_gain();
+		tracker->tracker_width = tracker_packet.tracker_width();
     }
 }
 

@@ -669,18 +669,23 @@ typedef struct
 /// Tracker Pool Entry
 typedef struct
 {
-    // Tracker Static Properties
-    PSMClientTrackerInfo tracker_info;
+	// Tracker Static Properties
+	PSMClientTrackerInfo tracker_info;
 
-    // Tracker Streaming State
-    int listener_count;
-    bool is_connected;
-    int sequence_num;
-    long long data_frame_last_received_time;
-    float data_frame_average_fps;
+	// Tracker Streaming State
+	int listener_count;
+	bool is_connected;
+	int sequence_num;
+	long long data_frame_last_received_time;
+	float data_frame_average_fps;
 
-    // SharedVideoFrameReadOnlyAccessor used by config tool
-    void *opaque_shared_memory_accesor;
+	// We could have had this in PSMClientTrackerInfo, but that might break compatibility.
+	int tracker_exposure;
+	int tracker_gain;
+	int tracker_width;
+
+	// SharedVideoFrameReadOnlyAccessor used by config tool
+	void *opaque_shared_memory_accesor;
 } PSMTracker;
 
 // HMD State
@@ -1496,6 +1501,12 @@ PSM_PUBLIC_FUNCTION(PSMResult) PSM_SetControllerHandAsync(PSMControllerID contro
 PSM_PUBLIC_FUNCTION(PSMTracker *) PSM_GetTracker(PSMTrackerID tracker_id);
 
 PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetTrackerEx(PSMTrackerID tracker_id, PSMTracker * tracker_out);
+
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetTrackerExposure(PSMTrackerID tracker_id, int *exposure);
+
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetTrackerGain(PSMTrackerID tracker_id, int *gain);
+
+PSM_PUBLIC_FUNCTION(PSMResult) PSM_GetTrackerWidth(PSMTrackerID tracker_id, int *width);
 
 /** \brief Allocate a reference to a tracker.
 	This function tells the client API to increment a reference count for a given tracker.
