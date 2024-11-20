@@ -601,7 +601,7 @@ public:
 	PSEYECaptureCAM_VIRTUAL(int _index) :
 		m_index(-1), m_frameAvailable(false), m_pipeConnected(false),
 		capturePipeSD(INVALID_HANDLE_VALUE), capturePipeHD(INVALID_HANDLE_VALUE),
-		m_frameHeight(480), m_frameWidth(640)
+		m_frameHeight(480), m_frameWidth(640), m_exposure(0), m_gain(0)
 	{
 		//CoInitialize(NULL);
 		m_isValid = open(_index);
@@ -622,7 +622,7 @@ public:
 		case CV_CAP_PROP_CONTRAST:
 			return 0;
 		case CV_CAP_PROP_EXPOSURE:
-			return 0;
+			return (double)m_exposure;
 		case CV_CAP_PROP_FPS:
 			return 30;
 		case CV_CAP_PROP_FRAME_HEIGHT:
@@ -630,7 +630,7 @@ public:
 		case CV_CAP_PROP_FRAME_WIDTH:
 			return (double)m_frameWidth;
 		case CV_CAP_PROP_GAIN:
-			return 0;
+			return (double)m_gain;
 		case CV_CAP_PROP_HUE:
 			return 0;
 		case CV_CAP_PROP_SHARPNESS:
@@ -648,6 +648,12 @@ public:
 	{
 		switch (property_id)
 		{
+		case CV_CAP_PROP_EXPOSURE:
+			m_exposure = (int)round(value);
+			return true;
+		case CV_CAP_PROP_GAIN:
+			m_gain = (int)round(value);
+			return true;
 		case CV_CAP_PROP_FRAME_HEIGHT:
 			m_frameHeight = (int)round(value);
 
@@ -1199,6 +1205,8 @@ protected:
 	bool m_isValid;
 	int m_frameHeight;
 	int m_frameWidth;
+	int m_exposure;
+	int m_gain;
 
 	HANDLE capturePipeSD;
 	HANDLE capturePipeHD;
