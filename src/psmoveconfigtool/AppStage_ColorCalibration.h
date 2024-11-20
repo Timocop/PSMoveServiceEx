@@ -70,6 +70,7 @@ protected:
 		autoConfig_wait2,
 
 		detection_init,
+		detection_exposure_adjust_begin,
 		detection_exposure_adjust,
 		detection_exposure_wait1,
 		detection_exposure_wait2,

@@ -70,7 +70,6 @@ public:
         , gsLowerBuffer(nullptr)
         , gsUpperBuffer(nullptr)
 		, maskedBuffer(nullptr)
-		, detectionMaskedBuffer(nullptr)
 		, detectionLowerBuffer(nullptr)
     {
         const int frameWidth = static_cast<int>(trackerView->tracker_info.tracker_screen_dimensions.x);
@@ -91,7 +90,6 @@ public:
         gsUpperBuffer = new cv::Mat(frameHeight, frameWidth, CV_8UC1);
 		maskedBuffer = new cv::Mat(frameHeight, frameWidth, CV_8UC3);
 
-		detectionMaskedBuffer = new cv::Mat(frameHeight, frameWidth, CV_8UC3);
 		detectionLowerBuffer = new cv::Mat(frameHeight, frameWidth, CV_8UC1);
     }
 
@@ -101,12 +99,6 @@ public:
 		{
 			delete detectionLowerBuffer;
 			detectionLowerBuffer = nullptr;
-		}
-
-		if (detectionMaskedBuffer != nullptr)
-		{
-			delete detectionMaskedBuffer;
-			detectionMaskedBuffer = nullptr;
 		}
 
 		if (maskedBuffer != nullptr)
@@ -153,7 +145,6 @@ public:
     cv::Mat *gsUpperBuffer; // HSV image clamped by HSV range into grayscale mask
 	cv::Mat *maskedBuffer; // bgr image ANDed together with grayscale mask
 
-	cv::Mat *detectionMaskedBuffer; // bgr masks images ANDed together with grayscale mask
 	cv::Mat *detectionLowerBuffer;  // bit mask image
 };
 
@@ -220,6 +211,8 @@ void AppStage_ColorCalibration::enter()
 
     tracker_count = trackerSettings->get_tracker_count();
     tracker_index = trackerSettings->get_tracker_Index();
+
+	m_lastDetection = std::chrono::high_resolution_clock::now();
 
     // Use the tracker selected from the tracker settings menu
     assert(m_trackerView == nullptr);
@@ -576,14 +569,18 @@ void AppStage_ColorCalibration::renderUI()
 {
 	static float waitCount;
 
+	bool bDebugDetectColor = false;
+	if (m_menuState > eMenuState::detection_init && m_menuState < eMenuState::detection_fail)
+		bDebugDetectColor = true;
+
 	// Tracker Alignment Marker
-	if (m_bAlignDetectColor && m_video_buffer_state != nullptr) 
+	if ((m_bAlignDetectColor || bDebugDetectColor) && m_video_buffer_state != nullptr)
 	{
 		float align_window_size = 64.f;
 		ImVec2 align_pos;
 		ImVec2 align_pos_window;
 
-		if (m_bAlignPinned)
+		if (m_bAlignPinned || bDebugDetectColor)
 		{
 			align_pos.x = m_mAlignPosition[0];
 			align_pos.y = m_mAlignPosition[1];
@@ -931,6 +928,31 @@ void AppStage_ColorCalibration::renderUI()
 								}
 								ImGui::SameLine();
 								ImGui::Text("Frame Width: %.0f", m_trackerFrameWidth);
+
+								if (ImGui::Button(" - ##Exposure"))
+								{
+									request_tracker_set_exposure(m_trackerExposure - 8);
+								}
+								ImGui::SameLine();
+								if (ImGui::Button(" + ##Exposure"))
+								{
+									request_tracker_set_exposure(m_trackerExposure + 8);
+								}
+								ImGui::SameLine();
+								ImGui::Text("Exposure: %.0f", m_trackerExposure);
+
+								if (ImGui::Button(" - ##Gain"))
+								{
+									request_tracker_set_gain(m_trackerGain - 8);
+								}
+								ImGui::SameLine();
+								if (ImGui::Button(" + ##Gain"))
+								{
+									request_tracker_set_gain(m_trackerGain + 8);
+								}
+								ImGui::SameLine();
+								ImGui::Text("Gain: %.0f", m_trackerGain);
+
 							}
 							else
 							{
@@ -2068,6 +2090,9 @@ void AppStage_ColorCalibration::renderUI()
 			break;
 		}
 
+		m_mAlignPosition[0] = -1;
+		m_mAlignPosition[1] = -1;
+
 		m_videoDisplayMode = eVideoDisplayMode::mode_bgr;
 		m_bTurnOnAllControllers = false;
 		m_bColorCollsionShow = false;
@@ -2155,7 +2180,7 @@ void AppStage_ColorCalibration::renderUI()
 
 				m_iDetectingExposure = k_color_autodetect_probe_step;
 				m_bDetectingExposureGood = false;
-				setState(eMenuState::detection_exposure_adjust);
+				setState(eMenuState::detection_exposure_adjust_begin);
 			}
 		}
 		else
@@ -2178,7 +2203,7 @@ void AppStage_ColorCalibration::renderUI()
 
 				m_iDetectingExposure = k_color_autodetect_probe_step;
 				m_bDetectingExposureGood = false;
-				setState(eMenuState::detection_exposure_adjust);
+				setState(eMenuState::detection_exposure_adjust_begin);
 			}
 		}
 
@@ -2192,27 +2217,40 @@ void AppStage_ColorCalibration::renderUI()
 		ImGui::End();
 		break;
 	}
+
+	case eMenuState::detection_exposure_adjust_begin:
+	{
+		m_lastDetection = std::chrono::high_resolution_clock::now();
+		setState(eMenuState::detection_exposure_adjust);
+		break;
+	}
 	case eMenuState::detection_exposure_adjust:
 	{
-		m_bDetectingColors = true;
+		std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastDetection;
 
-		switch (m_iDetectingAdjustMethod)
+		if (timeSinceLast.count() > k_auto_calib_sleep)
 		{
-		case eDetectionAdjustMethod::adjust_exposure:
-		{
-			request_tracker_set_exposure(m_iDetectingExposure);
-			request_tracker_set_gain(32);
-			break;
-		}
-		case eDetectionAdjustMethod::adjust_gain:
-		{
-			request_tracker_set_exposure(32);
-			request_tracker_set_gain(m_iDetectingExposure);
-			break;
-		}
-		}
+			m_bDetectingColors = true;
 
-		setState(eMenuState::detection_exposure_wait1);
+			switch (m_iDetectingAdjustMethod)
+			{
+			case eDetectionAdjustMethod::adjust_exposure:
+			{
+				request_tracker_set_exposure(m_iDetectingExposure);
+				request_tracker_set_gain(32);
+				break;
+			}
+			case eDetectionAdjustMethod::adjust_gain:
+			{
+				request_tracker_set_exposure(32);
+				request_tracker_set_gain(m_iDetectingExposure);
+				break;
+			}
+			}
+
+			setState(eMenuState::detection_exposure_wait1);
+		}
 		break;
 	}
 	case eMenuState::detection_exposure_wait1:
@@ -2223,9 +2261,9 @@ void AppStage_ColorCalibration::renderUI()
 	}
 	case eMenuState::detection_exposure_wait2:
 	{
-		// $TODO: Wait for frame ready instead of waiting
 		std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
 		std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastDetection;
+
 		if (timeSinceLast.count() > k_auto_calib_sleep)
 		{
 			setState(eMenuState::detection_get_red);
@@ -2238,9 +2276,9 @@ void AppStage_ColorCalibration::renderUI()
 		preset.hue_center = 0;
 		preset.hue_range = 25;
 		preset.saturation_center = 255;
-		preset.saturation_range = 125;
+		preset.saturation_range = 164;
 		preset.value_center = 255;
-		preset.value_range = 125;
+		preset.value_range = 164;
 
 		request_tracker_set_color_preset(PSMTrackingColorType_Red, preset);
 
@@ -2258,9 +2296,9 @@ void AppStage_ColorCalibration::renderUI()
 	}
 	case eMenuState::detection_get_red_wait2:
 	{
-		// $TODO: Wait for frame ready instead of waiting
 		std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
 		std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastDetection;
+
 		if (timeSinceLast.count() > k_auto_calib_sleep)
 		{
 			setState(eMenuState::detection_get_red_done);
@@ -2276,16 +2314,11 @@ void AppStage_ColorCalibration::renderUI()
 			break;
 		}
 
-		*m_video_buffer_state->detectionMaskedBuffer = cv::Scalar(0, 0, 0);
-
-		cv::threshold(*m_video_buffer_state->maskedBuffer, *m_video_buffer_state->maskedBuffer, 0, 255, CV_THRESH_BINARY);
-
+		*m_video_buffer_state->detectionLowerBuffer = cv::Scalar();
 		cv::bitwise_or(
-			*m_video_buffer_state->maskedBuffer,
-			*m_video_buffer_state->detectionMaskedBuffer,
-			*m_video_buffer_state->detectionMaskedBuffer);
-
-		cv::threshold(*m_video_buffer_state->detectionMaskedBuffer, *m_video_buffer_state->detectionMaskedBuffer, 0, 255, CV_THRESH_BINARY);
+			*m_video_buffer_state->detectionLowerBuffer,
+			*m_video_buffer_state->gsLowerBuffer,
+			*m_video_buffer_state->detectionLowerBuffer);
 
 		setState(eMenuState::detection_get_green);
 		break;
@@ -2296,9 +2329,9 @@ void AppStage_ColorCalibration::renderUI()
 		preset.hue_center = 60;
 		preset.hue_range = 25;
 		preset.saturation_center = 255;
-		preset.saturation_range = 125;
+		preset.saturation_range = 164;
 		preset.value_center = 255;
-		preset.value_range = 125;
+		preset.value_range = 164;
 
 		request_tracker_set_color_preset(PSMTrackingColorType_Green, preset);
 
@@ -2316,9 +2349,9 @@ void AppStage_ColorCalibration::renderUI()
 	}
 	case eMenuState::detection_get_green_wait2: 
 	{
-		// $TODO: Wait for frame ready instead of waiting
 		std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
 		std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastDetection;
+
 		if (timeSinceLast.count() > k_auto_calib_sleep)
 		{
 			setState(eMenuState::detection_get_green_done);
@@ -2334,14 +2367,10 @@ void AppStage_ColorCalibration::renderUI()
 			break;
 		}
 
-		cv::threshold(*m_video_buffer_state->maskedBuffer, *m_video_buffer_state->maskedBuffer, 0, 255, CV_THRESH_BINARY);
-
 		cv::bitwise_and(
-			*m_video_buffer_state->maskedBuffer,
-			*m_video_buffer_state->detectionMaskedBuffer,
-			*m_video_buffer_state->detectionMaskedBuffer);
-
-		cv::threshold(*m_video_buffer_state->detectionMaskedBuffer, *m_video_buffer_state->detectionMaskedBuffer, 0, 255, CV_THRESH_BINARY);
+			*m_video_buffer_state->detectionLowerBuffer,
+			*m_video_buffer_state->gsLowerBuffer,
+			*m_video_buffer_state->detectionLowerBuffer);
 
 		setState(eMenuState::detection_get_blue);
 		break;
@@ -2352,9 +2381,9 @@ void AppStage_ColorCalibration::renderUI()
 		preset.hue_center = 120;
 		preset.hue_range = 25;
 		preset.saturation_center = 255;
-		preset.saturation_range = 125;
+		preset.saturation_range = 164;
 		preset.value_center = 255;
-		preset.value_range = 125;
+		preset.value_range = 164;
 
 		request_tracker_set_color_preset(PSMTrackingColorType_Blue, preset);
 
@@ -2370,9 +2399,9 @@ void AppStage_ColorCalibration::renderUI()
 		break;
 	case eMenuState::detection_get_blue_wait2:
 	{
-		// $TODO: Wait for frame ready instead of waiting
 		std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
 		std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastDetection;
+
 		if (timeSinceLast.count() > k_auto_calib_sleep)
 		{
 			setState(eMenuState::detection_get_blue_done);
@@ -2387,15 +2416,11 @@ void AppStage_ColorCalibration::renderUI()
 			setState(eMenuState::detection_fail_pre);
 			break;
 		}
-
-		cv::threshold(*m_video_buffer_state->maskedBuffer, *m_video_buffer_state->maskedBuffer, 0, 255, CV_THRESH_BINARY);
-
+		
 		cv::bitwise_and(
-			*m_video_buffer_state->maskedBuffer,
-			*m_video_buffer_state->detectionMaskedBuffer,
-			*m_video_buffer_state->detectionMaskedBuffer);
-
-		cv::threshold(*m_video_buffer_state->detectionMaskedBuffer, *m_video_buffer_state->detectionMaskedBuffer, 0, 255, CV_THRESH_BINARY);
+			*m_video_buffer_state->detectionLowerBuffer,
+			*m_video_buffer_state->gsLowerBuffer,
+			*m_video_buffer_state->detectionLowerBuffer);
 
 		setState(eMenuState::detection_change_color_wait1);
 		request_set_controller_tracking_color(m_masterControllerView, PSMTrackingColorType_Magenta);
@@ -2410,9 +2435,6 @@ void AppStage_ColorCalibration::renderUI()
 			setState(eMenuState::detection_fail_pre);
 			break;
 		}
-
-		cv::cvtColor(*m_video_buffer_state->detectionMaskedBuffer, *m_video_buffer_state->detectionLowerBuffer, cv::COLOR_BGR2GRAY);
-		cv::threshold(*m_video_buffer_state->detectionLowerBuffer, *m_video_buffer_state->detectionLowerBuffer, 0, 255, CV_THRESH_BINARY);
 
 		if (!m_bDetectingCancel)
 		{
@@ -2433,50 +2455,56 @@ void AppStage_ColorCalibration::renderUI()
 			// Try adjusting exposure first.
 			if (contures.size() == 0)
 			{
-				// If its a virtual tracker, don't even bother setting gain/exposure, just fail.
-				if (is_tracker_virtual())
+				if (m_iDetectingAdjustMethod == eDetectionAdjustMethod::adjust_keep)
 				{
-					m_iDetectingFailReason = eDetectionFailReason::failreason_unsupported_tracker;
+					m_iDetectingFailReason = eDetectionFailReason::failreason_no_detection;
 					setState(eMenuState::detection_fail_pre);
 				}
 				else
 				{
-					if (m_iDetectingAdjustMethod == eDetectionAdjustMethod::adjust_keep)
+					m_iDetectingExposure += k_color_autodetect_probe_step;
+
+					if (m_iDetectingExposure >= k_color_autodetect_probe_max)
 					{
 						m_iDetectingFailReason = eDetectionFailReason::failreason_no_detection;
 						setState(eMenuState::detection_fail_pre);
 					}
 					else
 					{
-						m_iDetectingExposure += k_color_autodetect_probe_step;
-
-						if (m_iDetectingExposure >= k_color_autodetect_probe_max)
-						{
-							m_iDetectingFailReason = eDetectionFailReason::failreason_no_detection;
-							setState(eMenuState::detection_fail_pre);
-						}
-						else
-						{
-							setState(eMenuState::detection_exposure_adjust);
-						}
+						setState(eMenuState::detection_exposure_adjust_begin);
 					}
 				}
 				break;
 			}
+
+			int iDetectionCenterX = 0;
+			int iDetectionCenterY = 0;
+
+			for (int i = 0; i < contures.size(); i++)
+			{
+				iDetectionCenterX += contures[i][0];
+				iDetectionCenterY += contures[i][1];
+			}
+
+			iDetectionCenterX /= contures.size();
+			iDetectionCenterY /= contures.size();
+
+			m_mAlignPosition[0] = iDetectionCenterX;
+			m_mAlignPosition[1] = iDetectionCenterY;
 
 			// Apply some buffer for exposure/gain
 			if (!m_bDetectingExposureGood)
 			{
 				m_bDetectingExposureGood = true;
 
-				if (!is_tracker_virtual() && m_iDetectingAdjustMethod != eDetectionAdjustMethod::adjust_keep)
+				if (m_iDetectingAdjustMethod != eDetectionAdjustMethod::adjust_keep)
 				{
-					m_iDetectingExposure += (k_color_autodetect_probe_step_good);
+					m_iDetectingExposure += k_color_autodetect_probe_step_good;
 
 					if (m_iDetectingExposure >= k_color_autodetect_probe_max)
 						m_iDetectingExposure = k_color_autodetect_probe_max;
 
-					setState(eMenuState::detection_exposure_adjust);
+					setState(eMenuState::detection_exposure_adjust_begin);
 					break;
 				}
 			}
@@ -2485,9 +2513,9 @@ void AppStage_ColorCalibration::renderUI()
 			PSMTrackingColorType new_color =
 				static_cast<PSMTrackingColorType>(
 				(m_masterTrackingColorType + 1) % PSMTrackingColorType_Custom0); //PSMTrackingColorType_MaxColorTypes
-
+			
 			PSMVector3f pick_color;
-			if (!get_average_color_point(contures[0][0], contures[0][1], 10, 32, 32, pick_color))
+			if (!get_average_color_point(iDetectionCenterX, iDetectionCenterY, 10, 64, 64, pick_color))
 			{
 				m_iDetectingFailReason = eDetectionFailReason::failreason_no_detection;
 				setState(eMenuState::detection_fail_pre);
@@ -2541,9 +2569,9 @@ void AppStage_ColorCalibration::renderUI()
 	}
 	case eMenuState::detection_change_color_wait2:
 	{
-		// $TODO: Wait for frame ready instead of waiting
 		std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
 		std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastDetection;
+
 		if (timeSinceLast.count() > k_auto_calib_sleep)
 		{
 			setState(eMenuState::detection_change_color);
@@ -2583,7 +2611,7 @@ void AppStage_ColorCalibration::renderUI()
 			if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconUpdate(), "Try Again"))
 			{
 				m_iDetectingExposure = k_color_autodetect_probe_step;
-				setState(eMenuState::detection_exposure_adjust);
+				setState(eMenuState::detection_exposure_adjust_begin);
 			}
 
 			ImGui::SameLine();
@@ -2665,7 +2693,7 @@ void AppStage_ColorCalibration::renderUI()
 			if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconUpdate(), "Try Again"))
 			{
 				m_iDetectingExposure = k_color_autodetect_probe_step;
-				setState(eMenuState::detection_exposure_adjust);
+				setState(eMenuState::detection_exposure_adjust_begin);
 			}
 
 			ImGui::SameLine();
@@ -2695,7 +2723,7 @@ void AppStage_ColorCalibration::renderUI()
 			if (AssetManager::ImGuiButtonIcon(AssetManager::getInstance()->getIconUpdate(), "Try Again"))
 			{
 				m_iDetectingExposure = k_color_autodetect_probe_step;
-				setState(eMenuState::detection_exposure_adjust);
+				setState(eMenuState::detection_exposure_adjust_begin);
 			}
 
 			ImGui::SameLine();
@@ -2754,9 +2782,9 @@ void AppStage_ColorCalibration::renderUI()
 	}
     case eMenuState::autoConfig_wait2:
 	{
-		// $TODO: Wait for frame ready instead of waiting
 		std::chrono::time_point<std::chrono::high_resolution_clock> now = std::chrono::high_resolution_clock::now();
 		std::chrono::duration<float, std::milli> timeSinceLast = now - m_lastDetection;
+
 		if (timeSinceLast.count() > k_auto_calib_sleep)
 		{
 			setState(eMenuState::autoConfig);
@@ -2766,7 +2794,7 @@ void AppStage_ColorCalibration::renderUI()
     case eMenuState::changeController:
 		if (m_bDetectingColors)
 		{
-			setState(eMenuState::detection_exposure_adjust);
+			setState(eMenuState::detection_exposure_adjust_begin);
 		}
 		else
 		{
@@ -2778,7 +2806,13 @@ void AppStage_ColorCalibration::renderUI()
     case eMenuState::changeTracker:
 		if (m_bDetectingColors)
 		{
-			setState(eMenuState::detection_exposure_adjust);
+			// We should reset exposure/gain when we change from/to a virtual tracker.
+			if (is_tracker_virtual())
+			{
+				m_iDetectingExposure = k_color_autodetect_probe_step;
+			}
+
+			setState(eMenuState::detection_exposure_adjust_begin);
 		}
 		else
 		{
@@ -3513,6 +3547,13 @@ void AppStage_ColorCalibration::handle_tracker_get_settings_response(
 				}
 				}
 			}
+
+			// We should reset exposure/gain when we change from/to a virtual tracker.
+			if (thisPtr->m_bDetectingColors && thisPtr->is_tracker_virtual())
+			{
+				thisPtr->m_iDetectingExposure = k_color_autodetect_probe_step;
+			}
+
 			
         } break;
     case PSMResult_Error:
@@ -3723,7 +3764,7 @@ void AppStage_ColorCalibration::request_change_tracker(int step)
     }
 }
 
-void AppStage_ColorCalibration::auto_adjust_color_sensitivity(TrackerColorPreset &preset, bool isPSmoveDevice)
+void AppStage_ColorCalibration::auto_adjust_color_sensitivity(TrackerColorPreset &preset, bool isNativeDevice)
 {
 	// Additional color details
 	// MAGENTA requires some HEU_RANGE adjustments to track propperly otherwise it becomes too blocky. None of the other colors seems to be near it at all anyways?
@@ -3737,7 +3778,7 @@ void AppStage_ColorCalibration::auto_adjust_color_sensitivity(TrackerColorPreset
 	float saturationRangeMulti = 1.0f;
 
 	// Only fine tune known psmoves and pseyes because it could cause issues with non-psmove hardware
-	if (isPSmoveDevice)
+	if (isNativeDevice)
 	{
 		switch (m_masterTrackingColorType)
 		{
@@ -4045,64 +4086,66 @@ bool AppStage_ColorCalibration::get_average_color_point(float x, float y, int hu
 	float targetSaturation = avgSaturation;
 	float targetValue = avgValue;
 
-	for (int j = 0; j <= 1; ++j)
+	// Directions: right, down, left, up
+	int dirX[] = { 1, 0, -1, 0 };
+	int dirY[] = { 0, 1, 0, -1 };
+	int steps = 1; // Number of steps in the current direction
+	int __x = static_cast<int>(x);
+	int __y = static_cast<int>(y);
+	 
+	bool stepFound = false;
+	int stepChange = 0;
+	while (steps < dispSize.x || steps < dispSize.y) 
 	{
-		for (int stepX = 1;; ++stepX)
+		// Cycle through directions
+		for (int dir = 0; dir < 4; dir++)
 		{
-			int __x = static_cast<int>(x) + ((j == 0) ? stepX : -stepX);
-			int __y = static_cast<int>(y);
-			if (__x < 0 || __x > dispSize.x - 1)
-				break;
-			if (__y < 0 || __y > dispSize.y - 1)
-				break;
+			for (int i = 0; i < steps; i++) 
+			{
+				__x += dirX[dir];
+				__y += dirY[dir];
 
-			int __img_x = (__x * m_video_buffer_state->hsvBuffer->cols) / static_cast<int>(dispSize.x);
-			int __img_y = (__y * m_video_buffer_state->hsvBuffer->rows) / static_cast<int>(dispSize.y);
-			cv::Vec< unsigned char, 3 > __hsv_pixel = m_video_buffer_state->hsvBuffer->at<cv::Vec< unsigned char, 3 >>(cv::Point(__img_x, __img_y));
+				// Ensure the indices are within bounds
+				if (__x >= 0 && __x < dispSize.x && __y >= 0 && __y < dispSize.y) 
+				{
+					int __img_x = (__x * m_video_buffer_state->hsvBuffer->cols) / static_cast<int>(dispSize.x);
+					int __img_y = (__y * m_video_buffer_state->hsvBuffer->rows) / static_cast<int>(dispSize.y);
+					cv::Vec< unsigned char, 3 > __hsv_pixel = m_video_buffer_state->hsvBuffer->at<cv::Vec< unsigned char, 3 >>(cv::Point(__img_x, __img_y));
 
-			float __hue = __hsv_pixel[0];
-			float __saturation = __hsv_pixel[1];
-			float __value = __hsv_pixel[2];
-			if (__hue > targetHue + hue_range || __hue < targetHue - hue_range)
-				break;
-			if (__saturation > targetSaturation + saturation_range || __saturation < targetSaturation - saturation_range)
-				break;
-			if (__value > targetValue + value_range || __value < targetValue - value_range)
-				break;
+					float __hue = __hsv_pixel[0];
+					float __saturation = __hsv_pixel[1];
+					float __value = __hsv_pixel[2];
 
-			avgHue += __hsv_pixel[0];
-			avgSaturation += __hsv_pixel[1];
-			avgValue += __hsv_pixel[2];
-			avgCount++;
+					if (__hue > targetHue + hue_range || __hue < targetHue - hue_range)
+						continue;
+					if (__saturation > targetSaturation + saturation_range || __saturation < targetSaturation - saturation_range)
+						continue;
+					if (__value > targetValue + value_range || __value < targetValue - value_range)
+						continue;
+
+					if (avgCount > 10000)
+						continue;
+
+					avgHue += __hue;
+					avgSaturation += __saturation;
+					avgValue += __value;
+					avgCount++;
+
+					stepFound = true;
+				}
+			}
+
+			if (dir == 1 || dir == 3) stepChange++; // Increase steps after vertical moves
 		}
 
-		for (int stepY = 1;; ++stepY)
-		{
-			int __x = static_cast<int>(x);
-			int __y = static_cast<int>(y) + ((j == 0) ? stepY : -stepY);
-			if (__x < 0 || __x > dispSize.x - 1)
-				break;
-			if (__y < 0 || __y > dispSize.y - 1)
+		if (stepChange == 2) {
+			stepChange = 0;
+			steps++;
+
+			if (!stepFound)
 				break;
 
-			int __img_x = (__x * m_video_buffer_state->hsvBuffer->cols) / static_cast<int>(dispSize.x);
-			int __img_y = (__y * m_video_buffer_state->hsvBuffer->rows) / static_cast<int>(dispSize.y);
-			cv::Vec< unsigned char, 3 > __hsv_pixel = m_video_buffer_state->hsvBuffer->at<cv::Vec< unsigned char, 3 >>(cv::Point(__img_x, __img_y));
-
-			float __hue = __hsv_pixel[0];
-			float __saturation = __hsv_pixel[1];
-			float __value = __hsv_pixel[2];
-			if (__hue > targetHue + hue_range || __hue < targetHue - hue_range)
-				break;
-			if (__saturation > targetSaturation + saturation_range || __saturation < targetSaturation - saturation_range)
-				break;
-			if (__value > targetValue + value_range || __value < targetValue - value_range)
-				break;
-
-			avgHue += __hsv_pixel[0];
-			avgSaturation += __hsv_pixel[1];
-			avgValue += __hsv_pixel[2];
-			avgCount++;
+			stepFound = false;
 		}
 	}
 
