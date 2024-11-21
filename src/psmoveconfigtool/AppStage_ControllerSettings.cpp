@@ -1578,7 +1578,7 @@ void AppStage_ControllerSettings::renderUI()
 
 										if (iOffsetView == 1)
 										{
-											ImGui::Text("Local Orientation X (Roll): ");
+											ImGui::Text("Local Orientation X (Pitch): ");
 											ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 											ImGui::PushItemWidth(120.f);
 											if (ImGui::InputFloat("##LocalOffsetOrientationX", &controllerInfo.OffsetOrientation.x, 1.f, 5.f, 2))
@@ -1606,7 +1606,7 @@ void AppStage_ControllerSettings::renderUI()
 											}
 											ImGui::PopItemWidth();
 
-											ImGui::Text("Local Orientation Z (Pitch): ");
+											ImGui::Text("Local Orientation Z (Roll): ");
 											ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 											ImGui::PushItemWidth(120.f);
 											if (ImGui::InputFloat("##LocalOffsetOrientationZ", &controllerInfo.OffsetOrientation.z, 1.f, 5.f, 2))
@@ -1622,7 +1622,7 @@ void AppStage_ControllerSettings::renderUI()
 
 											ImGui::Separator();
 
-											ImGui::Text("World Orientation X (Roll): ");
+											ImGui::Text("World Orientation X (Pitch): ");
 											ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 											ImGui::PushItemWidth(120.f);
 											if (ImGui::InputFloat("##WorldOffsetOrientationX", &controllerInfo.OffsetWorldOrientation.x, 1.f, 5.f, 2))
@@ -1653,7 +1653,7 @@ void AppStage_ControllerSettings::renderUI()
 
 										if (iOffsetView == 1)
 										{
-											ImGui::Text("World Orientation Z (Pitch): ");
+											ImGui::Text("World Orientation Z (Roll): ");
 											ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 											ImGui::PushItemWidth(120.f);
 											if (ImGui::InputFloat("##WorldOffsetOrientationZ", &controllerInfo.OffsetWorldOrientation.z, 1.f, 5.f, 2))

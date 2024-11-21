@@ -865,7 +865,7 @@ void AppStage_HMDSettings::renderUI()
 
 							if (iOffsetView == 1)
 							{
-								ImGui::Text("Local Orientation X (Roll): ");
+								ImGui::Text("Local Orientation X (Pitch): ");
 								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 								ImGui::PushItemWidth(120.f);
 								if (ImGui::InputFloat("##LocalOffsetOrientationX", &hmdInfo.OffsetOrientation.x, 1.f, 5.f, 2))
@@ -893,7 +893,7 @@ void AppStage_HMDSettings::renderUI()
 								}
 								ImGui::PopItemWidth();
 
-								ImGui::Text("Local Orientation Z (Pitch): ");
+								ImGui::Text("Local Orientation Z (Roll): ");
 								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 								ImGui::PushItemWidth(120.f);
 								if (ImGui::InputFloat("##LocalOffsetOrientationZ", &hmdInfo.OffsetOrientation.z, 1.f, 5.f, 2))
@@ -909,7 +909,7 @@ void AppStage_HMDSettings::renderUI()
 
 								ImGui::Separator();
 
-								ImGui::Text("World Orientation X (Roll): ");
+								ImGui::Text("World Orientation X (Pitch): ");
 								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 								ImGui::PushItemWidth(120.f);
 								if (ImGui::InputFloat("##WorldOffsetOrientationX", &hmdInfo.OffsetWorldOrientation.x, 1.f, 5.f, 2))
@@ -940,7 +940,7 @@ void AppStage_HMDSettings::renderUI()
 
 							if (iOffsetView == 1)
 							{
-								ImGui::Text("World Orientation Z (Pitch): ");
+								ImGui::Text("World Orientation Z (Roll): ");
 								ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
 								ImGui::PushItemWidth(120.f);
 								if (ImGui::InputFloat("##WorldOffsetOrientationZ", &hmdInfo.OffsetWorldOrientation.z, 1.f, 5.f, 2))
