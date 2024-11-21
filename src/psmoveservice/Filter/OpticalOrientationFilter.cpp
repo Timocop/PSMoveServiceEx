@@ -186,34 +186,37 @@ Eigen::Quaternionf OpticalOrientationFilter::getOrientation(float time, float of
 {
 	Eigen::Quaternionf result = Eigen::Quaternionf::Identity();
 
+	// Apply offsets to reset orientation
+	const Eigen::Quaternionf local_offset_x_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_x * k_degrees_to_radians, Eigen::Vector3f::UnitX()));
+	const Eigen::Quaternionf local_offset_y_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_y * k_degrees_to_radians, Eigen::Vector3f::UnitY()));
+	const Eigen::Quaternionf local_offset_z_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_z * k_degrees_to_radians, Eigen::Vector3f::UnitZ()));
+	const Eigen::Quaternionf local_offset_quat = local_offset_y_quat * local_offset_z_quat * local_offset_x_quat;
+
+	const Eigen::Quaternionf world_offset_x_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_world_x * k_degrees_to_radians, Eigen::Vector3f::UnitX()));
+	const Eigen::Quaternionf world_offset_y_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_world_y * k_degrees_to_radians, Eigen::Vector3f::UnitY()));
+	const Eigen::Quaternionf world_offset_z_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_world_z * k_degrees_to_radians, Eigen::Vector3f::UnitZ()));
+	const Eigen::Quaternionf world_offset_quat = world_offset_y_quat * world_offset_z_quat * world_offset_x_quat;
+
 	if (m_state->bIsValid)
 	{
-		Eigen::Quaternionf combined_orientation = getCombinedOrientation();
+		Eigen::Quaternionf orientation = getCombinedOrientation();
+		Eigen::Vector3f ang_velocity = m_state->angular_velocity;
 
-		Eigen::Quaternionf predicted_orientation = combined_orientation;
+		Eigen::Quaternionf predicted_orientation = orientation * local_offset_quat;
 
 		if (fabsf(time) > k_real_epsilon)
 		{
+			const Eigen::Vector3f local_velocity = eigen_vector3f_clockwise_rotate(local_offset_quat, ang_velocity);
+
 			const Eigen::Quaternionf &quaternion_derivative =
-				eigen_angular_velocity_to_quaternion_derivative(combined_orientation, m_state->angular_velocity);
+				eigen_angular_velocity_to_quaternion_derivative(predicted_orientation, local_velocity);
 
 			predicted_orientation = Eigen::Quaternionf(
-				combined_orientation.coeffs()
+				predicted_orientation.coeffs()
 				+ quaternion_derivative.coeffs()*time).normalized();
 		}
 
-		// Apply offsets to reset orientation
-		const Eigen::Quaternionf local_offset_x_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_x * k_degrees_to_radians, Eigen::Vector3f::UnitX()));
-		const Eigen::Quaternionf local_offset_y_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_y * k_degrees_to_radians, Eigen::Vector3f::UnitY()));
-		const Eigen::Quaternionf local_offset_z_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_z * k_degrees_to_radians, Eigen::Vector3f::UnitZ()));
-		const Eigen::Quaternionf local_offset_quat = local_offset_y_quat * local_offset_z_quat * local_offset_x_quat;
-
-		const Eigen::Quaternionf world_offset_x_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_world_x * k_degrees_to_radians, Eigen::Vector3f::UnitX()));
-		const Eigen::Quaternionf world_offset_y_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_world_y * k_degrees_to_radians, Eigen::Vector3f::UnitY()));
-		const Eigen::Quaternionf world_offset_z_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_world_z * k_degrees_to_radians, Eigen::Vector3f::UnitZ()));
-		const Eigen::Quaternionf world_offset_quat = world_offset_y_quat * world_offset_z_quat * world_offset_x_quat;
-
-		result = (world_offset_quat * m_state->reset_orientation) * (predicted_orientation * local_offset_quat);
+		result = (world_offset_quat * m_state->reset_orientation) * predicted_orientation;
 	}
 
 	return result;
@@ -224,14 +227,36 @@ Eigen::Quaternionf OpticalOrientationFilter::getResetOrientation() const
 	return m_state->reset_orientation;
 }
 
-Eigen::Vector3f OpticalOrientationFilter::getAngularVelocityRadPerSec() const
+Eigen::Vector3f OpticalOrientationFilter::getAngularVelocityRadPerSec(float offset_x, float offset_y, float offset_z) const
 {
-	return m_state->bIsValid ? m_state->angular_velocity : Eigen::Vector3f::Zero();
+	if (!m_state->bIsValid)
+		return Eigen::Vector3f::Zero();
+
+	// Rotate by Axis
+	const Eigen::Quaternionf local_offset_x_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_x * k_degrees_to_radians, Eigen::Vector3f::UnitX()));
+	const Eigen::Quaternionf local_offset_y_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_y * k_degrees_to_radians, Eigen::Vector3f::UnitY()));
+	const Eigen::Quaternionf local_offset_z_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_z * k_degrees_to_radians, Eigen::Vector3f::UnitZ()));
+	const Eigen::Quaternionf local_offset_quat = local_offset_y_quat * local_offset_z_quat * local_offset_x_quat;
+
+	const Eigen::Vector3f local_velocity = eigen_vector3f_clockwise_rotate(local_offset_quat, m_state->angular_velocity);
+
+	return local_velocity;
 }
 
-Eigen::Vector3f OpticalOrientationFilter::getAngularAccelerationRadPerSecSqr() const
+Eigen::Vector3f OpticalOrientationFilter::getAngularAccelerationRadPerSecSqr(float offset_x, float offset_y, float offset_z) const
 {
-	return m_state->bIsValid ? m_state->angular_acceleration : Eigen::Vector3f::Zero();
+	if (!m_state->bIsValid)
+		return Eigen::Vector3f::Zero();
+
+	// Rotate by Axis
+	const Eigen::Quaternionf local_offset_x_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_x * k_degrees_to_radians, Eigen::Vector3f::UnitX()));
+	const Eigen::Quaternionf local_offset_y_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_y * k_degrees_to_radians, Eigen::Vector3f::UnitY()));
+	const Eigen::Quaternionf local_offset_z_quat = Eigen::Quaternionf(Eigen::AngleAxisf(offset_z * k_degrees_to_radians, Eigen::Vector3f::UnitZ()));
+	const Eigen::Quaternionf local_offset_quat = local_offset_y_quat * local_offset_z_quat * local_offset_x_quat;
+
+	const Eigen::Vector3f local_acceleration = eigen_vector3f_clockwise_rotate(local_offset_quat, m_state->angular_acceleration);
+
+	return local_acceleration;
 }
 
 Eigen::Quaternionf OpticalOrientationFilter::getCombinedOrientation() const

@@ -37,8 +37,8 @@ public:
 
 	Eigen::Quaternionf getOrientation(float time = 0.f, float offset_x = 0.f, float offset_y = 0.f, float offset_z = 0.f, float offset_world_x = 0.f, float offset_world_y = 0.f, float offset_world_z = 0.f) const override;
 	Eigen::Quaternionf getResetOrientation() const override;
-    Eigen::Vector3f getAngularVelocityRadPerSec() const override;
-    Eigen::Vector3f getAngularAccelerationRadPerSecSqr() const override;
+    Eigen::Vector3f getAngularVelocityRadPerSec(float offset_x = 0.f, float offset_y = 0.f, float offset_z = 0.f) const override;
+    Eigen::Vector3f getAngularAccelerationRadPerSecSqr(float offset_x = 0.f, float offset_y = 0.f, float offset_z = 0.f) const override;
 
 protected:
     OrientationFilterConstants m_constants;

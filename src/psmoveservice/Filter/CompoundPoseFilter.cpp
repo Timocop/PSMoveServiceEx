@@ -213,14 +213,14 @@ Eigen::Quaternionf CompoundPoseFilter::getResetOrientation() const
 	return (m_orientation_filter != nullptr) ? m_orientation_filter->getResetOrientation() : Eigen::Quaternionf::Identity();
 }
 
-Eigen::Vector3f CompoundPoseFilter::getAngularVelocityRadPerSec() const
+Eigen::Vector3f CompoundPoseFilter::getAngularVelocityRadPerSec(float offset_x, float offset_y, float offset_z) const
 {
-	return (m_orientation_filter != nullptr) ? m_orientation_filter->getAngularVelocityRadPerSec() : Eigen::Vector3f::Zero();
+	return (m_orientation_filter != nullptr) ? m_orientation_filter->getAngularVelocityRadPerSec(offset_x, offset_y, offset_z) : Eigen::Vector3f::Zero();
 }
 
-Eigen::Vector3f CompoundPoseFilter::getAngularAccelerationRadPerSecSqr() const
+Eigen::Vector3f CompoundPoseFilter::getAngularAccelerationRadPerSecSqr(float offset_x, float offset_y, float offset_z) const
 {
-	return (m_orientation_filter != nullptr) ? m_orientation_filter->getAngularAccelerationRadPerSecSqr() : Eigen::Vector3f::Zero();
+	return (m_orientation_filter != nullptr) ? m_orientation_filter->getAngularAccelerationRadPerSecSqr(offset_x, offset_y, offset_z) : Eigen::Vector3f::Zero();
 }
 
 Eigen::Vector3f CompoundPoseFilter::getPositionCm(float time) const

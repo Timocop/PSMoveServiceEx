@@ -346,10 +346,10 @@ public:
 	virtual Eigen::Quaternionf getResetOrientation() const = 0;
 
     /// Get the current world space angular velocity of the filter state (rad/s)
-    virtual Eigen::Vector3f getAngularVelocityRadPerSec() const = 0;
+    virtual Eigen::Vector3f getAngularVelocityRadPerSec(float offset_x = 0.f, float offset_y = 0.f, float offset_z = 0.f) const = 0;
 
     /// Get the current world space angular acceleration of the filter state (rad/s^2)
-    virtual Eigen::Vector3f getAngularAccelerationRadPerSecSqr() const = 0;
+    virtual Eigen::Vector3f getAngularAccelerationRadPerSecSqr(float offset_x = 0.f, float offset_y = 0.f, float offset_z = 0.f) const = 0;
 };
 
 /// Common interface to all position filters
@@ -386,10 +386,10 @@ public:
 	virtual Eigen::Quaternionf getResetOrientation() const = 0;
 
     /// Get the current world space angular velocity of the filter state (rad/s)
-    virtual Eigen::Vector3f getAngularVelocityRadPerSec() const = 0;
+    virtual Eigen::Vector3f getAngularVelocityRadPerSec(float offset_x = 0.f, float offset_y = 0.f, float offset_z = 0.f) const = 0;
 
     /// Get the current world space angular acceleration of the filter state (rad/s^2)
-    virtual Eigen::Vector3f getAngularAccelerationRadPerSecSqr() const = 0;
+    virtual Eigen::Vector3f getAngularAccelerationRadPerSecSqr(float offset_x = 0.f, float offset_y = 0.f, float offset_z = 0.f) const = 0;
 
     /// Estimate the current position of the filter state given a time offset into the future (centimeters)
     virtual Eigen::Vector3f getPositionCm(float time = 0.f) const = 0;
