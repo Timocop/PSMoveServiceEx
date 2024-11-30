@@ -1484,7 +1484,7 @@ void AppStage_ControllerSettings::renderUI()
 												controllerInfo.FilterAngularSmoothingFactor = 0.25f;
 												controllerInfo.FilterVelocityPredictionCutoff = 1.0f;
 												controllerInfo.FilterAngularPredictionCutoff = 0.25f;
-												controllerInfo.FilterMagnetometerDeviationCutoff = 0.10f;
+												controllerInfo.FilterMagnetometerDeviationCutoff = 0.20f;
 												controllerInfo.FilterPositionKalmanError = 10.f;
 												controllerInfo.FilterPositionKalmanNoise = 300.f;
 												controllerInfo.FilterPositionKalmanDisableCutoff = true;
@@ -1513,7 +1513,7 @@ void AppStage_ControllerSettings::renderUI()
 												controllerInfo.FilterAngularSmoothingFactor = 0.25f;
 												controllerInfo.FilterVelocityPredictionCutoff = 1.0f;
 												controllerInfo.FilterAngularPredictionCutoff = 0.0f; //HMD
-												controllerInfo.FilterMagnetometerDeviationCutoff = 0.10f;
+												controllerInfo.FilterMagnetometerDeviationCutoff = 0.20f;
 												controllerInfo.FilterPositionKalmanError = 10.f;
 												controllerInfo.FilterPositionKalmanNoise = 200.f; //HMD
 												controllerInfo.FilterPositionKalmanDisableCutoff = true;
