@@ -1004,12 +1004,15 @@ void OrientationFilterMadgwickMARG::update(
 			}
 
 			const Eigen::Vector3f &world_g = -packet.world_accelerometer;
-			const float accel_g = sqrtf(world_g.x() * world_g.x() + world_g.y() * world_g.y() + world_g.z() * world_g.z());
+			const float accel_g = sqrtf(
+				world_g.x() * world_g.x() + 
+				world_g.y() * world_g.y() + 
+				world_g.z() * world_g.z());
 			
 			if ((eigen_quaternion_unsigned_angle_between(SEq_smart_new, SEq_new) * k_radians_to_degreees) > k_madgwick_smart_correct_max_deg)
 			{
 				// Make sure smart madgwick its kind of stable
-				if (accel_g > k_madgwick_smart_correct_gravity_stable && accel_g < 1.f + (1.f - k_madgwick_smart_correct_gravity_stable))
+				if (fabsf(accel_g - 1.f) < (1.f - k_madgwick_smart_correct_gravity_stable))
 				{
 					m_smartResetTime += imu_delta_time;
 
@@ -1514,8 +1517,7 @@ bool OrientationFilterComplementaryMARG::filter_process_passive_drift_correction
 	bool gravity_stable = false;
 	bool gyro_stable = false;
 	bool accel_stable = false;
-	if (grav_q > filter_passive_drift_correction_gravity_deadzone &&
-		grav_q < 1.f + (1.f - filter_passive_drift_correction_gravity_deadzone))
+	if (fabsf(grav_q - 1.0f) < (1.f - filter_passive_drift_correction_gravity_deadzone))
 	{
 		gravity_stable = true;
 	}
