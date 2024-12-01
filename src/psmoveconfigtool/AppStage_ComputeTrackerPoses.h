@@ -58,7 +58,8 @@ public:
 
 	struct MagneticInfo
 	{
-		float magnetic_strength;
+		float average_magnetic_strength;
+		int sample_count;
 		PSMVector3f m_position;
 	};
 
@@ -228,7 +229,6 @@ protected:
 	std::vector<TriangulationInfo> m_triangInfo;
 
 	std::vector<MagneticInfo> m_magneticSamples;
-	float m_currentMag;
 	bool m_hideGoodSamples;
 	bool m_showTrackerFrustum;
 };

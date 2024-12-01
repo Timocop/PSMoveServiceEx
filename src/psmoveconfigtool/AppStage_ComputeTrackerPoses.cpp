@@ -62,7 +62,6 @@ AppStage_ComputeTrackerPoses::AppStage_ComputeTrackerPoses(App *app)
 	, m_triangCenter(false)
 	, m_hideGoodSamples(false)
 	, m_showTrackerFrustum(true)
-	, m_currentMag(0.f)
 { 
     m_renderTrackerIter = m_trackerViews.end();
 	m_triangInfo.clear();
@@ -116,7 +115,6 @@ void AppStage_ComputeTrackerPoses::enter()
 	m_lastControllerSeqNum = -1;
 	
 	m_showTrackerFrustum = true;
-	m_currentMag = 0.f;
 
 	m_magneticSamples.clear();
 
@@ -254,8 +252,6 @@ void AppStage_ComputeTrackerPoses::update()
 								raw_mag.z * raw_mag.z
 							) - 1.f);
 
-							m_currentMag = k_sample_alpha*raw_mag_q + (1.f - k_sample_alpha)*m_currentMag;
-
 							if (controllerView->ControllerState.PSMoveState.bIsCurrentlyTracking)
 							{
 								PSMVector3f position = controllerView->ControllerState.PSMoveState.Pose.Position;
@@ -278,15 +274,18 @@ void AppStage_ComputeTrackerPoses::update()
 
 								if (targetIndex > -1)
 								{
-									m_magneticSamples[targetIndex].magnetic_strength = 
-										k_sample_alpha*m_currentMag + 
-										(1.f - k_sample_alpha)*m_magneticSamples[targetIndex].magnetic_strength;
+									if (m_magneticSamples[targetIndex].sample_count < 1000)
+									{
+										m_magneticSamples[targetIndex].average_magnetic_strength += raw_mag_q;
+										m_magneticSamples[targetIndex].sample_count++;
+									}
 								}
 
 								if (targetIndex == -1 && m_magneticSamples.size() < 1000)
 								{
 									MagneticInfo info;
-									info.magnetic_strength = m_currentMag;
+									info.average_magnetic_strength = raw_mag_q;
+									info.sample_count = 1;
 									info.m_position = position;
 
 									m_magneticSamples.push_back(info);
@@ -711,7 +710,10 @@ void AppStage_ComputeTrackerPoses::render()
 			{
 				for (auto it = m_magneticSamples.begin(); it != m_magneticSamples.end(); ++it)
 				{
-					float mag_str = fabsf(it->magnetic_strength);
+					if (it->sample_count < 1)
+						continue;
+
+					float mag_str = fabsf(it->average_magnetic_strength / it->sample_count);
 
 					glm::vec3 color = glm::vec3(1.f, 1.f, 1.f);
 
@@ -1164,7 +1166,10 @@ void AppStage_ComputeTrackerPoses::renderUI()
 
 			for (auto it = m_magneticSamples.begin(); it != m_magneticSamples.end(); ++it)
 			{
-				float mag_str = fabsf(it->magnetic_strength);
+				if (it->sample_count < 1)
+					continue;
+
+				float mag_str = fabsf(it->average_magnetic_strength / it->sample_count);
 
 				samples_avg += mag_str;
 				++sample_count;
