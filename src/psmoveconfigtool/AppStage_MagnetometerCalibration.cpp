@@ -894,12 +894,12 @@ void AppStage_MagnetometerCalibration::renderUI()
 				if (!m_boundsStatistics->getIsComplete())
                 {
 					ImGui::Separator();
-					ImGui::ProgressBar(static_cast<float>(m_boundsStatistics->samplePercentage) / 100.f, ImVec2(-1, 0));
-					ImGui::SameLine();
 					ImGui::Text("Progress");
-					ImGui::ProgressBar(static_cast<float>(m_boundsStatistics->sampleQuality) / 100.f, ImVec2(-1, 0), " ");
-					ImGui::SameLine();
+					ImGui::SameLine(100.f);
+					ImGui::ProgressBar(static_cast<float>(m_boundsStatistics->samplePercentage) / 100.f, ImVec2(-1, 0));
 					ImGui::Text("Quality");
+					ImGui::SameLine(100.f);
+					ImGui::ProgressBar(static_cast<float>(m_boundsStatistics->sampleQuality) / 100.f, ImVec2(-1, 0), " ");
 
 					ImGui::Separator();
                 }
