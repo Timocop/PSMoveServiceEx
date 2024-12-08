@@ -40,20 +40,20 @@ static const char *k_video_display_mode_names[] = {
     "Undistorted"
 };
 
-static const float k_stabilize_init_wait_time_ms = 3000.f;
-static const float k_stabilize_next_wait_time_ms = 1000.f;
+static const float k_stabilize_init_wait_time_ms = 1000.f;
+static const float k_stabilize_next_wait_time_ms = 500.f;
 
-#define PATTERN_W 9 // Internal corners
-#define PATTERN_H 6
-#define CORNER_COUNT (PATTERN_W*PATTERN_H)
+#define BIG_PATTERN_W 9 // Internal corners
+#define BIG_PATTERN_H 6
+#define SMALL_PATTERN_W 6 // Internal corners
+#define SMALL_PATTERN_H 3
+
 #define DEFAULT_SQUARE_LEN_MM 24
-#define DESIRED_CAPTURE_BOARD_COUNT 12
+#define DESIRED_CAPTURE_BOARD_COUNT_BIG 12
+#define DESIRED_CAPTURE_BOARD_COUNT_SMALL 18
 
 #define BOARD_MOVED_PIXEL_DIST 5
-#define BOARD_MOVED_ERROR_SUM BOARD_MOVED_PIXEL_DIST*CORNER_COUNT
-
 #define BOARD_NEW_LOCATION_PIXEL_DIST 100
-#define BOARD_NEW_LOCATION_ERROR_SUM BOARD_NEW_LOCATION_PIXEL_DIST*CORNER_COUNT
 
 #define STRAIGHT_LINE_TOLERANCE 5 // error tolerance in pixels
 
@@ -68,6 +68,9 @@ public:
         , capturedBoardCount(0)
 		, calibFixedAspectRatio(false)
 		, calibFixedFocalLength(false)
+		, m_pattern_w(BIG_PATTERN_W)
+		, m_pattern_h(BIG_PATTERN_H)
+		, m_pattern_max_count(DESIRED_CAPTURE_BOARD_COUNT_BIG)
     {
         // Video Frame data
         bgrSourceBuffer = new cv::Mat(frameHeight, frameWidth, CV_8UC3);
@@ -196,14 +199,14 @@ public:
     void findAndAppendNewChessBoard(bool appWantsAppend)
     {
         
-        if (capturedBoardCount < DESIRED_CAPTURE_BOARD_COUNT)
+        if (capturedBoardCount < m_pattern_max_count)
         {
             std::vector<cv::Point2f> new_image_points;
 
             // Find chessboard corners:
             if (cv::findChessboardCorners(
                     *gsBuffer, 
-                    cv::Size(PATTERN_W, PATTERN_H), 
+                    cv::Size(m_pattern_w, m_pattern_h),
                     new_image_points, // output corners
                     cv::CALIB_CB_ADAPTIVE_THRESH 
                     + cv::CALIB_CB_FILTER_QUADS 
@@ -220,7 +223,7 @@ public:
 
                 // Append the new chessboard corner pixels into the image_points matrix
                 // Append the corresponding 3d chessboard corners into the object_points matrix
-                if (new_image_points.size() == CORNER_COUNT) 
+                if (new_image_points.size() == getPatternCornerCount())
                 {
                     bCurrentImagePointsValid= false;
                     // See if the board is stationary (didn't move much since last frame)
@@ -228,14 +231,14 @@ public:
                     {
                         float error_sum= 0.f;
 
-                        for (int corner_index= 0; corner_index < CORNER_COUNT; ++corner_index)
+                        for (int corner_index= 0; corner_index < getPatternCornerCount(); ++corner_index)
                         {
                             float squared_error= static_cast<float>(cv::norm(new_image_points[corner_index] - currentImagePoints[corner_index]));
 
                             error_sum+= squared_error;
                         }
 
-                        bCurrentImagePointsValid= error_sum <= BOARD_MOVED_ERROR_SUM;
+                        bCurrentImagePointsValid= error_sum <= getBoardMovedErrorSum();
                     }
                     else
                     {
@@ -250,14 +253,14 @@ public:
                         {
                             float error_sum= 0.f;
 
-                            for (int corner_index= 0; corner_index < CORNER_COUNT; ++corner_index)
+                            for (int corner_index= 0; corner_index < getPatternCornerCount(); ++corner_index)
                             {
                                 float squared_error= static_cast<float>(cv::norm(new_image_points[corner_index] - lastValidImagePoints[corner_index]));
 
                                 error_sum+= squared_error;
                             }
 
-                            bCurrentImagePointsValid= error_sum >= BOARD_NEW_LOCATION_ERROR_SUM;
+                            bCurrentImagePointsValid= error_sum >= getBoardLocationErrorSum();
                         }
                     }
 
@@ -271,9 +274,9 @@ public:
                     {
                         // Keep track of the corners of all of the chessboards we sample
                         quadList.push_back(new_image_points[0]);
-                        quadList.push_back(new_image_points[PATTERN_W - 1]);
-                        quadList.push_back(new_image_points[CORNER_COUNT-1]);
-                        quadList.push_back(new_image_points[CORNER_COUNT-PATTERN_W]);                        
+                        quadList.push_back(new_image_points[m_pattern_w - 1]);
+                        quadList.push_back(new_image_points[getPatternCornerCount()-1]);
+                        quadList.push_back(new_image_points[getPatternCornerCount()-m_pattern_w]);
 
                         // Append the new images points and object points
                         imagePointsList.push_back(new_image_points);
@@ -296,15 +299,15 @@ public:
         }
     }
 
-    static bool areGridLinesStraight(const std::vector<cv::Point2f> &corners, const int tolerance)
+    bool areGridLinesStraight(const std::vector<cv::Point2f> &corners, const int tolerance)
     {
         assert(corners.size() == CORNER_COUNT);
         bool bAllLinesStraight= true;
 
-        for (int line_index= 0; bAllLinesStraight && line_index < PATTERN_H; ++line_index)
+        for (int line_index= 0; bAllLinesStraight && line_index < m_pattern_h; ++line_index)
         {
-            int start_index= line_index*PATTERN_W;
-            int end_index= start_index + PATTERN_W - 1;
+            int start_index= line_index * m_pattern_w;
+            int end_index= start_index + m_pattern_w - 1;
 
             cv::Point2f line_start= corners[start_index];
             cv::Point2f line_end= corners[end_index];
@@ -323,7 +326,7 @@ public:
         return bAllLinesStraight;
     }
 
-    static float distanceToLine(cv::Point2f line_start, cv::Point2f line_end, cv::Point2f point)
+    float distanceToLine(cv::Point2f line_start, cv::Point2f line_end, cv::Point2f point)
     {
         const auto start_to_end= line_end - line_start;
         const auto start_to_point= point - line_start;
@@ -337,7 +340,7 @@ public:
     {
         bool bSuccess= false;
 
-        if (capturedBoardCount >= DESIRED_CAPTURE_BOARD_COUNT)
+        if (capturedBoardCount >= m_pattern_max_count)
         {
             // Only need to calculate objectPointsList once,
             // then resize for each set of image points.
@@ -380,14 +383,29 @@ public:
     {
         corners.clear();
         
-        for( int i = 0; i < PATTERN_H; ++i )
+        for( int i = 0; i < m_pattern_h; ++i )
         {
-            for( int j = 0; j < PATTERN_W; ++j )
+            for( int j = 0; j < m_pattern_w; ++j )
             {
                 corners.push_back(cv::Point3f(float(j*square_length_mm), float(i*square_length_mm), 0.f));
             }
         }
     }
+
+	int getPatternCornerCount()
+	{
+		return m_pattern_w * m_pattern_h;
+	}
+
+	int getBoardMovedErrorSum()
+	{
+		return BOARD_MOVED_PIXEL_DIST * getPatternCornerCount();
+	}
+
+	int getBoardLocationErrorSum()
+	{
+		return BOARD_NEW_LOCATION_PIXEL_DIST * getPatternCornerCount();
+	}
 
     const PSMClientTrackerInfo &trackerInfo;
     int frameWidth;
@@ -407,6 +425,10 @@ public:
 	std::chrono::time_point<std::chrono::high_resolution_clock> timeStableValidPoints;
     std::vector<cv::Point2f> quadList;
     std::vector<std::vector<cv::Point2f>> imagePointsList;
+
+	int m_pattern_w;
+	int m_pattern_h;
+	int m_pattern_max_count;
 
     // Calibration state
     double reprojectionError;
@@ -428,6 +450,7 @@ AppStage_DistortionCalibration::AppStage_DistortionCalibration(App *app)
     , m_menuState(AppStage_DistortionCalibration::inactive)
     , m_videoDisplayMode(AppStage_DistortionCalibration::eVideoDisplayMode::mode_bgr)
 	, m_square_length_mm(DEFAULT_SQUARE_LEN_MM)
+	, m_pattern_mode(ePatternMode::pattern_big)
     , m_trackerExposure(0.0)
     , m_trackerGain(0.0)
     , m_bStreamIsActive(false)
@@ -534,7 +557,7 @@ void AppStage_DistortionCalibration::update()
 
 				m_opencv_state->findAndAppendNewChessBoard(bCapurePoint);
 
-                if (m_opencv_state->capturedBoardCount >= DESIRED_CAPTURE_BOARD_COUNT)
+                if (m_opencv_state->capturedBoardCount >= m_opencv_state->m_pattern_max_count)
                 {
 					int calibFlags = 0;
 
@@ -744,9 +767,41 @@ void AppStage_DistortionCalibration::renderUI()
 				}
 			}
 			ImGui::PopItemWidth();
+			if (ImGui::IsItemHovered())
+				ImGui::SetTooltip(
+					"Use a ruler to measure the length of a single square in millimeters."
+				);
 
 			if (m_opencv_state != nullptr)
 			{
+				int patternMode = m_pattern_mode;
+				if (ImGui::Combo("Pattern Mode", &patternMode, "Paper (Big)\0Mobile (Small)\0\0"))
+				{
+					m_pattern_mode = static_cast<ePatternMode>(patternMode);
+
+					switch (m_pattern_mode)
+					{
+					case ePatternMode::pattern_small:
+						m_opencv_state->m_pattern_h = SMALL_PATTERN_H;
+						m_opencv_state->m_pattern_w = SMALL_PATTERN_W;
+						m_opencv_state->m_pattern_max_count = DESIRED_CAPTURE_BOARD_COUNT_SMALL;
+						break;
+
+					default:
+						m_opencv_state->m_pattern_h = BIG_PATTERN_H;
+						m_opencv_state->m_pattern_w = BIG_PATTERN_W;
+						m_opencv_state->m_pattern_max_count = DESIRED_CAPTURE_BOARD_COUNT_BIG;
+						break;
+					}
+				}
+				if (ImGui::IsItemHovered())
+					ImGui::SetTooltip(
+						"Select which chessboard calibration pattern your want to use.\n"
+						"Usually you want to print the large pattern on paper and display the small pattern on mobile phone screens.\n"
+						"Keep in mind that smaller patters are less accurate.\n"
+						"(Default: Paper)"
+					);
+
 				ImGui::Checkbox("Fixed Aspect Ratio", &m_opencv_state->calibFixedAspectRatio);
 				if (ImGui::IsItemHovered())
 					ImGui::SetTooltip(
@@ -767,8 +822,8 @@ void AppStage_DistortionCalibration::renderUI()
 			{
 				// Crank up the exposure and gain so that we can see the chessboard
 				// These overrides will get rolled back once tracker gets closed
-				request_tracker_set_temp_exposure(128.f);
-				request_tracker_set_temp_gain(128.f);
+				request_tracker_set_temp_exposure(32.f);
+				request_tracker_set_temp_gain(32.f);
 
 				m_menuState = eMenuState::capture;
 			}
@@ -834,7 +889,7 @@ void AppStage_DistortionCalibration::renderUI()
 				const float k_stabilize_wait_time_ms = (m_opencv_state->capturedBoardCount > 0) ? (k_stabilize_next_wait_time_ms) : (k_stabilize_init_wait_time_ms);
 
                 const float samplePercentage= 
-                    static_cast<float>(m_opencv_state->capturedBoardCount) / static_cast<float>(DESIRED_CAPTURE_BOARD_COUNT);
+                    static_cast<float>(m_opencv_state->capturedBoardCount) / static_cast<float>(m_opencv_state->m_pattern_max_count);
                 ImGui::ProgressBar(samplePercentage, ImVec2(-1, 0));
 
 				if (m_opencv_state->bCurrentImagePointsValid)
@@ -1087,37 +1142,43 @@ void AppStage_DistortionCalibration::handle_tracker_start_stream_response(
                 // Allocate an opencv buffer 
                 thisPtr->m_opencv_state = new OpenCVBufferState(trackerInfo);
 
-				// $TODO: 1080p distortion calibration does not work.
-				// However calibrating in 480p and then switching to 1080p works. Why? How knows.
-				//if (width != 640 || height != 480)
-				//{
-				//	thisPtr->m_menuState = AppStage_DistortionCalibration::showWarningResolution;
-				//}
-				//else
+				switch (thisPtr->m_pattern_mode)
 				{
-					// Warn the user if they are about to change the distortion calibration settings for the PS3EYE
-					if (trackerInfo.tracker_type == PSMTrackerType::PSMTracker_PS3Eye)
-					{
-						// Virtual trackers have a common device path "VirtualTracker_#"
-						// ###Externet $TODO: Add better virtual tracker check. Probably should do that after changing protocols.
-						bool is_virtual = (trackerInfo.device_path[0] == 'V');
+				case ePatternMode::pattern_small:
+					thisPtr->m_opencv_state->m_pattern_h = SMALL_PATTERN_H;
+					thisPtr->m_opencv_state->m_pattern_w = SMALL_PATTERN_W;
+					thisPtr->m_opencv_state->m_pattern_max_count = DESIRED_CAPTURE_BOARD_COUNT_SMALL;
+					break;
 
-						// Virtual trackers dont have precomputed distortion calibration settings.
-						if (is_virtual)
-						{
-							// Start capturing chess boards
-							thisPtr->m_menuState = AppStage_DistortionCalibration::enterBoardSettings;
-						}
-						else
-						{
-							thisPtr->m_menuState = AppStage_DistortionCalibration::showWarning;
-						}
-					}
-					else
+				default:
+					thisPtr->m_opencv_state->m_pattern_h = BIG_PATTERN_H;
+					thisPtr->m_opencv_state->m_pattern_w = BIG_PATTERN_W;
+					thisPtr->m_opencv_state->m_pattern_max_count = DESIRED_CAPTURE_BOARD_COUNT_BIG;
+					break;
+				}
+
+				// Warn the user if they are about to change the distortion calibration settings for the PS3EYE
+				if (trackerInfo.tracker_type == PSMTrackerType::PSMTracker_PS3Eye)
+				{
+					// Virtual trackers have a common device path "VirtualTracker_#"
+					// ###Externet $TODO: Add better virtual tracker check. Probably should do that after changing protocols.
+					bool is_virtual = (trackerInfo.device_path[0] == 'V');
+
+					// Virtual trackers dont have precomputed distortion calibration settings.
+					if (is_virtual)
 					{
 						// Start capturing chess boards
 						thisPtr->m_menuState = AppStage_DistortionCalibration::enterBoardSettings;
 					}
+					else
+					{
+						thisPtr->m_menuState = AppStage_DistortionCalibration::showWarning;
+					}
+				}
+				else
+				{
+					// Start capturing chess boards
+					thisPtr->m_menuState = AppStage_DistortionCalibration::enterBoardSettings;
 				}
             }
             else

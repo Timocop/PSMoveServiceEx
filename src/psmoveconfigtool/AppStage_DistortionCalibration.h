@@ -72,12 +72,19 @@ private:
         MAX_VIDEO_DISPLAY_MODES
     };
 
+	enum ePatternMode
+	{
+		pattern_big,
+		pattern_small
+	};
+
     // Menu state
     eMenuState m_menuState;
     eVideoDisplayMode m_videoDisplayMode;
 
 	// Board Settings
 	float m_square_length_mm;
+	ePatternMode m_pattern_mode;
 
     // Tracker Settings state
     float m_trackerExposure;
