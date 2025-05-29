@@ -152,7 +152,7 @@ TrackerManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
         optical_tracking_timeout= pt.get<int>("optical_tracking_timeout", optical_tracking_timeout);
 		use_bgr_to_hsv_lookup_table = pt.get<bool>("use_bgr_to_hsv_lookup_table", use_bgr_to_hsv_lookup_table);
 		thread_sleep_ms = pt.get<int>("thread_sleep_ms", thread_sleep_ms);
-		tracker_deviation_exclude_angle = pt.get<float>("excluded_opposed_cameras", tracker_deviation_exclude_angle);
+		tracker_deviation_exclude_angle = pt.get<float>("tracker_deviation_exclude_angle", tracker_deviation_exclude_angle);
 		min_valid_projection_area = pt.get<float>("min_valid_projection_area", min_valid_projection_area);
 		
 		occluded_area_on_loss_size = pt.get<float>("occluded_area_on_loss_size", occluded_area_on_loss_size);

@@ -679,10 +679,12 @@ void AppStage_AdvancedSettings::renderUI()
 						{
 							ImGui::Text("Facing tracker deviation exclude angle:");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::PushItemWidth(100.f);
 							if (ImGui::InputFloat("##TrackerDeviationExcludeAngle", &cfg_tracker.tracker_deviation_exclude_angle, 1.f, 5.f, 2))
 							{
 								cfg_tracker.tracker_deviation_exclude_angle = static_cast<float>(std::fmax(0.f, std::fmin(180.f, cfg_tracker.tracker_deviation_exclude_angle)));
 							}
+							ImGui::PopItemWidth();
 
 							if (ImGui::IsItemHovered())
 								ImGui::SetTooltip(
