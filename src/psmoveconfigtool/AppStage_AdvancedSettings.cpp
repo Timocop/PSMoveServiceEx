@@ -226,7 +226,7 @@ TrackerConfig::config2ptree()
 	pt.put("optical_tracking_timeout", optical_tracking_timeout);
 	pt.put("use_bgr_to_hsv_lookup_table", use_bgr_to_hsv_lookup_table);
 	pt.put("thread_sleep_ms", thread_sleep_ms);
-	pt.put("excluded_opposed_cameras", exclude_opposed_cameras);
+	pt.put("tracker_deviation_exclude_angle", tracker_deviation_exclude_angle);
 	pt.put("min_valid_projection_area", min_valid_projection_area);
 	
 	pt.put("occluded_area_on_loss_size", occluded_area_on_loss_size);
@@ -271,7 +271,7 @@ TrackerConfig::ptree2config(const boost::property_tree::ptree &pt)
 	optical_tracking_timeout = pt.get<int>("optical_tracking_timeout", optical_tracking_timeout);
 	use_bgr_to_hsv_lookup_table = pt.get<bool>("use_bgr_to_hsv_lookup_table", use_bgr_to_hsv_lookup_table);
 	thread_sleep_ms = pt.get<int>("thread_sleep_ms", thread_sleep_ms);
-	exclude_opposed_cameras = pt.get<bool>("excluded_opposed_cameras", exclude_opposed_cameras);
+	tracker_deviation_exclude_angle = pt.get<float>("tracker_deviation_exclude_angle", tracker_deviation_exclude_angle);
 	min_valid_projection_area = pt.get<float>("min_valid_projection_area", min_valid_projection_area);
 	
 	occluded_area_on_loss_size = pt.get<float>("occluded_area_on_loss_size", occluded_area_on_loss_size);
@@ -677,18 +677,21 @@ void AppStage_AdvancedSettings::renderUI()
 						}
 
 						{
-							ImGui::Text("Exclude opposed trackers:");
+							ImGui::Text("Facing tracker deviation exclude angle:");
 							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
-							ImGui::Checkbox("##ExcludeOpposedTrackers", &cfg_tracker.exclude_opposed_cameras);
+							if (ImGui::InputFloat("##TrackerDeviationExcludeAngle", &cfg_tracker.tracker_deviation_exclude_angle, 1.f, 5.f, 2))
+							{
+								cfg_tracker.tracker_deviation_exclude_angle = static_cast<float>(std::fmax(0.f, std::fmin(180.f, cfg_tracker.tracker_deviation_exclude_angle)));
+							}
 
 							if (ImGui::IsItemHovered())
 								ImGui::SetTooltip(
-									"Exclude triangulations from trackers that are facing each other.\n"
+									"Exclude triangulations from trackers that are facing each other by this angle in degress.\n"
 									"Enabling this can help get better triangulations between trackers\n"
 									"and may result in better tracking but also increases potential tracking loss\n"
 									"due to trackers being excluded.\n"
-									"This is only good if you have 4 or more trackers.\n"
-									"(The default value is FALSE)"
+									"(The default value is 35)\n"
+									"(Set 0 to disable)"
 								);
 						}
 

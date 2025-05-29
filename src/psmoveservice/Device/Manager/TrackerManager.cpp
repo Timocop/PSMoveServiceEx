@@ -28,7 +28,7 @@ TrackerManagerConfig::TrackerManagerConfig(const std::string &fnamebase)
 	optical_tracking_timeout= 100;
 	thread_sleep_ms = 1;
 	use_bgr_to_hsv_lookup_table = true;
-	exclude_opposed_cameras = false;
+	tracker_deviation_exclude_angle = 35.0f;
 	min_valid_projection_area = 6.f;
 	occluded_area_on_loss_size = 4.f;
 	occluded_area_ignore_num_trackers = 0;
@@ -87,7 +87,7 @@ TrackerManagerConfig::config2ptree()
     pt.put("optical_tracking_timeout", optical_tracking_timeout);
 	pt.put("use_bgr_to_hsv_lookup_table", use_bgr_to_hsv_lookup_table);
 	pt.put("thread_sleep_ms", thread_sleep_ms);
-	pt.put("excluded_opposed_cameras", exclude_opposed_cameras);
+	pt.put("tracker_deviation_exclude_angle", tracker_deviation_exclude_angle);
 	pt.put("min_valid_projection_area", min_valid_projection_area);
 
 	pt.put("occluded_area_on_loss_size", occluded_area_on_loss_size);
@@ -152,7 +152,7 @@ TrackerManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
         optical_tracking_timeout= pt.get<int>("optical_tracking_timeout", optical_tracking_timeout);
 		use_bgr_to_hsv_lookup_table = pt.get<bool>("use_bgr_to_hsv_lookup_table", use_bgr_to_hsv_lookup_table);
 		thread_sleep_ms = pt.get<int>("thread_sleep_ms", thread_sleep_ms);
-		exclude_opposed_cameras = pt.get<bool>("excluded_opposed_cameras", exclude_opposed_cameras);
+		tracker_deviation_exclude_angle = pt.get<float>("excluded_opposed_cameras", tracker_deviation_exclude_angle);
 		min_valid_projection_area = pt.get<float>("min_valid_projection_area", min_valid_projection_area);
 		
 		occluded_area_on_loss_size = pt.get<float>("occluded_area_on_loss_size", occluded_area_on_loss_size);

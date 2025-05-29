@@ -65,7 +65,7 @@ public:
     int optical_tracking_timeout;
 	int thread_sleep_ms;
 	bool use_bgr_to_hsv_lookup_table;
-	bool exclude_opposed_cameras;
+	float tracker_deviation_exclude_angle;
 	float min_valid_projection_area;
 	float occluded_area_on_loss_size;
 	int occluded_area_ignore_num_trackers;

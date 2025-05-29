@@ -1917,15 +1917,28 @@ static void computeSpherePoseForHmdFromMultipleTrackers(
 			const CommonDeviceScreenLocation &other_screen_location = sorted_projections[other_list_index].position2d_list;
 			const ServerTrackerViewPtr other_tracker = tracker_manager->getTrackerViewPtr(other_tracker_id);
 
-            // if trackers are on opposite sides
-            if (cfg.exclude_opposed_cameras)
-            {
-                if ((tracker->getTrackerPose().PositionCm.x > 0) == (other_tracker->getTrackerPose().PositionCm.x < 0) &&
-                    (tracker->getTrackerPose().PositionCm.z > 0) == (other_tracker->getTrackerPose().PositionCm.z < 0))
-                {
-                    continue;
-                }
-            }
+			if (cfg.tracker_deviation_exclude_angle > 0.0f)
+			{
+				CommonDeviceQuaternion trackerOrientation = tracker->getTrackerPose().Orientation;
+				CommonDeviceQuaternion otherTrackerOrientation = other_tracker->getTrackerPose().Orientation;
+
+				Eigen::Quaternionf trackerQuat = Eigen::Quaternionf(
+					trackerOrientation.w,
+					trackerOrientation.x,
+					trackerOrientation.y,
+					trackerOrientation.z);
+				Eigen::Quaternionf otherTrackerQuat = Eigen::Quaternionf(
+					otherTrackerOrientation.w,
+					otherTrackerOrientation.x,
+					otherTrackerOrientation.y,
+					otherTrackerOrientation.z);
+
+				float trackerAngle = fabsf(eigen_quaternion_unsigned_angle_between(trackerQuat, otherTrackerQuat)) * k_radians_to_degreees;
+				if (trackerAngle > (180.0f - fmaxf(0.f, fminf(180.0f, cfg.tracker_deviation_exclude_angle))))
+				{
+					continue;
+				}
+			}
 
             // Using the screen locations on two different trackers we can triangulate a world position
             CommonDevicePosition world_position =
@@ -2369,15 +2382,28 @@ static void computePointCloudPoseForHmdFromMultipleTrackers(
 			const CommonDeviceScreenLocation &other_screen_location = sorted_projections[other_list_index].position2d_list;
 			const ServerTrackerViewPtr other_tracker = tracker_manager->getTrackerViewPtr(other_tracker_id);
 
-            // if trackers are on opposite sides
-            if (cfg.exclude_opposed_cameras)
-            {
-                if ((tracker->getTrackerPose().PositionCm.x > 0) == (other_tracker->getTrackerPose().PositionCm.x < 0) &&
-                    (tracker->getTrackerPose().PositionCm.z > 0) == (other_tracker->getTrackerPose().PositionCm.z < 0))
-                {
-                    continue;
-                }
-            }
+			if (cfg.tracker_deviation_exclude_angle > 0.0f)
+			{
+				CommonDeviceQuaternion trackerOrientation = tracker->getTrackerPose().Orientation;
+				CommonDeviceQuaternion otherTrackerOrientation = other_tracker->getTrackerPose().Orientation;
+
+				Eigen::Quaternionf trackerQuat = Eigen::Quaternionf(
+					trackerOrientation.w,
+					trackerOrientation.x,
+					trackerOrientation.y,
+					trackerOrientation.z);
+				Eigen::Quaternionf otherTrackerQuat = Eigen::Quaternionf(
+					otherTrackerOrientation.w,
+					otherTrackerOrientation.x,
+					otherTrackerOrientation.y,
+					otherTrackerOrientation.z);
+
+				float trackerAngle = fabsf(eigen_quaternion_unsigned_angle_between(trackerQuat, otherTrackerQuat)) * k_radians_to_degreees;
+				if (trackerAngle > (180.0f - fmaxf(0.f, fminf(180.0f, cfg.tracker_deviation_exclude_angle))))
+				{
+					continue;
+				}
+			}
 
             // Using the screen locations on two different trackers we can triangulate a world position
             CommonDevicePosition world_position =
