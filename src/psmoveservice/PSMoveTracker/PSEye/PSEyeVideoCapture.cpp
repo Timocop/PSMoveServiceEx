@@ -831,6 +831,12 @@ public:
 			return true;
 		}
 
+		// Pipe has no new data or data is not the proper size.
+		if (dwRead <= 1 || dwRead != VRIT_BUFF_SD_SIZE)
+		{
+			return true;
+		}
+
 		if (m_frameAvailable)
 			return true;
 
@@ -961,6 +967,12 @@ public:
 				return true;
 			}
 
+			return true;
+		}
+
+		// Pipe has no new data or data is not the proper size.
+		if (dwRead <= 1 || dwRead != VRIT_BUFF_HD_SIZE)
+		{
 			return true;
 		}
 
