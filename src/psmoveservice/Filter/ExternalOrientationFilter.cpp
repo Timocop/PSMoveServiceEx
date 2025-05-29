@@ -560,6 +560,12 @@ void OrientationFilterExternal::update(
 		return;
 	}
 
+	// Pipe has no new data.
+	if (dwRead <= 1)
+	{
+		return;
+	}
+
 	showMessage = true;
 
 	const char* p = pipeBuffer;
