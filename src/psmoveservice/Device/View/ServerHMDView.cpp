@@ -92,7 +92,7 @@ ServerHMDView::ServerHMDView(const int device_id)
 	: ServerDeviceView(device_id)
 	, m_tracking_listener_count(0)
 	, m_tracking_enabled(false)
-	, m_roi_disable_count(0)
+	, m_tracking_enforced(0)
 	, m_device(nullptr)
 	, m_tracker_pose_estimations(nullptr)
 	, m_multicam_pose_estimation(nullptr)
@@ -415,7 +415,7 @@ void ServerHMDView::updateOpticalPoseEstimation(TrackerManager* tracker_manager)
 						//Create an occlusion area at the last seen valid tracked projection.
 						//If the projection center is near the occluded area it will not mark the projection as valid.
 						//This will remove jitter when the shape of the controllers is partially visible to the trackers.
-						if (!getIsROIDisabled())
+						if (!getIsTrackingEnforced())
 						{
 							if (trackerMgrConfig.occluded_area_on_loss_size >= 0.01)
 							{
@@ -1835,6 +1835,7 @@ static void computeSpherePoseForHmdFromMultipleTrackers(
 {
 	int available_trackers = 0;
 	int hmd_id = hmdView->getDeviceID();
+	bool isTrackingEnforced = hmdView->getIsTrackingEnforced();
 
 	for (int tracker_id = 0; tracker_id < tracker_manager->getMaxDevices(); ++tracker_id)
 	{
@@ -1917,7 +1918,7 @@ static void computeSpherePoseForHmdFromMultipleTrackers(
 			const CommonDeviceScreenLocation &other_screen_location = sorted_projections[other_list_index].position2d_list;
 			const ServerTrackerViewPtr other_tracker = tracker_manager->getTrackerViewPtr(other_tracker_id);
 
-			if (cfg.tracker_deviation_exclude_angle > 0.0f)
+			if (cfg.tracker_deviation_exclude_angle > 0.0f && !isTrackingEnforced)
 			{
 				CommonDeviceQuaternion trackerOrientation = tracker->getTrackerPose().Orientation;
 				CommonDeviceQuaternion otherTrackerOrientation = other_tracker->getTrackerPose().Orientation;
@@ -1950,7 +1951,7 @@ static void computeSpherePoseForHmdFromMultipleTrackers(
 
 			// Check how much the trangulation deviates from other trackers.
 			// Ignore its position if it deviates too much and renew its ROI.
-			if (pair_count > 0 && cfg.max_tracker_position_deviation > 0.01f)
+			if (pair_count > 0 && cfg.max_tracker_position_deviation > 0.01f && !isTrackingEnforced)
 			{
 				const float N = static_cast<float>(pair_count);
 
@@ -1978,7 +1979,7 @@ static void computeSpherePoseForHmdFromMultipleTrackers(
 			{
 				// Do some runtime position caching to make transitions between cameras smoother.
 				// Give each camera an offset from the total average.
-				if (cfg.average_position_cache_enabled)
+				if (cfg.average_position_cache_enabled && !isTrackingEnforced)
 				{
 					++pair_count;
 
@@ -2222,7 +2223,7 @@ static void computeSpherePoseForHmdFromMultipleTrackers(
 
     if (pair_count == 0 
 		&& projections_found > 0
-		&& (available_trackers == 1 || !cfg.ignore_pose_from_one_tracker))
+		&& (available_trackers == 1 || !cfg.ignore_pose_from_one_tracker || isTrackingEnforced))
     {
         // Position not triangulated from opposed camera, estimate from one tracker only.
         computeSpherePoseForHmdFromSingleTracker(
@@ -2246,27 +2247,42 @@ static void computeSpherePoseForHmdFromMultipleTrackers(
 
 		if (cfg.average_position_cache_enabled)
 		{
-			// Renew cached average world position when we have more samples
-			for (int j = newPositionOffsetCaching.size() - 1; j >= 0; --j)
+			if (!isTrackingEnforced)
 			{
-				const orgPositionOffsetCaching orgCache = newPositionOffsetCaching[j];
-				positionOffsetCaching *cache = &globalPositionOffsetCaching[orgCache.tracker_1_id][orgCache.tracker_2_id][orgCache.index];
+				// Renew cached average world position when we have more samples
+				for (int j = newPositionOffsetCaching.size() - 1; j >= 0; --j)
+				{
+					const orgPositionOffsetCaching orgCache = newPositionOffsetCaching[j];
+					positionOffsetCaching *cache = &globalPositionOffsetCaching[orgCache.tracker_1_id][orgCache.tracker_2_id][orgCache.index];
 
-				// Only update when theres new pairs.
-				if ((cache->paired_trackers & ((1 << orgCache.tracker_1_id) | (1 << (orgCache.tracker_2_id + PSMOVESERVICE_MAX_TRACKER_COUNT)))) > 0)
-					continue;
-				if ((cache->paired_trackers & ((1 << orgCache.tracker_2_id) | (1 << (orgCache.tracker_1_id + PSMOVESERVICE_MAX_TRACKER_COUNT)))) > 0)
-					continue;
+					// Only update when theres new pairs.
+					if ((cache->paired_trackers & ((1 << orgCache.tracker_1_id) | (1 << (orgCache.tracker_2_id + PSMOVESERVICE_MAX_TRACKER_COUNT)))) > 0)
+						continue;
+					if ((cache->paired_trackers & ((1 << orgCache.tracker_2_id) | (1 << (orgCache.tracker_1_id + PSMOVESERVICE_MAX_TRACKER_COUNT)))) > 0)
+						continue;
 
 
-				cache->world_avg_position.x = unfiltered_average_world_position.x;
-				cache->world_avg_position.y = unfiltered_average_world_position.y;
-				cache->world_avg_position.z = unfiltered_average_world_position.z;
-				cache->local_position.x = cache->new_local_position.x;
-				cache->local_position.y = cache->new_local_position.y;
-				cache->local_position.z = cache->new_local_position.z;
-				cache->paired_trackers |= (1 << orgCache.tracker_1_id) | (1 << (orgCache.tracker_2_id + PSMOVESERVICE_MAX_TRACKER_COUNT));
-				cache->isValid = true;
+					cache->world_avg_position.x = unfiltered_average_world_position.x;
+					cache->world_avg_position.y = unfiltered_average_world_position.y;
+					cache->world_avg_position.z = unfiltered_average_world_position.z;
+					cache->local_position.x = cache->new_local_position.x;
+					cache->local_position.y = cache->new_local_position.y;
+					cache->local_position.z = cache->new_local_position.z;
+					cache->paired_trackers |= (1 << orgCache.tracker_1_id) | (1 << (orgCache.tracker_2_id + PSMOVESERVICE_MAX_TRACKER_COUNT));
+					cache->isValid = true;
+				}
+			}
+			else
+			{
+				// Optical tracking is enforced, disable and clear cache.
+				for (int i = 0; i < TrackerManager::k_max_devices; ++i)
+				{
+					for (int j = 0; j < TrackerManager::k_max_devices; ++j)
+					{
+						globalPositionOffsetCaching[i][j].clear();
+						globalPositionOffsetCachingCount[i][j] = 0;
+					}
+				}
 			}
 		}
 
@@ -2298,6 +2314,7 @@ static void computePointCloudPoseForHmdFromMultipleTrackers(
 {
 	int available_trackers = 0;
 	int hmd_id = hmdView->getDeviceID();
+	bool isTrackingEnforced = hmdView->getIsTrackingEnforced();
 
 	for (int tracker_id = 0; tracker_id < tracker_manager->getMaxDevices(); ++tracker_id)
 	{
@@ -2382,7 +2399,7 @@ static void computePointCloudPoseForHmdFromMultipleTrackers(
 			const CommonDeviceScreenLocation &other_screen_location = sorted_projections[other_list_index].position2d_list;
 			const ServerTrackerViewPtr other_tracker = tracker_manager->getTrackerViewPtr(other_tracker_id);
 
-			if (cfg.tracker_deviation_exclude_angle > 0.0f)
+			if (cfg.tracker_deviation_exclude_angle > 0.0f && !isTrackingEnforced)
 			{
 				CommonDeviceQuaternion trackerOrientation = tracker->getTrackerPose().Orientation;
 				CommonDeviceQuaternion otherTrackerOrientation = other_tracker->getTrackerPose().Orientation;
@@ -2415,7 +2432,7 @@ static void computePointCloudPoseForHmdFromMultipleTrackers(
 
 			// Check how much the trangulation deviates from other trackers.
 			// Ignore its position if it deviates too much and renew its ROI.
-			if (pair_count > 0 && cfg.max_tracker_position_deviation > 0.01f)
+			if (pair_count > 0 && cfg.max_tracker_position_deviation > 0.01f && !isTrackingEnforced)
 			{
 				const float N = static_cast<float>(pair_count);
 
@@ -2443,7 +2460,7 @@ static void computePointCloudPoseForHmdFromMultipleTrackers(
 			{
 				// Do some runtime position caching to make transitions between cameras smoother.
 				// Give each camera an offset from the total average.
-				if (cfg.average_position_cache_enabled)
+				if (cfg.average_position_cache_enabled && !isTrackingEnforced)
 				{
 					++pair_count;
 
@@ -2687,7 +2704,7 @@ static void computePointCloudPoseForHmdFromMultipleTrackers(
 
     if (pair_count == 0 
 		&& projections_found > 0
-		&& (available_trackers == 1 || !cfg.ignore_pose_from_one_tracker))
+		&& (available_trackers == 1 || !cfg.ignore_pose_from_one_tracker || isTrackingEnforced))
     {
         // Position not triangulated from opposed camera, estimate from one tracker only.
         computePointCloudPoseForHmdFromSingleTracker(
@@ -2711,27 +2728,42 @@ static void computePointCloudPoseForHmdFromMultipleTrackers(
 
 		if (cfg.average_position_cache_enabled)
 		{
-			// Renew cached average world position when we have more samples
-			for (int j = newPositionOffsetCaching.size() - 1; j >= 0; --j)
+			if (!isTrackingEnforced)
 			{
-				const orgPositionOffsetCaching orgCache = newPositionOffsetCaching[j];
-				positionOffsetCaching *cache = &globalPositionOffsetCaching[orgCache.tracker_1_id][orgCache.tracker_2_id][orgCache.index];
+				// Renew cached average world position when we have more samples
+				for (int j = newPositionOffsetCaching.size() - 1; j >= 0; --j)
+				{
+					const orgPositionOffsetCaching orgCache = newPositionOffsetCaching[j];
+					positionOffsetCaching *cache = &globalPositionOffsetCaching[orgCache.tracker_1_id][orgCache.tracker_2_id][orgCache.index];
 
-				// Only update when theres new pairs.
-				if ((cache->paired_trackers & ((1 << orgCache.tracker_1_id) | (1 << (orgCache.tracker_2_id + PSMOVESERVICE_MAX_TRACKER_COUNT)))) > 0)
-					continue;
-				if ((cache->paired_trackers & ((1 << orgCache.tracker_2_id) | (1 << (orgCache.tracker_1_id + PSMOVESERVICE_MAX_TRACKER_COUNT)))) > 0)
-					continue;
+					// Only update when theres new pairs.
+					if ((cache->paired_trackers & ((1 << orgCache.tracker_1_id) | (1 << (orgCache.tracker_2_id + PSMOVESERVICE_MAX_TRACKER_COUNT)))) > 0)
+						continue;
+					if ((cache->paired_trackers & ((1 << orgCache.tracker_2_id) | (1 << (orgCache.tracker_1_id + PSMOVESERVICE_MAX_TRACKER_COUNT)))) > 0)
+						continue;
 
 
-				cache->world_avg_position.x = unfiltered_average_world_position.x;
-				cache->world_avg_position.y = unfiltered_average_world_position.y;
-				cache->world_avg_position.z = unfiltered_average_world_position.z;
-				cache->local_position.x = cache->new_local_position.x;
-				cache->local_position.y = cache->new_local_position.y;
-				cache->local_position.z = cache->new_local_position.z;
-				cache->paired_trackers |= (1 << orgCache.tracker_1_id) | (1 << (orgCache.tracker_2_id + PSMOVESERVICE_MAX_TRACKER_COUNT));
-				cache->isValid = true;
+					cache->world_avg_position.x = unfiltered_average_world_position.x;
+					cache->world_avg_position.y = unfiltered_average_world_position.y;
+					cache->world_avg_position.z = unfiltered_average_world_position.z;
+					cache->local_position.x = cache->new_local_position.x;
+					cache->local_position.y = cache->new_local_position.y;
+					cache->local_position.z = cache->new_local_position.z;
+					cache->paired_trackers |= (1 << orgCache.tracker_1_id) | (1 << (orgCache.tracker_2_id + PSMOVESERVICE_MAX_TRACKER_COUNT));
+					cache->isValid = true;
+				}
+			}
+			else
+			{
+				// Optical tracking is enforced, disable and clear cache.
+				for (int i = 0; i < TrackerManager::k_max_devices; ++i)
+				{
+					for (int j = 0; j < TrackerManager::k_max_devices; ++j)
+					{
+						globalPositionOffsetCaching[i][j].clear();
+						globalPositionOffsetCachingCount[i][j] = 0;
+					}
+				}
 			}
 		}
 

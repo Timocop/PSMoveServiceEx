@@ -126,14 +126,14 @@ public:
     // Set the assigned tracking color ID for the controller
     bool setTrackingColorID(eCommonTrackingColorID colorID);
 
-	// Get if the region-of-interest optimization is disabled for this HMD
-	inline bool getIsROIDisabled() const { return m_roi_disable_count > 0; }
+	// Get if the optical tracking is enforced
+	inline bool getIsTrackingEnforced() const { return m_tracking_enforced > 0; }
 
-	// Request the HMD to not use the ROI optimization
-	inline void pushDisableROI() { ++m_roi_disable_count; }
+	// Request the controller to not use enforced optical tracking
+	inline void pushTrackingEnforcement() { ++m_tracking_enforced; }
 
-	// Undo the request to not use the ROI optimization
-	inline void popDisableROI() { assert(m_roi_disable_count > 0); --m_roi_disable_count; }
+	// Undo the request to not use enforced optical tracking
+	inline void popTrackingEnforcement() { assert(m_tracking_enforced > 0); --m_tracking_enforced; }
 
 	// get the prediction time used for region of interest calculation
 	float getROIPredictionTime() const;
@@ -171,8 +171,8 @@ private:
 	int m_tracking_listener_count;
 	bool m_tracking_enabled;
 
-	// ROI state
-	int m_roi_disable_count;
+	// Tracking enforced (disables ROI and bypasses filters)
+	int m_tracking_enforced;
 
 	// Device State
     IHMDInterface *m_device;

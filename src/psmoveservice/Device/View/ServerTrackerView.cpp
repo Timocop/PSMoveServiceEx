@@ -1421,7 +1421,7 @@ ServerTrackerView::computeProjectionForController(
 
     // Compute a region of interest in the tracker buffer around where we expect to find the tracking shape
     const TrackerManagerConfig &trackerMgrConfig= DeviceManager::getInstance()->m_tracker_manager->getConfig();
-	const bool bRoiDisabled = tracked_controller->getIsROIDisabled() || trackerMgrConfig.disable_roi;
+	const bool bRoiDisabled = trackerMgrConfig.disable_roi;
 	const bool bRoiOptimized = trackerMgrConfig.optimized_roi;
 	const int iRoiEdgeOffset = static_cast<int>(std::fmax(0, std::fmin(64, trackerMgrConfig.roi_edge_offset)));
 
@@ -1681,7 +1681,7 @@ bool ServerTrackerView::computeProjectionForHMD(
     
     // Compute a region of interest in the tracker buffer around where we expect to find the tracking shape
     const TrackerManagerConfig &trackerMgrConfig= DeviceManager::getInstance()->m_tracker_manager->getConfig();
-    const bool bRoiDisabled = tracked_hmd->getIsROIDisabled() || trackerMgrConfig.disable_roi;
+    const bool bRoiDisabled = trackerMgrConfig.disable_roi;
 
 	// Exclude Morpheus HMD because the pixel cloud needs bigger projection areas
 	bool bOptimizedTrackingShape = false;

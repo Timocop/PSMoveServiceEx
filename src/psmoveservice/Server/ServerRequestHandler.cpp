@@ -507,10 +507,13 @@ public:
                         controller_view->clearLEDOverride();
                     }
 
-                    // If this connection had ROI disabled, pop the ROI supression request
+                    // If this connection had ROI disabled, pop the tracking enforcement request
+					// $HACK
+					// Mostly used for pose calibration so dont just disable ROI but filters bypassed as well.
+					// Kept for legacy support.
                     if (streamInfo.disable_roi)
                     {
-                        controller_view->popDisableROI();
+                        controller_view->popTrackingEnforcement();
                     }
 
                     // Halt any controller tracking this connection had going on
@@ -543,10 +546,12 @@ public:
                 const HMDStreamInfo &streamInfo = connection_state->active_hmd_stream_info[hmd_id];
                 ServerHMDViewPtr hmd_view = m_device_manager.getHMDViewPtr(hmd_id);
 
-                // Undo the ROI suppression
+				// If this connection had ROI disabled, pop the tracking enforcement request
+				// $HACK
+				// Mostly used for pose calibration so dont just disable ROI but filters bypassed as well.
                 if (streamInfo.disable_roi)
                 {
-                    m_device_manager.getHMDViewPtr(hmd_id)->popDisableROI();
+                    m_device_manager.getHMDViewPtr(hmd_id)->popTrackingEnforcement();
                 }
 
                 // Halt any hmd tracking this connection had going on
@@ -1054,7 +1059,7 @@ protected:
 
                 if (streamInfo.disable_roi)
                 {
-                    controller_view->pushDisableROI();
+                    controller_view->pushTrackingEnforcement();
                 }
 
                 response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
@@ -1087,9 +1092,12 @@ protected:
 
             if (controller_view->getIsStreamable())
             {
+				// $HACK
+				// Mostly used for pose calibration so dont just disable ROI but filters bypassed as well.
+				// Kept for legacy support.
                 if (streamInfo.disable_roi)
                 {
-                    controller_view->popDisableROI();
+                    controller_view->popTrackingEnforcement();
                 }
 
                 if (streamInfo.include_position_data)
@@ -4198,11 +4206,14 @@ protected:
                     << ",roi=" << streamInfo.disable_roi
                     << ")";
 
+				// $HACK
+				// Mostly used for pose calibration so dont just disable ROI but filters bypassed as well.
+				// Kept for legacy support.
                 if (streamInfo.disable_roi)
                 {
                     ServerHMDViewPtr hmd_view = m_device_manager.getHMDViewPtr(hmd_id);
 
-                    hmd_view->pushDisableROI();
+                    hmd_view->pushTrackingEnforcement();
                 }
 
                 if (streamInfo.include_position_data)
@@ -4241,9 +4252,12 @@ protected:
             {
                 const HMDStreamInfo &streamInfo = context.connection_state->active_hmd_stream_info[hmd_id];
 
+				// $HACK
+				// Mostly used for pose calibration so dont just disable ROI but filters bypassed as well.
+				// Kept for legacy support.
                 if (streamInfo.disable_roi)
                 {
-                    hmd_view->popDisableROI();
+                    hmd_view->popTrackingEnforcement();
                 }
 
                 if (streamInfo.include_position_data)

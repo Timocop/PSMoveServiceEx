@@ -176,14 +176,14 @@ public:
     // Get the tracking shape for the controller
     bool getTrackingShape(CommonDeviceTrackingShape &outTrackingShape) const;
 
-	// Get if the region-of-interest optimization is disabled for this controller
-	inline bool getIsROIDisabled() const { return m_roi_disable_count > 0; }
+	// Get if the optical tracking is enforced
+	inline bool getIsTrackingEnforced() const { return m_tracking_enforced > 0; }
 	
-	// Request the controller to not use the ROI optimization
-	inline void pushDisableROI() { ++m_roi_disable_count; }
+	// Request the controller to not use enforced optical tracking
+	inline void pushTrackingEnforcement() { ++m_tracking_enforced; }
 
-	// Undo the request to not use the ROI optimization
-	inline void popDisableROI() { assert(m_roi_disable_count > 0); --m_roi_disable_count;  }
+	// Undo the request to not use enforced optical tracking
+	inline void popTrackingEnforcement() { assert(m_tracking_enforced > 0); --m_tracking_enforced;  }
 
 	// Get the prediction time used for ROI tracking
 	float getROIPredictionTime() const;
@@ -230,9 +230,9 @@ private:
     std::tuple<unsigned char, unsigned char, unsigned char> m_tracking_color;
     int m_tracking_listener_count;
     bool m_tracking_enabled;
-    
-	// Region-of-Interest state
-	int m_roi_disable_count;
+
+	// Tracking enforced (disables ROI and bypasses filters)
+	int m_tracking_enforced;
     
     // Override color state
     std::tuple<unsigned char, unsigned char, unsigned char> m_LED_override_color;
