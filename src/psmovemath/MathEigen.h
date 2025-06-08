@@ -140,6 +140,13 @@ eigen_vector3d_normalize_with_default(Eigen::Vector3d &v, const Eigen::Vector3d 
 float
 eigen_quaternion_unsigned_angle_between(const Eigen::Quaternionf &a, const Eigen::Quaternionf &b);
 
+float 
+eigen_quaternion_unsigned_angle_between_fov(
+	const Eigen::Vector3f & a1,
+	const Eigen::Quaternionf & a2, 
+	const Eigen::Vector3f & b1, 
+	const Eigen::Quaternionf & b2);
+
 Eigen::Quaternionf
 eigen_angular_velocity_to_quaternion_derivative(
 	const Eigen::Quaternionf &current_orientation,

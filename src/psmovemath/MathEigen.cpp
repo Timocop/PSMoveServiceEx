@@ -192,6 +192,36 @@ eigen_quaternion_unsigned_angle_between(const Eigen::Quaternionf &a, const Eigen
 	return radian_diff;
 }
 
+float
+eigen_quaternion_unsigned_angle_between_fov(const Eigen::Vector3f &a1, const Eigen::Quaternionf &a2, const Eigen::Vector3f &b1, const Eigen::Quaternionf &b2)
+{
+	assert_eigen_quaternion_is_normalized(a2);
+	assert_eigen_quaternion_is_normalized(b2);
+
+	Eigen::Vector3f directionToTarget = b1 - a1;
+
+	if (directionToTarget.norm() <= k_real_epsilon)
+	{
+		return 0.0f;
+	}
+
+	Eigen::Vector3f forward = a2 * Eigen::Vector3f::UnitZ();
+
+	// Normalize direction vector
+	directionToTarget.normalize();
+
+	// Calculate angle between forward vector and direction to target
+	float dotProduct = forward.dot(directionToTarget);
+
+	if (dotProduct < -1.0f)
+		dotProduct = -1.0f;
+
+	if (dotProduct > 1.0f)
+		dotProduct = 1.0f;
+
+	return std::acos(dotProduct);
+}
+
 Eigen::Quaternionf
 eigen_angular_velocity_to_quaternion_derivative(
 	const Eigen::Quaternionf &current_orientation,
@@ -385,7 +415,7 @@ eigen_quaternionf_to_yaw_pitch_roll(
 
 	Eigen::Vector3f r = Eigen::Vector3f(diffQ.x(), diffQ.y(), diffQ.z());
 	
-	if (r.norm() < k_real_epsilon)
+	if (r.norm() <= k_real_epsilon)
 	{
 		Eigen::Vector3f rotatedPitchAxis = diffQ * pitchAxis;
 		Eigen::Vector3f rotatedYawAxis = pitchAxis.cross(rotatedPitchAxis);

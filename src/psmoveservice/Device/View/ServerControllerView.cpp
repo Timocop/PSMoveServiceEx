@@ -3155,22 +3155,35 @@ static void computeSpherePoseForControllerFromMultipleTrackers(
 
 			if (cfg.tracker_deviation_exclude_angle > 0.0f && !isTrackingEnforced)
 			{
+				CommonDevicePosition trackerPosition = tracker->getTrackerPose().PositionCm;
 				CommonDeviceQuaternion trackerOrientation = tracker->getTrackerPose().Orientation;
+				CommonDevicePosition otherTrackerPosition = other_tracker->getTrackerPose().PositionCm;
 				CommonDeviceQuaternion otherTrackerOrientation = other_tracker->getTrackerPose().Orientation;
 
+				Eigen::Vector3f trackerVec = Eigen::Vector3f(
+					trackerPosition.x,
+					trackerPosition.y,
+					trackerPosition.z);
 				Eigen::Quaternionf trackerQuat = Eigen::Quaternionf(
-					trackerOrientation.w, 
-					trackerOrientation.x, 
-					trackerOrientation.y, 
+					trackerOrientation.w,
+					trackerOrientation.x,
+					trackerOrientation.y,
 					trackerOrientation.z);
+				Eigen::Vector3f otherTrackerVec = Eigen::Vector3f(
+					otherTrackerPosition.x,
+					otherTrackerPosition.y,
+					otherTrackerPosition.z);
 				Eigen::Quaternionf otherTrackerQuat = Eigen::Quaternionf(
 					otherTrackerOrientation.w, 
 					otherTrackerOrientation.x,
 					otherTrackerOrientation.y,
 					otherTrackerOrientation.z);
 				
-				float trackerAngle = fabsf(eigen_quaternion_unsigned_angle_between(trackerQuat, otherTrackerQuat)) * k_radians_to_degreees;
-				if (trackerAngle > (180.0f - fmaxf(0.f, fminf(180.0f, cfg.tracker_deviation_exclude_angle))))
+				float trackerMaxFovDeviation = fmaxf(0.f, fminf(180.0f, cfg.tracker_deviation_exclude_angle));
+
+				float trackerAngle1 = fabsf(eigen_quaternion_unsigned_angle_between_fov(trackerVec, trackerQuat, otherTrackerVec, otherTrackerQuat)) * k_radians_to_degreees;
+				float trackerAngle2 = fabsf(eigen_quaternion_unsigned_angle_between_fov(otherTrackerVec, otherTrackerQuat, trackerVec, trackerQuat)) * k_radians_to_degreees;
+				if (trackerAngle1 < trackerMaxFovDeviation && trackerAngle2 < trackerMaxFovDeviation)
 				{
 					continue;
 				}
