@@ -1470,31 +1470,28 @@ void AppStage_ColorCalibration::renderUI()
 								"Cycles through all available trackers automatically."
 							);
 
-						if (ImGui::CollapsingHeader("Automatic Detection Settings", 0, true, true))
-						{
-							static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
-							ImGui::BeginChild("##AutoColorDetectionSettingsChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
-							ImGui::BeginGroup();
-							{
-								int adjustMethod = m_iDetectingAdjustMethod;
-								ImGui::Text("Automatic exposure/gain options:");
-								if (ImGui::Combo("##DetectAdjustMethod", &adjustMethod, "Keep Settings\0Adjust Exposure\0Adjust Gain\0\0"))
-								{
-									m_iDetectingAdjustMethod = static_cast<eDetectionAdjustMethod>(adjustMethod);
-								}
-							}
-							ImGui::EndGroup();
-							if (ImGui::IsItemVisible())
-								lastChildVec2 = ImGui::GetItemRectSize();
-							ImGui::EndChild();
-						}
-
-						if (ImGui::CollapsingHeader("Automatic/Manual Detection Settings", 0, true, true))
+						if (ImGui::CollapsingHeader("Detect Colors Settings", 0, true, true))
 						{
 							static ImVec2 lastChildVec2 = ImVec2(0.f, 4.f);
 							ImGui::BeginChild("##AutoManualColorDetectionSettingsChild", ImVec2(0.f, lastChildVec2.y + 16.f), true);
 							ImGui::BeginGroup();
 							{
+								if (m_masterControllerView != nullptr)
+								{
+									int adjustMethod = m_iDetectingAdjustMethod;
+									ImGui::Text("Automatic exposure/gain options:");
+									if (ImGui::Combo("##DetectAdjustMethod", &adjustMethod, "Keep Settings\0Adjust Exposure\0Adjust Gain\0\0"))
+									{
+										m_iDetectingAdjustMethod = static_cast<eDetectionAdjustMethod>(adjustMethod);
+									}
+
+									if (ImGui::IsItemHovered())
+										ImGui::SetTooltip(
+											"Only available for 'Automatically detect colors'."
+										);
+
+								}
+								
 								int colorSensitivity = m_iColorSensitivity;
 								ImGui::Text("Color detection sensitivity:");
 								if (ImGui::Combo("##SensitivityPostProcessing", &colorSensitivity, "Keep Settings\0Strict Sensitivity\0Normal Sensitivity\0Aggressive Sensitivity\0\0"))
