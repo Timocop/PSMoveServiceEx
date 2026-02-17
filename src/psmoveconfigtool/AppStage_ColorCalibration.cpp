@@ -1192,21 +1192,6 @@ void AppStage_ColorCalibration::renderUI()
 					{
 						ImGui::Text("Tracker Frame Rate: %d", m_displayFps);
 					}
-
-					ImGui::Separator();
-
-					if (ImGui::CollapsingHeader("Miscellaneous"))
-					{
-						if (ImGui::Button("Save Default Profile"))
-						{
-							request_save_default_tracker_profile();
-						}
-
-						if (ImGui::Button("Apply Default Profile"))
-						{
-							request_apply_default_tracker_profile();
-						}
-					}
 				}
 			}
 			ImGui::EndGroup();
@@ -3564,32 +3549,6 @@ void AppStage_ColorCalibration::handle_tracker_get_settings_response(
             //CLIENT_LOG_INFO("AppStage_ColorCalibration") << "Failed to get the tracker settings!";
         } break;
     }
-}
-
-void AppStage_ColorCalibration::request_save_default_tracker_profile()
-{
-    // Tell the psmove service that we want to save the current trackers profile.
-    RequestPtr request(new PSMoveProtocol::Request());
-    request->set_type(PSMoveProtocol::Request_RequestType_SAVE_TRACKER_PROFILE);
-    request->mutable_request_save_tracker_profile()->set_tracker_id(m_trackerView->tracker_info.tracker_id);
-    request->mutable_request_save_tracker_profile()->set_controller_id(m_overrideControllerId);
-
-	PSMRequestID request_id;
-	PSM_SendOpaqueRequest(&request, &request_id);
-	PSM_EatResponse(request_id);
-}
-
-void AppStage_ColorCalibration::request_apply_default_tracker_profile()
-{
-    // Tell the psmove service that we want to apply the saved default profile to the current tracker.
-    RequestPtr request(new PSMoveProtocol::Request());
-    request->set_type(PSMoveProtocol::Request_RequestType_APPLY_TRACKER_PROFILE);
-    request->mutable_request_save_tracker_profile()->set_tracker_id(m_trackerView->tracker_info.tracker_id);
-    request->mutable_request_save_tracker_profile()->set_controller_id(m_overrideControllerId);
-
-    PSMRequestID request_id;
-    PSM_SendOpaqueRequest(&request, &request_id);
-    PSM_RegisterCallback(request_id, AppStage_ColorCalibration::handle_tracker_get_settings_response, this);
 }
 
 void AppStage_ColorCalibration::release_devices()
