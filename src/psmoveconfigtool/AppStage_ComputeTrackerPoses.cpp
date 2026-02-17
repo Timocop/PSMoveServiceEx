@@ -2256,6 +2256,12 @@ void AppStage_ComputeTrackerPoses::request_start_hmd_stream(
 		PSMStreamFlags_includeRawTrackerData |
 		PSMStreamFlags_includePhysicsData;
 
+	// If we are jumping straight to testing, we want the ROI optimization on
+	if (!m_bSkipCalibration)
+	{
+		flags |= PSMStreamFlags_disableROI;
+	}
+
     // Start off getting getting projection data from tracker 0
     {
         PSMRequestID requestId;
