@@ -381,6 +381,34 @@ void AppStage_TrackerSettings::renderUI()
 							ImGui::PopTextWrapPos();
 						}
 
+						if (m_trackerInfos.size() > 1 &&
+							trackerInfo.tracker_pose.Position.x == 0.0f &&
+							trackerInfo.tracker_pose.Position.y == 0.0f &&
+							trackerInfo.tracker_pose.Position.z == 0.0f)
+						{
+							if (!bWarningAndIssuesShown)
+							{
+								ImGui::PushFont(AssetManager::getInstance()->getDefaultImFontBold());
+								ImGui::Separator();
+								ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(32, 32));
+								ImGui::SameLine();
+								ImGui::Text("Warnings and Issues");
+								ImGui::Separator();
+								ImGui::PopFont();
+								bWarningAndIssuesShown = true;
+							}
+
+							ImGui::Image(AssetManager::getInstance()->getIconExclamation()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_red());
+							ImGui::SameLine();
+							ImGui::PushTextWrapPos();
+							ImGui::TextColored(AssetManager::k_imcolor_red(),
+								"Tracker pose not calibrated.\n"
+								"The tracker is not calibrated for triangulated tracking. Please redo pose calibration, otherwise tracking problems will occur!\n"
+								"Make sure that all colors on all devices are calibrated correctly before doing pose calibration."
+							);
+							ImGui::PopTextWrapPos();
+						}
+
 						// Warn user if bus could be overloaded by the amount of cameras.
 						for (int i = m_trackerBusInfo.size() - 1; i >= 0; --i)
 						{
