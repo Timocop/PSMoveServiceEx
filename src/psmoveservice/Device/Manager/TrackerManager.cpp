@@ -1,6 +1,7 @@
 //-- includes -----
 #include "PSMoveService.h"
 #include "TrackerManager.h"
+#include "GenericWebcamEnumerator.h"
 #include "TrackerDeviceEnumerator.h"
 #include "VirtualTrackerEnumerator.h"
 #include "ControllerManager.h"
@@ -14,15 +15,19 @@
 #include "MathUtility.h"
 #include "PSMoveProtocol.pb.h"
 
+#include <algorithm>
+
 //-- constants -----
 
 //-- Tracker Manager Config -----
-const int TrackerManagerConfig::CONFIG_VERSION = 3;
+const int TrackerManagerConfig::CONFIG_VERSION = 4;
 
 TrackerManagerConfig::TrackerManagerConfig(const std::string &fnamebase)
     : PSMoveConfig(fnamebase)
 {
 	virtual_tracker_count = 0;
+	generic_webcam_enabled = false;
+	generic_webcam_stable_id.clear();
 	ignore_pose_from_one_tracker = true;
 	tracker_sync_mode = TrackerSyncMode::WaitAll;
 	optical_tracking_timeout= 100;
@@ -82,6 +87,8 @@ TrackerManagerConfig::config2ptree()
 	pt.put("legacy", DeviceManager().getInstance()->isLegacyService());
 
 	pt.put("virtual_tracker_count", virtual_tracker_count);
+	pt.put("generic_webcam.enabled", generic_webcam_enabled);
+	pt.put("generic_webcam.stable_id", generic_webcam_stable_id);
 	pt.put("ignore_pose_from_one_tracker", ignore_pose_from_one_tracker);
 	pt.put("tracker_sync_mode", tracker_sync_mode);
     pt.put("optical_tracking_timeout", optical_tracking_timeout);
@@ -144,9 +151,18 @@ TrackerManagerConfig::ptree2config(const boost::property_tree::ptree &pt)
 
 	bool legacy = pt.get<bool>("legacy", false);
 
-	if (version == TrackerManagerConfig::CONFIG_VERSION && legacy == DeviceManager().getInstance()->isLegacyService())
+	if ((version == 3 || version == TrackerManagerConfig::CONFIG_VERSION) &&
+		legacy == DeviceManager().getInstance()->isLegacyService())
     {
 		virtual_tracker_count = pt.get<int>("virtual_tracker_count", virtual_tracker_count);
+		generic_webcam_enabled =
+			pt.get<bool>("generic_webcam.enabled", generic_webcam_enabled);
+		generic_webcam_stable_id =
+			pt.get<std::string>("generic_webcam.stable_id", generic_webcam_stable_id);
+		if (generic_webcam_stable_id.empty())
+		{
+			generic_webcam_enabled = false;
+		}
 		ignore_pose_from_one_tracker = pt.get<bool>("ignore_pose_from_one_tracker", ignore_pose_from_one_tracker);
 		tracker_sync_mode = static_cast<TrackerSyncMode>(pt.get<int>("tracker_sync_mode", tracker_sync_mode));
         optical_tracking_timeout= pt.get<int>("optical_tracking_timeout", optical_tracking_timeout);
@@ -247,7 +263,13 @@ TrackerManagerConfig::get_global_down_axis() const
 TrackerManager::TrackerManager()
     : DeviceTypeManager(10000)
     , m_tracker_list_dirty(false)
+	, m_trackersSynced(false)
+	, m_isTrackerPollAllowed(false)
 {
+	std::fill(
+		m_isTrackerReady,
+		m_isTrackerReady + TrackerManager::k_max_devices,
+		false);
 }
 
 bool 
@@ -271,6 +293,50 @@ TrackerManager::startup()
 		// Copy the virtual tracker count into the Virtual tracker enumerator's static variable.
 		// This breaks the dependency between the Tracker Manager and the enumerator.
 		VirtualTrackerEnumerator::virtual_tracker_count = cfg.virtual_tracker_count;
+
+#ifdef _WIN32
+		std::vector<GenericWebcamDeviceInfo> generic_webcams;
+		std::string generic_webcam_error;
+		if (GenericWebcamEnumerator::enumerateAllDevices(
+				generic_webcams,
+				false,
+				&generic_webcam_error))
+		{
+			for (const GenericWebcamDeviceInfo &camera : generic_webcams)
+			{
+				SERVER_LOG_INFO("TrackerManager") <<
+					"Generic webcam available: \"" <<
+					camera.friendly_name << "\" stable_id=" <<
+					camera.stable_id;
+			}
+
+			if (cfg.generic_webcam_enabled)
+			{
+				const bool configured_camera_found =
+					std::find_if(
+						generic_webcams.begin(),
+						generic_webcams.end(),
+						[this](const GenericWebcamDeviceInfo &camera)
+						{
+							return camera.stable_id ==
+								cfg.generic_webcam_stable_id;
+						}) != generic_webcams.end();
+				if (!configured_camera_found)
+				{
+					SERVER_LOG_WARNING("TrackerManager") <<
+						"The enabled generic webcam stable_id \"" <<
+						cfg.generic_webcam_stable_id <<
+						"\" is not currently available.";
+				}
+			}
+		}
+		else
+		{
+			SERVER_LOG_WARNING("TrackerManager") <<
+				"Unable to enumerate generic webcams: " <<
+				generic_webcam_error;
+		}
+#endif
 
         // Refresh the tracker list
         mark_tracker_list_dirty();
@@ -391,7 +457,17 @@ TrackerManager::mark_tracker_list_dirty()
 DeviceEnumerator *
 TrackerManager::allocate_device_enumerator()
 {
-    return new TrackerDeviceEnumerator(TrackerDeviceEnumerator::CommunicationType_ALL);
+	std::vector<std::string> enabled_generic_webcam_ids;
+	if (cfg.generic_webcam_enabled &&
+		!cfg.generic_webcam_stable_id.empty())
+	{
+		enabled_generic_webcam_ids.push_back(
+			cfg.generic_webcam_stable_id);
+	}
+
+    return new TrackerDeviceEnumerator(
+		TrackerDeviceEnumerator::CommunicationType_ALL,
+		enabled_generic_webcam_ids);
 }
 
 void

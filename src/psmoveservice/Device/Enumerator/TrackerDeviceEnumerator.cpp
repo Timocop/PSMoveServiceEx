@@ -1,5 +1,6 @@
 // -- includes -----
 #include "TrackerDeviceEnumerator.h"
+#include "GenericWebcamEnumerator.h"
 #include "VirtualTrackerEnumerator.h"
 #include "ServerUtility.h"
 #include "USBDeviceManager.h"
@@ -9,6 +10,7 @@
 
 #define ENUM_INDEX_VIRTUAL 0
 #define ENUM_INDEX_HID 1
+#define ENUM_INDEX_GENERIC 2
 
 // -- private definitions -----
 #ifdef _MSC_VER
@@ -31,7 +33,8 @@ static bool is_tracker_supported(USBDeviceEnumerator* enumerator, CommonDeviceSt
 
 // -- methods -----
 TrackerDeviceEnumerator::TrackerDeviceEnumerator(
-	eAPIType _apiType)
+	eAPIType _apiType,
+	const std::vector<std::string> &enabled_generic_webcam_ids)
 	: DeviceEnumerator()
 	, api_type(_apiType)
 	, enumerator_count(0)
@@ -39,6 +42,7 @@ TrackerDeviceEnumerator::TrackerDeviceEnumerator(
 	, m_cameraIndex(-1)
 	, m_cameraHidIndex(-1)
 	, m_cameraVirtIndex(-1)
+	, m_cameraGenericIndex(-1)
 {
 	switch (_apiType)
 	{
@@ -64,9 +68,19 @@ TrackerDeviceEnumerator::TrackerDeviceEnumerator(
 		enumerator_count = 1;
 		break;
 	}
+	case eAPIType::CommunicationType_GENERIC:
+	{
+		AnyDeviceEnumerator _enumerator;
+		_enumerator.m_usb_enumerator = nullptr;
+		_enumerator.enumerator =
+			new GenericWebcamEnumerator(enabled_generic_webcam_ids, true);
+		enumerators.push_back(_enumerator);
+		enumerator_count = 1;
+		break;
+	}
 	case eAPIType::CommunicationType_ALL:
 	{
-		for (int i = 0; i < 2; i++)
+		for (int i = 0; i < 3; i++)
 		{
 			switch (i)
 			{
@@ -86,13 +100,24 @@ TrackerDeviceEnumerator::TrackerDeviceEnumerator(
 				enumerators.push_back(_enumerator);
 				break;
 			}
+			case ENUM_INDEX_GENERIC:
+			{
+				AnyDeviceEnumerator _enumerator;
+				_enumerator.m_usb_enumerator = nullptr;
+				_enumerator.enumerator =
+					new GenericWebcamEnumerator(
+						enabled_generic_webcam_ids,
+						true);
+				enumerators.push_back(_enumerator);
+				break;
+			}
 			default:
 			{
 				assert(0 && "unreachable");
 			}
 			}
 		}
-		enumerator_count = 2;
+		enumerator_count = 3;
 		break;
 	}
 	}
@@ -109,7 +134,14 @@ TrackerDeviceEnumerator::TrackerDeviceEnumerator(
 		{
 			m_deviceType = enumerators[enumerator_index].enumerator->get_device_type();
 			m_cameraIndex = 0;
-			m_cameraVirtIndex = 0;
+			if (get_generic_webcam_enumerator() != nullptr)
+			{
+				m_cameraGenericIndex = 0;
+			}
+			else
+			{
+				m_cameraVirtIndex = 0;
+			}
 		}
 		else
 		{
@@ -235,6 +267,7 @@ const USBDeviceEnumerator *TrackerDeviceEnumerator::get_hid_tracker_enumerator()
 		enumerator = (enumerator_index < enumerator_count) ? static_cast<USBDeviceEnumerator *>(enumerators[0].m_usb_enumerator) : nullptr;
 		break;
 	case eAPIType::CommunicationType_VIRTUAL:
+	case eAPIType::CommunicationType_GENERIC:
 		enumerator = nullptr;
 		break;
 	case eAPIType::CommunicationType_ALL:
@@ -264,6 +297,9 @@ const VirtualTrackerEnumerator *TrackerDeviceEnumerator::get_virtual_tracker_enu
 	case eAPIType::CommunicationType_VIRTUAL:
 		enumerator = (enumerator_index < enumerator_count) ? static_cast<VirtualTrackerEnumerator *>(enumerators[0].enumerator) : nullptr;
 		break;
+	case eAPIType::CommunicationType_GENERIC:
+		enumerator = nullptr;
+		break;
 	case eAPIType::CommunicationType_ALL:
 		if (enumerator_index < enumerator_count)
 		{
@@ -272,6 +308,39 @@ const VirtualTrackerEnumerator *TrackerDeviceEnumerator::get_virtual_tracker_enu
 		else
 		{
 			enumerator = nullptr;
+		}
+		break;
+	}
+
+	return enumerator;
+}
+
+const GenericWebcamEnumerator *
+TrackerDeviceEnumerator::get_generic_webcam_enumerator() const
+{
+	GenericWebcamEnumerator *enumerator = nullptr;
+
+	switch (api_type)
+	{
+	case eAPIType::CommunicationType_HID:
+	case eAPIType::CommunicationType_VIRTUAL:
+		enumerator = nullptr;
+		break;
+	case eAPIType::CommunicationType_GENERIC:
+		enumerator =
+			(enumerator_index < enumerator_count)
+			? static_cast<GenericWebcamEnumerator *>(
+				enumerators[0].enumerator)
+			: nullptr;
+		break;
+	case eAPIType::CommunicationType_ALL:
+		if (enumerator_index < enumerator_count)
+		{
+			enumerator =
+				(enumerator_index == ENUM_INDEX_GENERIC)
+				? static_cast<GenericWebcamEnumerator *>(
+					enumerators[ENUM_INDEX_GENERIC].enumerator)
+				: nullptr;
 		}
 		break;
 	}
@@ -356,7 +425,14 @@ bool TrackerDeviceEnumerator::next()
 
 		if (enumerators[enumerator_index].enumerator != nullptr)
 		{
-			++m_cameraVirtIndex;
+			if (get_generic_webcam_enumerator() != nullptr)
+			{
+				++m_cameraGenericIndex;
+			}
+			else
+			{
+				++m_cameraVirtIndex;
+			}
 			m_deviceType = enumerators[enumerator_index].enumerator->get_device_type();
 		}
 		else if (enumerators[enumerator_index].m_usb_enumerator != nullptr)
@@ -367,7 +443,7 @@ bool TrackerDeviceEnumerator::next()
 	}
 	else
 	{
-		m_deviceType = CommonDeviceState::SUPPORTED_CONTROLLER_TYPE_COUNT; // invalid
+		m_deviceType = CommonDeviceState::INVALID_DEVICE_TYPE;
 	}
 
 	return foundValid;

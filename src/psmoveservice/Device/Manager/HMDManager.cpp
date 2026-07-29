@@ -118,10 +118,17 @@ HMDManager::updateStateAndPredict(TrackerManager* tracker_manager)
 
 		if (hmdView->getIsOpen())
 		{
+			// Apply all IMU packets first so the point-cloud solver can rewind
+			// from the newest inertial state to the webcam capture timestamp.
+			hmdView->updateStateAndPredict();
+
 			if (tracker_manager->trackersSynced())
 			{
 				hmdView->updateOpticalPoseEstimation(tracker_manager);
 			}
+
+			// Apply the capture-time-aligned optical correction in the same
+			// service tick. Duplicate frames are suppressed by ServerHMDView.
 			hmdView->updateStateAndPredict();
 		}
 	}

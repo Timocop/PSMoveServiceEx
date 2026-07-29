@@ -3,6 +3,8 @@
 
 //-- includes -----
 #include "DeviceInterface.h"
+#include "HMDOpticalPoseFusion.h"
+#include "MorpheusSensorClock.h"
 #include "ServerDeviceView.h"
 #include "PoseFilterInterface.h"
 #include "PSMoveProtocolInterface.h"
@@ -27,7 +29,9 @@ struct HMDOpticalPoseEstimation
 {
 	std::chrono::time_point<std::chrono::high_resolution_clock> last_update_timestamp;
 	std::chrono::time_point<std::chrono::high_resolution_clock> last_visible_timestamp;
+	std::chrono::time_point<std::chrono::high_resolution_clock> measurement_timestamp;
 	bool bValidTimestamps;
+	bool bValidMeasurementTimestamp;
 
 	CommonDevicePosition position_cm;
 	CommonDeviceTrackingProjection projection;
@@ -47,7 +51,9 @@ struct HMDOpticalPoseEstimation
 	{
 		last_update_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>();
 		last_visible_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>();
+		measurement_timestamp = std::chrono::time_point<std::chrono::high_resolution_clock>();
 		bValidTimestamps = false;
+		bValidMeasurementTimestamp = false;
 
 		position_cm.clear();
 		bCurrentlyTracking = false;
@@ -167,6 +173,8 @@ protected:
         DeviceOutputDataFramePtr &data_frame);
 
 private:
+	void clearPoseFilterPacketQueues();
+
 	// Tracking color state
 	int m_tracking_listener_count;
 	bool m_tracking_enabled;
@@ -180,12 +188,18 @@ private:
 	// Filter State (IMU Thread)
 	std::chrono::time_point<std::chrono::high_resolution_clock> m_lastSensorDataTimestamp;
 	bool m_bIsLastSensorDataTimestampValid;
+	MorpheusClockDomainBridge m_morpheusClockDomainBridge;
 
 	// Filter State (Shared)
 	t_hmd_pose_sensor_queue m_PoseSensorIMUPacketQueue;
 	t_hmd_pose_optical_queue m_PoseSensorOpticalPacketQueue; // TODO: Currently on main thread
 
 	// Filter state
+	t_high_resolution_timepoint m_lastPoseFilterUpdateTimestamp;
+	bool m_bIsLastPoseFilterUpdateTimestampValid;
+	t_high_resolution_timepoint m_lastOpticalMeasurementTimestamp;
+	bool m_bIsLastOpticalMeasurementTimestampValid;
+	HMDOpticalPoseFusion::TimingStatus m_lastOpticalTimingStatus;
 	HMDOpticalPoseEstimation *m_tracker_pose_estimations; // array of size TrackerManager::k_max_devices
 	HMDOpticalPoseEstimation *m_multicam_pose_estimation;
 	class IPoseFilter *m_pose_filter;

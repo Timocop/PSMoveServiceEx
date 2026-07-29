@@ -1,6 +1,7 @@
 //-- includes -----
 #include "AtomicPrimitives.h"
 #include "MorpheusHMD.h"
+#include "MorpheusSensorClock.h"
 #include "DeviceInterface.h"
 #include "DeviceManager.h"
 #include "HMDDeviceEnumerator.h"
@@ -15,6 +16,7 @@
 #include "hidapi.h"
 #include "libusb.h"
 #include "WorkerThread.h"
+#include <algorithm>
 #include <vector>
 #include <cstdlib>
 #include <mutex>
@@ -168,7 +170,8 @@ struct MorpheusSensorData
 	unsigned char unk5;                         // byte 53: Voltage reference ? starts in 0 and suddenly jumps to 3
 	unsigned char unk6;	                        // byte 54: Voltage value ? starts on 0, ranges very fast to 255, when switched from VR to Cinematic and back varies between 255 and 254 and sometimes oscillates between them
 	unsigned char face_distance[2];             // byte 55-56: Infrared headset sensor, 0 to 1023, used to measure distance between the face / head and visor
-	unsigned char unk7[6];                      // byte 57-62
+	unsigned char unk7[4];                      // byte 57-60
+	unsigned char sample_period_us[2];          // byte 61-62
 	unsigned char sequence;                     // byte 63
 
     MorpheusSensorData()
@@ -181,6 +184,7 @@ struct MorpheusSensorData
         memset(this, 0, sizeof(MorpheusSensorData));
     }
 };
+static_assert(sizeof(MorpheusSensorData) == 64, "Unexpected PSVR sensor report layout");
 
 struct MorpheusCommandHeader
 {
@@ -205,7 +209,10 @@ public:
 		, m_hidDevice(nullptr)
 		, m_device_handle(nullptr)
 		, m_device_descriptor(nullptr)
+		, m_hmdListener(nullptr)
 		, m_nextPollSequenceNumber(0)
+		, m_sensorClock()
+		, m_hasQueredCommands(false)
 	{
 		setConfig(cfg);
 
@@ -250,6 +257,7 @@ public:
 			m_device_handle = USBContext->usb_device_handle;
 			m_device_descriptor = USBContext->usb_device_descriptor;
 			m_hmdListener = hmd_listener;
+			m_sensorClock.reset();
 			WorkerThread::startThread();
 		}
 	}
@@ -257,6 +265,7 @@ public:
 	void stop()
 	{
 		WorkerThread::stopThread();
+		m_sensorClock.reset();
 	}
 
 protected:
@@ -270,8 +279,10 @@ protected:
 		// Attempt to read the next sensor update packet from the HMD
 		memcpy(&m_previousRawHIDPacket, &m_currentRawHIDPacket, sizeof(MorpheusSensorData));
 		int res = hid_read_timeout(m_hidDevice, (unsigned char*)&m_currentRawHIDPacket, sizeof(MorpheusSensorData), HID_READ_TIMEOUT);
+		const MorpheusSensorClock::TimePoint host_read_complete =
+			MorpheusSensorClock::Clock::now();
 
-		if (res > 0)
+		if (res == static_cast<int>(sizeof(MorpheusSensorData)))
 		{
 			// https://github.com/hrl7/node-psvr/blob/master/lib/psvr.js
 			MorpheusHMDState newState;
@@ -283,14 +294,64 @@ protected:
 			// Processes the IMU data
 			newState.parse_data_input(&cfg, &m_currentRawHIDPacket);
 
+			if (m_currentRawHIDPacket.sensors_ready != 0)
+			{
+				const std::uint16_t reported_period_us =
+					static_cast<std::uint16_t>(
+						m_currentRawHIDPacket.sample_period_us[0] |
+						(m_currentRawHIDPacket.sample_period_us[1] << 8));
+				const MorpheusSensorClock::Result clock_result =
+					m_sensorClock.processReport(
+						MorpheusSensorClock::decodeTick24(
+							m_currentRawHIDPacket.imu_frame_0.seq_frame),
+						MorpheusSensorClock::decodeTick24(
+							m_currentRawHIDPacket.imu_frame_1.seq_frame),
+						m_currentRawHIDPacket.sequence,
+						reported_period_us,
+						host_read_complete);
+
+				if (clock_result.status == MorpheusSensorClock::Status::Discontinuity)
+				{
+					SERVER_MT_LOG_WARNING("MorpheusSensorProcessor::doWork") <<
+						"Resetting PSVR sensor clock after a tick or host-time discontinuity";
+				}
+
+				for (std::size_t frame_index = 0; frame_index < 2; ++frame_index)
+				{
+					newState.SensorTimestampValid[frame_index] =
+						clock_result.status == MorpheusSensorClock::Status::Synchronized &&
+						clock_result.sample_valid[frame_index];
+					if (newState.SensorTimestampValid[frame_index])
+					{
+						newState.SensorTimestamps[frame_index] =
+							clock_result.sample_timestamps[frame_index];
+					}
+				}
+			}
+			else
+			{
+				m_sensorClock.reset();
+			}
+
 			// Store a copy of the parsed input date for functions
 			// that want to query input state off of the worker thread
 			m_currentState.storeValue(newState);
 
 			if (m_hmdListener != nullptr)
 			{
-				m_hmdListener->notifySensorDataReceived(&newState);
+				if (newState.SensorTimestampValid[0] ||
+					newState.SensorTimestampValid[1])
+				{
+					m_hmdListener->notifySensorDataReceived(&newState);
+				}
 			}
+		}
+		else if (res > 0)
+		{
+			SERVER_MT_LOG_WARNING("MorpheusSensorProcessor::doWork") <<
+				"Ignoring partial PSVR sensor report (" << res << "/"
+				<< sizeof(MorpheusSensorData) << " bytes)";
+			m_sensorClock.reset();
 		}
 		else if (res < 0)
 		{
@@ -305,6 +366,7 @@ protected:
 			}
 
 			bWorking = false;
+			m_sensorClock.reset();
 		}
 
 		// Don't send output writes too frequently
@@ -373,6 +435,7 @@ protected:
 
 	// Worker thread state
 	int m_nextPollSequenceNumber;
+	MorpheusSensorClock m_sensorClock;
 	MorpheusSensorData m_previousRawHIDPacket;
 	MorpheusSensorData m_currentRawHIDPacket;
 
@@ -390,7 +453,7 @@ static void morpheus_close_usb_device(MorpheusUSBContext *morpheus_context);
 
 // -- public interface
 // -- Morpheus HMD Config
-const int MorpheusHMDConfig::CONFIG_VERSION = 2;
+const int MorpheusHMDConfig::CONFIG_VERSION = 3;
 
 const boost::property_tree::ptree
 MorpheusHMDConfig::config2ptree()
@@ -468,6 +531,32 @@ MorpheusHMDConfig::config2ptree()
 
 	pt.put("use_custom_optical_tracking", use_custom_optical_tracking);
 	pt.put("override_custom_tracking_leds", override_custom_tracking_leds);
+	pt.put("OpticalTracking.BuiltInLEDMask", built_in_tracking_led_mask);
+	pt.put("OpticalTracking.BuiltInLEDIntensity", built_in_tracking_led_intensity);
+	pt.put("OpticalTracking.LEDModel.Version", built_in_led_model_version);
+	pt.put("OpticalTracking.LEDModel.HMDOrigin.X", built_in_hmd_origin_in_led_model_cm.x);
+	pt.put("OpticalTracking.LEDModel.HMDOrigin.Y", built_in_hmd_origin_in_led_model_cm.y);
+	pt.put("OpticalTracking.LEDModel.HMDOrigin.Z", built_in_hmd_origin_in_led_model_cm.z);
+	pt.put("OpticalTracking.Solver.MinInlierCount", point_cloud_min_inlier_count);
+	pt.put("OpticalTracking.Solver.MaxAssociationDistancePx", point_cloud_max_association_distance_px);
+	pt.put("OpticalTracking.Solver.MaxReprojectionErrorPx", point_cloud_max_reprojection_error_px);
+	pt.put("OpticalTracking.Solver.MinDepthCm", point_cloud_min_depth_cm);
+	pt.put("OpticalTracking.Solver.MaxDepthCm", point_cloud_max_depth_cm);
+	pt.put("OpticalTracking.Solver.MaxOrientationErrorDegrees", point_cloud_max_orientation_error_degrees);
+	pt.put("OpticalTracking.Solver.MaxTranslationJumpCm", point_cloud_max_translation_jump_cm);
+	pt.put("OpticalTracking.Solver.MaxFrameAgeMs", point_cloud_max_frame_age_ms);
+
+	for (int point_index = 0;
+			point_index < CommonDeviceTrackingShape::MAX_POINT_CLOUD_POINT_COUNT;
+			++point_index)
+	{
+		const std::string point_path =
+			"OpticalTracking.LEDModel." + std::to_string(point_index);
+
+		pt.put(point_path + ".X", built_in_led_positions_cm[point_index].x);
+		pt.put(point_path + ".Y", built_in_led_positions_cm[point_index].y);
+		pt.put(point_path + ".Z", built_in_led_positions_cm[point_index].z);
+	}
 
 	pt.put("FilterSettings.PositionKalman.Error", filter_position_kalman_error);
 	pt.put("FilterSettings.PositionKalman.ProcessNoise", filter_position_kalman_noise);
@@ -483,11 +572,12 @@ MorpheusHMDConfig::ptree2config(const boost::property_tree::ptree &pt)
 {
     version = pt.get<int>("version", 0);
 	bool legacy = pt.get<bool>("legacy", false);
+	const bool is_compatible_version = version == 2 || version == CONFIG_VERSION;
 
 #if !defined(IS_TESTING)
-	if (version == MorpheusHMDConfig::CONFIG_VERSION && legacy == DeviceManager().getInstance()->isLegacyService())
+	if (is_compatible_version && legacy == DeviceManager().getInstance()->isLegacyService())
 #else
-	if (version == MorpheusHMDConfig::CONFIG_VERSION)
+	if (is_compatible_version)
 #endif
     {
 		is_valid = pt.get<bool>("is_valid", false);
@@ -564,6 +654,91 @@ MorpheusHMDConfig::ptree2config(const boost::property_tree::ptree &pt)
 
 		use_custom_optical_tracking = pt.get<bool>("use_custom_optical_tracking", use_custom_optical_tracking);
 		override_custom_tracking_leds = pt.get<int>("override_custom_tracking_leds", override_custom_tracking_leds);
+		built_in_tracking_led_mask =
+			pt.get<int>("OpticalTracking.BuiltInLEDMask", built_in_tracking_led_mask);
+		built_in_tracking_led_intensity =
+			pt.get<int>("OpticalTracking.BuiltInLEDIntensity", built_in_tracking_led_intensity);
+		built_in_led_model_version =
+			pt.get<int>("OpticalTracking.LEDModel.Version", built_in_led_model_version);
+		built_in_hmd_origin_in_led_model_cm.x =
+			pt.get<float>(
+				"OpticalTracking.LEDModel.HMDOrigin.X",
+				built_in_hmd_origin_in_led_model_cm.x);
+		built_in_hmd_origin_in_led_model_cm.y =
+			pt.get<float>(
+				"OpticalTracking.LEDModel.HMDOrigin.Y",
+				built_in_hmd_origin_in_led_model_cm.y);
+		built_in_hmd_origin_in_led_model_cm.z =
+			pt.get<float>(
+				"OpticalTracking.LEDModel.HMDOrigin.Z",
+				built_in_hmd_origin_in_led_model_cm.z);
+		point_cloud_min_inlier_count =
+			pt.get<int>("OpticalTracking.Solver.MinInlierCount", point_cloud_min_inlier_count);
+		point_cloud_max_association_distance_px =
+			pt.get<float>(
+				"OpticalTracking.Solver.MaxAssociationDistancePx",
+				point_cloud_max_association_distance_px);
+		point_cloud_max_reprojection_error_px =
+			pt.get<float>(
+				"OpticalTracking.Solver.MaxReprojectionErrorPx",
+				point_cloud_max_reprojection_error_px);
+		point_cloud_min_depth_cm =
+			pt.get<float>("OpticalTracking.Solver.MinDepthCm", point_cloud_min_depth_cm);
+		point_cloud_max_depth_cm =
+			pt.get<float>("OpticalTracking.Solver.MaxDepthCm", point_cloud_max_depth_cm);
+		point_cloud_max_orientation_error_degrees =
+			pt.get<float>(
+				"OpticalTracking.Solver.MaxOrientationErrorDegrees",
+				point_cloud_max_orientation_error_degrees);
+		point_cloud_max_translation_jump_cm =
+			pt.get<float>(
+				"OpticalTracking.Solver.MaxTranslationJumpCm",
+				point_cloud_max_translation_jump_cm);
+		point_cloud_max_frame_age_ms =
+			pt.get<int>(
+				"OpticalTracking.Solver.MaxFrameAgeMs",
+				point_cloud_max_frame_age_ms);
+
+		for (int point_index = 0;
+			point_index < CommonDeviceTrackingShape::MAX_POINT_CLOUD_POINT_COUNT;
+			++point_index)
+		{
+			const std::string point_path =
+				"OpticalTracking.LEDModel." + std::to_string(point_index);
+
+			built_in_led_positions_cm[point_index].x =
+				pt.get<float>(point_path + ".X", built_in_led_positions_cm[point_index].x);
+			built_in_led_positions_cm[point_index].y =
+				pt.get<float>(point_path + ".Y", built_in_led_positions_cm[point_index].y);
+			built_in_led_positions_cm[point_index].z =
+				pt.get<float>(point_path + ".Z", built_in_led_positions_cm[point_index].z);
+		}
+
+		built_in_tracking_led_mask =
+			std::max(0, std::min(built_in_tracking_led_mask, static_cast<int>(_MorpheusLED_FRONT)));
+		built_in_tracking_led_intensity =
+			std::max(0, std::min(built_in_tracking_led_intensity, 100));
+		point_cloud_min_inlier_count =
+			std::max(4, std::min(point_cloud_min_inlier_count, 7));
+		point_cloud_max_association_distance_px =
+			std::max(
+				10.f,
+				std::min(point_cloud_max_association_distance_px, 200.f));
+		point_cloud_max_reprojection_error_px =
+			std::max(
+				1.f,
+				std::min(point_cloud_max_reprojection_error_px, 30.f));
+		point_cloud_min_depth_cm =
+			std::max(10.f, std::min(point_cloud_min_depth_cm, 395.f));
+		point_cloud_max_depth_cm =
+			std::max(point_cloud_min_depth_cm + 5.f, std::min(point_cloud_max_depth_cm, 400.f));
+		point_cloud_max_orientation_error_degrees =
+			std::max(5.f, std::min(point_cloud_max_orientation_error_degrees, 90.f));
+		point_cloud_max_translation_jump_cm =
+			std::max(5.f, std::min(point_cloud_max_translation_jump_cm, 200.f));
+		point_cloud_max_frame_age_ms =
+			std::max(50, std::min(point_cloud_max_frame_age_ms, 250));
+		version = CONFIG_VERSION;
 
 		filter_position_kalman_error = pt.get<float>("FilterSettings.PositionKalman.Error", filter_position_kalman_error);
 		filter_position_kalman_noise = pt.get<float>("FilterSettings.PositionKalman.ProcessNoise", filter_position_kalman_noise);
@@ -740,10 +915,9 @@ bool MorpheusHMD::open(
 				SERVER_LOG_INFO("MorpheusHMD::open") << "Turning on MorpheusHMD VR-Mode.";
 				morpheus_set_vr_mode(true);
 
-				//morpheus_enable_tracking() resets morpheus_set_led_brightness() LED settings?
-				//Lets just wait a bit.
-				std::this_thread::sleep_for(std::chrono::milliseconds(1500));
-				morpheus_set_led_brightness(_MorpheusLED_ALL, 50);
+				// VR mode can reset light state. Give the processor unit time to
+				// settle, then establish a known all-off state. Tracking streams
+				// explicitly enable only their configured light mask.
 				std::this_thread::sleep_for(std::chrono::milliseconds(1500));
 				setTrackingEnabled(false, true);
 
@@ -880,19 +1054,43 @@ MorpheusHMD::getTrackingShape(CommonDeviceTrackingShape &outTrackingShape) const
 	}
 	else
 	{
+		static const int k_led_bit_by_model_index[
+			CommonDeviceTrackingShape::MAX_POINT_CLOUD_POINT_COUNT] =
+		{
+			_MorpheusLED_E,
+			_MorpheusLED_C,
+			_MorpheusLED_F,
+			_MorpheusLED_A,
+			_MorpheusLED_D,
+			_MorpheusLED_G,
+			_MorpheusLED_B,
+			_MorpheusLED_H,
+			_MorpheusLED_I
+		};
+
 		outTrackingShape.shape_type = eCommonTrackingShapeType::PointCloud;
-		//###HipsterSloth TODO: These are just me eye balling the LED centers with a ruler
-		// This should really be computed using the calibration tool
-		outTrackingShape.shape.point_cloud.point[0] = { 0.00f, 0.00f, 0.00f }; // 0
-		outTrackingShape.shape.point_cloud.point[1] = { 7.25f, 4.05f, 3.75f }; // 1
-		outTrackingShape.shape.point_cloud.point[2] = { 9.05f, 0.00f, 9.65f }; // 2
-		outTrackingShape.shape.point_cloud.point[3] = { 7.25f, -4.05f, 3.75f }; // 3
-		outTrackingShape.shape.point_cloud.point[4] = { -7.25f, 4.05f, 3.75f }; // 4
-		outTrackingShape.shape.point_cloud.point[5] = { -9.05f, 0.00f, 9.65f }; // 5
-		outTrackingShape.shape.point_cloud.point[6] = { -7.25f, -4.05f, 3.75f }; // 6
-		outTrackingShape.shape.point_cloud.point[7] = { 5.65f, -1.07f, 27.53f }; // 7
-		outTrackingShape.shape.point_cloud.point[8] = { -5.65f, -1.07f, 27.53f }; // 8
-		outTrackingShape.shape.point_cloud.point_count = 9;
+		outTrackingShape.shape.point_cloud.point_count = 0;
+
+		for (int model_index = 0;
+			model_index < CommonDeviceTrackingShape::MAX_POINT_CLOUD_POINT_COUNT;
+			++model_index)
+		{
+			if ((getConfig()->built_in_tracking_led_mask & k_led_bit_by_model_index[model_index]) != 0)
+			{
+				const CommonDevicePosition &model_point =
+					getConfig()->built_in_led_positions_cm[model_index];
+				const CommonDevicePosition &hmd_origin =
+					getConfig()->built_in_hmd_origin_in_led_model_cm;
+				CommonDevicePosition &output_point =
+					outTrackingShape.shape.point_cloud.point[
+						outTrackingShape.shape.point_cloud.point_count++];
+
+				output_point.set(
+					model_point.x - hmd_origin.x,
+					model_point.y - hmd_origin.y,
+					model_point.z - hmd_origin.z);
+			}
+		}
 	}
 }
 
@@ -964,7 +1162,9 @@ void MorpheusHMD::setTrackingEnabled(bool bEnable, bool bForce)
 			else
 			{
 				morpheus_set_led_brightness(_MorpheusLED_ALL, 0);
-				morpheus_set_led_brightness(_MorpheusLED_FONTTOPTRI, 50);
+				morpheus_set_led_brightness(
+					static_cast<unsigned short>(getConfig()->built_in_tracking_led_mask),
+					static_cast<unsigned char>(getConfig()->built_in_tracking_led_intensity));
 			}
 
 			bIsTracking = true;
@@ -979,8 +1179,7 @@ void MorpheusHMD::setTrackingEnabled(bool bEnable, bool bForce)
 			}
 			else
 			{
-				morpheus_set_led_brightness(_MorpheusLED_FRONT, 0);
-				morpheus_set_led_brightness(_MorpheusLED_BACK, 50);
+				morpheus_set_led_brightness(_MorpheusLED_ALL, 0);
 			}
 
 			bIsTracking = false;
@@ -1255,6 +1454,9 @@ void MorpheusHMD::morpheus_set_led_brightness(
 	{
 		return;
 	}
+
+	led_bitmask &= _MorpheusLED_ALL;
+	intensity = std::min<unsigned char>(intensity, 100);
 
 	MorpheusCommand command = { {0} };
 	command.header.request_id = Morpheus_Req_SetLEDBrightness;

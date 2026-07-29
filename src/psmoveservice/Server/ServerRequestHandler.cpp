@@ -28,6 +28,7 @@
 #include "TrackerManager.h"
 #include "VirtualController.h"
 
+#include <algorithm>
 #include <cassert>
 #include <bitset>
 #include <map>
@@ -2901,15 +2902,19 @@ protected:
                 PSMoveProtocol::Response_ResultSetTrackerExposure* result_exposure =
                     response->mutable_result_set_tracker_exposure();
 
-                // Set the desired exposure on the tracker
-                tracker_view->setExposure(desired_exposure, bSaveSetting);
+                // Set the desired exposure on the tracker. Generic webcams
+                // report unsupported controls instead of echoing a cached
+                // value that never reached the hardware.
+                const bool setting_applied =
+                    tracker_view->setExposure(
+                        desired_exposure,
+                        bSaveSetting);
 
-                // Only save the setting if requested
-                if (bSaveSetting)
+                if (setting_applied && bSaveSetting)
                 {
                     tracker_view->saveSettings();
                 }
-                else
+                else if (setting_applied)
                 {
                     context.connection_state->active_tracker_stream_info[tracker_id].has_temp_settings_override = true;
                 }
@@ -2917,7 +2922,10 @@ protected:
                 // Return back the actual exposure that got set
                 result_exposure->set_new_exposure(static_cast<float>(tracker_view->getExposure()));
 
-                response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+                response->set_result_code(
+                    setting_applied
+                    ? PSMoveProtocol::Response_ResultCode_RESULT_OK
+                    : PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
             }
             else
             {
@@ -2947,15 +2955,15 @@ protected:
                 PSMoveProtocol::Response_ResultSetTrackerGain* result_gain =
                     response->mutable_result_set_tracker_gain();
 
-                // Set the desired gain on the tracker
-                tracker_view->setGain(desired_gain, bSaveSetting);
+                // Set the desired gain on the tracker.
+                const bool setting_applied =
+                    tracker_view->setGain(desired_gain, bSaveSetting);
 
-                // Only save the setting if requested
-                if (bSaveSetting)
+                if (setting_applied && bSaveSetting)
                 {
                     tracker_view->saveSettings();
                 }
-                else
+                else if (setting_applied)
                 {
                     context.connection_state->active_tracker_stream_info[tracker_id].has_temp_settings_override = true;
                 }
@@ -2963,7 +2971,10 @@ protected:
                 // Return back the actual gain that got set
                 result_gain->set_new_gain(static_cast<float>(tracker_view->getGain()));
 
-                response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);
+                response->set_result_code(
+                    setting_applied
+                    ? PSMoveProtocol::Response_ResultCode_RESULT_OK
+                    : PSMoveProtocol::Response_ResultCode_RESULT_ERROR);
             }
             else
             {
@@ -2979,7 +2990,7 @@ protected:
     void handle_request__set_tracker_option(const RequestContext &context,
         PSMoveProtocol::Response *response)
     {
-        const int tracker_id = context.request->request_set_tracker_gain().tracker_id();
+        const int tracker_id = context.request->request_set_tracker_option().tracker_id();
 
         response->set_type(PSMoveProtocol::Response_ResponseType_TRACKER_OPTION_UPDATED);
 
@@ -4049,8 +4060,10 @@ protected:
 				float filter_position_kalman_disable_cutoff;
 				float filter_madgwick_smart_correct;
 
-				bool use_custom_optical_tracking;
-				int override_custom_tracking_leds;
+				bool use_custom_optical_tracking = false;
+				int override_custom_tracking_leds = 0;
+				int built_in_tracking_led_mask = 0;
+				int built_in_tracking_led_intensity = 0;
 
                 switch (hmd_view->getHMDDeviceType())
                 {
@@ -4086,6 +4099,8 @@ protected:
 
 						use_custom_optical_tracking = config->use_custom_optical_tracking;
 						override_custom_tracking_leds = config->override_custom_tracking_leds;
+						built_in_tracking_led_mask = config->built_in_tracking_led_mask;
+						built_in_tracking_led_intensity = config->built_in_tracking_led_intensity;
 
 						hmd_info->set_hmd_type(PSMoveProtocol::Morpheus);
 
@@ -4161,6 +4176,8 @@ protected:
 
 				hmd_info->set_use_custom_optical_tracking(use_custom_optical_tracking);
 				hmd_info->set_override_custom_tracking_leds(override_custom_tracking_leds);
+				hmd_info->set_built_in_tracking_led_mask(built_in_tracking_led_mask);
+				hmd_info->set_built_in_tracking_led_intensity(built_in_tracking_led_intensity);
             }
         }
 
@@ -4647,15 +4664,40 @@ protected:
 			{
 				MorpheusHMD *hmd = HmdView->castChecked<MorpheusHMD>();
 				MorpheusHMDConfig *config = hmd->getConfigMutable();
+				const int built_in_led_mask =
+					std::max(0, std::min(request.built_in_led_mask(), 0x07f));
+				const int built_in_led_intensity =
+					std::max(0, std::min(request.built_in_led_intensity(), 100));
+				const bool update_built_in_settings = request.has_built_in_led_settings();
+				const bool switch_to_optical_filter =
+					!request.use_custom() &&
+					config->orientation_filter_type == "MadgwickARG";
 
 				if (config->use_custom_optical_tracking != request.use_custom() ||
-					config->override_custom_tracking_leds != request.led_overrides())
+					config->override_custom_tracking_leds != request.led_overrides() ||
+					(update_built_in_settings &&
+						(config->built_in_tracking_led_mask != built_in_led_mask ||
+						 config->built_in_tracking_led_intensity != built_in_led_intensity)) ||
+					switch_to_optical_filter)
 				{
 					config->use_custom_optical_tracking = request.use_custom();
 					config->override_custom_tracking_leds = request.led_overrides();
+					if (update_built_in_settings)
+					{
+						config->built_in_tracking_led_mask = built_in_led_mask;
+						config->built_in_tracking_led_intensity = built_in_led_intensity;
+					}
+					if (switch_to_optical_filter)
+					{
+						config->orientation_filter_type = "ComplementaryOpticalARG";
+					}
 					config->save();
 
 					hmd->setTrackingEnabled(hmd->getTrackingEnabled(), true);
+					if (switch_to_optical_filter)
+					{
+						HmdView->resetPoseFilter();
+					}
 				}
 
 				response->set_result_code(PSMoveProtocol::Response_ResultCode_RESULT_OK);

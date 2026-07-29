@@ -58,10 +58,10 @@ public:
 	void setFrameRate(double value, bool bUpdateConfig);
 
     double getExposure() const;
-    void setExposure(double value, bool bUpdateConfig);
+    bool setExposure(double value, bool bUpdateConfig);
 
     double getGain() const;
-    void setGain(double value, bool bUpdateConfig);
+    bool setGain(double value, bool bUpdateConfig);
     
     bool computeProjectionForController(
         const class ServerControllerView* tracked_controller, 

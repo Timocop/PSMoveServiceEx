@@ -38,6 +38,8 @@ public:
 		isLoaded = false;
 
 		virtual_tracker_count = 0;
+		generic_webcam_enabled = false;
+		generic_webcam_stable_id.clear();
 		ignore_pose_from_one_tracker = true;
 		tracker_sync_mode = 0;
 		optical_tracking_timeout = 100;
@@ -74,6 +76,8 @@ public:
 	bool isLoaded;
 
 	int virtual_tracker_count;
+	bool generic_webcam_enabled;
+	std::string generic_webcam_stable_id;
 	bool ignore_pose_from_one_tracker;
 	int tracker_sync_mode;
 	int optical_tracking_timeout;
@@ -204,6 +208,7 @@ private:
 	void RestartService();
 
 	int m_tabSelectedTab;
+	std::array<char, 80> m_genericWebcamStableId;
 };
 
 #endif // APP_STAGE_ADVANCED_SETTINGS_H

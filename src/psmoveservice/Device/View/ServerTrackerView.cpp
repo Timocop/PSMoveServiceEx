@@ -4,6 +4,7 @@
 #include "ServerTrackerView.h"
 #include "ServerControllerView.h"
 #include "ServerHMDView.h"
+#include "HMDPointCloudPoseSolver.h"
 #include "MathUtility.h"
 #include "MathEigen.h"
 #include "MathGLM.h"
@@ -17,6 +18,7 @@
 #include "TrackerManager.h"
 #include "ControllerManager.h"
 #include "HMDManager.h"
+#include "MorpheusHMD.h"
 #include "PoseFilterInterface.h"
 
 #include <boost/interprocess/shared_memory_object.hpp>
@@ -559,8 +561,8 @@ public:
             t_opencv_int_contour_list contours;
             cv::findContours(gsLowerROI,
                              contours,
-                             CV_RETR_EXTERNAL,
-                             CV_CHAIN_APPROX_SIMPLE,  //CV_CHAIN_APPROX_NONE?
+                             cv::RETR_EXTERNAL,
+                             cv::CHAIN_APPROX_SIMPLE,
                              ofs);
 
             // Compute the area of each contour
@@ -820,7 +822,8 @@ static bool computeTrackerRelativePointCloudContourPose(
     const ITrackerInterface *tracker_device,
     const CommonDeviceTrackingShape *tracking_shape,
     const t_opencv_float_contour_list &opencv_contours,
-    const CommonDevicePose *tracker_relative_pose_guess,
+	const HMDPointCloudPosePrior &pose_prior,
+	const HMDPointCloudPoseSolverSettings &solver_settings,
     HMDOpticalPoseEstimation *out_pose_estimate);
 static cv::Rect2i computeTrackerROIForPoseProjection(
 	const int roi_index_controller,
@@ -1016,7 +1019,7 @@ bool ServerTrackerView::allocate_device_interface(const class DeviceEnumerator *
 	case CommonDeviceState::PS3EYE:
 	case CommonDeviceState::VirtualTracker:
 	{
-		m_device = new PS3EyeTracker();
+		m_device = new PS3EyeTracker(getDeviceID());
 	} break;
     default:
         break;
@@ -1223,9 +1226,9 @@ double ServerTrackerView::getExposure() const
     return m_device->getExposure();
 }
 
-void ServerTrackerView::setExposure(double value, bool bUpdateConfig)
+bool ServerTrackerView::setExposure(double value, bool bUpdateConfig)
 {
-    m_device->setExposure(value, bUpdateConfig);
+    return m_device->setExposure(value, bUpdateConfig);
 }
 
 double ServerTrackerView::getGain() const
@@ -1233,9 +1236,9 @@ double ServerTrackerView::getGain() const
     return m_device->getGain();
 }
 
-void ServerTrackerView::setGain(double value, bool bUpdateConfig)
+bool ServerTrackerView::setGain(double value, bool bUpdateConfig)
 {
-    m_device->setGain(value, bUpdateConfig);
+    return m_device->setGain(value, bUpdateConfig);
 }
 
 void ServerTrackerView::getCameraIntrinsics(
@@ -1720,9 +1723,13 @@ bool ServerTrackerView::computeProjectionForHMD(
     std::vector<double> contour_areas;
     if (bSuccess)
     {
+		const int max_contour_count =
+			tracking_shape->shape_type == eCommonTrackingShapeType::PointCloud
+			? HMDPointCloudPoseSolver::kMaxImagePointCount
+			: 1;
         bSuccess = 
             m_opencv_buffer_state->computeBiggestNContours(
-                hsvColorRange, biggest_contours, contour_areas, CommonDeviceTrackingProjection::MAX_POINT_CLOUD_POINT_COUNT);
+                hsvColorRange, biggest_contours, contour_areas, max_contour_count);
     }
 
 	// Check if contours are in blacklisted areas.
@@ -1887,10 +1894,105 @@ bool ServerTrackerView::computeProjectionForHMD(
         case eCommonTrackingShapeType::PointCloud:
             {
                 const HMDOpticalPoseEstimation *prior_post_est= tracked_hmd->getTrackerPoseEstimate(getDeviceID());
-                CommonDevicePose tracker_pose_guess= {prior_post_est->position_cm, prior_post_est->orientation};
+				HMDPointCloudPosePrior pose_prior;
+				HMDPointCloudPoseSolverSettings solver_settings;
 
-                // Undistort the source contours
-                t_opencv_float_contour_list undistorted_contours;
+				std::chrono::time_point<std::chrono::high_resolution_clock> frame_timestamp;
+				const bool has_frame_timestamp =
+					m_device->getVideoFrameTimestamp(frame_timestamp);
+				const std::chrono::time_point<std::chrono::high_resolution_clock> now =
+					std::chrono::high_resolution_clock::now();
+				const double frame_age_seconds = has_frame_timestamp
+					? std::max(
+						0.,
+						std::chrono::duration<double>(now - frame_timestamp).count())
+					: 0.;
+
+				const IPoseFilter *pose_filter = tracked_hmd->getPoseFilter();
+				if (pose_filter != nullptr &&
+					pose_filter->getIsOrientationStateValid())
+				{
+					const Eigen::Quaternionf world_orientation =
+						pose_filter->getOrientation(
+							static_cast<float>(-std::min(frame_age_seconds, 0.25)));
+					CommonDeviceQuaternion world_orientation_common;
+					world_orientation_common.w = world_orientation.w();
+					world_orientation_common.x = world_orientation.x();
+					world_orientation_common.y = world_orientation.y();
+					world_orientation_common.z = world_orientation.z();
+					const CommonDeviceQuaternion tracker_orientation =
+						computeTrackerOrientation(&world_orientation_common);
+					cv::Mat prior_rvec(3, 1, cv::DataType<double>::type);
+
+					commonDeviceOrientationToOpenCVRodrigues(
+						tracker_orientation,
+						prior_rvec);
+					pose_prior.orientation_rvec = cv::Vec3d(
+						prior_rvec.at<double>(0),
+						prior_rvec.at<double>(1),
+						prior_rvec.at<double>(2));
+					pose_prior.has_orientation = true;
+				}
+
+				bool has_fresh_position_prior =
+					prior_post_est->bCurrentlyTracking;
+				double position_prior_age_seconds = 0.;
+				if (has_frame_timestamp
+					&& prior_post_est->bValidMeasurementTimestamp)
+				{
+					position_prior_age_seconds =
+						std::chrono::duration<double>(
+							frame_timestamp
+							- prior_post_est->measurement_timestamp).count();
+					has_fresh_position_prior =
+						position_prior_age_seconds >= 0.
+						&& position_prior_age_seconds
+							<= solver_settings.max_position_prior_age_seconds;
+				}
+
+				if (has_fresh_position_prior)
+				{
+					pose_prior.position_cm = cv::Vec3d(
+						prior_post_est->position_cm.x,
+						prior_post_est->position_cm.y,
+						prior_post_est->position_cm.z);
+					pose_prior.has_position = true;
+
+					if (has_frame_timestamp
+						&& prior_post_est->bValidMeasurementTimestamp)
+					{
+						pose_prior.position_age_seconds =
+							position_prior_age_seconds;
+					}
+				}
+
+				if (tracked_hmd->getHMDDeviceType() == CommonDeviceState::Morpheus)
+				{
+					const MorpheusHMDConfig *config =
+						tracked_hmd->castCheckedConst<MorpheusHMD>()->getConfig();
+
+					solver_settings.min_inlier_count =
+						config->point_cloud_min_inlier_count;
+					solver_settings.max_association_distance_px =
+						config->point_cloud_max_association_distance_px;
+					solver_settings.max_reprojection_error_px =
+						config->point_cloud_max_reprojection_error_px;
+					solver_settings.min_depth_cm =
+						config->point_cloud_min_depth_cm;
+					solver_settings.max_depth_cm =
+						config->point_cloud_max_depth_cm;
+					solver_settings.max_orientation_error_degrees =
+						config->point_cloud_max_orientation_error_degrees;
+					solver_settings.max_acquisition_heading_error_degrees =
+						std::min(
+							solver_settings.max_acquisition_heading_error_degrees,
+							static_cast<double>(
+								config->point_cloud_max_orientation_error_degrees));
+					solver_settings.max_translation_jump_cm =
+						config->point_cloud_max_translation_jump_cm;
+				}
+
+                t_opencv_float_contour_list source_contours;
                 for (auto it = biggest_contours.begin(); it != biggest_contours.end(); ++it)
                 {
                     // Draw the source contour
@@ -1900,23 +2002,18 @@ bool ServerTrackerView::computeProjectionForHMD(
                     t_opencv_float_contour biggest_contour_f;
                     cv::Mat(*it).convertTo(biggest_contour_f, cv::Mat(biggest_contour_f).type());
 
-                    // Compute an undistorted version of the contour
-                    t_opencv_float_contour undistort_contour;
-                    cv::undistortPoints(biggest_contour_f, undistort_contour,
-                        camera_matrix,
-                        distortions,
-                        cv::noArray(),
-                        camera_matrix);
-
-                    undistorted_contours.push_back(biggest_contour_f);
+					// The solver consumes raw pixels and applies camera
+					// distortion exactly once during ray generation/PnP.
+                    source_contours.push_back(biggest_contour_f);
                 }
 
                 bSuccess =
                     computeTrackerRelativePointCloudContourPose(
                         m_device,
                         tracking_shape,
-                        undistorted_contours,
-                        prior_post_est->bCurrentlyTracking ? &tracker_pose_guess : nullptr,
+                        source_contours,
+						pose_prior,
+						solver_settings,
                         out_pose_estimate);
 
                 //Draw results onto m_opencv_buffer_state
@@ -1937,6 +2034,12 @@ bool ServerTrackerView::computeProjectionForHMD(
 	if (bIsBlacklisted)
 	{
 		m_opencv_buffer_state->draw_pose_blacklist(mBlacklistedAreaRec);
+	}
+
+	if (bSuccess)
+	{
+		out_pose_estimate->bValidMeasurementTimestamp =
+			m_device->getVideoFrameTimestamp(out_pose_estimate->measurement_timestamp);
 	}
 
     return bSuccess;
@@ -2033,14 +2136,20 @@ CommonDeviceQuaternion
 ServerTrackerView::computeTrackerOrientation(
     const CommonDeviceQuaternion *world_relative_orientation) const
 {
+	const TrackerManagerConfig &cfg =
+		DeviceManager::getInstance()->m_tracker_manager->getConfig();
+	const float global_forward_yaw_radians =
+		cfg.global_forward_degrees * k_degrees_to_radians;
+	const glm::quat global_forward_inv_quat =
+		glm::conjugate(glm::quat(glm::vec3(0.f, global_forward_yaw_radians, 0.f)));
     const glm::quat world_orientation(
         world_relative_orientation->w,
         world_relative_orientation->x,
         world_relative_orientation->y,
         world_relative_orientation->z);    
     const glm::quat camera_inv_quat= glm::conjugate(computeGLMCameraTransformQuaternion(m_device));
-    // combined_rotation = second_rotation * first_rotation;
-    const glm::quat rel_quat = camera_inv_quat * world_orientation;
+    const glm::quat rel_quat =
+		camera_inv_quat * global_forward_inv_quat * world_orientation;
     
     CommonDeviceQuaternion result;
     result.w= rel_quat.w;
@@ -2612,16 +2721,22 @@ static bool computeTrackerRelativePointCloudContourPose(
     const ITrackerInterface *tracker_device,
     const CommonDeviceTrackingShape *tracking_shape,
     const t_opencv_float_contour_list &opencv_contours,
-    const CommonDevicePose *tracker_relative_pose_guess,
+	const HMDPointCloudPosePrior &pose_prior,
+	const HMDPointCloudPoseSolverSettings &solver_settings,
     HMDOpticalPoseEstimation *out_pose_estimate)
 {
     assert(tracking_shape->shape_type == eCommonTrackingShapeType::PointCloud);
 
-    bool bValidTrackerPose = true;
-    float projectionArea = 0.f;
+	const PS3EyeTracker *tracker =
+		static_cast<const PS3EyeTracker *>(tracker_device);
+	if (tracker->getDriverType() == ITrackerInterface::Generic_Webcam &&
+		!tracker->hasValidCameraCalibration())
+	{
+		return false;
+	}
 
     // Compute centers of mass for the contours
-    t_opencv_float_contour cvImagePoints;
+    std::vector<cv::Point2f> cvImagePoints;
     for (auto it = opencv_contours.begin(); it != opencv_contours.end(); ++it)
     {
         cv::Point2f massCenter= computeSafeCenterOfMassForContour<t_opencv_float_contour>(*it);
@@ -2629,35 +2744,112 @@ static bool computeTrackerRelativePointCloudContourPose(
         cvImagePoints.push_back(massCenter);
     }
 
-    if (cvImagePoints.size() >= 3)
+	if (cvImagePoints.size() < 4 ||
+		tracking_shape->shape.point_cloud.point_count < 4)
     {
-        //###HipsterSloth $TODO Solve the pose using SoftPOSIT
-        out_pose_estimate->position_cm.clear();
-        out_pose_estimate->orientation.clear();
-        out_pose_estimate->bOrientationValid = false;
-        bValidTrackerPose = true;
+		return false;
     }
 
-    // Return the projection of the tracking shape
-    if (bValidTrackerPose)
-    {
-        CommonDeviceTrackingProjection *out_projection = &out_pose_estimate->projection;
-        const int imagePointCount = static_cast<int>(cvImagePoints.size());
+	std::vector<cv::Point3f> cvObjectPoints;
+	cvObjectPoints.reserve(tracking_shape->shape.point_cloud.point_count);
+	for (int point_index = 0;
+		point_index < tracking_shape->shape.point_cloud.point_count;
+		++point_index)
+	{
+		const CommonDevicePosition &point =
+			tracking_shape->shape.point_cloud.point[point_index];
+		cvObjectPoints.push_back(cv::Point3f(point.x, point.y, point.z));
+	}
 
-        out_projection->shape_type = eCommonTrackingProjectionType::ProjectionType_Points;
+	cv::Matx33f camera_matrix_float;
+	cv::Matx<float, 5, 1> distortion_float;
+	computeOpenCVCameraIntrinsicMatrix(
+		tracker_device,
+		camera_matrix_float,
+		distortion_float);
 
-        for (int vertex_index = 0; vertex_index < imagePointCount; ++vertex_index)
-        {
-            const cv::Point2f &cvPoint = cvImagePoints[vertex_index];
+	cv::Matx33d camera_matrix;
+	cv::Vec<double, 5> distortion;
+	for (int row = 0; row < 3; ++row)
+	{
+		for (int column = 0; column < 3; ++column)
+		{
+			camera_matrix(row, column) =
+				static_cast<double>(camera_matrix_float(row, column));
+		}
+	}
+	for (int index = 0; index < 5; ++index)
+	{
+		distortion[index] = static_cast<double>(distortion_float(index, 0));
+	}
 
-            out_projection->shape.points.point[vertex_index] = {cvPoint.x, cvPoint.y};
-        }
+	HMDPointCloudPoseResult pose_result;
+	if (!HMDPointCloudPoseSolver::solve(
+			cvObjectPoints,
+			cvImagePoints,
+			camera_matrix,
+			distortion,
+			pose_prior,
+			solver_settings,
+			pose_result))
+	{
+		return false;
+	}
 
-        out_projection->shape.points.point_count = imagePointCount;
-        out_projection->screen_area = projectionArea;
-    }
+	out_pose_estimate->position_cm.set(
+		static_cast<float>(pose_result.position_cm[0]),
+		static_cast<float>(pose_result.position_cm[1]),
+		static_cast<float>(pose_result.position_cm[2]));
 
-    return bValidTrackerPose;
+	cv::Mat result_rvec(3, 1, cv::DataType<double>::type);
+	result_rvec.at<double>(0) = pose_result.orientation_rvec[0];
+	result_rvec.at<double>(1) = pose_result.orientation_rvec[1];
+	result_rvec.at<double>(2) = pose_result.orientation_rvec[2];
+
+	float axis_x, axis_y, axis_z, axis_theta;
+	openCVRodriguesToAngleAxis(
+		result_rvec,
+		axis_x,
+		axis_y,
+		axis_z,
+		axis_theta);
+	angleAxisVectorToCommonDeviceOrientation(
+		axis_x,
+		axis_y,
+		axis_z,
+		axis_theta,
+		out_pose_estimate->orientation);
+	out_pose_estimate->bOrientationValid = true;
+	out_pose_estimate->bCurrentlyTracking = true;
+
+	CommonDeviceTrackingProjection *out_projection =
+		&out_pose_estimate->projection;
+	out_projection->shape_type =
+		eCommonTrackingProjectionType::ProjectionType_Points;
+	out_projection->shape.points.point_count = 0;
+
+	for (auto pair_it = pose_result.inlier_pairs.begin();
+		pair_it != pose_result.inlier_pairs.end() &&
+			out_projection->shape.points.point_count <
+				CommonDeviceTrackingProjection::MAX_POINT_CLOUD_POINT_COUNT;
+		++pair_it)
+	{
+		const int image_index = pair_it->second;
+		if (image_index >= 0 &&
+			image_index < static_cast<int>(cvImagePoints.size()))
+		{
+			const cv::Point2f &image_point = cvImagePoints[image_index];
+			out_projection->shape.points.point[
+				out_projection->shape.points.point_count++].set(
+					image_point.x,
+					image_point.y);
+		}
+	}
+	out_projection->screen_area =
+		static_cast<float>(pose_result.projection_area_px_sqr);
+
+    return out_projection->shape.points.point_count >=
+		solver_settings.min_continuation_inlier_count;
 }
 
 static cv::Rect2i computeTrackerROIForPoseProjection(

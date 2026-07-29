@@ -151,7 +151,13 @@ SET(Boost_DEBUG                OFF) #Switch this and next to ON for help debuggi
 SET(Boost_DETAILED_FAILURE_MSG OFF)
 set(Boost_USE_STATIC_LIBS      ON) # only find static libs
 set(Boost_USE_MULTITHREADED    ON)
-set(Boost_USE_STATIC_RUNTIME   ON) #Not default. Because our app is linking against static runtime (see above).
+IF(MSVC)
+    # The Windows targets explicitly select /MT below. Linux and macOS static
+    # Boost archives still use the platform's shared C/C++ runtime.
+    set(Boost_USE_STATIC_RUNTIME ON)
+ELSE()
+    set(Boost_USE_STATIC_RUNTIME OFF)
+ENDIF()
 find_package(Boost REQUIRED)  # Future targets can specify components.
 
 

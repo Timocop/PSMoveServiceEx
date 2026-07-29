@@ -10,6 +10,7 @@
 #include "PSMoveConfig.h"
 #include "MathUtility.h"
 #include "MathEigen.h"
+#include <string>
 #include <vector>
 
 //-- typedefs -----
@@ -59,6 +60,8 @@ public:
     virtual void ptree2config(const boost::property_tree::ptree &pt);
 
 	int virtual_tracker_count;
+	bool generic_webcam_enabled;
+	std::string generic_webcam_stable_id;
 	bool ignore_pose_from_one_tracker;
 	TrackerSyncMode tracker_sync_mode;
     long version;
@@ -151,7 +154,10 @@ public:
 
 	inline void setTrackerReady(int deviceId)
 	{
-		m_isTrackerReady[deviceId] = true;
+		if (deviceId >= 0 && deviceId < TrackerManager::k_max_devices)
+		{
+			m_isTrackerReady[deviceId] = true;
+		}
 	}
 
 	inline bool isTrackerPollAllowed()

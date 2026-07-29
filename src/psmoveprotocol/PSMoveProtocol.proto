@@ -739,6 +739,11 @@ message Request {
         int32 hmd_id = 1;
         bool use_custom = 2;
         int32 led_overrides = 3;
+        int32 built_in_led_mask = 4;
+        int32 built_in_led_intensity = 5;
+        // Older clients omit the new fields and must not reset the saved
+        // built-in light configuration to proto3's zero defaults.
+        bool has_built_in_led_settings = 6;
     }
     RequestSetHmdTrackingLedOverrides set_hmd_tracking_led_overrides_request = 62;
 }
@@ -1011,6 +1016,8 @@ message Response {
 			
 			bool use_custom_optical_tracking = 28;
 			int32 override_custom_tracking_leds = 29;
+			int32 built_in_tracking_led_mask = 30;
+			int32 built_in_tracking_led_intensity = 31;
         }
         repeated HMDInfo hmd_entries = 1;
     }

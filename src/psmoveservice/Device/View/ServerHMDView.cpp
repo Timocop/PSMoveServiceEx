@@ -27,10 +27,8 @@ static IPoseFilter *pose_filter_factory(
 	const std::string &position_filter_type, const std::string &orientation_filter_type,
 	const PoseFilterConstants &constants);
 static void post_imu_filter_packets_for_morpheus(
-	const MorpheusHMD *hmd,
 	const MorpheusHMDState *hmdState,
-	const t_high_resolution_timepoint now,
-	const t_high_resolution_duration duration_since_last_update,
+	MorpheusClockDomainBridge *clock_domain_bridge,
 	t_hmd_pose_sensor_queue *pose_filter_queue);
 static void post_imu_filter_packets_for_virtual(
 	const VirtualHMD *hmd,
@@ -62,6 +60,11 @@ static Eigen::Quaternionf CommonDeviceQuaternion_to_EigenQuaternionf(const Commo
 static CommonDevicePosition EigenVector3f_to_CommonDevicePosition(const Eigen::Vector3f &p);
 static CommonDeviceQuaternion EigenQuaternionf_to_CommonDeviceQuaternion(const Eigen::Quaternionf &q);
 
+static void setMulticamMeasurementTimestamp(
+	const int *valid_projection_tracker_ids,
+	const int projections_found,
+	const HMDOpticalPoseEstimation *tracker_pose_estimations,
+	HMDOpticalPoseEstimation *multicam_pose_estimation);
 static void computeSpherePoseForHmdFromSingleTracker(
     const ServerHMDView *hmdView,
     const ServerTrackerViewPtr tracker,
@@ -94,6 +97,11 @@ ServerHMDView::ServerHMDView(const int device_id)
 	, m_tracking_enabled(false)
 	, m_tracking_enforced(0)
 	, m_device(nullptr)
+	, m_bIsLastSensorDataTimestampValid(false)
+	, m_morpheusClockDomainBridge()
+	, m_bIsLastPoseFilterUpdateTimestampValid(false)
+	, m_bIsLastOpticalMeasurementTimestampValid(false)
+	, m_lastOpticalTimingStatus(HMDOpticalPoseFusion::TimingStatus::Accepted)
 	, m_tracker_pose_estimations(nullptr)
 	, m_multicam_pose_estimation(nullptr)
 	, m_pose_filter(nullptr)
@@ -184,12 +192,24 @@ void ServerHMDView::free_device_interface()
 
 bool ServerHMDView::open(const class DeviceEnumerator *enumerator)
 {
+	// These fields are written by the sensor callback. Reset them before the
+	// base open starts the device worker thread.
+	clearPoseFilterPacketQueues();
+	m_lastPollSeqNumProcessed = -1;
+	m_bIsLastSensorDataTimestampValid = false;
+	m_morpheusClockDomainBridge.reset();
+
     // Attempt to open the controller
     bool bSuccess = ServerDeviceView::open(enumerator);
 
     // Setup the orientation filter based on the controller configuration
     if (bSuccess)
     {
+		// MorpheusHMD::open() waits for the processor unit after starting its
+		// sensor worker. Discard that pre-filter startup backlog while retaining
+		// the now-warmed device and clock-domain synchronization state.
+		clearPoseFilterPacketQueues();
+
         IDeviceInterface *device = getDevice();
         bool bAllocateTrackingColor = false;
 
@@ -233,8 +253,6 @@ bool ServerHMDView::open(const class DeviceEnumerator *enumerator)
             }
         }
 
-        // Reset the poll sequence number high water mark
-        m_lastPollSeqNumProcessed = -1;
     }
 
     return bSuccess;
@@ -254,6 +272,30 @@ void ServerHMDView::close()
     }
 
     ServerDeviceView::close();
+
+	// ServerDeviceView::close() joins the device worker, so callback-owned
+	// clock state can be reset here without racing a final sensor report.
+	clearPoseFilterPacketQueues();
+	m_lastPollSeqNumProcessed = -1;
+	m_bIsLastSensorDataTimestampValid = false;
+	m_morpheusClockDomainBridge.reset();
+}
+
+void ServerHMDView::clearPoseFilterPacketQueues()
+{
+	// This method runs on the main/consumer thread. During open the IMU queue's
+	// single producer may still append, which ReaderWriterQueue supports.
+	PoseSensorPacket discarded_packet;
+	while (m_PoseSensorIMUPacketQueue.try_dequeue(discarded_packet))
+	{
+	}
+	m_PoseSensorOpticalPacketQueue.clear();
+	m_lastPoseFilterUpdateTimestamp = t_high_resolution_timepoint();
+	m_bIsLastPoseFilterUpdateTimestampValid = false;
+	m_lastOpticalMeasurementTimestamp = t_high_resolution_timepoint();
+	m_bIsLastOpticalMeasurementTimestampValid = false;
+	m_lastOpticalTimingStatus =
+		HMDOpticalPoseFusion::TimingStatus::Accepted;
 }
 
 void ServerHMDView::resetPoseFilter()
@@ -271,6 +313,16 @@ void ServerHMDView::resetPoseFilter()
 		delete m_pose_filter_space;
 		m_pose_filter_space = nullptr;
 	}
+
+	// A reset creates a new filter timeline. Optical samples accepted by the
+	// old filter must not suppress or be replayed into the new one.
+	m_PoseSensorOpticalPacketQueue.clear();
+	m_lastPoseFilterUpdateTimestamp = t_high_resolution_timepoint();
+	m_bIsLastPoseFilterUpdateTimestampValid = false;
+	m_lastOpticalMeasurementTimestamp = t_high_resolution_timepoint();
+	m_bIsLastOpticalMeasurementTimestampValid = false;
+	m_lastOpticalTimingStatus =
+		HMDOpticalPoseFusion::TimingStatus::Accepted;
 
 	switch (m_device->getDeviceType())
 	{
@@ -296,6 +348,13 @@ void ServerHMDView::updateOpticalPoseEstimation(TrackerManager* tracker_manager)
     const std::chrono::time_point<std::chrono::high_resolution_clock> now= std::chrono::high_resolution_clock::now();
 	const TrackerManagerConfig &trackerMgrConfig = DeviceManager::getInstance()->m_tracker_manager->getConfig();
 	ControllerManager *m_controllerManager = DeviceManager::getInstance()->m_controller_manager;
+
+	// A measurement timestamp describes only the pose solved during this
+	// update. Never carry validity forward from a previous camera topology.
+	if (m_multicam_pose_estimation != nullptr)
+	{
+		m_multicam_pose_estimation->bValidMeasurementTimestamp = false;
+	}
 
     // TODO: Probably need to first update IMU state to get velocity.
     // If velocity is too high, don't bother getting a new position.
@@ -641,8 +700,100 @@ void ServerHMDView::updateOpticalPoseEstimation(TrackerManager* tracker_manager)
 	// TODO: These packets will eventually get posted from the notifyTrackerDataReceived()
 	// callback function which will be called by camera processing threads as new video
 	// frames are received.
-	if (m_multicam_pose_estimation->bCurrentlyTracking)
+	if (m_multicam_pose_estimation->bCurrentlyTracking
+		&& m_bIsLastPoseFilterUpdateTimestampValid)
 	{
+		float maximum_frame_age_seconds = 0.25f;
+		if (getHMDDeviceType() == CommonDeviceState::Morpheus)
+		{
+			const MorpheusHMD *hmd = this->castCheckedConst<MorpheusHMD>();
+			maximum_frame_age_seconds =
+				static_cast<float>(
+					hmd->getConfig()->point_cloud_max_frame_age_ms)
+				/ 1000.f;
+		}
+
+		const HMDOpticalPoseFusion::TimingResult timing =
+			HMDOpticalPoseFusion::evaluateMeasurementTiming(
+				m_multicam_pose_estimation->bValidMeasurementTimestamp,
+				m_multicam_pose_estimation->measurement_timestamp,
+				m_bIsLastOpticalMeasurementTimestampValid,
+				m_lastOpticalMeasurementTimestamp,
+				m_lastPoseFilterUpdateTimestamp,
+				maximum_frame_age_seconds);
+
+		if (timing.status
+			!= HMDOpticalPoseFusion::TimingStatus::Accepted)
+		{
+			// Duplicate is the normal state between camera frames. Other
+			// transitions are logged once so timestamp problems are diagnosable
+			// without flooding the service log at the main-loop rate.
+			if (timing.status
+					!= HMDOpticalPoseFusion::TimingStatus::DuplicateOrOutOfOrder
+				&& timing.status != m_lastOpticalTimingStatus)
+			{
+				SERVER_LOG_WARNING("updateOpticalPoseEstimation()")
+					<< "Skipping HMD optical sample: "
+					<< HMDOpticalPoseFusion::timingStatusName(
+						timing.status);
+			}
+			m_lastOpticalTimingStatus = timing.status;
+			return;
+		}
+
+		HMDOpticalPoseEstimation aligned_pose =
+			*m_multicam_pose_estimation;
+		const Eigen::Vector3f optical_position(
+			aligned_pose.position_cm.x,
+			aligned_pose.position_cm.y,
+			aligned_pose.position_cm.z);
+		Eigen::Vector3f aligned_position;
+		if (!HMDOpticalPoseFusion::forwardAlignPosition(
+				optical_position,
+				m_pose_filter->getVelocityCmPerSec(),
+				timing.age_seconds,
+				aligned_position))
+		{
+			SERVER_LOG_WARNING("updateOpticalPoseEstimation()")
+				<< "Skipping non-finite HMD optical position";
+			return;
+		}
+		aligned_pose.position_cm =
+			EigenVector3f_to_CommonDevicePosition(aligned_position);
+
+		if (aligned_pose.bOrientationValid)
+		{
+			const Eigen::Quaternionf optical_orientation(
+				aligned_pose.orientation.w,
+				aligned_pose.orientation.x,
+				aligned_pose.orientation.y,
+				aligned_pose.orientation.z);
+			const Eigen::Quaternionf imu_orientation_at_capture =
+				m_pose_filter->getOrientation(-timing.age_seconds);
+			const Eigen::Quaternionf imu_orientation_at_fusion =
+				m_pose_filter->getOrientation();
+			Eigen::Quaternionf aligned_orientation;
+			if (!HMDOpticalPoseFusion::forwardAlignOrientation(
+					optical_orientation,
+					imu_orientation_at_capture,
+					imu_orientation_at_fusion,
+					aligned_orientation))
+			{
+				SERVER_LOG_WARNING("updateOpticalPoseEstimation()")
+					<< "Skipping non-finite HMD optical orientation";
+				return;
+			}
+			aligned_pose.orientation =
+				EigenQuaternionf_to_CommonDeviceQuaternion(
+					aligned_orientation);
+		}
+
+		const t_high_resolution_timepoint source_measurement_timestamp =
+			m_multicam_pose_estimation->measurement_timestamp;
+		aligned_pose.measurement_timestamp =
+			m_lastPoseFilterUpdateTimestamp;
+		aligned_pose.bValidMeasurementTimestamp = true;
+
 		switch (getHMDDeviceType())
 		{
 		case CommonDeviceState::Morpheus:
@@ -651,8 +802,8 @@ void ServerHMDView::updateOpticalPoseEstimation(TrackerManager* tracker_manager)
 
 			post_optical_filter_packet_for_morpheus_hmd(
 				hmd,
-				now,
-				m_multicam_pose_estimation,
+				m_lastPoseFilterUpdateTimestamp,
+				&aligned_pose,
 				&m_PoseSensorOpticalPacketQueue);
 		} break;
 		case CommonDeviceState::VirtualHMD:
@@ -661,13 +812,19 @@ void ServerHMDView::updateOpticalPoseEstimation(TrackerManager* tracker_manager)
 
 			post_optical_filter_packet_for_virtual_hmd(
 				hmd,
-				now,
-				m_multicam_pose_estimation,
+				m_lastPoseFilterUpdateTimestamp,
+				&aligned_pose,
 				&m_PoseSensorOpticalPacketQueue);
 		} break;
 		default:
 			assert(0 && "Unhandled HMD Type");
 		}
+
+		m_lastOpticalMeasurementTimestamp =
+			source_measurement_timestamp;
+		m_bIsLastOpticalMeasurementTimestampValid = true;
+		m_lastOpticalTimingStatus =
+			HMDOpticalPoseFusion::TimingStatus::Accepted;
 	}
 }
 
@@ -739,6 +896,8 @@ void ServerHMDView::updateStateAndPredict()
 
 		// Process the filter packet
 		m_pose_filter->update(sensorPacket.timestamp, filter_packet);
+		m_lastPoseFilterUpdateTimestamp = sensorPacket.timestamp;
+		m_bIsLastPoseFilterUpdateTimestampValid = true;
 
 		// Flag the state as unpublished, which will trigger an update to the client
 		markStateAsUnpublished();
@@ -978,30 +1137,18 @@ void ServerHMDView::stopTracking()
 
 void ServerHMDView::notifySensorDataReceived(const CommonDeviceState * sensor_state)
 {
-	// Compute the time in seconds since the last update
-	const t_high_resolution_timepoint now = std::chrono::high_resolution_clock::now();
-	t_high_resolution_duration durationSinceLastUpdate = t_high_resolution_duration::zero();
-
-	if (m_bIsLastSensorDataTimestampValid)
-	{
-		durationSinceLastUpdate = now - m_lastSensorDataTimestamp;
-	}
-	m_lastSensorDataTimestamp = now;
-	m_bIsLastSensorDataTimestampValid = true;
-
 	// Apply device specific filtering
 	switch (sensor_state->DeviceType)
 	{
 	case CommonDeviceState::Morpheus:
 	{
-		const MorpheusHMD *hmd = this->castCheckedConst<MorpheusHMD>();
 		const MorpheusHMDState *hmdState =
 			static_cast<const MorpheusHMDState *>(sensor_state);
 
 		// Only update the position filter when tracking is enabled
 		post_imu_filter_packets_for_morpheus(
-			hmd, hmdState,
-			now, durationSinceLastUpdate,
+			hmdState,
+			&m_morpheusClockDomainBridge,
 			&m_PoseSensorIMUPacketQueue);
 	} break;
 	case CommonDeviceState::VirtualHMD:
@@ -1009,6 +1156,17 @@ void ServerHMDView::notifySensorDataReceived(const CommonDeviceState * sensor_st
 		const VirtualHMD *hmd = this->castCheckedConst<VirtualHMD>();
 		const VirtualHMDState *hmdState =
 			static_cast<const VirtualHMDState *>(sensor_state);
+		const t_high_resolution_timepoint now =
+			std::chrono::high_resolution_clock::now();
+		t_high_resolution_duration durationSinceLastUpdate =
+			t_high_resolution_duration::zero();
+
+		if (m_bIsLastSensorDataTimestampValid)
+		{
+			durationSinceLastUpdate = now - m_lastSensorDataTimestamp;
+		}
+		m_lastSensorDataTimestamp = now;
+		m_bIsLastSensorDataTimestampValid = true;
 
 		// Only update the position filter when tracking is enabled
 		post_imu_filter_packets_for_virtual(
@@ -1179,7 +1337,7 @@ init_filters_for_morpheus_hmd(
 
 	*out_pose_filter_space = pose_filter_space;
 	*out_pose_filter = pose_filter_factory(
-		CommonDeviceState::eDeviceType::PSMove,
+		CommonDeviceState::eDeviceType::Morpheus,
 		hmd_config->position_filter_type,
 		hmd_config->orientation_filter_type,
 		constants);
@@ -1324,33 +1482,45 @@ pose_filter_factory(
 
 
 static void post_imu_filter_packets_for_morpheus(
-	const MorpheusHMD *hmd,
 	const MorpheusHMDState *hmdState,
-	const t_high_resolution_timepoint now,
-	const t_high_resolution_duration duration_since_last_update,
+	MorpheusClockDomainBridge *clock_domain_bridge,
 	t_hmd_pose_sensor_queue *pose_filter_queue)
 {
-	const MorpheusHMDConfig *config = hmd->getConfig();
+	const std::chrono::steady_clock::time_point steady_now =
+		std::chrono::steady_clock::now();
+	const t_high_resolution_timepoint filter_clock_now =
+		std::chrono::high_resolution_clock::now();
+	const MorpheusClockDomainBridge::Result bridge_result =
+		clock_domain_bridge->mapSamples(
+			hmdState->SensorTimestamps,
+			hmdState->SensorTimestampValid,
+			steady_now,
+			filter_clock_now);
 
-	PoseSensorPacket sensor_packet;
-
-	sensor_packet.clear();
-
-	// Don't bother with the earlier frame if this is the very first IMU packet 
-	// (since we have no previous timestamp to use)
-	int start_frame_index = 0;
-	if (duration_since_last_update == t_high_resolution_duration::zero())
+	if (bridge_result.status ==
+		MorpheusClockDomainBridge::Status::Discontinuity)
 	{
-		start_frame_index = 1;
+		SERVER_MT_LOG_WARNING("post_imu_filter_packets_for_morpheus") <<
+			"Resetting the PSVR pose-filter clock bridge after a clock discontinuity";
+	}
+	if (bridge_result.status !=
+		MorpheusClockDomainBridge::Status::Synchronized)
+	{
+		return;
 	}
 
-	const t_high_resolution_timepoint prev_timestamp = now - (duration_since_last_update / 2);
-	t_high_resolution_timepoint timestamps[2] = { prev_timestamp, now };
-
 	// Each state update contains two readings (one earlier and one later) of accelerometer and gyro data
-	for (int frame = start_frame_index; frame < 2; ++frame)
+	for (int frame = 0; frame < 2; ++frame)
 	{
-		sensor_packet.timestamp = timestamps[frame];
+		if (!bridge_result.sample_valid[frame])
+		{
+			continue;
+		}
+
+		PoseSensorPacket sensor_packet;
+		sensor_packet.clear();
+
+		sensor_packet.timestamp = bridge_result.sample_timestamps[frame];
 
 		sensor_packet.raw_imu_accelerometer = {
 			hmdState->SensorFrames[frame].RawAccel.i,
@@ -1407,7 +1577,10 @@ static void post_optical_filter_packet_for_morpheus_hmd(
 	PoseSensorPacket sensor_packet;
 
 	sensor_packet.clear();
-	sensor_packet.timestamp = now;
+	sensor_packet.timestamp =
+		pose_estimation->bValidMeasurementTimestamp
+		? pose_estimation->measurement_timestamp
+		: now;
 
 	if (pose_estimation->bOrientationValid)
 	{
@@ -1444,7 +1617,10 @@ static void post_optical_filter_packet_for_virtual_hmd(
 	PoseSensorPacket sensor_packet;
 
 	sensor_packet.clear();
-	sensor_packet.timestamp = now;
+	sensor_packet.timestamp =
+		pose_estimation->bValidMeasurementTimestamp
+		? pose_estimation->measurement_timestamp
+		: now;
 
 	// HMD does have an optical position
 	if (pose_estimation->bCurrentlyTracking)
@@ -1787,6 +1963,45 @@ static CommonDeviceQuaternion EigenQuaternionf_to_CommonDeviceQuaternion(const E
     return result;
 }
 
+static void setMulticamMeasurementTimestamp(
+	const int *valid_projection_tracker_ids,
+	const int projections_found,
+	const HMDOpticalPoseEstimation *tracker_pose_estimations,
+	HMDOpticalPoseEstimation *multicam_pose_estimation)
+{
+	multicam_pose_estimation->bValidMeasurementTimestamp = false;
+	if (projections_found <= 0)
+	{
+		return;
+	}
+
+	t_high_resolution_timepoint newest_measurement_timestamp;
+	for (int list_index = 0; list_index < projections_found; ++list_index)
+	{
+		const HMDOpticalPoseEstimation &tracker_pose_estimation =
+			tracker_pose_estimations[valid_projection_tracker_ids[list_index]];
+		if (!tracker_pose_estimation.bValidMeasurementTimestamp)
+		{
+			// A fused timestamp is meaningful only when every contributing
+			// camera supplied a capture-time estimate.
+			return;
+		}
+
+		if (list_index == 0 ||
+			tracker_pose_estimation.measurement_timestamp >
+				newest_measurement_timestamp)
+		{
+			newest_measurement_timestamp =
+				tracker_pose_estimation.measurement_timestamp;
+		}
+	}
+
+	// The solve cannot causally exist before its newest constituent frame.
+	multicam_pose_estimation->measurement_timestamp =
+		newest_measurement_timestamp;
+	multicam_pose_estimation->bValidMeasurementTimestamp = true;
+}
+
 static void computeSpherePoseForHmdFromSingleTracker(
     const ServerHMDView *hmdView,
     const ServerTrackerViewPtr tracker,
@@ -1804,6 +2019,9 @@ static void computeSpherePoseForHmdFromSingleTracker(
 
     // Copy over the screen projection area
     multicam_pose_estimation->projection.screen_area = tracker_pose_estimation->projection.screen_area;
+	multicam_pose_estimation->measurement_timestamp = tracker_pose_estimation->measurement_timestamp;
+	multicam_pose_estimation->bValidMeasurementTimestamp =
+		tracker_pose_estimation->bValidMeasurementTimestamp;
 }
 
 static void computePointCloudPoseForHmdFromSingleTracker(
@@ -1823,6 +2041,9 @@ static void computePointCloudPoseForHmdFromSingleTracker(
 
     // Copy over the screen projection area
     multicam_pose_estimation->projection.screen_area = tracker_pose_estimation->projection.screen_area;
+	multicam_pose_estimation->measurement_timestamp = tracker_pose_estimation->measurement_timestamp;
+	multicam_pose_estimation->bValidMeasurementTimestamp =
+		tracker_pose_estimation->bValidMeasurementTimestamp;
 }
 
 static void computeSpherePoseForHmdFromMultipleTrackers(
@@ -2305,6 +2526,11 @@ static void computeSpherePoseForHmdFromMultipleTrackers(
         // Store the averaged tracking position
 		multicam_pose_estimation->position_cm = average_world_position;
         multicam_pose_estimation->bCurrentlyTracking = true;
+		setMulticamMeasurementTimestamp(
+			valid_projection_tracker_ids,
+			projections_found,
+			tracker_pose_estimations,
+			multicam_pose_estimation);
     }
 
     // No orientation for the sphere projection
@@ -2733,10 +2959,11 @@ static void computePointCloudPoseForHmdFromMultipleTrackers(
 		&& (available_trackers == 1 || !cfg.ignore_pose_from_one_tracker || isTrackingEnforced))
     {
         // Position not triangulated from opposed camera, estimate from one tracker only.
+		const int tracker_id = valid_projection_tracker_ids[0];
         computePointCloudPoseForHmdFromSingleTracker(
             hmdView,
-            tracker_manager->getTrackerViewPtr(0),
-            &tracker_pose_estimations[0],
+            tracker_manager->getTrackerViewPtr(tracker_id),
+            &tracker_pose_estimations[tracker_id],
             multicam_pose_estimation);		
     }
     else if(pair_count > 0)
@@ -2799,11 +3026,36 @@ static void computePointCloudPoseForHmdFromMultipleTrackers(
         // Store the averaged tracking position
         multicam_pose_estimation->position_cm = average_world_position;
         multicam_pose_estimation->bCurrentlyTracking = true;
+		setMulticamMeasurementTimestamp(
+			valid_projection_tracker_ids,
+			projections_found,
+			tracker_pose_estimations,
+			multicam_pose_estimation);
     }
 
-    // No orientation for the sphere projection
-    multicam_pose_estimation->orientation.clear();
-    multicam_pose_estimation->bOrientationValid = false;
+	// Triangulation contributes position only. Preserve orientation from the
+	// largest valid point-cloud projection (the input list is screen-area
+	// ordered) so adding a second camera cannot erase 6DoF orientation.
+	if (projections_found > 0)
+	{
+		const int orientation_tracker_id =
+			valid_projection_tracker_ids[0];
+		const HMDOpticalPoseEstimation &orientation_estimation =
+			tracker_pose_estimations[orientation_tracker_id];
+		const ServerTrackerViewPtr orientation_tracker =
+			tracker_manager->getTrackerViewPtr(
+				orientation_tracker_id);
+		multicam_pose_estimation->orientation =
+			orientation_tracker->computeWorldOrientation(
+				&orientation_estimation.orientation);
+		multicam_pose_estimation->bOrientationValid =
+			orientation_estimation.bOrientationValid;
+	}
+	else
+	{
+		multicam_pose_estimation->orientation.clear();
+		multicam_pose_estimation->bOrientationValid = false;
+	}
 
     // Compute the average projection area.
     // This is proportional to our position tracking quality.

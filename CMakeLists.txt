@@ -18,6 +18,8 @@ file(WRITE "${PSM_ROOT_INSTALL_PATH}/version.txt" "${PSM_PROJECT_NAME}")
 include(cmake/ThirdParty.cmake)
 include(cmake/Installer.cmake)
 
+enable_testing()
+
 # Step into the subdirectories
 add_subdirectory(src)
 

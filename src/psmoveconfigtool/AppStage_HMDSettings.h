@@ -99,6 +99,8 @@ public:
 
 		bool UseCustomOpticalTracking;
 		int OverrideCustomTrackingLeds;
+		int BuiltInTrackingLedMask;
+		int BuiltInTrackingLedIntensity;
     };
 
 
@@ -149,7 +151,12 @@ protected:
 		int HmdID,
 		OffsetSettings offset_settings);
 
-	void request_set_hmd_tracking_leds(int HmdID, bool UseCustom, int TrackingLedOverrrides);
+	void request_set_hmd_tracking_leds(
+		int HmdID,
+		bool UseCustom,
+		int TrackingLedOverrrides,
+		int BuiltInLedMask,
+		int BuiltInLedIntensity);
 
 
 private:

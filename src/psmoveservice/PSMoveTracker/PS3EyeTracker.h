@@ -5,6 +5,7 @@
 #include "PSMoveConfig.h"
 #include "DeviceEnumerator.h"
 #include "DeviceInterface.h"
+#include <chrono>
 #include <string>
 #include <vector>
 #include <deque>
@@ -40,6 +41,11 @@ public:
 	double frame_width;
 	double frame_height;
 	double frame_rate;
+	double frame_latency_ms;
+	std::string video_mode;
+	std::string calibration_video_mode;
+	double calibration_frame_width;
+	double calibration_frame_height;
     double exposure;
 	double gain;
     double focalLengthX;
@@ -82,7 +88,7 @@ struct PS3EyeTrackerState : public CommonDeviceState
 
 class PS3EyeTracker : public ITrackerInterface {
 public:
-    PS3EyeTracker();
+    explicit PS3EyeTracker(int server_tracker_id = -1);
     virtual ~PS3EyeTracker();
         
     // PSMoveTracker
@@ -106,6 +112,10 @@ public:
     std::string getUSBDevicePath() const override;
     bool getVideoFrameDimensions(int *out_width, int *out_height, int *out_stride) const override;
     const unsigned char *getVideoFrameBuffer(int & frameHeight, int & frameWidth) const override;
+	bool getVideoFrameTimestamp(
+		std::chrono::time_point<std::chrono::high_resolution_clock> &out_timestamp) const override;
+	double getFrameLatencyMs() const override;
+	void setFrameLatencyMs(double value, bool bUpdateConfig) override;
     void loadSettings() override;
     void saveSettings() override;
 	void setFrameWidth(double value, bool bUpdateConfig) override;
@@ -114,9 +124,9 @@ public:
 	double getFrameHeight() const override;
 	void setFrameRate(double value, bool bUpdateConfig) override;
 	double getFrameRate() const override;
-    void setExposure(double value, bool bUpdateConfig) override;
+    bool setExposure(double value, bool bUpdateConfig) override;
     double getExposure() const override;
-	void setGain(double value, bool bUpdateConfig) override;
+	bool setGain(double value, bool bUpdateConfig) override;
 	double getGain() const override;
     void getCameraIntrinsics(
         float &outFocalLengthX, float &outFocalLengthY,
@@ -144,16 +154,22 @@ public:
     // -- Getters
     inline const PS3EyeTrackerConfig &getConfig() const
     { return cfg; }
+	bool hasValidCameraCalibration() const;
 
 private:
     PS3EyeTrackerConfig cfg;
     std::string USBDevicePath;
     class PSEyeVideoCapture *VideoCapture;
+	class ITrackerVideoSource *VideoSource;
     class PSEyeCaptureData *CaptureData;
     ITrackerInterface::eDriverType DriverType;    
+	int m_serverTrackerId;
     
     // Read Controller State
     int NextPollSequenceNumber;
     std::deque<PS3EyeTrackerState> TrackerStates;
+	std::chrono::time_point<std::chrono::high_resolution_clock> m_lastVideoFrameTimestamp;
+	bool m_hasVideoFrameTimestamp;
+	bool m_videoSourceFailureReported;
 };
 #endif // PS3EYE_TRACKER_H

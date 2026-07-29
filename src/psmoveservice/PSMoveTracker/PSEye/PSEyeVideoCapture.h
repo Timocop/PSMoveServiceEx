@@ -57,7 +57,13 @@ public:
     /*
     If a PS3 Eye device is not found, fall back to base class cv::VideoCapture::open(index)
     */
+#if CV_VERSION_MAJOR >= 4
+    // OpenCV 4 changed VideoCapture::open(int) to a two-argument virtual
+    // signature with a default backend parameter.
+    bool open(int index);
+#else
     bool open(int index) override;
+#endif
 
     /// Use cv::VideoCapture::set() unless \ref eyeType == PSEYE_CLEYE_DRIVER
     bool set(int propId, double value) override;

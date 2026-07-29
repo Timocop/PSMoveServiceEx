@@ -6,6 +6,7 @@
 #include "USBApiInterface.h"
 #include <deque>
 #include <map>
+#include <string>
 #include <vector>
 
 //-- definitions -----
@@ -17,6 +18,7 @@ public:
 		CommunicationType_INVALID = -1,
 		CommunicationType_HID,
 		CommunicationType_VIRTUAL,
+		CommunicationType_GENERIC,
 		CommunicationType_ALL
 	};
 
@@ -26,7 +28,10 @@ public:
 		DeviceEnumerator *enumerator;
 	};
 
-    TrackerDeviceEnumerator(eAPIType api_type);
+    TrackerDeviceEnumerator(
+		eAPIType api_type,
+		const std::vector<std::string> &enabled_generic_webcam_ids =
+			std::vector<std::string>());
 	~TrackerDeviceEnumerator();
 
     bool is_valid() const override;
@@ -37,8 +42,10 @@ public:
 	inline int get_camera_index() const { return m_cameraIndex; }
 	inline int get_camera_hid_index() const { return m_cameraHidIndex; }
 	inline int get_camera_virt_index() const { return m_cameraVirtIndex; }
+	inline int get_camera_generic_index() const { return m_cameraGenericIndex; }
 	const class USBDeviceEnumerator *get_hid_tracker_enumerator() const;
 	const class VirtualTrackerEnumerator *get_virtual_tracker_enumerator() const;
+	const class GenericWebcamEnumerator *get_generic_webcam_enumerator() const;
 
 protected: 
 	bool testUSBEnumerator();
@@ -52,6 +59,7 @@ private:
 	int m_cameraIndex;
 	int m_cameraHidIndex;
 	int m_cameraVirtIndex;
+	int m_cameraGenericIndex;
 };
 
 #endif // TRACKER_DEVICE_ENUMERATOR_H

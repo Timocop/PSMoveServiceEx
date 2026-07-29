@@ -207,6 +207,17 @@ list(APPEND PSMOVESERVICE_SRC ${PSEYE_SRC})
 list(APPEND PSMOVE_SERVICE_INCL_DIRS ${PSEYE_INCLUDE_DIRS})
 list(APPEND PSMOVE_SERVICE_REQ_LIBS ${PSEYE_LIBRARIES})
 
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    # Stable-identity generic webcam discovery and asynchronous capture.
+    list(APPEND PSMOVE_SERVICE_REQ_LIBS
+        mfplat
+        mf
+        mfreadwrite
+        mfuuid
+        ole32
+        strmiids)
+ENDIF()
+
 add_executable(PSMoveService ${PSMOVESERVICE_SRC})
 target_include_directories(PSMoveService PUBLIC ${PSMOVE_SERVICE_INCL_DIRS})
 target_link_libraries(PSMoveService ${PSMOVE_SERVICE_REQ_LIBS})

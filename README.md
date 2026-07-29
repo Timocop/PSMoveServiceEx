@@ -12,6 +12,8 @@ A background service that manages multiple PSMove Controllers and PS3 Eye Camera
 # 📖 Documentation
 * Use the [Wiki](https://github.com/Timocop/PSMoveServiceEx/wiki) for guidance and tutorials. **(WORK IN PROGRESS)**
 * Old general setup legacy guides, troubleshooting and design docs can be found on the [wiki](https://github.com/psmoveservice/PSMoveService/wiki)
+* See [PSVR built-in LED tracking](misc/PSVR_LED_TRACKING.md) for the seated
+  single-camera 6DoF setup, synchronization design, and validation checklist.
 
 # ❓ Getting Help
 Please start with the wiki. If you can't find help with your problem then please search through the issues (especially the closed ones) to see if your problem has been addressed already. 

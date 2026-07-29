@@ -491,6 +491,7 @@ ENDIF()
 # TEST_KALMAN_FILTER
 #
 
+IF(EXISTS "${ROOT_DIR}/src/psmoveservice/Filter/KalmanOrientationFilter.h")
 list(APPEND TEST_KALMAN_INCL_DIRS
     ${ROOT_DIR}/src/psmovemath/
     ${ROOT_DIR}/src/psmoveservice/Device/Interface
@@ -542,6 +543,9 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         LIBRARY DESTINATION ${PSM_RELEASE_INSTALL_PATH}/lib
         ARCHIVE DESTINATION ${PSM_RELEASE_INSTALL_PATH}/lib)        
 ELSE() #Linux/Darwin
+ENDIF()
+ELSE()
+    message(STATUS "Skipping stale test_kalman_filter target: Kalman filter sources are not present")
 ENDIF()
 
 #
@@ -600,4 +604,83 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     target_link_libraries(test_hidapi_sierra ${PLATFORM_LIBS})
     #target_link_libraries(test_hidapi_sierra /usr/local/opt/hidapi/lib/libhidapi.dylib)
     SET_TARGET_PROPERTIES(test_hidapi_sierra PROPERTIES FOLDER Test)
+ENDIF()
+
+#
+# Deterministic PSVR optical tracking tests
+#
+add_executable(test_morpheus_sensor_clock
+    ${CMAKE_CURRENT_LIST_DIR}/test_morpheus_sensor_clock.cpp
+    ${ROOT_DIR}/src/psmoveservice/MorpheusHMD/MorpheusSensorClock.cpp)
+target_include_directories(test_morpheus_sensor_clock PUBLIC
+    ${ROOT_DIR}/src/psmoveservice/MorpheusHMD)
+SET_TARGET_PROPERTIES(test_morpheus_sensor_clock PROPERTIES FOLDER Test)
+add_test(NAME morpheus_sensor_clock COMMAND test_morpheus_sensor_clock)
+
+add_executable(test_hmd_point_cloud_pose_solver
+    ${CMAKE_CURRENT_LIST_DIR}/test_hmd_point_cloud_pose_solver.cpp
+    ${ROOT_DIR}/src/psmoveservice/Device/View/HMDPointCloudPoseSolver.cpp)
+target_include_directories(test_hmd_point_cloud_pose_solver PUBLIC
+    ${ROOT_DIR}/src/psmoveservice/Device/View
+    ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(test_hmd_point_cloud_pose_solver ${OpenCV_LIBS})
+SET_TARGET_PROPERTIES(test_hmd_point_cloud_pose_solver PROPERTIES FOLDER Test)
+add_test(NAME hmd_point_cloud_pose_solver COMMAND test_hmd_point_cloud_pose_solver)
+
+add_executable(test_hmd_optical_pose_fusion
+    ${CMAKE_CURRENT_LIST_DIR}/test_hmd_optical_pose_fusion.cpp
+    ${ROOT_DIR}/src/psmoveservice/Device/View/HMDOpticalPoseFusion.cpp)
+target_include_directories(test_hmd_optical_pose_fusion PUBLIC
+    ${ROOT_DIR}/src/psmoveservice/Device/View
+    ${EIGEN3_INCLUDE_DIR})
+SET_TARGET_PROPERTIES(test_hmd_optical_pose_fusion PROPERTIES FOLDER Test)
+add_test(NAME hmd_optical_pose_fusion COMMAND test_hmd_optical_pose_fusion)
+
+add_executable(test_tracker_video_source_helpers
+    ${CMAKE_CURRENT_LIST_DIR}/test_tracker_video_source_helpers.cpp)
+target_include_directories(test_tracker_video_source_helpers PUBLIC
+    ${ROOT_DIR}/src/psmoveservice/PSMoveTracker
+    ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(test_tracker_video_source_helpers ${OpenCV_LIBS})
+SET_TARGET_PROPERTIES(test_tracker_video_source_helpers PROPERTIES FOLDER Test)
+add_test(NAME tracker_video_source_helpers COMMAND test_tracker_video_source_helpers)
+
+add_executable(test_generic_webcam_enumerator_helpers
+    ${CMAKE_CURRENT_LIST_DIR}/test_generic_webcam_enumerator_helpers.cpp
+    ${ROOT_DIR}/src/psmoveservice/Device/Enumerator/GenericWebcamEnumerator.cpp)
+target_include_directories(test_generic_webcam_enumerator_helpers PUBLIC
+    ${ROOT_DIR}/src/psmoveprotocol
+    ${ROOT_DIR}/src/psmoveservice/Device/Enumerator
+    ${ROOT_DIR}/src/psmoveservice/Device/Interface
+    ${ROOT_DIR}/src/psmoveservice/PSMoveTracker
+    ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(
+    test_generic_webcam_enumerator_helpers
+    ${OpenCV_LIBS})
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    target_link_libraries(
+        test_generic_webcam_enumerator_helpers
+        mfplat
+        mf
+        mfreadwrite
+        mfuuid
+        ole32)
+ENDIF()
+SET_TARGET_PROPERTIES(
+    test_generic_webcam_enumerator_helpers
+    PROPERTIES FOLDER Test)
+add_test(
+    NAME generic_webcam_enumerator_helpers
+    COMMAND test_generic_webcam_enumerator_helpers)
+
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    add_dependencies(
+        test_hmd_point_cloud_pose_solver
+        opencv)
+    add_dependencies(
+        test_tracker_video_source_helpers
+        opencv)
+    add_dependencies(
+        test_generic_webcam_enumerator_helpers
+        opencv)
 ENDIF()

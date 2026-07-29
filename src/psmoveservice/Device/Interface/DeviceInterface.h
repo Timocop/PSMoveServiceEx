@@ -2,6 +2,7 @@
 #define DEVICE_INTERFACE_H
 
 // -- includes -----
+#include <chrono>
 #include <string>
 #include <tuple>
 
@@ -415,7 +416,7 @@ struct CommonDeviceTrackingProjection
 	{
 		TRIANGLE_POINT_COUNT = 3,
 		QUAD_POINT_COUNT = 4,
-		MAX_POINT_CLOUD_POINT_COUNT = 6 // at most 6 points visible to a given camera
+		MAX_POINT_CLOUD_POINT_COUNT = 9
 	};
 
     union{
@@ -591,6 +592,13 @@ public:
     // Returns a pointer to the last video frame buffer captured
     virtual const unsigned char *getVideoFrameBuffer(int &frameHeight, int &frameWidth) const = 0;
 
+	// Returns the exposure-time estimate for the last returned video frame.
+	virtual bool getVideoFrameTimestamp(
+		std::chrono::time_point<std::chrono::high_resolution_clock> &out_timestamp) const = 0;
+
+	virtual double getFrameLatencyMs() const = 0;
+	virtual void setFrameLatencyMs(double value, bool bUpdateConfig) = 0;
+
     static const char *getDriverTypeString(eDriverType device_type)
     {
         const char *result = nullptr;
@@ -628,10 +636,10 @@ public:
 	virtual void setFrameRate(double value, bool bUpdateConfig) = 0;
 	virtual double getFrameRate() const = 0;
 
-    virtual void setExposure(double value, bool bUpdateConfig) = 0;
+    virtual bool setExposure(double value, bool bUpdateConfig) = 0;
     virtual double getExposure() const = 0;
 
-	virtual void setGain(double value, bool bUpdateConfig) = 0;
+	virtual bool setGain(double value, bool bUpdateConfig) = 0;
 	virtual double getGain() const = 0;
 
     virtual void getCameraIntrinsics(

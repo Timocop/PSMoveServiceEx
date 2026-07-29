@@ -16,6 +16,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
+#include <algorithm>
 #include <iostream>
 
 #ifdef _WIN32
@@ -221,6 +222,8 @@ TrackerConfig::config2ptree()
 	}
 
 	pt.put("virtual_tracker_count", virtual_tracker_count);
+	pt.put("generic_webcam.enabled", generic_webcam_enabled);
+	pt.put("generic_webcam.stable_id", generic_webcam_stable_id);
 	pt.put("ignore_pose_from_one_tracker", ignore_pose_from_one_tracker);
 	pt.put("tracker_sync_mode", tracker_sync_mode);
 	pt.put("optical_tracking_timeout", optical_tracking_timeout);
@@ -266,6 +269,12 @@ TrackerConfig::ptree2config(const boost::property_tree::ptree &pt)
 	map_flatten(pt, "");
 
 	virtual_tracker_count = pt.get<int>("virtual_tracker_count", virtual_tracker_count);
+	generic_webcam_enabled =
+		pt.get<bool>("generic_webcam.enabled", generic_webcam_enabled);
+	generic_webcam_stable_id =
+		pt.get<std::string>(
+			"generic_webcam.stable_id",
+			generic_webcam_stable_id);
 	ignore_pose_from_one_tracker = pt.get<bool>("ignore_pose_from_one_tracker", ignore_pose_from_one_tracker);
 	tracker_sync_mode = pt.get<int>("tracker_sync_mode", tracker_sync_mode);
 	optical_tracking_timeout = pt.get<int>("optical_tracking_timeout", optical_tracking_timeout);
@@ -467,7 +476,9 @@ AppStage_AdvancedSettings::AppStage_AdvancedSettings(App *app)
     : AppStage(app)
     , m_menuState(AppStage_AdvancedSettings::inactive)
 	, m_tabSelectedTab(0)
-{ }
+{
+	m_genericWebcamStableId.fill('\0');
+}
 
 bool AppStage_AdvancedSettings::init(int argc, char** argv)
 {
@@ -485,6 +496,13 @@ void AppStage_AdvancedSettings::enter()
 		//Load configs
 		cfg_tracker = TrackerConfig();
 		cfg_tracker.isLoaded = cfg_tracker.load();
+		m_genericWebcamStableId.fill('\0');
+		std::copy_n(
+			cfg_tracker.generic_webcam_stable_id.c_str(),
+			std::min(
+				cfg_tracker.generic_webcam_stable_id.size(),
+				m_genericWebcamStableId.size() - 1),
+			m_genericWebcamStableId.data());
 
 		cfg_controller = ControllerConfig();
 		cfg_controller.isLoaded = cfg_controller.load();
@@ -572,6 +590,36 @@ void AppStage_AdvancedSettings::renderUI()
 									"The number of trackers emulated in PSMoveServiceEx.\n"
 									"Useful if you want to add your custom trackers that are not related to PlayStation Move."
 								);
+						}
+
+						{
+							ImGui::Text("Generic webcam:");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 150.f);
+							ImGui::Checkbox(
+								"##GenericWebcamEnabled",
+								&cfg_tracker.generic_webcam_enabled);
+
+							ImGui::Text("Webcam stable ID:");
+							ImGui::SameLine(ImGui::GetWindowWidth() - 300.f);
+							ImGui::PushItemWidth(250.f);
+							if (ImGui::InputText(
+									"##GenericWebcamStableId",
+									m_genericWebcamStableId.data(),
+									m_genericWebcamStableId.size()))
+							{
+								cfg_tracker.generic_webcam_stable_id =
+									m_genericWebcamStableId.data();
+							}
+							ImGui::PopItemWidth();
+
+							if (ImGui::IsItemHovered())
+							{
+								ImGui::SetTooltip(
+									"Copy the wmf_... stable_id printed by "
+									"PSMoveServiceEx at startup.\n"
+									"Only an explicitly enabled camera is opened; "
+									"a service restart is required.");
+							}
 						}
 
 						{

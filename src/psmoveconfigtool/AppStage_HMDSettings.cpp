@@ -345,11 +345,16 @@ void AppStage_HMDSettings::renderUI()
 							int useCustomOpticalTracking = (hmdInfo.UseCustomOpticalTracking) ? 1 : 0;
 							
 							ImGui::PushItemWidth(195);
-							if (ImGui::Combo("Tracking Method", &useCustomOpticalTracking, "Build-in Tracking Lights\0Custom Tracking Bulb\0\0"))
+							if (ImGui::Combo("Tracking Method", &useCustomOpticalTracking, "Built-in Tracking Lights\0Custom Tracking Bulb\0\0"))
 							{
 								hmdInfo.UseCustomOpticalTracking = (useCustomOpticalTracking > 0);
 
-								request_set_hmd_tracking_leds(hmdInfo.HmdID, hmdInfo.UseCustomOpticalTracking, hmdInfo.OverrideCustomTrackingLeds);
+								request_set_hmd_tracking_leds(
+									hmdInfo.HmdID,
+									hmdInfo.UseCustomOpticalTracking,
+									hmdInfo.OverrideCustomTrackingLeds,
+									hmdInfo.BuiltInTrackingLedMask,
+									hmdInfo.BuiltInTrackingLedIntensity);
 							}
 							ImGui::PopItemWidth();
 
@@ -364,20 +369,75 @@ void AppStage_HMDSettings::renderUI()
 									{
 										hmdInfo.OverrideCustomTrackingLeds = (centerOverride) ? centerLed : 0;
 
-										request_set_hmd_tracking_leds(hmdInfo.HmdID, hmdInfo.UseCustomOpticalTracking, hmdInfo.OverrideCustomTrackingLeds);
+										request_set_hmd_tracking_leds(
+											hmdInfo.HmdID,
+											hmdInfo.UseCustomOpticalTracking,
+											hmdInfo.OverrideCustomTrackingLeds,
+											hmdInfo.BuiltInTrackingLedMask,
+											hmdInfo.BuiltInTrackingLedIntensity);
 									}
 								}
 								ImGui::Unindent();
 							}
 							else
 							{
-								ImGui::PushTextWrapPos();
-								ImGui::Image(AssetManager::getInstance()->getIconWarning()->getImTextureId(), ImVec2(24, 24), ImVec2(0, 0), ImVec2(1, 1), AssetManager::k_imcolor_red());
-								ImGui::SameLine();
-								ImGui::TextColored(AssetManager::k_imcolor_red(),
-									"This tracking method is currently unavailable!"
-								);
-								ImGui::PopTextWrapPos();
+								bool settings_changed = false;
+
+								ImGui::Indent();
+								ImGui::PushItemWidth(195);
+								settings_changed |= ImGui::SliderInt(
+									"LED Intensity",
+									&hmdInfo.BuiltInTrackingLedIntensity,
+									0,
+									100);
+								ImGui::PopItemWidth();
+
+								const char *front_led_labels[7] =
+									{"A", "B", "C", "D", "E", "F", "G"};
+								int enabled_led_count = 0;
+								for (int led_index = 0; led_index < 7; ++led_index)
+								{
+									bool enabled =
+										(hmdInfo.BuiltInTrackingLedMask & (1 << led_index)) != 0;
+									if (ImGui::Checkbox(front_led_labels[led_index], &enabled))
+									{
+										if (enabled)
+										{
+											hmdInfo.BuiltInTrackingLedMask |= 1 << led_index;
+										}
+										else
+										{
+											hmdInfo.BuiltInTrackingLedMask &= ~(1 << led_index);
+										}
+										settings_changed = true;
+									}
+									if (enabled)
+									{
+										++enabled_led_count;
+									}
+									if (led_index < 6)
+									{
+										ImGui::SameLine();
+									}
+								}
+
+								if (enabled_led_count < 5)
+								{
+									ImGui::TextColored(
+										AssetManager::k_imcolor_red(),
+										"Enable at least five front LEDs for pose tracking.");
+								}
+
+								if (settings_changed)
+								{
+									request_set_hmd_tracking_leds(
+										hmdInfo.HmdID,
+										false,
+										hmdInfo.OverrideCustomTrackingLeds,
+										hmdInfo.BuiltInTrackingLedMask,
+										hmdInfo.BuiltInTrackingLedIntensity);
+								}
+								ImGui::Unindent();
 							}
 						}	
 						
@@ -1408,7 +1468,9 @@ void AppStage_HMDSettings::request_set_hmd_offsets(
 void AppStage_HMDSettings::request_set_hmd_tracking_leds(
 	int HmdID,
 	bool UseCustom,
-	int TrackingLedOverrrides)
+	int TrackingLedOverrrides,
+	int BuiltInLedMask,
+	int BuiltInLedIntensity)
 {
 	if (HmdID != -1)
 	{
@@ -1418,6 +1480,9 @@ void AppStage_HMDSettings::request_set_hmd_tracking_leds(
 		request->mutable_set_hmd_tracking_led_overrides_request()->set_hmd_id(HmdID);
 		request->mutable_set_hmd_tracking_led_overrides_request()->set_use_custom(UseCustom);
 		request->mutable_set_hmd_tracking_led_overrides_request()->set_led_overrides(TrackingLedOverrrides);
+		request->mutable_set_hmd_tracking_led_overrides_request()->set_built_in_led_mask(BuiltInLedMask);
+		request->mutable_set_hmd_tracking_led_overrides_request()->set_built_in_led_intensity(BuiltInLedIntensity);
+		request->mutable_set_hmd_tracking_led_overrides_request()->set_has_built_in_led_settings(true);
 
 		PSMRequestID request_id;
 		PSM_SendOpaqueRequest(&request, &request_id);
@@ -1496,6 +1561,8 @@ void AppStage_HMDSettings::handle_hmd_list_response(
 
 				HmdInfo.UseCustomOpticalTracking = HmdResponse.use_custom_optical_tracking();
 				HmdInfo.OverrideCustomTrackingLeds = HmdResponse.override_custom_tracking_leds();
+				HmdInfo.BuiltInTrackingLedMask = HmdResponse.built_in_tracking_led_mask();
+				HmdInfo.BuiltInTrackingLedIntensity = HmdResponse.built_in_tracking_led_intensity();
 
                 if (HmdInfo.HmdType == AppStage_HMDSettings::Morpheus)
                 {

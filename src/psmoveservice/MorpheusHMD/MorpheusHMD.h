@@ -5,6 +5,7 @@
 #include "DeviceEnumerator.h"
 #include "DeviceInterface.h"
 #include "MathUtility.h"
+#include <chrono>
 #include <string>
 #include <vector>
 #include <deque>
@@ -44,7 +45,7 @@ public:
 		, is_valid(false)
 		, version(CONFIG_VERSION)
 		, position_filter_type("PositionKalman")
-		, orientation_filter_type("MadgwickARG")
+		, orientation_filter_type("ComplementaryOpticalARG")
 		, raw_accelerometer_variance(0.f)
         , max_velocity(1.f)
 		, raw_gyro_variance(0.f)
@@ -67,8 +68,19 @@ public:
 		, filter_angular_smoothing_factor(0.25f)
 		, filter_velocity_prediction_cutoff(1.0f)
 		, filter_angular_prediction_cutoff(0.0f)
-		, use_custom_optical_tracking(true)
+		, use_custom_optical_tracking(false)
 		, override_custom_tracking_leds(0)
+		, built_in_tracking_led_mask(0x07f)
+		, built_in_tracking_led_intensity(50)
+		, built_in_led_model_version(1)
+		, point_cloud_min_inlier_count(5)
+		, point_cloud_max_association_distance_px(60.f)
+		, point_cloud_max_reprojection_error_px(8.f)
+		, point_cloud_min_depth_cm(25.f)
+		, point_cloud_max_depth_cm(400.f)
+		, point_cloud_max_orientation_error_degrees(35.f)
+		, point_cloud_max_translation_jump_cm(40.f)
+		, point_cloud_max_frame_age_ms(250)
 		, filter_position_kalman_error(10.f)
 		, filter_position_kalman_noise(200.f)
 		, filter_position_kalman_disable_cutoff(true)
@@ -79,15 +91,28 @@ public:
 		offset_world_orientation.set(0.0f, 0.0f, 0.0f);
 		offset_scale.set(1.0f, 1.0f, 1.0f);
 
+		// Bootstrap model in headset-local centimetres. The ordering is
+		// E, C, F, A, D, G, B, H, I to preserve the historical model.
+		built_in_led_positions_cm[0].set(0.00f, 0.00f, 0.00f);
+		built_in_led_positions_cm[1].set(7.25f, 4.05f, 3.75f);
+		built_in_led_positions_cm[2].set(9.05f, 0.00f, 9.65f);
+		built_in_led_positions_cm[3].set(7.25f, -4.05f, 3.75f);
+		built_in_led_positions_cm[4].set(-7.25f, 4.05f, 3.75f);
+		built_in_led_positions_cm[5].set(-9.05f, 0.00f, 9.65f);
+		built_in_led_positions_cm[6].set(-7.25f, -4.05f, 3.75f);
+		built_in_led_positions_cm[7].set(5.65f, -1.07f, 27.53f);
+		built_in_led_positions_cm[8].set(-5.65f, -1.07f, 27.53f);
+		built_in_hmd_origin_in_led_model_cm.set(0.f, 0.f, 0.f);
+
 		// The Morpheus uses the BMI055 IMU Chip: 
 		// https://d3nevzfk7ii3be.cloudfront.net/igi/hnlrYUv5BUb6lMoW.huge
 		// https://www.bosch-sensortec.com/bst/products/all_products/bmi055
 		//
 		// The Accelerometer can operate in one of 4 modes: 
-		//   ±2g, ±4g, ±8g, ±16g
+		//   Â±2g, Â±4g, Â±8g, Â±16g
 		// The Gyroscope can operate in one of 5 modes: 
-		//   ±125°/s, ±250°/s, ±500°/s, ±1000°/s, ±2000°/s
-		//   (or ±2.18 rad/s, ±4.36 rad/s, ±8.72 rad/s, ±17.45 rad/s, ±34.9 rad/s)
+		//   Â±125Â°/s, Â±250Â°/s, Â±500Â°/s, Â±1000Â°/s, Â±2000Â°/s
+		//   (or Â±2.18 rad/s, Â±4.36 rad/s, Â±8.72 rad/s, Â±17.45 rad/s, Â±34.9 rad/s)
 		//
 		// I haven't seen any indication that suggests the Morpheus changes modes.
 		// However we need to calibrate the sensor bias at startup
@@ -95,7 +120,7 @@ public:
 		// NOTE: If you are unfamiliar like I was with "LSB/Unit"
 		// see http://stackoverflow.com/questions/19161872/meaning-of-lsb-unit-and-unit-lsb
 
-		// Accelerometer configured at ±2g, 1024 LSB/g
+		// Accelerometer configured at Â±2g, 1024 LSB/g
 		accelerometer_gain.i = A_SCALE_2G;
 		accelerometer_gain.j = A_SCALE_2G;
 		accelerometer_gain.k = A_SCALE_2G;
@@ -105,7 +130,7 @@ public:
 		raw_accelerometer_bias.j = 0.f;
 		raw_accelerometer_bias.k = 0.f;
 
-		// Gyroscope configured at ±1000°/s, 32.8 LSB/(°/s)
+		// Gyroscope configured at Â±1000Â°/s, 32.8 LSB/(Â°/s)
 		// but we want the calibrated gyro value in radians/s so add in a deg->rad conversion as well
 		gyro_gain.i = G_SCALE_2000DPS;
 		gyro_gain.j = G_SCALE_2000DPS;
@@ -223,6 +248,21 @@ public:
 	bool use_custom_optical_tracking;
 	int override_custom_tracking_leds;
 
+	// Built-in PSVR light tracking settings.
+	int built_in_tracking_led_mask;
+	int built_in_tracking_led_intensity;
+	int built_in_led_model_version;
+	std::array<CommonDevicePosition, CommonDeviceTrackingShape::MAX_POINT_CLOUD_POINT_COUNT> built_in_led_positions_cm;
+	CommonDevicePosition built_in_hmd_origin_in_led_model_cm;
+	int point_cloud_min_inlier_count;
+	float point_cloud_max_association_distance_px;
+	float point_cloud_max_reprojection_error_px;
+	float point_cloud_min_depth_cm;
+	float point_cloud_max_depth_cm;
+	float point_cloud_max_orientation_error_degrees;
+	float point_cloud_max_translation_jump_cm;
+	int point_cloud_max_frame_age_ms;
+
 	float filter_position_kalman_error;
 	float filter_position_kalman_noise;
 	bool filter_position_kalman_disable_cutoff;
@@ -253,6 +293,8 @@ struct MorpheusHMDSensorFrame
 struct MorpheusHMDState : public CommonHMDState
 {
 	std::array< MorpheusHMDSensorFrame, 2> SensorFrames;
+	std::array<std::chrono::steady_clock::time_point, 2> SensorTimestamps;
+	std::array<bool, 2> SensorTimestampValid;
 
     MorpheusHMDState()
     {
@@ -266,6 +308,10 @@ struct MorpheusHMDState : public CommonHMDState
 
 		SensorFrames[0].clear();
 		SensorFrames[1].clear();
+		SensorTimestamps[0] = std::chrono::steady_clock::time_point();
+		SensorTimestamps[1] = std::chrono::steady_clock::time_point();
+		SensorTimestampValid[0] = false;
+		SensorTimestampValid[1] = false;
     }
 
 	void parse_data_input(const MorpheusHMDConfig *config, const struct MorpheusSensorData *data_input);
