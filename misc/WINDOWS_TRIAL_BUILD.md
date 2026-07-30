@@ -39,20 +39,26 @@ other than this repository's workflow run or an explicitly linked prerelease.
 The workflow uses:
 
 - the `windows-2022` GitHub-hosted image and Visual Studio 2022;
-- the `x64-windows-static` vcpkg triplet, matching the service's static MSVC
-  runtime;
+- the repository's `x64-windows-static-v142` overlay triplet, matching the
+  service's static MSVC runtime while keeping Boost 1.83 on its supported v142
+  toolset;
 - the vcpkg baseline recorded in `vcpkg.json`;
 - OpenCV 4.6.0, Protobuf 3.21.12, Boost 1.83.0, SDL2, libusb, and Eigen3.
 
-With vcpkg checked out at the manifest's baseline and `VCPKG_ROOT` set, the
-equivalent configure command is:
+Use the immutable vcpkg tool revision recorded in the workflow and set
+`VCPKG_ROOT` to that checkout. The manifest baseline independently selects the
+pinned port versions. The equivalent configure command is:
 
 ```powershell
+$env:VCPKG_OVERLAY_TRIPLETS = (Resolve-Path .\cmake\triplets).Path
+
 cmake -S . -B build `
   -G "Visual Studio 17 2022" `
   -A x64 `
+  -T v142 `
   -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
-  -DVCPKG_TARGET_TRIPLET=x64-windows-static `
+  -DVCPKG_TARGET_TRIPLET=x64-windows-static-v142 `
+  -DVCPKG_OVERLAY_TRIPLETS="$env:VCPKG_OVERLAY_TRIPLETS" `
   -DPSMOVE_USE_SYSTEM_DEPENDENCIES=ON `
   -DProtobuf_USE_STATIC_LIBS=ON
 ```
