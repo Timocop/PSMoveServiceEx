@@ -53,6 +53,11 @@ SetBuildVars.bat
 SetBuildVars_Win32.bat
 SetBuildVars_X64.bat
 
+# Local Codex/agent workspace state
+.codex/
+.agents/
+AGENTS.md
+
 
 # Allow source model files
 !/src/psmoveconfigtool/source_assets_old/**

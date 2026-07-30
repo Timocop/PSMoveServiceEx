@@ -2,6 +2,14 @@
 # (installed via homebrew on Mac or apt-get in Linux/Ubuntu)
 # In MSVC, we auto-download the source and make it an external_project
 
+# The original Windows build remains available for legacy VC14 development.
+# CI and current Windows toolchains use version-pinned packages supplied by a
+# CMake toolchain (vcpkg in the checked-in workflow) instead.
+option(
+    PSMOVE_USE_SYSTEM_DEPENDENCIES
+    "Use dependencies supplied by the active CMake toolchain"
+    OFF)
+
 # Platform specific libraries
 SET(PLATFORM_LIBS)
 IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -34,7 +42,13 @@ ENDIF()
 
 
 # Eigen3
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+IF(PSMOVE_USE_SYSTEM_DEPENDENCIES)
+    find_package(Eigen3 CONFIG REQUIRED)
+    get_target_property(
+        EIGEN3_INCLUDE_DIR
+        Eigen3::Eigen
+        INTERFACE_INCLUDE_DIRECTORIES)
+ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     # TODO: Convert this to ExternalProject_Add
     # Can manually set EIGEN3_INCLUDE_DIR to "${ROOT_DIR}/thirdparty/eigen
     MESSAGE(STATUS "Using Eigen3 in submodule")
@@ -53,6 +67,25 @@ ENDIF()
 
 # OpenCV
 # Override by adding "-DOpenCV_DIR=C:\path\to\opencv\build" to your cmake command
+IF(PSMOVE_USE_SYSTEM_DEPENDENCIES)
+    find_package(
+        OpenCV
+        CONFIG
+        REQUIRED
+        COMPONENTS
+            core
+            calib3d
+            features2d
+            flann
+            imgproc
+            imgcodecs
+            ml
+            highgui
+            objdetect
+            video
+            videoio)
+    add_definitions(-DHAS_OPENCV)
+ELSE()
 IF(NOT OpenCV_DIR)
     IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         ExternalProject_Add(opencv
@@ -130,6 +163,7 @@ set(OpenCV_STATIC ON)
 IF(NOT(${CMAKE_SYSTEM_NAME} MATCHES "Windows"))
     FIND_PACKAGE(OpenCV REQUIRED)
 ENDIF()
+ENDIF()
 
 
 # Boost
@@ -183,7 +217,25 @@ ENDIF()
 # SDL and GL
 set(SDL_GL_INCLUDE_DIRS)
 set(SDL_GL_LIBS)
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+IF(PSMOVE_USE_SYSTEM_DEPENDENCIES)
+    find_package(SDL2 CONFIG REQUIRED)
+    IF(TARGET SDL2::SDL2)
+        list(APPEND SDL_GL_LIBS SDL2::SDL2)
+    ELSEIF(TARGET SDL2::SDL2-static)
+        list(APPEND SDL_GL_LIBS SDL2::SDL2-static)
+    ELSE()
+        message(FATAL_ERROR "The SDL2 package did not provide a usable target.")
+    ENDIF()
+    IF(TARGET SDL2::SDL2main)
+        list(INSERT SDL_GL_LIBS 0 SDL2::SDL2main)
+    ENDIF()
+    IF(DEFINED SDL2_INCLUDE_DIRS)
+        list(APPEND SDL_GL_INCLUDE_DIRS ${SDL2_INCLUDE_DIRS})
+    ENDIF()
+    IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+        list(APPEND SDL_GL_LIBS imm32.lib version.lib)
+    ENDIF()
+ELSEIF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     find_library(OPENGL_FRAMEWORK OpenGL)
     find_package(SDL2)
     list(APPEND SDL_GL_INCLUDE_DIRS ${SDL2_INCLUDE_DIR})
@@ -216,8 +268,16 @@ IF (${CMAKE_SYSTEM_NAME} MATCHES "Darwin"
     list(APPEND PSEYE_SRC
         ${ROOT_DIR}/thirdparty/PS3EYEDriver/src/ps3eye.h
         ${ROOT_DIR}/thirdparty/PS3EYEDriver/src/ps3eye.cpp)
-    #Requires libusb
-    find_package(USB1 REQUIRED)
+    # Requires libusb. The vcpkg package intentionally exposes the same
+    # LIBUSB_* variables used by the legacy FindUSB1 module.
+    IF(PSMOVE_USE_SYSTEM_DEPENDENCIES)
+        find_package(libusb CONFIG REQUIRED)
+        IF(NOT LIBUSB_INCLUDE_DIR AND LIBUSB_INCLUDE_DIRS)
+            list(GET LIBUSB_INCLUDE_DIRS 0 LIBUSB_INCLUDE_DIR)
+        ENDIF()
+    ELSE()
+        find_package(USB1 REQUIRED)
+    ENDIF()
     list(APPEND PSEYE_INCLUDE_DIRS ${LIBUSB_INCLUDE_DIR})
     list(APPEND PSEYE_LIBRARIES ${LIBUSB_LIBRARIES})
     add_definitions(-DHAVE_PS3EYE)

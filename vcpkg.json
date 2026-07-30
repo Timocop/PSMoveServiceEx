@@ -1,0 +1,45 @@
+{
+  "name": "psmoveserviceex",
+  "version-string": "0.27.8-psvr-led-preview",
+  "builtin-baseline": "caa7579a1c48e2ca770f6ccf98cb03db95642631",
+  "dependencies": [
+    "boost-atomic",
+    "boost-algorithm",
+    "boost-asio",
+    "boost-bind",
+    "boost-chrono",
+    "boost-date-time",
+    "boost-filesystem",
+    "boost-foreach",
+    "boost-function",
+    "boost-interprocess",
+    "boost-lambda",
+    "boost-lexical-cast",
+    "boost-lockfree",
+    "boost-program-options",
+    "boost-property-tree",
+    "boost-smart-ptr",
+    "boost-system",
+    "boost-thread",
+    "boost-uuid",
+    "eigen3",
+    "libusb",
+    {
+      "name": "opencv4",
+      "default-features": false,
+      "features": [
+        "jpeg",
+        "png"
+      ]
+    },
+    "protobuf",
+    "sdl2"
+  ],
+  "overrides": [
+    {
+      "name": "opencv4",
+      "version": "4.6.0",
+      "port-version": 10
+    }
+  ]
+}

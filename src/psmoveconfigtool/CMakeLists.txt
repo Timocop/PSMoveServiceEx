@@ -46,8 +46,8 @@ add_executable(PSMoveConfigTool ${PSMOVECONFIGTOOL_SRC})
 target_include_directories(PSMoveConfigTool PUBLIC ${PSMOVECONFIGTOOL_INCL_DIRS})
 target_link_libraries(PSMoveConfigTool ${PSMOVECONFIGTOOL_REQ_LIBS})
 
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-add_dependencies(PSMoveService opencv)
+IF(TARGET opencv)
+    add_dependencies(PSMoveConfigTool opencv)
 ENDIF()
 
 # Allow access to the protocol buffers (extracting response parameters)
@@ -78,10 +78,13 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             CONFIGURATIONS Debug
             DESTINATION ${PSM_DEBUG_INSTALL_PATH}/bin/assets
             FILES_MATCHING PATTERN "*.ttf"  PATTERN "*.jpg")
-    install(DIRECTORY ${OPENVR_BINARIES_DIR}/ 
-            CONFIGURATIONS Debug
-            DESTINATION ${PSM_DEBUG_INSTALL_PATH}/bin
-            FILES_MATCHING PATTERN "*.dll" PATTERN "*.pdb")   
+    IF(DEFINED OPENVR_BINARIES_DIR
+       AND IS_DIRECTORY "${OPENVR_BINARIES_DIR}")
+        install(DIRECTORY ${OPENVR_BINARIES_DIR}/
+                CONFIGURATIONS Debug
+                DESTINATION ${PSM_DEBUG_INSTALL_PATH}/bin
+                FILES_MATCHING PATTERN "*.dll" PATTERN "*.pdb")
+    ENDIF()
     install(TARGETS PSMoveConfigTool
         CONFIGURATIONS Release
         RUNTIME DESTINATION ${PSM_RELEASE_INSTALL_PATH}/bin
@@ -91,9 +94,12 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             CONFIGURATIONS Release
             DESTINATION ${PSM_RELEASE_INSTALL_PATH}/bin/assets
             FILES_MATCHING PATTERN "*.ttf"  PATTERN "*.jpg")
-    install(DIRECTORY ${OPENVR_BINARIES_DIR}/ 
-            CONFIGURATIONS Release
-            DESTINATION ${PSM_RELEASE_INSTALL_PATH}/bin
-            FILES_MATCHING PATTERN "*.dll" PATTERN "*.pdb")   
+    IF(DEFINED OPENVR_BINARIES_DIR
+       AND IS_DIRECTORY "${OPENVR_BINARIES_DIR}")
+        install(DIRECTORY ${OPENVR_BINARIES_DIR}/
+                CONFIGURATIONS Release
+                DESTINATION ${PSM_RELEASE_INSTALL_PATH}/bin
+                FILES_MATCHING PATTERN "*.dll" PATTERN "*.pdb")
+    ENDIF()
 ELSE() #Linux/Darwin
 ENDIF()

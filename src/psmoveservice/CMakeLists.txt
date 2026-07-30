@@ -222,7 +222,7 @@ add_executable(PSMoveService ${PSMOVESERVICE_SRC})
 target_include_directories(PSMoveService PUBLIC ${PSMOVE_SERVICE_INCL_DIRS})
 target_link_libraries(PSMoveService ${PSMOVE_SERVICE_REQ_LIBS})
 
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+IF(TARGET opencv)
     add_dependencies(PSMoveService opencv)
 ENDIF()
 
@@ -267,7 +267,9 @@ IF(MSVC)
 	target_include_directories(PSMoveServiceAdmin PUBLIC ${PSMOVE_SERVICE_INCL_DIRS})
 	target_link_libraries(PSMoveServiceAdmin ${PSMOVE_SERVICE_REQ_LIBS})
 	
-	add_dependencies(PSMoveServiceAdmin opencv)
+	IF(TARGET opencv)
+		add_dependencies(PSMoveServiceAdmin opencv)
+	ENDIF()
 	
 	# set the UAC level in the property sheet
     set_target_properties(PSMoveServiceAdmin PROPERTIES LINK_FLAGS "/level='requireAdministrator' /uiAccess='false'")

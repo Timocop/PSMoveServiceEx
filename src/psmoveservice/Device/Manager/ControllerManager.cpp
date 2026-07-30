@@ -16,6 +16,26 @@
 #include "hidapi.h"
 #include "gamepad/Gamepad.h"
 
+namespace
+{
+    void initialize_gamepad_api(bool xinput_only)
+    {
+        // The pinned libstem API exposes only Gamepad_init(). A historical
+        // PSMoveServiceEx call passed xinput_only even though no matching
+        // dependency API was committed, which made clean checkouts fail to
+        // compile. Keep the library's supported initialization behaviour and
+        // state the one setting that cannot be enforced by this dependency.
+        Gamepad_init();
+
+        if (xinput_only)
+        {
+            SERVER_LOG_WARNING("ControllerManager::startup") <<
+                "The pinned gamepad backend cannot enforce XInput-only mode; "
+                "using its normal DirectInput/XInput enumeration.";
+        }
+    }
+}
+
 //-- methods -----
 //-- Tracker Manager Config -----
 const int ControllerManagerConfig::CONFIG_VERSION = 1;
@@ -102,7 +122,7 @@ ControllerManager::startup()
 
 	if (success && gamepad_api_enabled)
 	{
-		Gamepad_init(gamepad_api_xinput_only);
+		initialize_gamepad_api(gamepad_api_xinput_only);
 	}
 
     if (success)

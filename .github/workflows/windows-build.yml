@@ -1,0 +1,167 @@
+name: Windows trial build
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - master-experimental
+  push:
+    branches:
+      - master-experimental
+      - "codex/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-trial-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-win64:
+    name: Build and test Win64
+    runs-on: windows-2022
+    timeout-minutes: 180
+    env:
+      VCPKG_DEFAULT_TRIPLET: x64-windows-static
+      VCPKG_DEFAULT_HOST_TRIPLET: x64-windows
+
+    steps:
+      - name: Check out source and submodules
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          submodules: recursive
+
+      - name: Restore and build pinned dependencies
+        uses: lukka/run-vcpkg@b1a0dd252f06b9e25b3c022a9a03bd7a427fb6a2 # v11
+        with:
+          vcpkgGitCommitId: caa7579a1c48e2ca770f6ccf98cb03db95642631
+          runVcpkgInstall: true
+          vcpkgJsonGlob: "**/vcpkg.json"
+
+      - name: Configure Visual Studio build
+        shell: pwsh
+        run: |
+          cmake -S . -B build `
+            -G "Visual Studio 17 2022" `
+            -A x64 `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
+            -DVCPKG_TARGET_TRIPLET="$env:VCPKG_DEFAULT_TRIPLET" `
+            -DPSMOVE_USE_SYSTEM_DEPENDENCIES=ON `
+            -DProtobuf_USE_STATIC_LIBS=ON
+
+      - name: Build service, configuration tool, client, and tracking tests
+        shell: pwsh
+        run: |
+          cmake --build build `
+            --config Release `
+            --parallel 2 `
+            --target `
+              PSMoveService `
+              PSMoveConfigTool `
+              PSMoveClient_CAPI `
+              test_morpheus_sensor_clock `
+              test_hmd_point_cloud_pose_solver `
+              test_hmd_optical_pose_fusion `
+              test_tracker_video_source_helpers `
+              test_generic_webcam_enumerator_helpers
+
+      - name: Run deterministic tracking tests
+        shell: pwsh
+        run: |
+          ctest --test-dir build `
+            -C Release `
+            --output-on-failure `
+            -R "morpheus_sensor_clock|hmd_point_cloud_pose_solver|hmd_optical_pose_fusion|tracker_video_source_helpers|generic_webcam_enumerator_helpers"
+
+      - name: Create portable trial ZIP
+        shell: pwsh
+        run: |
+          $packageParent = Join-Path $env:RUNNER_TEMP "psmove-package"
+          $packageDir = Join-Path $packageParent "PSMoveService"
+          $zipPath = Join-Path $env:RUNNER_TEMP "PSMoveServiceEx-PSVR-LED-Win64.zip"
+
+          New-Item -ItemType Directory -Path $packageDir -Force | Out-Null
+          Copy-Item "build/src/psmoveservice/Release/PSMoveService.exe" $packageDir
+          Copy-Item "build/src/psmoveconfigtool/Release/PSMoveConfigTool.exe" $packageDir
+          Copy-Item "build/src/psmoveclient/Release/PSMoveClient_CAPI.dll" $packageDir
+          Copy-Item "src/psmoveconfigtool/assets" $packageDir -Recurse
+          Copy-Item "misc/calibration" $packageDir -Recurse
+          Copy-Item "misc/PSVR_LED_TRACKING.md" $packageDir
+          Copy-Item "misc/PSVR_STEAMVR_FIRST_RUN.md" $packageDir
+          Copy-Item "misc/WINDOWS_TRIAL_BUILD.md" $packageDir
+          Copy-Item "LICENSE" (Join-Path $packageDir "LICENSE.txt")
+
+          @(
+            "PSMoveServiceEx PSVR LED Win64 trial build"
+            "Commit: $env:GITHUB_SHA"
+            "Workflow run: $env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
+            "Unsigned test software: retain this file when reporting results."
+          ) | Set-Content (Join-Path $packageDir "BUILD_INFO.txt")
+
+          $requiredFiles = @(
+            "PSMoveService.exe"
+            "PSMoveConfigTool.exe"
+            "PSMoveClient_CAPI.dll"
+            "PSVR_LED_TRACKING.md"
+            "PSVR_STEAMVR_FIRST_RUN.md"
+            "WINDOWS_TRIAL_BUILD.md"
+            "BUILD_INFO.txt"
+            "LICENSE.txt"
+            "calibration/distortion/Checkerboard_A4.pdf"
+          )
+          foreach ($file in $requiredFiles) {
+            if (-not (Test-Path (Join-Path $packageDir $file))) {
+              throw "Missing required package file: $file"
+            }
+          }
+          if (-not (Test-Path (Join-Path $packageDir "assets") -PathType Container)) {
+            throw "Missing required package directory: assets"
+          }
+
+          Push-Location $packageDir
+          try {
+            & .\PSMoveService.exe --help | Out-Host
+            if ($LASTEXITCODE -ne 0) {
+              throw "Packaged PSMoveService.exe smoke check failed: $LASTEXITCODE"
+            }
+          }
+          finally {
+            Pop-Location
+          }
+
+          $clientPath = (Resolve-Path (
+            Join-Path $packageDir "PSMoveClient_CAPI.dll")).Path
+          $clientHandle = [Runtime.InteropServices.NativeLibrary]::Load($clientPath)
+          if ($clientHandle -eq [IntPtr]::Zero) {
+            throw "Unable to load packaged PSMoveClient_CAPI.dll"
+          }
+          [Runtime.InteropServices.NativeLibrary]::Free($clientHandle)
+
+          $fileChecksums = Get-ChildItem $packageDir -File -Recurse |
+            Sort-Object FullName |
+            ForEach-Object {
+              $relativePath = [IO.Path]::GetRelativePath(
+                $packageDir,
+                $_.FullName).Replace("\", "/")
+              $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash
+              "$($hash.ToLowerInvariant())  $relativePath"
+            }
+          $fileChecksums | Set-Content (Join-Path $packageDir "SHA256SUMS.txt")
+
+          Compress-Archive -Path $packageDir -DestinationPath $zipPath
+          $zipHash = (Get-FileHash $zipPath -Algorithm SHA256).Hash
+          $zipChecksumPath = "$zipPath.sha256"
+          "$($zipHash.ToLowerInvariant())  $(Split-Path $zipPath -Leaf)" |
+            Set-Content $zipChecksumPath
+          Get-Content $zipChecksumPath
+
+      - name: Upload Win64 trial package
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: PSMoveServiceEx-PSVR-LED-Win64-${{ github.run_number }}
+          path: |
+            ${{ runner.temp }}/PSMoveServiceEx-PSVR-LED-Win64.zip
+            ${{ runner.temp }}/PSMoveServiceEx-PSVR-LED-Win64.zip.sha256
+          if-no-files-found: error
+          retention-days: 30

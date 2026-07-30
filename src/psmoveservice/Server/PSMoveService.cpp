@@ -722,7 +722,7 @@ int PSMoveService::exec(int argc, char *argv[])
         return 0;
     }
 
-    if (options_map.count("-h"))
+    if (options_map.count("help"))
     {
         std::cout << "Valid Options: " << std::endl;
         std::cout << desc << std::endl;
